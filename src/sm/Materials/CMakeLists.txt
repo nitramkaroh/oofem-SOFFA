@@ -79,6 +79,7 @@ set (sm_material
     HyperelasticMaterials/simopistermaterial.C
     HyperelasticMaterials/ogdencompressiblematerial.C
     HyperelasticMaterials/hyperelasticmaterial1d.C
+	
     #Lattice models
     LatticeMaterials/latticematstatus.C
     LatticeMaterials/latticestructuralmaterial.C	
@@ -91,6 +92,12 @@ set (sm_material
     LatticeMaterials/latticeslip.C
     LatticeMaterials/latticeplasticitydamageviscoelastic.C
     1D/isoasymm1d.C
+	
+	#Hyperelastic surface material
+	HyperelasticSurfaceMaterials/hyperelasticsurfacematerial.C
+	HyperelasticSurfaceMaterials/hyperelasticsurfacematerial.C
+	linearelasticsurfacematerial.C
+	isolinearelasticsurfacematerial.C
 )
 
 if (USE_MFRONT)

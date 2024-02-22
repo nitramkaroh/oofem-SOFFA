@@ -117,7 +117,7 @@ public:
      * @param gp Gauss point at which the stress is evaluated.
      * @param tStep Time step.
      */
-    void computeFirstPKStressVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep);
+    virtual void computeFirstPKStressVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep);
 
     /**
      * Computes the Cauchy stress tensor on Voigt format. This method will
@@ -128,7 +128,7 @@ public:
      * @param gp Gauss point at which the stress is evaluated.
      * @param tStep Time step.
      */
-    void computeCauchyStressVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep);
+    virtual void computeCauchyStressVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep);
 
     /**
      * Computes the stiffness matrix of receiver.
