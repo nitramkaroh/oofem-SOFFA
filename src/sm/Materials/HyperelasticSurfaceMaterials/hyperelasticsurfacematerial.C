@@ -39,6 +39,11 @@ HyperElasticSurfaceMaterial::HyperElasticSurfaceMaterial( int n, Domain *d ) :
     StructuralMaterial( n, d )
 {}
 
+void HyperElasticSurfaceMaterial::initializeFrom( InputRecord &ir )
+{
+    BaseHyperElasticMaterial::initializeFrom( ir );
+    StructuralMaterial::initializeFrom( ir );
+}
 
 
 FloatMatrixF<9, 9>

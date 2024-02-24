@@ -46,6 +46,7 @@ protected:
 public:
     HyperElasticSurfaceMaterial( int n, Domain *d );
     ~HyperElasticSurfaceMaterial() { }
+    void initializeFrom( InputRecord &ir ) override;
 
     virtual FloatArrayF<6> giveRealSurfaceStressVector_3d( const FloatArrayF<6> &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const { OOFEM_ERROR( "not implemented " ); };
     virtual FloatArrayF<9> giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &reducedF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;      
