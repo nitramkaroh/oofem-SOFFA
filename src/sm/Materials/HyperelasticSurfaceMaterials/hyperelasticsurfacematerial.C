@@ -88,4 +88,15 @@ HyperElasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArray
     return vP;
 }
 
+int HyperElasticSurfaceMaterial::giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep )
+{
+    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
+    if ( type == IST_CauchyStressTensor ) {
+        answer = status->giveCVector();
+        return 1;
+    } else {
+        return StructuralMaterial::giveIPValue( answer, gp, type, tStep );
+    }
+}
+
 } // namespace oofem;

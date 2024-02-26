@@ -65,7 +65,7 @@ SurfaceTensionMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> 
     // update gp
     status->letTempFVectorBe( vF );
     status->letTempPVectorBe( vP );
-    status->letCVectorBe( vS );
+    status->letTempCVectorBe( vS );
     //
     return vP;
 }
@@ -82,8 +82,48 @@ SurfaceTensionMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMo
     Tensor4_3d A;
     A( i_3, j_3, k_3, l_3 ) = this->gamma *  F.compute_tensor_cross_product()( i_3, j_3, k_3, l_3 ) ;
 
+    // Numerical implementation
+    Tensor4_3d Anum;
+    Tensor2_3d Pnew, dP, dF, Fnew;
+    FloatArrayF<9> vFnew;
+
+
+    FloatArrayF<9> vP( status->giveTempPVector() );
+    Tensor2_3d P( vP );
+    double h = 1e-8;
+
+    std::vector<std::array<int,2> > locs = {{ 0, 0 },
+                                         { 1, 1 },
+                                         { 2, 2 },
+                                         { 1, 2 },
+                                         { 0, 2 },
+                                         { 0, 1 },
+                                         { 2, 1 },
+                                         { 2, 0 },
+                                         { 1, 0 }};
+
+    for ( size_t k = 0; k < 9; k++ ) {
+        vFnew.at( k+1 )    = h;
+        dF               = vFnew;
+        Fnew( i_3, j_3 ) = F( i_3, j_3 ) + dF( i_3, j_3 );
+        Pnew( i_3, j_3 ) = this->gamma * Fnew.compute_cofactor()( i_3, j_3 );
+        dP( i_3, j_3 ) = ( Pnew( i_3, j_3 ) - P( i_3, j_3 ) ) / h;
+        for ( size_t i = 0; i < 3; i++ ) {
+            for ( size_t j = 0; j < 3; j++ ) {
+                Anum( i, j, locs.at( k ).at( 0 ), locs.at( k ).at( 1 ) ) = dP( i, j );
+            }
+        }
+        vFnew.at( k + 1 ) = 0.;
+    }
+
+    Tensor4_3d Adiff;
+    Adiff( i_3, j_3, k_3, l_3 ) = A( i_3, j_3, k_3, l_3 ) - Anum( i_3, j_3, k_3, l_3 ); // Check the difference
+
+    //return Anum.to_voigt_form();
     return A.to_voigt_form();
 }
+
+
 
 
 MaterialStatus *
