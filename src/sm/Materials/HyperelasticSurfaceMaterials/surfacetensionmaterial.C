@@ -50,7 +50,7 @@ SurfaceTensionMaterial::SurfaceTensionMaterial( int n, Domain *d ) :
 
 FloatArrayF<9>
 SurfaceTensionMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
-// returns 9 components of the first piola kirchhoff stress corresponding to the given deformation gradinent
+// returns 9 components of the first piola kirchhoff stress corresponding to the given deformation gradinet
 {
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
     Tensor2_3d F( vF ), P, S;

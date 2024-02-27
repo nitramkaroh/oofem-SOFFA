@@ -127,11 +127,11 @@ Element :: computeVectorOf(const IntArray &dofIDMask, ValueModeType u, TimeStep 
         answer.append(vec);
     }
 
-    /////@todo This rotation matrix needs to have the dofidmask/eid/primary field or something passed to it, otherwise it won't work generally.
-    //if ( this->computeGtoLRotationMatrix(G2L) ) {
-    //    OOFEM_WARNING("The transformation matrix from global -> element local c.s. is not fully supported for this function (yet)");
-    //    answer.rotatedWith(G2L, 'n');
-    //}
+    ///@todo This rotation matrix needs to have the dofidmask/eid/primary field or something passed to it, otherwise it won't work generally.
+    if ( this->computeGtoLRotationMatrix(G2L) ) {
+        OOFEM_WARNING("The transformation matrix from global -> element local c.s. is not fully supported for this function (yet)");
+        answer.rotatedWith(G2L, 'n');
+    }
 }
 
 

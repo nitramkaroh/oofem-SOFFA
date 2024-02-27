@@ -65,10 +65,7 @@ protected:
 
 public:
     QuadSurface( int n, Domain *d );
-    virtual ~QuadSurface()
-    {
-        delete this->GtoLRotationMatrix;
-    };
+    virtual ~QuadSurface() {}
     FEInterpolation *giveInterpolation() const override;
 
 
