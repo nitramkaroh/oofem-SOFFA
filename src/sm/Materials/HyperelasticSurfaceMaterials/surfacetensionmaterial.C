@@ -37,8 +37,8 @@
 #include "floatarray.h"
 #include "classfactory.h"
 #include "mathfem.h"
-
-
+#include "domain.h"
+#include "function.h"
 namespace oofem {
 REGISTER_Material( SurfaceTensionMaterial );
 
@@ -54,12 +54,17 @@ SurfaceTensionMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> 
 {
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
     Tensor2_3d F( vF ), P, S;
-
+    double gamma_t;
+    if(this->gamma_ltf == 0) {
+      gamma_t = this->gamma;
+    } else {
+      gamma_t = this->gamma * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
+    }
     // compute the first Piola-Kirchhoff
-    P( i_3, j_3 ) = this->gamma * F.compute_cofactor()( i_3, j_3 );
+    P( i_3, j_3 ) = gamma_t * F.compute_cofactor()( i_3, j_3 );
     // compute Cauchy stress vector
     S( i_3, j_3 ) = ( 1 / F.compute_determinant() ) * P( i_3, k_3 ) * F( j_3, k_3 );
-
+    //
     auto vP = P.to_voigt_form();
     auto vS = S.to_voigt_form();
     // update gp
@@ -80,46 +85,16 @@ SurfaceTensionMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMo
 
     Tensor2_3d F( vF );
     Tensor4_3d A;
-    A( i_3, j_3, k_3, l_3 ) = this->gamma *  F.compute_tensor_cross_product()( i_3, j_3, k_3, l_3 ) ;
-
-    // Numerical implementation
-    Tensor4_3d Anum;
-    Tensor2_3d Pnew, dP, dF, Fnew;
-    FloatArrayF<9> vFnew;
-
-
-    FloatArrayF<9> vP( status->giveTempPVector() );
-    Tensor2_3d P( vP );
-    double h = 1e-8;
-
-    std::vector<std::array<int,2> > locs = {{ 0, 0 },
-                                         { 1, 1 },
-                                         { 2, 2 },
-                                         { 1, 2 },
-                                         { 0, 2 },
-                                         { 0, 1 },
-                                         { 2, 1 },
-                                         { 2, 0 },
-                                         { 1, 0 }};
-
-    for ( size_t k = 0; k < 9; k++ ) {
-        vFnew.at( k+1 )    = h;
-        dF               = vFnew;
-        Fnew( i_3, j_3 ) = F( i_3, j_3 ) + dF( i_3, j_3 );
-        Pnew( i_3, j_3 ) = this->gamma * Fnew.compute_cofactor()( i_3, j_3 );
-        dP( i_3, j_3 ) = ( Pnew( i_3, j_3 ) - P( i_3, j_3 ) ) / h;
-        for ( size_t i = 0; i < 3; i++ ) {
-            for ( size_t j = 0; j < 3; j++ ) {
-                Anum( i, j, locs.at( k ).at( 0 ), locs.at( k ).at( 1 ) ) = dP( i, j );
-            }
-        }
-        vFnew.at( k + 1 ) = 0.;
+    double gamma_t;
+    //
+    if(this->gamma_ltf == 0) {
+      gamma_t = this->gamma;
+    } else {
+      gamma_t = this->gamma * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
     }
-
-    Tensor4_3d Adiff;
-    Adiff( i_3, j_3, k_3, l_3 ) = A( i_3, j_3, k_3, l_3 ) - Anum( i_3, j_3, k_3, l_3 ); // Check the difference
-
-    //return Anum.to_voigt_form();
+    //
+    A( i_3, j_3, k_3, l_3 ) =  gamma_t *  F.compute_tensor_cross_product()( i_3, j_3, k_3, l_3 ) ;
+    //
     return A.to_voigt_form();
 }
 
@@ -137,5 +112,6 @@ void SurfaceTensionMaterial::initializeFrom( InputRecord &ir )
 {
     HyperElasticSurfaceMaterial::initializeFrom( ir );
     IR_GIVE_FIELD( ir, gamma, _IFT_SurfaceTensionMaterial_gamma );
+    IR_GIVE_OPTIONAL_FIELD( ir, gamma_ltf, _IFT_SurfaceTensionMaterial_gammaLTF );
 }
 } // end namespace oofem

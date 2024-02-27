@@ -44,6 +44,8 @@
 //@{
 #define _IFT_SurfaceTensionMaterial_Name "surfacetensionmat"
 #define _IFT_SurfaceTensionMaterial_gamma "gamma"
+#define _IFT_SurfaceTensionMaterial_gammaLTF "gamma_ltf"
+
 //@}
 
 namespace oofem {
@@ -55,6 +57,7 @@ class SurfaceTensionMaterial : public HyperElasticSurfaceMaterial
 protected:
     // Material parameters
     double gamma;
+    int gamma_ltf = 0;
 
 
 public:
