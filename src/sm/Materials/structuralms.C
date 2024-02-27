@@ -115,6 +115,7 @@ void StructuralMaterialStatus :: updateYourself(TimeStep *tStep)
     strainVector = tempStrainVector;
     PVector      = tempPVector;
     FVector      = tempFVector;
+    CVector      = tempCVector;
 }
 
 
@@ -139,6 +140,7 @@ void StructuralMaterialStatus :: initTempStatus()
     tempStrainVector = strainVector;
     tempPVector      = PVector;
     tempFVector      = FVector;
+    tempCVector      = CVector;
 }
 
 
