@@ -99,6 +99,7 @@ set (sm_material
 	linearelasticsurfacematerial.C
 	isolinearelasticsurfacematerial.C
 	HyperelasticSurfaceMaterials/surfacetensionmaterial.C
+	HyperelasticSurfaceMaterials/basehyperelasticsurfacematerial.C
 )
 
 if (USE_MFRONT)
