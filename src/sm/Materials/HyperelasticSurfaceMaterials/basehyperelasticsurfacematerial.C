@@ -38,25 +38,86 @@
 namespace oofem {
 
 double BaseHyperElasticSurfaceMaterial::compute_surface_determinant( const Tensor2_3d &F ) const {
-    //Tensor1_3d e1( { 1, 0, 0 } );
-    //Tensor1_3d e2( { 0, 1, 0 } );
 
-    //Tensor1_3d F1, F2;
-    //F1( i_3 ) = F( i_3, j_3 ) * e1( j_3 );
-    //F2( i_3 ) = F( i_3, j_3 ) * e2( j_3 );
-    return 0.;
+    double p1 = std::pow( F( 0, 0 ) * F( 1, 1 ) - F( 0, 1 ) * F( 1, 0 ), 2 );
+    double p2 = std::pow( F( 0, 0 ) * F( 2, 1 ) - F( 0, 1 ) * F( 2, 0 ), 2 );
+    double p3 = std::pow( F( 1, 0 ) * F( 2, 1 ) - F( 1, 1 ) * F( 2, 0 ), 2 );
+
+    return std::sqrt( p1 + p2 + p3 );
 };
 
 Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_cofactor( const Tensor2_3d &F ) const
 {
     Tensor2_3d cofF;
+    double F11, F12, F21, F22, F31, F32;
+    F11 = F( 0, 0 );F12 = F( 0, 1 );F21 = F( 1, 0 );
+    F22 = F( 1, 1 );F31 = F( 2, 0 );F32 = F( 2, 1 );
+
+    cofF( 0, 0 ) = F11 * ( pow(F12, 2) + pow(F22 , 2) + pow(F32 , 2) ) - F12 * ( F11 * F12 + F21 * F22 + F31 * F32 );
+    cofF( 0, 1 ) = F12 * ( pow(F11, 2) + pow(F21 , 2) + pow(F31 , 2) ) - F11 * ( F11 * F12 + F21 * F22 + F31 * F32 );
+    cofF( 1, 0 ) = F21 * ( pow(F12, 2) + pow(F22 , 2) + pow(F32 , 2) ) - F22 * ( F11 * F12 + F21 * F22 + F31 * F32 );
+    cofF( 1, 1 ) = F22 * ( pow(F11, 2) + pow(F21 , 2) + pow(F31 , 2) ) - F21 * ( F11 * F12 + F21 * F22 + F31 * F32 );
+    cofF( 2, 0 ) = F31 * ( pow(F12, 2) + pow(F22 , 2) + pow(F32 , 2) ) - F32 * ( F11 * F12 + F21 * F22 + F31 * F32 );
+    cofF( 2, 1 ) = F32 * ( pow(F11, 2) + pow(F21 , 2) + pow(F31 , 2) ) - F31 * ( F11 * F12 + F21 * F22 + F31 * F32 );
+
+    cofF( i_3, j_3 ) = 1/this->compute_surface_determinant(F)*cofF( i_3, j_3 );
 
     return cofF;
 };
 
 Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_dCof_dF( const Tensor2_3d &F ) const
 {
-    Tensor4_3d A;
+    Tensor4_3d A1,A2,A;
+    double F11, F12, F21, F22, F31, F32;
+    F11 = F( 0, 0 ); F12 = F( 0, 1 );F21 = F( 1, 0 );
+    F22 = F( 1, 1 ); F31 = F( 2, 0 );F32 = F( 2, 1 );
+
+    A1( 0, 0, 0, 0 ) = pow( F22, 2 ) + pow( F32, 2 );
+    A1( 0, 1, 0, 0 ) = -F21 * F22 - F31 * F32;
+    A1( 1, 0, 0, 0 ) = -F12 * F22;
+    A1( 1, 1, 0, 0 ) = 2 * F11 * F22 - F12 * F21;
+    A1( 2, 0, 0, 0 ) = -F12 * F32;
+    A1( 2, 1, 0, 0 ) = 2 * F11 * F32 - F12 * F31;
+
+    A1( 0, 0, 1, 0 ) = -F12 * F22;
+    A1( 0, 1, 1, 0 ) = 2 * F12 * F21 - F11 * F22;
+    A1( 1, 0, 1, 0 ) = pow(F12 , 2) + pow(F32 , 2);
+    A1( 1, 1, 1, 0 ) = -F11 * F12 - F31 * F32;
+    A1( 2, 0, 1, 0 ) = -F22 * F32;
+    A1( 2, 1, 1, 0 ) = 2 * F21 * F32 - F22 * F31;
+
+    A1( 0, 0, 2, 0 ) = -F12 * F32;
+    A1( 0, 1, 2, 0 ) = 2 * F12 * F31 - F11 * F32;
+    A1( 1, 0, 2, 0 ) = -F22 * F32;
+    A1( 1, 1, 2, 0 ) = 2 * F22 * F31 - F21 * F32;
+    A1( 2, 0, 2, 0 ) = pow(F12 , 2) + pow(F22 , 2);
+    A1( 2, 1, 2, 0 ) = -F11 * F12 - F21 * F22;
+
+    A1( 0, 0, 0, 1 ) = -F21 * F22 - F31 * F32;
+    A1( 0, 1, 0, 1 ) = pow( F21, 2 ) + pow( F31, 2 );
+    A1( 1, 0, 0, 1 ) = 2 * F12 * F21 - F11 * F22;
+    A1( 1, 1, 0, 1 ) = -F11 * F21;
+    A1( 2, 0, 0, 1 ) = 2 * F12 * F31 - F11 * F32;
+    A1( 2, 1, 0, 1 ) = -F11 * F31;
+
+    A1( 0, 0, 1, 1 ) = 2 * F11 * F22 - F12 * F21;
+    A1( 0, 1, 1, 1 ) = -F11 * F21;
+    A1( 1, 0, 1, 1 ) = -F11 * F12 - F31 * F32;
+    A1( 1, 1, 1, 1 ) = pow( F11, 2 ) + pow( F31, 2 );
+    A1( 2, 0, 1, 1 ) = 2 * F22 * F31 - F21 * F32;
+    A1( 2, 1, 1, 1 ) = -F21 * F31;
+
+    A1( 0, 0, 2, 1 ) = 2 * F11 * F32 - F12 * F31;
+    A1( 0, 1, 2, 1 ) = -F11 * F31;
+    A1( 1, 0, 2, 1 ) = 2 * F21 * F32 - F22 * F31;
+    A1( 1, 1, 2, 1 ) = -F21 * F31;
+    A1( 2, 0, 2, 1 ) = -F11 * F12 - F21 * F22;
+    A1( 2, 1, 2, 1 ) = pow( F11, 2 ) + pow( F21, 2 );
+
+    Tensor2_3d cofF  = this->compute_surface_cofactor( F );
+    A2( i_3, j_3, k_3, l_3 ) = cofF( i_3, j_3 ) * cofF( k_3, l_3 );
+
+    A( i_3, j_3, k_3, l_3 ) = 1 / this->compute_surface_determinant( F ) * (A1( i_3, j_3, k_3, l_3 ) - A2( i_3, j_3, k_3, l_3 ));
 
     return A;
 };

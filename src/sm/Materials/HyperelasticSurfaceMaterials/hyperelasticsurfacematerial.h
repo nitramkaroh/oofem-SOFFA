@@ -32,13 +32,13 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "./HyperelasticMaterials/basehyperelasticmaterial.h"
+#include "./HyperelasticSurfaceMaterials/basehyperelasticsurfacematerial.h"
 #include "./structuralmaterial.h"
 #include "./structuralms.h"
 
 namespace oofem {
 
-class OOFEM_EXPORT HyperElasticSurfaceMaterial : public BaseHyperElasticMaterial, public StructuralMaterial
+class OOFEM_EXPORT HyperElasticSurfaceMaterial : public BaseHyperElasticSurfaceMaterial, public StructuralMaterial
 {
 protected:
    

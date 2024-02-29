@@ -35,13 +35,12 @@
 #include "hyperelasticsurfacematerial.h"
 namespace oofem {
 HyperElasticSurfaceMaterial::HyperElasticSurfaceMaterial( int n, Domain *d ) :
-    BaseHyperElasticMaterial() ,
+    BaseHyperElasticSurfaceMaterial() ,
     StructuralMaterial( n, d )
 {}
 
 void HyperElasticSurfaceMaterial::initializeFrom( InputRecord &ir )
 {
-    BaseHyperElasticMaterial::initializeFrom( ir );
     StructuralMaterial::initializeFrom( ir );
 }
 
