@@ -72,29 +72,29 @@ void NLStructuralSurfaceElement ::computeStressVector( FloatArray &answer, const
     answer = cs->giveRealSurfaceStresses( strain, normal, gp, tStep );
 }
 
-//void NLStructuralSurfaceElement ::computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
-//{
-//
-//    answer = this->giveStructuralCrossSection()->giveStiffnessMatrix_dPdF_3d( rMode, gp, tStep );
-//    if ( this->matRotation ) {
-//        FloatArray x, y, z;
-//        FloatMatrix Q;
-//        this->giveMaterialOrientationAt( x, y, z, gp->giveNaturalCoordinates() );
-//        Q = {
-//            { x( 0 ) * x( 0 ), x( 1 ) * x( 1 ), x( 2 ) * x( 2 ), x( 1 ) * x( 2 ), x( 0 ) * x( 2 ), x( 0 ) * x( 1 ), x( 2 ) * x( 1 ), x( 2 ) * x( 0 ), x( 1 ) * x( 0 ) },
-//            { y( 0 ) * y( 0 ), y( 1 ) * y( 1 ), y( 2 ) * y( 2 ), y( 1 ) * y( 2 ), y( 0 ) * y( 2 ), y( 0 ) * y( 1 ), y( 2 ) * y( 1 ), y( 2 ) * y( 0 ), y( 1 ) * y( 0 ) },
-//            { z( 0 ) * z( 0 ), z( 1 ) * z( 1 ), z( 2 ) * z( 2 ), z( 1 ) * z( 2 ), z( 0 ) * z( 2 ), z( 0 ) * z( 1 ), z( 2 ) * z( 1 ), z( 2 ) * z( 0 ), z( 1 ) * z( 0 ) },
-//            { y( 0 ) * z( 0 ), y( 1 ) * z( 1 ), y( 2 ) * z( 2 ), y( 1 ) * z( 2 ), y( 0 ) * z( 2 ), y( 0 ) * z( 1 ), y( 2 ) * z( 1 ), y( 2 ) * z( 0 ), y( 1 ) * z( 0 ) },
-//            { x( 0 ) * z( 0 ), x( 1 ) * z( 1 ), x( 2 ) * z( 2 ), x( 1 ) * z( 2 ), x( 0 ) * z( 2 ), x( 0 ) * z( 1 ), x( 2 ) * z( 1 ), x( 2 ) * z( 0 ), x( 1 ) * z( 0 ) },
-//            { x( 0 ) * y( 0 ), x( 1 ) * y( 1 ), x( 2 ) * y( 2 ), x( 1 ) * y( 2 ), x( 0 ) * y( 2 ), x( 0 ) * y( 1 ), x( 2 ) * y( 1 ), x( 2 ) * y( 0 ), x( 1 ) * y( 0 ) },
-//            { z( 0 ) * y( 0 ), z( 1 ) * y( 1 ), z( 2 ) * y( 2 ), z( 1 ) * y( 2 ), z( 0 ) * y( 2 ), z( 0 ) * y( 1 ), z( 2 ) * y( 1 ), z( 2 ) * y( 0 ), z( 1 ) * y( 0 ) },
-//            { z( 0 ) * x( 0 ), z( 1 ) * x( 1 ), z( 2 ) * x( 2 ), z( 1 ) * x( 2 ), z( 0 ) * x( 2 ), z( 0 ) * x( 1 ), z( 2 ) * x( 1 ), z( 2 ) * x( 0 ), z( 1 ) * x( 0 ) },
-//            { y( 0 ) * x( 0 ), y( 1 ) * x( 1 ), y( 2 ) * x( 2 ), y( 1 ) * x( 2 ), y( 0 ) * x( 2 ), y( 0 ) * x( 1 ), y( 2 ) * x( 1 ), y( 2 ) * x( 0 ), y( 1 ) * x( 0 ) },
-//        };
-//        answer.rotatedWith( Q, 't' );
-//    }
-//
-//}
+void NLStructuralSurfaceElement::computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
+{
+    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
+    // the receiver at time step tStep.
+    // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
+
+    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    FloatArray u;
+    this->computeVectorOf( { D_u, D_v, D_w }, VM_Total, tStep, u ); // solution vector
+    if ( initialDisplacements ) {
+        u.subtract( *initialDisplacements );
+    }
+
+    // Displacement gradient H = du/dX
+    FloatMatrix B;
+    this->computeBHmatrixAt( gp, B );
+    answer.beProductOf( B, u );
+
+    // Deformation gradient F = H + I
+    answer.at( 1 ) += 1.0;
+    answer.at( 2 ) += 1.0;
+
+}
 
 
 

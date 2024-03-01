@@ -54,7 +54,6 @@ SurfaceTensionMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> 
 {
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
     Tensor2_3d F( vF ), P, S;
-    F( 2, 2 ) = 0.00;
     double gamma_t;
     if(this->gamma_ltf == 0) {
       gamma_t = this->gamma;
@@ -62,18 +61,17 @@ SurfaceTensionMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> 
       gamma_t = this->gamma * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
     }
     // compute the first Piola-Kirchhoff
-    //P( i_3, j_3 ) = gamma_t * F.compute_cofactor()( i_3, j_3 );
     P( i_3, j_3 ) = gamma_t * this->compute_surface_cofactor( F )( i_3, j_3 );
     // compute Cauchy stress vector
-    //S( i_3, j_3 ) = ( 1 / F.compute_determinant() ) * P( i_3, k_3 ) * F( j_3, k_3 );
-    //
+    S( i_3, j_3 ) = ( 1 / this->compute_surface_determinant(F) ) * P( i_3, k_3 ) * F( j_3, k_3 );
+
     auto vP = P.to_voigt_form();
-    //auto vS = S.to_voigt_form();
+    auto vS = S.to_voigt_form();
     // update gp
     status->letTempFVectorBe( vF );
     status->letTempPVectorBe( vP );
-    //status->letTempCVectorBe( vS );
-    //
+    status->letTempCVectorBe( vS );
+
     return vP;
 }
 
@@ -86,7 +84,6 @@ SurfaceTensionMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMo
     FloatArrayF<9> vF( status->giveTempFVector() );
 
     Tensor2_3d F( vF );
-    F( 2, 2 ) = 0.00;
     Tensor4_3d A;
     double gamma_t;
     //
@@ -95,10 +92,9 @@ SurfaceTensionMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMo
     } else {
       gamma_t = this->gamma * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
     }
-    //
-    //A( i_3, j_3, k_3, l_3 ) =  gamma_t *  F.compute_tensor_cross_product()( i_3, j_3, k_3, l_3 ) ;
+
     A( i_3, j_3, k_3, l_3 ) = gamma_t * this->compute_surface_dCof_dF( F )( i_3, j_3, k_3, l_3 );
-    //
+
     return A.to_voigt_form();
 }
 
