@@ -66,5 +66,11 @@ public:
 
     Tensor4_3d compute_surface_dCof_dF( const Tensor2_3d &F ) const;
 
+    Tensor2_3d compute_surface_d_normF_dF( const Tensor2_3d &F ) const;
+
+    double compute_surface_NormF( const Tensor2_3d &F ) const;
+
+    Tensor4_3d compute_surface_d2_normF_dF2( const Tensor2_3d &F ) const;
+
 };
 } // end namespace oofem
