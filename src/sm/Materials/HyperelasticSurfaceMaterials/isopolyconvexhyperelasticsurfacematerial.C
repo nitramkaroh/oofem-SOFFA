@@ -32,7 +32,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "surfacetensionmaterial.h"
+#include "isopolyconvexhyperelasticsurfacematerial.h"
 #include "floatmatrix.h"
 #include "floatarray.h"
 #include "classfactory.h"
@@ -40,28 +40,32 @@
 #include "domain.h"
 #include "function.h"
 namespace oofem {
-REGISTER_Material( SurfaceTensionMaterial );
+REGISTER_Material( IsotropicPolyconvexHyperelasticSurfaceMaterial );
 
-SurfaceTensionMaterial::SurfaceTensionMaterial( int n, Domain *d ) :
-    HyperElasticSurfaceMaterial(n,d),
-    gamma(0.)
+IsotropicPolyconvexHyperelasticSurfaceMaterial::IsotropicPolyconvexHyperelasticSurfaceMaterial( int n, Domain *d ) :
+    HyperElasticSurfaceMaterial( n, d ),
+    gamma( 0. ),
+    alpha( 0. )
 {
 }
 
 FloatArrayF<9>
-SurfaceTensionMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 // returns 9 components of the first piola kirchhoff stress corresponding to the given deformation gradinet
 {
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
     Tensor2_3d F( vF ), P, S;
-    double gamma_t;
+    double gamma_t, alpha_t;
     if(this->gamma_ltf == 0) {
-      gamma_t = this->gamma;
+        gamma_t = this->gamma;
+        alpha_t = this->alpha;
     } else {
-      gamma_t = this->gamma * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
+        gamma_t = this->gamma * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
+        alpha_t = this->alpha * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
     // compute the first Piola-Kirchhoff
-    P( i_3, j_3 ) = gamma_t * this->compute_surface_cofactor( F )( i_3, j_3 );
+    P( i_3, j_3 ) = gamma_t * this->compute_surface_cofactor( F )( i_3, j_3 ) + 
+                    alpha_t * this->compute_surface_d_normF_dF( F )( i_3, j_3 );
     // compute Cauchy stress vector
     S( i_3, j_3 ) = ( 1 / this->compute_surface_determinant(F) ) * P( i_3, k_3 ) * F( j_3, k_3 );
 
@@ -77,7 +81,7 @@ SurfaceTensionMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> 
 
 
 FloatMatrixF<9, 9>
-SurfaceTensionMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+IsotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 // returns the 9x9 tangent stiffness matrix - dP/dF
 {
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
@@ -85,15 +89,18 @@ SurfaceTensionMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMo
 
     Tensor2_3d F( vF );
     Tensor4_3d A;
-    double gamma_t;
+    double gamma_t, alpha_t;
     //
-    if(this->gamma_ltf == 0) {
-      gamma_t = this->gamma;
+    if ( this->gamma_ltf == 0 ) {
+        gamma_t = this->gamma;
+        alpha_t = this->alpha;
     } else {
-      gamma_t = this->gamma * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
+        gamma_t = this->gamma * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        alpha_t = this->alpha * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
 
-    A( i_3, j_3, k_3, l_3 ) = gamma_t * this->compute_surface_dCof_dF( F )( i_3, j_3, k_3, l_3 );
+    A( i_3, j_3, k_3, l_3 ) = gamma_t * this->compute_surface_dCof_dF( F )( i_3, j_3, k_3, l_3 ) + 
+                              alpha_t * this->compute_surface_d2_normF_dF2( F )( i_3, j_3, k_3, l_3 );
 
     return A.to_voigt_form();
 }
@@ -102,16 +109,17 @@ SurfaceTensionMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMo
 
 
 MaterialStatus *
-SurfaceTensionMaterial::CreateStatus( GaussPoint *gp ) const
+IsotropicPolyconvexHyperelasticSurfaceMaterial::CreateStatus( GaussPoint *gp ) const
 {
     return new StructuralMaterialStatus( gp );
 }
 
 
-void SurfaceTensionMaterial::initializeFrom( InputRecord &ir )
+void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord &ir )
 {
     HyperElasticSurfaceMaterial::initializeFrom( ir );
-    IR_GIVE_FIELD( ir, gamma, _IFT_SurfaceTensionMaterial_gamma );
-    IR_GIVE_OPTIONAL_FIELD( ir, gamma_ltf, _IFT_SurfaceTensionMaterial_gammaLTF );
+    IR_GIVE_OPTIONAL_FIELD( ir, gamma, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma );
+    IR_GIVE_OPTIONAL_FIELD( ir, alpha, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha );
+    IR_GIVE_OPTIONAL_FIELD( ir, gamma_ltf, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF );
 }
 } // end namespace oofem

@@ -32,8 +32,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef surfacetensionmaterial_h
-#define surfacetensionmaterial_h
+#ifndef isopolyconvexhyperelasticsurfacematerial_h
+#define isopolyconvexhyperelasticsurfacematerial_h
 
 #include "sm/Materials/structuralmaterial.h"
 #include "sm/Materials/structuralms.h"
@@ -42,9 +42,10 @@
 
 ///@name Input fields for SurfaceTensionMaterial
 //@{
-#define _IFT_SurfaceTensionMaterial_Name "surfacetensionmat"
-#define _IFT_SurfaceTensionMaterial_gamma "gamma"
-#define _IFT_SurfaceTensionMaterial_gammaLTF "gamma_ltf"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_Name "surfacetensionmat"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma "gamma"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha "alpha"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF "gamma_ltf"
 
 //@}
 
@@ -52,16 +53,17 @@ namespace oofem {
 /**
  * This class implements basic surface tension material for fluids
  */
-class SurfaceTensionMaterial : public HyperElasticSurfaceMaterial
+class IsotropicPolyconvexHyperelasticSurfaceMaterial : public HyperElasticSurfaceMaterial
 {
 protected:
     // Material parameters
     double gamma;
     int gamma_ltf = 0;
+    double alpha; 
 
 
 public:
-    SurfaceTensionMaterial( int n, Domain *d );
+    IsotropicPolyconvexHyperelasticSurfaceMaterial( int n, Domain *d );
 
     void initializeFrom( InputRecord &ir ) override;
 
@@ -73,8 +75,8 @@ public:
 
     MaterialStatus *CreateStatus( GaussPoint *gp ) const override;
 
-    const char *giveInputRecordName() const override { return _IFT_SurfaceTensionMaterial_Name; }
-    const char *giveClassName() const override { return "SurfaceTensionMaterial"; }
+    const char *giveInputRecordName() const override { return _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_Name; }
+    const char *giveClassName() const override { return "IsotropicPolyconvexHyperelasticSurfaceMaterial"; }
 };
 } // end namespace oofem
 #endif

@@ -98,7 +98,7 @@ set (sm_material
 	HyperelasticSurfaceMaterials/hyperelasticsurfacematerial.C
 	linearelasticsurfacematerial.C
 	isolinearelasticsurfacematerial.C
-	HyperelasticSurfaceMaterials/surfacetensionmaterial.C
+	HyperelasticSurfaceMaterials/isopolyconvexhyperelasticsurfacematerial.C
 	HyperelasticSurfaceMaterials/basehyperelasticsurfacematerial.C
 )
 
