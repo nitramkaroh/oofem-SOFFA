@@ -44,8 +44,10 @@ REGISTER_Material( IsotropicPolyconvexHyperelasticSurfaceMaterial );
 
 IsotropicPolyconvexHyperelasticSurfaceMaterial::IsotropicPolyconvexHyperelasticSurfaceMaterial( int n, Domain *d ) :
     HyperElasticSurfaceMaterial( n, d ),
-    gamma( 0. ),
-    alpha( 0. )
+    gamma1( 0. ),
+    gamma2( 0. ),
+    alpha1( 0. ),
+    alpha2( 0. )
 {
 }
 
@@ -54,20 +56,37 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3
 // returns 9 components of the first piola kirchhoff stress corresponding to the given deformation gradinet
 {
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
-    Tensor2_3d F( vF ), P, S;
-    double gamma_t, alpha_t;
+    FloatArrayF<9> indent = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d F( vF ), P, S, Identity( indent ), Pgamma1, Pgamma2, Palpha1, Palpha2;
+
+    double gamma_t1, gamma_t2, alpha_t1, alpha_t2;
     if(this->gamma_ltf == 0) {
-        gamma_t = this->gamma;
-        alpha_t = this->alpha;
+        gamma_t1 = this->gamma1;
+        gamma_t2  = this->gamma2;
+        alpha_t1 = this->alpha1;
+        alpha_t2 = this->alpha2;
     } else {
-        gamma_t = this->gamma * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
-        alpha_t = this->alpha * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        gamma_t1 = this->gamma1 * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
+        gamma_t2  = this->gamma2 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        alpha_t1 = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        alpha_t2 = this->alpha2 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
     // compute the first Piola-Kirchhoff
-    P( i_3, j_3 ) = gamma_t * this->compute_surface_cofactor( F )( i_3, j_3 ) + 
-                    alpha_t * this->compute_surface_d_normF_dF( F )( i_3, j_3 );
+    Pgamma1( i_3, j_3 ) = gamma_t1 * this->compute_surface_cofactor( F )( i_3, j_3 ); 
+    Pgamma2( i_3, j_3 ) = -gamma_t2 * Identity( i_3, j_3 ); 
+
+    Palpha1( i_3, j_3 ) =  alpha_t1 * this->compute_surface_d_normF_dF( F )( i_3, j_3 ) ;
+    Palpha2( i_3, j_3 ) = - alpha_t2 / sqrt( 2 ) * Identity( i_3, j_3 );
+
+    P( i_3, j_3 ) = Pgamma1( i_3, j_3 ) + Pgamma2( i_3, j_3 ) + Palpha1( i_3, j_3 ) + Palpha2( i_3, j_3 );
+
+    /*P( i_3, j_3 ) = gamma_t * this->compute_surface_cofactor( F )( i_3, j_3 ) + 
+                    alpha_t1 * this->compute_surface_d_normF_dF( F )( i_3, j_3 ) - 
+                    alpha_t2/sqrt(2) * Identity( i_3, j_3 );*/
+    ;
     // compute Cauchy stress vector
     S( i_3, j_3 ) = ( 1 / this->compute_surface_determinant(F) ) * P( i_3, k_3 ) * F( j_3, k_3 );
+    //S( j_3, k_3 ) = ( 1 / this->compute_surface_determinant( F ) ) * F( i_3, j_3 ) * P( i_3, k_3 );+
 
     auto vP = P.to_voigt_form();
     auto vS = S.to_voigt_form();
@@ -89,18 +108,18 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMa
 
     Tensor2_3d F( vF );
     Tensor4_3d A;
-    double gamma_t, alpha_t;
+    double gamma_t1, alpha_t1;
     //
     if ( this->gamma_ltf == 0 ) {
-        gamma_t = this->gamma;
-        alpha_t = this->alpha;
+        gamma_t1  = this->gamma1;
+        alpha_t1 = this->alpha1;
     } else {
-        gamma_t = this->gamma * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
-        alpha_t = this->alpha * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        gamma_t1  = this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        alpha_t1 = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
 
-    A( i_3, j_3, k_3, l_3 ) = gamma_t * this->compute_surface_dCof_dF( F )( i_3, j_3, k_3, l_3 ) + 
-                              alpha_t * this->compute_surface_d2_normF_dF2( F )( i_3, j_3, k_3, l_3 );
+    A( i_3, j_3, k_3, l_3 ) = gamma_t1 * this->compute_surface_dCof_dF( F )( i_3, j_3, k_3, l_3 ) + 
+                              alpha_t1 * this->compute_surface_d2_normF_dF2( F )( i_3, j_3, k_3, l_3 );
 
     return A.to_voigt_form();
 }
@@ -118,8 +137,23 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::CreateStatus( GaussPoint *gp ) c
 void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord &ir )
 {
     HyperElasticSurfaceMaterial::initializeFrom( ir );
-    IR_GIVE_OPTIONAL_FIELD( ir, gamma, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma );
-    IR_GIVE_OPTIONAL_FIELD( ir, alpha, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha );
+    IR_GIVE_OPTIONAL_FIELD( ir, gamma1, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma1 );
+    IR_GIVE_OPTIONAL_FIELD( ir, gamma2, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma2 );
+    IR_GIVE_OPTIONAL_FIELD( ir, alpha1, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha1 );
+    IR_GIVE_OPTIONAL_FIELD( ir, alpha2, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha2 );
     IR_GIVE_OPTIONAL_FIELD( ir, gamma_ltf, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF );
+
+    // In case of old input fiule with only one alpha parameter
+    double alphaTemp, gammaTemp;
+    IR_GIVE_OPTIONAL_FIELD( ir, alphaTemp, "alpha" );
+    IR_GIVE_OPTIONAL_FIELD( ir, gammaTemp, "gamma" );
+    if ( alphaTemp != 0 && alpha1 == 0 && alpha2 == 0 ) {
+        alpha1 = alphaTemp;
+    };
+    if ( gammaTemp != 0 && gamma1 == 0 && gamma2 == 0 ) {
+        gamma1 = gammaTemp;
+    };
+
+
 }
 } // end namespace oofem

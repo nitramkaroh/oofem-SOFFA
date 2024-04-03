@@ -138,14 +138,15 @@ double BaseHyperElasticSurfaceMaterial::compute_surface_NormF( const Tensor2_3d 
 Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_normF_dF2( const Tensor2_3d &F ) const
 {
     Tensor4_3d answer, part1, part2;
+    double normF = this->compute_surface_NormF( F );
 
     part1( 0, 0, 0, 0 ) = 1;part1( 1, 0, 1, 0 ) = 1;part1( 2, 0, 2, 0 ) = 1;
     part1( 0, 1, 0, 1 ) = 1;part1( 1, 1, 1, 1 ) = 1;part1( 2, 1, 2, 1 ) = 1;
     part1( 0, 2, 0, 2 ) = 1;part1( 1, 2, 1, 2 ) = 1;part1( 2, 2, 2, 2 ) = 1;
 
-    part1( i_3, j_3, k_3, l_3 ) = 1 / this->compute_surface_NormF( F ) * part1( i_3, j_3, k_3, l_3 );
+    part1( i_3, j_3, k_3, l_3 ) = 1 / normF * part1( i_3, j_3, k_3, l_3 );
 
-    part2( i_3, j_3, k_3, l_3 ) = -1 / pow( this->compute_surface_NormF( F ), 3 ) * F( i_3, j_3 ) * F( k_3, l_3 );
+    part2( i_3, j_3, k_3, l_3 ) = -1 / pow( normF, 3 ) * F( i_3, j_3 ) * F( k_3, l_3 );
 
     answer( i_3, j_3, k_3, l_3 ) = part1( i_3, j_3, k_3, l_3 ) + part2( i_3, j_3, k_3, l_3 );
     return answer;

@@ -43,8 +43,10 @@
 ///@name Input fields for SurfaceTensionMaterial
 //@{
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_Name "surfacetensionmat"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma "gamma"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha "alpha"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma1 "gamma1"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma2 "gamma2"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha1 "alpha1"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha2 "alpha2"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF "gamma_ltf"
 
 //@}
@@ -57,9 +59,10 @@ class IsotropicPolyconvexHyperelasticSurfaceMaterial : public HyperElasticSurfac
 {
 protected:
     // Material parameters
-    double gamma;
+    /*double gamma;*/
+    double gamma1, gamma2;
     int gamma_ltf = 0;
-    double alpha; 
+    double alpha1, alpha2; 
 
 
 public:
