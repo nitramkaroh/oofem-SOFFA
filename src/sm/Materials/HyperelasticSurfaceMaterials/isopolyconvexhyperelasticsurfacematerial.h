@@ -47,6 +47,7 @@
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma2 "gamma2"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha1 "alpha1"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha2 "alpha2"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_delta "delta"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF "gamma_ltf"
 
 //@}
@@ -63,6 +64,7 @@ protected:
     double gamma1, gamma2;
     int gamma_ltf = 0;
     double alpha1, alpha2; 
+    double delta; 
 
 
 public:

@@ -152,4 +152,117 @@ Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_normF_dF2( const 
     return answer;
 };
 
+Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_d_traceU_dF( const Tensor2_3d &F ) const
+{
+    FloatMatrix Fm;
+    F.toFloatMatrix( Fm );
+
+
+    Tensor2_3d C;
+    // Compute C
+    C( j_3, k_3 )     = F( i_3, j_3 ) * F( i_3, k_3 );  
+    FloatMatrix Cmat;
+    C.toFloatMatrix( Cmat );
+    Cmat.resizeWithData( 2, 2 );
+
+    // Compute svd of C
+    FloatMatrix Uc, Sc, Vc;
+    Cmat.computeSVD2x2( Uc, Sc, Vc );
+
+    // Get svd of F
+    double lam1 = sqrt( Sc.at( 1, 1 ) );
+    double lam2 = sqrt( Sc.at( 2, 2 ) );
+
+    FloatMatrix Uf(Uc), Vf(Vc), Sinv, VSinv;
+    Vf.resizeWithData( 3, 3 );
+    Vf.at( 3, 3 ) = 1;
+
+    Sinv.resize( 3, 3 );
+    Sinv.at( 1, 1 ) = 1 / lam1;
+    Sinv.at( 2, 2 ) = 1 / lam2;
+
+    VSinv.beProductOf( Vf, Sinv );
+    Uf.beProductOf( Fm, VSinv );
+    
+    // Compute third column as cross product of the first two
+    Uf.at( 1, 3 ) = Uf.at( 2, 1 ) * Uf.at( 3, 2 ) - Uf.at( 3, 1 ) * Uf.at( 2, 2 );
+    Uf.at( 2, 3 ) = Uf.at( 3, 1 ) * Uf.at( 1, 2 ) - Uf.at( 1, 1 ) * Uf.at( 3, 2 );
+    Uf.at( 3, 3 ) = Uf.at( 1, 1 ) * Uf.at( 2, 2 ) - Uf.at( 2, 1 ) * Uf.at( 1, 2 );
+
+    // Compute rotation R 
+    FloatMatrix R;
+    R.beProductTOf( Uf, Vf );
+
+    Tensor2_3d answer( R );
+    return answer;
+};
+
+Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_traceU_dF2( const Tensor2_3d &F ) const
+{
+    FloatMatrix Fm;
+    F.toFloatMatrix( Fm );
+
+
+    Tensor2_3d C;
+    // Compute C
+    C( j_3, k_3 )     = F( i_3, j_3 ) * F( i_3, k_3 );
+    FloatMatrix Cmat;
+    C.toFloatMatrix( Cmat );
+    Cmat.resizeWithData( 2, 2 );
+
+    // Compute svd of C
+    FloatMatrix Uc, Sc, Vc;
+    Cmat.computeSVD2x2( Uc, Sc, Vc );
+
+    // Get svd of F
+    double lam1 = sqrt( Sc.at( 1, 1 ) );
+    double lam2 = sqrt( Sc.at( 2, 2 ) );
+
+    FloatMatrix Uf( Uc ), Vf( Vc ), Sinv, VSinv;
+    Vf.resizeWithData( 3, 3 );
+    Vf.at( 3, 3 ) = 1;
+
+    Sinv.resize( 3, 3 );
+    Sinv.at( 1, 1 ) = 1 / lam1;
+    Sinv.at( 2, 2 ) = 1 / lam2;
+
+    VSinv.beProductOf( Vf, Sinv );
+    Uf.beProductOf( Fm, VSinv );
+
+    // Compute third column as cross product of the first two
+    Uf.at( 1, 3 ) = Uf.at( 2, 1 ) * Uf.at( 3, 2 ) - Uf.at( 3, 1 ) * Uf.at( 2, 2 );
+    Uf.at( 2, 3 ) = Uf.at( 3, 1 ) * Uf.at( 1, 2 ) - Uf.at( 1, 1 ) * Uf.at( 3, 2 );
+    Uf.at( 3, 3 ) = Uf.at( 1, 1 ) * Uf.at( 2, 2 ) - Uf.at( 2, 1 ) * Uf.at( 1, 2 );
+
+    Vf.resizeWithData( 3, 3 );
+    Vf.at( 3, 3 ) = 1;
+
+
+    // Compute T matrices
+    FloatMatrix I1, I2, I3, T1, T2, T3, temp1, temp2, temp3;
+    
+    I1.resize( 3, 3 );I2.resize( 3, 3 );I3.resize( 3, 3 );
+
+    I1.at( 2, 3 ) = -1; I1.at( 3,2 ) = 1;
+    I2.at( 1, 3 ) = -1;I2.at( 3, 1 ) = 1;
+    I3.at( 1,2 ) = -1;I3.at( 2,1 ) = 1;
+
+    temp1.beProductTOf( I1, Vf );
+    T1.beProductOf( Uf, temp1 );
+
+    temp2.beProductTOf( I2, Vf );
+    T2.beProductOf( Uf, temp2 );
+
+    temp3.beProductTOf( I3, Vf );
+    T3.beProductOf( Uf, temp3 );
+
+    Tensor2_3d T1t( T1 ), T2t( T2 ), T3t( T3 );
+
+    Tensor4_3d answer;
+    answer( i_3, j_3, k_3, l_3 ) = 1 / lam2 * T1t( i_3, j_3 ) * T1t( k_3, l_3 ) + 1 / lam1 * T2t( i_3, j_3 ) * T2t( k_3, l_3 ) + 1 / ( lam1 + lam2 ) * T3t( i_3, j_3 ) * T3t( k_3, l_3 );
+
+    return answer;
+
+};
+
 } // end namespace oofem

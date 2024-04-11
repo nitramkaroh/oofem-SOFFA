@@ -2108,9 +2108,51 @@ FloatMatrix operator -( const FloatMatrix & a, const FloatMatrix & b ) {FloatMat
 FloatMatrix &operator += ( FloatMatrix & a, const FloatMatrix & b ) {a.add(b); return a;}
 FloatMatrix &operator -= ( FloatMatrix & a, const FloatMatrix & b ) {a.subtract(b); return a;}
 
+void FloatMatrix::computeSVD2x2(FloatMatrix &U, FloatMatrix &S, FloatMatrix &V) const{
+    if ( this->giveNumberOfColumns() != 2 && this->giveNumberOfRows() != 2 ) {
+        OOFEM_ERROR( "The matrix is not 2x2" );
+    }
+    U.resize( 2, 2 );
+    S.resize( 2, 2 );
+    V.resize( 2, 2 );
 
+    FloatMatrix AAt, AtA, At, W;
+    At.beTranspositionOf( *this );
+    AAt.beProductOf( *this, At );
+    
+    double phi = 0.5 * atan2( AAt.at( 1, 2 ) + AAt.at( 2, 1 ), AAt.at( 1, 1 ) - AAt.at( 2, 2 ) );
+    double Cphi = cos( phi );
+    double Sphi = sin( phi );
+    U.at( 1, 1 ) = Cphi; 
+    U.at( 1, 2 ) = -Sphi; 
+    U.at( 2, 1 ) = Sphi; 
+    U.at( 2, 2 ) = Cphi;
 
+    AtA.beProductOf( At, *this );
+    double theta = 0.5 * atan2( AtA.at( 1, 2 ) + AtA.at( 2, 1 ), AtA.at( 1, 1 ) - AtA.at( 2, 2 ) );
+    double Ctheta = cos( theta );
+    double Stheta  = sin( theta );
+    W.resize( 2, 2 );
+    W.at( 1, 1 )  = Ctheta;
+    W.at( 1, 2 )   = -Stheta;
+    W.at( 2, 1 )   = Stheta;
+    W.at( 2, 2 )   = Ctheta;
+  
+    double SUsum = AAt.at( 1, 1 ) + AAt.at( 2, 2 );
+    double SUdif = sqrt( ( AAt.at( 1, 1 ) - AAt.at( 2, 2 ) ) * ( AAt.at( 1, 1 ) - AAt.at( 2, 2 ) ) + 4 * AAt.at( 1, 2 ) * AAt.at( 2, 1 ) );
 
-
+    S.at( 1, 1 ) = sqrt( ( SUsum + SUdif ) / 2 );
+    S.at( 2, 2 ) = sqrt( ( SUsum - SUdif ) / 2 );
+   
+    FloatMatrix Ut, Scor, AW, C;
+    AW.beProductOf( *this, W );
+    Ut.beTranspositionOf( U );
+    Scor.beProductOf(Ut,AW);
+    
+    C.resize( 2, 2 );
+    C.at( 1, 1 ) = Scor.at( 1, 1 ) / abs( Scor.at( 1, 1 ) );
+    C.at( 2, 2 ) = Scor.at( 2, 2 ) / abs( Scor.at( 2, 2 ) );
+    V.beProductOf(W,C);
+}
 
 } // end namespace oofem

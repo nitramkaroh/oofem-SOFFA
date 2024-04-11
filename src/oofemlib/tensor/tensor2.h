@@ -93,10 +93,27 @@ public:
     }
 
     /**
+     * Creates a second-order order tensor in 3d from FloatMatrix
+     */
+
+    Tensor2_3d( const oofem::FloatMatrix &T )
+    {
+        this->data[0][0] = T.at( 1, 1 );
+        this->data[0][1] = T.at( 1, 2 );
+        this->data[0][2] = T.at( 1, 3 );
+        this->data[1][0] = T.at( 2, 1 );
+        this->data[1][1] = T.at( 2, 2 );
+        this->data[1][2] = T.at( 2, 3 );
+        this->data[2][0] = T.at( 3, 1 );
+        this->data[2][1] = T.at( 3, 2 );
+        this->data[2][2] = T.at( 3, 3 );
+    }
+
+    /**
      * Transforms a second-order tensor into a floatarrayf<9>,  using the Voigt notation
      */
 
-    const inline FloatArrayF< 9 >to_voigt_form()
+    const inline FloatArrayF< 9 >to_voigt_form() const
     {
         return {
                    this->operator()(0, 0),
@@ -109,6 +126,19 @@ public:
                    this->operator()(2, 0),
                    this->operator()(1, 0)
         };
+    }
+
+    void toFloatMatrix(FloatMatrix& T) const {
+        T.resize( 3, 3 );
+        T.at( 1, 1 ) = this->operator()( 0,0 );
+        T.at( 2, 2 ) = this->operator()( 1,1 );
+        T.at( 3, 3 ) = this->operator()( 2,2 );
+        T.at( 1, 2 ) = this->operator()( 0,1 );
+        T.at( 1, 3 ) = this->operator()( 0,2 );
+        T.at( 2, 3 ) = this->operator()( 1,2 );
+        T.at( 2, 1 ) = this->operator()( 1,0 );
+        T.at( 3, 1 ) = this->operator()( 2,0 );
+        T.at( 3, 2 ) = this->operator()( 2,1 );
     }
 
 
@@ -160,6 +190,13 @@ public:
             }
         }
         return Cpow;
+    }
+
+    void printYourself() const
+    {
+        FloatMatrix T;
+        this->toFloatMatrix( T );
+        T.printYourself();
     }
 
 
@@ -536,6 +573,8 @@ public:
 
         return Ax;
     }
+
+
 };
 
 // not used for now...

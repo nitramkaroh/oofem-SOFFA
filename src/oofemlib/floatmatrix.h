@@ -612,6 +612,8 @@ public:
 
     friend std :: ostream &operator<<(std :: ostream &out, const FloatMatrix &r);
 
+    void computeSVD2x2(FloatMatrix &U, FloatMatrix &S, FloatMatrix &V ) const;
+
 
 #ifdef _BOOSTPYTHON_BINDINGS
     void __setitem__(boost :: python :: api :: object t, double val);

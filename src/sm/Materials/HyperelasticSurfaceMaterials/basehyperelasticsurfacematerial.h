@@ -72,5 +72,8 @@ public:
 
     Tensor4_3d compute_surface_d2_normF_dF2( const Tensor2_3d &F ) const;
 
+    Tensor2_3d compute_surface_d_traceU_dF( const Tensor2_3d &F ) const;
+
+    Tensor4_3d compute_surface_d2_traceU_dF2( const Tensor2_3d &F ) const;
 };
 } // end namespace oofem
