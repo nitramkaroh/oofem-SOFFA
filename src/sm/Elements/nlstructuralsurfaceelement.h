@@ -72,6 +72,15 @@ public:
 
     virtual FloatArray giveNormal( GaussPoint *gp ) const = 0;
 
+    bool computeGtoLRotationMatrix( FloatMatrix &answer ) override
+    {
+        return false;
+    };
+    int computeLoadGToLRotationMtrx( FloatMatrix &answer ) override
+    {
+        return 0;
+    };
+
     /*void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;*/
 
 };

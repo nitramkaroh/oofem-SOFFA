@@ -32,58 +32,49 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef isopolyconvexhyperelasticsurfacematerial_h
-#define isopolyconvexhyperelasticsurfacematerial_h
+#ifndef anisopolyconvexhyperelasticsurfacematerial_h
+#define anisopolyconvexhyperelasticsurfacematerial_h
 
 #include "sm/Materials/structuralmaterial.h"
 #include "sm/Materials/structuralms.h"
-#include "sm/Materials/HyperelasticSurfaceMaterials/hyperelasticsurfacematerial.h"
+#include "sm/Materials/HyperelasticSurfaceMaterials/isopolyconvexhyperelasticsurfacematerial.h"
 
 
 ///@name Input fields for SurfaceTensionMaterial
 //@{
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_Name "surfacetensionmat"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma1 "gamma1"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma2 "gamma2"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha1 "alpha1"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha2 "alpha2"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_delta "delta"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF "gamma_ltf"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_Name "anisosurfacetensionmat"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_MatDir "matdir"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_beta "beta"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_eta "eta"
 
-//@}
+//@
 
 namespace oofem {
 /**
  * This class implements basic surface tension material for fluids
  */
-class IsotropicPolyconvexHyperelasticSurfaceMaterial : public HyperElasticSurfaceMaterial
+class AnisotropicPolyconvexHyperelasticSurfaceMaterial : public IsotropicPolyconvexHyperelasticSurfaceMaterial
 {
 protected:
     // Material parameters
-    /*double gamma;*/
-    double gamma1, gamma2;
-    int gamma_ltf = 0;
-    double alpha1, alpha2; 
-    double delta; 
+    FloatArray matdir;
+    double beta, eta;
 
 
 public:
-    IsotropicPolyconvexHyperelasticSurfaceMaterial( int n, Domain *d );
+    AnisotropicPolyconvexHyperelasticSurfaceMaterial( int n, Domain *d );
 
     void initializeFrom( InputRecord &ir ) override;
 
-    FloatMatrixF<6, 6> give3dSurfaceMaterialStiffnessMatrix( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override { OOFEM_ERROR( "not implemented, this material is designed for large strains only" ); }
-    FloatArrayF<6> giveRealSurfaceStressVector_3d( const FloatArrayF<6> &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override { OOFEM_ERROR( "not implemented, this material is designed for large strains only" ); }
-    
     FloatMatrixF<9, 9> give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
     FloatArrayF<9> giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
 
+    FloatArray computeLocalMaterialDirection( GaussPoint *gp ) const;
+
     MaterialStatus *CreateStatus( GaussPoint *gp ) const override;
 
-    double computeEnergy( const Tensor2_3d &F, GaussPoint *gp, TimeStep *tStep ) const;
-
-    const char *giveInputRecordName() const override { return _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_Name; }
-    const char *giveClassName() const override { return "IsotropicPolyconvexHyperelasticSurfaceMaterial"; }
+    const char *giveInputRecordName() const override { return _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_Name; }
+    const char *giveClassName() const override { return "AnisotropicPolyconvexHyperelasticSurfaceMaterial"; }
 };
 } // end namespace oofem
 #endif

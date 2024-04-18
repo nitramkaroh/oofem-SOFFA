@@ -101,6 +101,21 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3
     status->letTempPVectorBe( vP );
     status->letTempCVectorBe( vS );
 
+    ///////////////////////////////
+    //FloatArray a( FloatArrayF<3>(0., 0., 1.) );
+    //FloatMatrix Fmat(3,3);
+    //Fmat.at( 1, 1 ) = 1.;
+    //Fmat.at( 2, 1 ) = 1.5;
+    //Fmat.at( 3, 1 ) = 4.;
+    //Fmat.at( 1, 2 ) = 2.;
+    //Fmat.at( 2, 2 ) = 3.;
+    //Fmat.at( 3, 2 ) = 3.;
+   
+    //Tensor2_3d test = compute_surface_d_normal_dF_dot_a( Fmat, a );
+    //test.printYourself();
+
+    ///////////////////////////////
+
     return vP;
 }
 
@@ -166,5 +181,31 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord
     };
 
 
+}
+
+double IsotropicPolyconvexHyperelasticSurfaceMaterial::computeEnergy( const Tensor2_3d &F, GaussPoint *gp, TimeStep *tStep ) const
+{
+    double gamma_t1, gamma_t2, alpha_t1, alpha_t2, delta_t, beta_t;
+    if ( this->gamma_ltf == 0 ) {
+        gamma_t1 = this->gamma1;
+        alpha_t1 = this->alpha1;
+        delta_t  = this->delta;
+    } else {
+        gamma_t1 = this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        alpha_t1 = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        delta_t  = this->delta * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    }
+
+    Tensor2_3d C;
+    C( j_3, k_3 ) = F( i_3, j_3 ) * F( i_3, k_3 );
+
+    FloatMatrix Cmat, Uc, Sc, Vc;
+    C.toFloatMatrix( Cmat );
+    Cmat.resizeWithData( 2, 2 );
+    Cmat.computeSVD2x2( Uc, Sc, Vc );
+    double trU = sqrt( Sc.at( 1, 1 ) ) + sqrt( Sc.at( 2, 2 ) );
+
+    double energyIso = gamma_t1 * this->compute_surface_determinant( F ) + alpha_t1 * this->compute_surface_NormF( F ) + delta_t * trU;
+    return energyIso;
 }
 } // end namespace oofem

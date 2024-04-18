@@ -265,4 +265,86 @@ Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_traceU_dF2( const
 
 };
 
+FloatArray BaseHyperElasticSurfaceMaterial::compute_deformed_normal( const Tensor2_3d &F ) const
+{
+    FloatArray normal(3);
+    FloatMatrix Fm;
+    F.toFloatMatrix( Fm );
+    // Compute cross product of first two columns
+    normal.at(1) = Fm.at( 2, 1 ) * Fm.at( 3, 2 ) - Fm.at( 3, 1 ) * Fm.at( 2, 2 );
+    normal.at(2) = Fm.at( 3, 1 ) * Fm.at( 1, 2 ) - Fm.at( 1, 1 ) * Fm.at( 3, 2 );
+    normal.at(3) = Fm.at( 1, 1 ) * Fm.at( 2, 2 ) - Fm.at( 2, 1 ) * Fm.at( 1, 2 );
+
+    normal = 1 / this->compute_surface_determinant( F ) * normal;
+
+    return normal;
+}
+
+Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_a_dot_d_normal_dF( const Tensor2_3d &F, const FloatArray &a ) const
+{
+    double J = this->compute_surface_determinant( F );
+    Tensor2_3d part1, part2, result;
+    // part 1
+    part1( 0, 0 ) = F( 1, 1 ) * a( 2 ) - F( 2, 1 ) * a( 1 );
+    part1( 1, 0 ) = F( 2, 1 ) * a( 0 ) - F( 0, 1 ) * a( 2 );
+    part1( 2, 0 ) = F( 0, 1 ) * a( 1 ) - F( 1, 1 ) * a( 0 );
+    part1( 0, 1 ) = F( 2, 0 ) * a( 1 ) - F( 1, 0 ) * a( 2 );
+    part1( 1, 1 ) = F( 0, 0 ) * a( 2 ) - F( 2, 0 ) * a( 0 );
+    part1( 2, 1 ) = F( 1, 0 ) * a( 0 ) - F( 0, 0 ) * a( 1 );
+    part1( i_3, j_3 ) = part1( i_3, j_3 ) / J;
+
+    // part 02
+    FloatArray normal = compute_deformed_normal( F );
+    double mult = normal.dotProduct( a );
+    part2( i_3, j_3 ) = -mult / J * compute_surface_cofactor( F )( i_3, j_3 );
+
+    // result
+    result( i_3, j_3 ) = part1( i_3, j_3 ) + part2( i_3, j_3 );
+    return result;
+
+}
+
+
+Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_a_dot_d2_normal_d2F(const Tensor2_3d& F, const FloatArray& a) const {
+    double J = this->compute_surface_determinant( F );
+    FloatArray normal = compute_deformed_normal( F );
+    double mult = normal.dotProduct( a );
+
+    Tensor4_3d result, result1, result2, result3, result4;
+    Tensor2_3d cofF, a_dot_dndF, res2, res4;
+    cofF = this->compute_surface_cofactor( F );
+
+    // First part
+    result1( 1, 1, 0, 0 ) = a( 2 );
+    result1( 2, 1, 0, 0 ) = -a( 1 );
+    result1( 0, 1, 1, 0 ) = -a( 2 );
+    result1( 2, 1, 1, 0 ) = a( 0 );
+    result1( 0, 1, 2, 0 ) = a( 1 );
+    result1( 1, 1, 2, 0 ) = -a( 0 );
+
+    result1( 1, 0, 0, 1 ) = -a( 2 );
+    result1( 2, 0, 0, 1 ) = a( 1 );
+    result1( 0, 0, 1, 1 ) = a( 2 );
+    result1( 2, 0, 1, 1 ) = -a( 0 );
+    result1( 0, 0, 2, 1 ) = -a( 1 );
+    result1( 1, 0, 2, 1 ) = a( 0 );
+    result1( i_3, j_3, k_3, l_3 ) = 1 / J * result1( i_3, j_3, k_3, l_3 );
+    // second part
+    res2( 0, 0 )         = F( 1, 1 ) * a( 2 ) - F( 2, 1 ) * a( 1 );
+    res2( 1, 0 )         = F( 2, 1 ) * a( 0 ) - F( 0, 1 ) * a( 2 );
+    res2( 2, 0 )         = F( 0, 1 ) * a( 1 ) - F( 1, 1 ) * a( 0 );
+    res2( 0, 1 )         = F( 2, 0 ) * a( 1 ) - F( 1, 0 ) * a( 2 );
+    res2( 1, 1 )         = F( 0, 0 ) * a( 2 ) - F( 2, 0 ) * a( 0 );
+    res2( 2, 1 )         = F( 1, 0 ) * a( 0 ) - F( 0, 0 ) * a( 1 );
+    result2( i_3, j_3, k_3, l_3 ) = -1 / J / J * res2( i_3, j_3 ) * cofF( k_3, l_3 )- 1 / J / J * res2( k_3, l_3 ) * cofF( i_3, j_3 );
+    // third part
+    result3 = this->compute_surface_dCof_dF( F );
+    result3( i_3, j_3, k_3, l_3 ) = -1 / J * mult * result3( i_3, j_3, k_3, l_3 );
+    // fourth part
+    result4( i_3, j_3, k_3, l_3 ) = 2*mult/J/J * cofF( i_3, j_3 ) * cofF( k_3, l_3 );
+    // sum
+    result( i_3, j_3, k_3, l_3 ) = result1( i_3, j_3, k_3, l_3 ) + result2( i_3, j_3, k_3, l_3 ) + result3( i_3, j_3, k_3, l_3 ) + result4( i_3, j_3, k_3, l_3 );
+    return result;
+}
+
 } // end namespace oofem
