@@ -626,6 +626,7 @@ public:
 //@{
 /// Vector multiplication by scalar
 OOFEM_EXPORT FloatMatrix &operator *= ( FloatMatrix & x, const double & a );
+OOFEM_EXPORT FloatMatrix operator * ( const double & a, const FloatMatrix & x );
 OOFEM_EXPORT FloatMatrix operator *( const FloatMatrix & a, const FloatMatrix & b ) ;
 OOFEM_EXPORT FloatArray operator *( const FloatMatrix & a, const FloatArray & b ) ;
 OOFEM_EXPORT FloatMatrix operator +( const FloatMatrix & a, const FloatMatrix & b ) ;

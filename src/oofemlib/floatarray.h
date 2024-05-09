@@ -185,6 +185,7 @@ public:
 #endif
         return values [ i ];
     }
+    
     /**
      * Checks size of receiver towards requested bounds.
      * Current implementation will call exit(1), if dimension
@@ -553,6 +554,8 @@ const FloatArray ZeroVector = {0.0,0.0,0.0};
 OOFEM_EXPORT FloatArray &operator *= ( FloatArray & x, const double & a );
 OOFEM_EXPORT FloatArray operator *( const double & a, const FloatArray & x );
 OOFEM_EXPORT FloatArray operator *( const FloatArray & x, const double & a );
+OOFEM_EXPORT FloatArray operator /( const FloatArray & x, const double & a );
+
 OOFEM_EXPORT FloatArray operator + ( const FloatArray & x, const FloatArray & y );
 OOFEM_EXPORT FloatArray operator - ( const FloatArray & x, const FloatArray & y );
 OOFEM_EXPORT FloatArray &operator += ( FloatArray & x, const FloatArray & y );
