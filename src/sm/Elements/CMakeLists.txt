@@ -131,9 +131,11 @@ set (sm_element
     #qplanstrssphf.C
 	nlstructuralsurfaceelement.C
 	structural3dsurfaceelement.C
+	structural2dsurfaceelement.C
 	#surface elements
 	SurfaceElements/quadsurface.C
 	SurfaceElements/linesurface.C
+	SurfaceElements/axilinesurface.C
     )
 
 set (sm_interface_elements

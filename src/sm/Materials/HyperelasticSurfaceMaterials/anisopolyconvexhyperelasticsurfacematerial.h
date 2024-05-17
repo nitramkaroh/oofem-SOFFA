@@ -46,6 +46,7 @@
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_MatDir "matdir"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_beta "beta"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_eta "eta"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_zeta "zeta"
 
 //@
 
@@ -58,7 +59,7 @@ class AnisotropicPolyconvexHyperelasticSurfaceMaterial : public IsotropicPolycon
 protected:
     // Material parameters
     FloatArray matdir;
-    double beta, eta;
+    double beta, eta, zeta;
 
 
 public:

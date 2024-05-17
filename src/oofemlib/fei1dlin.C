@@ -128,6 +128,24 @@ void FEI1dLin :: boundaryEdgeLocal2Global(FloatArray &answer, int boundary, cons
     this->local2global(answer, lcoords, cellgeo);
 }
 
+/*
+ * FEI1dLinAxi element
+ */
+double
+FEI1dLinAxi ::giveTransformationJacobian( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    //FloatArray N;
+    //this->evalN( N, lcoords, cellgeo );
 
+    //double r = 0.0;
+    //for ( int i = 1; i <= 2; i++ ) {
+    //    double x = cellgeo.giveVertexCoordinates( i ).at( 1 );
+    //    r += x * N.at( i );
+    //}
+
+    //return r * FEI1dLin::giveTransformationJacobian( lcoords, cellgeo );
+
+    return FEI1dLin::giveTransformationJacobian( lcoords, cellgeo );
+}
 
 } // end namespace oofem

@@ -73,5 +73,15 @@ public:
     double boundaryEdgeGiveTransformationJacobian(int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
     void boundaryEdgeLocal2Global(FloatArray &answer, int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
 };
+
+class OOFEM_EXPORT FEI1dLinAxi : public FEI1dLin
+{
+public:
+    FEI1dLinAxi( int ind1) :
+        FEI1dLin( ind1 ) {}
+
+    double giveTransformationJacobian( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+};
+
 } // end namespace oofem
 #endif // fei1dlin_h

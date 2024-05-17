@@ -171,6 +171,8 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord
 
     // In case of old input fiule with only one alpha parameter
     double alphaTemp, gammaTemp;
+    alphaTemp = 0.;
+    gammaTemp = 0.;
     IR_GIVE_OPTIONAL_FIELD( ir, alphaTemp, "alpha" );
     IR_GIVE_OPTIONAL_FIELD( ir, gammaTemp, "gamma" );
     if ( alphaTemp != 0 && alpha1 == 0 && alpha2 == 0 ) {

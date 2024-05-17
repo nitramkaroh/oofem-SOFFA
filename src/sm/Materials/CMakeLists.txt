@@ -99,6 +99,7 @@ set (sm_material
 	linearelasticsurfacematerial.C
 	isolinearelasticsurfacematerial.C
 	HyperelasticSurfaceMaterials/isopolyconvexhyperelasticsurfacematerial.C
+	HyperelasticSurfaceMaterials/anisopolyconvexhyperelasticsurfacematerial.C
 	HyperelasticSurfaceMaterials/basehyperelasticsurfacematerial.C
 )
 

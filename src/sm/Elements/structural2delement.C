@@ -569,11 +569,11 @@ AxisymElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
 
 
     // mode is _3dMat !!!!!! answer.at(4,*), answer.at(5,*), answer.at(7,*), and answer.at(8,*) is zero
-    for ( int i = 1; i <= nRows * 2; i++ ) {
-        answer.at(1, 2 * i - 2) = dnx.at(i, 1);     // du/dx
-        answer.at(2, 2 * i - 1) = dnx.at(i, 2);     // dv/dy
-        answer.at(6, 2 * i - 2) = dnx.at(i, 2);     // du/dy
-        answer.at(9, 2 * i - 1) = dnx.at(i, 1);     // dv/dx
+    for ( int i = 1; i <= nRows; i++ ) {
+        answer.at(1, 2 * i - 1) = dnx.at(i, 1);     // du/dx
+        answer.at(2, 2 * i ) = dnx.at(i, 2);     // dv/dy
+        answer.at(6, 2 * i - 1) = dnx.at(i, 2);     // du/dy
+        answer.at(9, 2 * i ) = dnx.at(i, 1);     // dv/dx
     }
 
     for ( int i = 0; i < this->giveNumberOfDofManagers(); i++ ) {
