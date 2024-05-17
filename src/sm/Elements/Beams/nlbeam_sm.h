@@ -47,9 +47,6 @@
 //@{
 #define _IFT_NlBeam_SM_Name "nlbeam_sm"
 #define _IFT_NlBeam_SM_NIP "nip"
-#define _IFT_NlBeam_SM_EA "ea"
-#define _IFT_NlBeam_SM_EI "ei"
-#define _IFT_NlBeam_SM_GAs "gas"
 #define _IFT_NlBeam_SM_Material "materialtype"
 #define _IFT_NlBeam_SM_Beam_Tolerance "btol"
 #define _IFT_NlBeam_SM_Beam_MaxIteration "bmaxit"
@@ -93,11 +90,15 @@ protected:
   FloatArrayF<6> X;
   //FloatArray s, ds, u, w, phi, kappa;
   //FloatMatrix jacobi;
+  double EA, EI, GAs;
   double beam_tol = 1.e-14, beam_maxit = 100;
   double section_tol = 1.e-6,section_maxit = 20;
   int nsubsteps_init = 4;
-  //material-sectional characteristics
-  double EI, EA, GAs;
+  //
+  double Btildax, Btildaz;
+  FloatArray FBrx, FBrz;
+   // loadtime function associated with the given loading
+  int Ba_ltf;
   //
   FloatArray x, z, phi;
   // angle of inclincation
@@ -181,8 +182,8 @@ protected:
   /**
      Distributed load
    **/
-  void computeLoadingVariables(double fx, double fz);
-  double computeLoadAt(FloatArray &Px, FloatArray &Pz, TimeStep *tStep);
+  void computeLoadingVariables(double fx, double fz, double Brx, double Brz);
+  double computeLoadAt(FloatArray &Px, FloatArray &Pz, double &tBax, double &tBaz, TimeStep *tStep);
   /**
      Write output file
    **/

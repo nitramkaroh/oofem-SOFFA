@@ -19,6 +19,8 @@ namespace oofem {
 REGISTER_Element(NlBeam_SM);
 
 
+
+
 NlBeam_SM :: NlBeam_SM(int n, Domain *aDomain) : NLStructuralElement(n, aDomain)
 {
     numberOfDofMans = 2;
@@ -64,10 +66,11 @@ NlBeam_SM :: initializeFrom(InputRecord &ir)
     this->computeLength();
     // Numerical parameters
     // 1. number of segments for numerical integration along the beam, default value 100
+
     IR_GIVE_OPTIONAL_FIELD(ir, NIP, _IFT_NlBeam_SM_NIP);
-    IR_GIVE_FIELD(ir, EA, _IFT_NlBeam_SM_EA);
-    IR_GIVE_FIELD(ir, EI, _IFT_NlBeam_SM_EI);
-    IR_GIVE_FIELD(ir, GAs, _IFT_NlBeam_SM_GAs);
+    IR_GIVE_FIELD(ir, EA, "ea");
+    IR_GIVE_FIELD(ir, EI, "ei");
+    IR_GIVE_FIELD(ir, GAs, "gas");
     //
     IR_GIVE_OPTIONAL_FIELD(ir, this->num, _IFT_NlBeam_SM_num);
     // relative tolerance for iterations at the beam level
@@ -83,6 +86,20 @@ NlBeam_SM :: initializeFrom(InputRecord &ir)
     this->phi.resize(NIP+1);
     //compute alpha
     this->alpha = 0;
+    // Applied magnetic field
+    double BaA = 0, mu0 = 1, theta = 0,rho = 0, Br = 0;
+    IR_GIVE_OPTIONAL_FIELD(ir, BaA, "baa");
+    IR_GIVE_OPTIONAL_FIELD(ir, mu0, "mu0");
+    IR_GIVE_OPTIONAL_FIELD(ir, theta, "theta");
+    Btildax = (BaA/mu0)*cos(theta);
+    Btildaz = (BaA/mu0)*sin(theta);
+    // Residual magnetic field
+    IR_GIVE_OPTIONAL_FIELD(ir, Br, "br");
+    IR_GIVE_OPTIONAL_FIELD(ir, rho, "rho");
+    auto Brx = Br*cos(rho);
+    auto Brz = Br*sin(rho);
+     IR_GIVE_OPTIONAL_FIELD(ir, Ba_ltf, "ba_ltf");
+    //
     // calculate the loading -- change the name
     double fx = 0, fz = 0;
     ////
@@ -98,7 +115,9 @@ NlBeam_SM :: initializeFrom(InputRecord &ir)
     //
     Fx.resize(NIP+1);
     Fz.resize(NIP+1);
-    this->computeLoadingVariables(fx, fz);
+    FBrx.resize(NIP+1);
+    FBrz.resize(NIP+1);
+    this->computeLoadingVariables(fx, fz, Brx, Brz);
 
     /*    this->vN.resize(2*NIP+1);
     this->vQ.resize(NIP+1);
@@ -138,24 +157,34 @@ NlBeam_SM :: computeLength()
 
   
 void
-NlBeam_SM :: computeLoadingVariables(double fx, double fz)
+NlBeam_SM :: computeLoadingVariables(double fx, double fz, double Brx, double Brz)
 {
   // assuming only load with constant intesity
   double dxi = beamLength/NIP;
   Fx.at(1) = 0.5 * fx * dxi;
   Fz.at(1) = 0.5 * fz * dxi;
+
+  FBrx.at(1) = 0.5 * Brx * dxi;
+  FBrz.at(1) = 0.5 * Brz * dxi;
   
   for (int i=2; i <= NIP; i++) {
     Fx.at(i) = Fx.at(i-1) + fx * dxi;
     Fz.at(i) = Fz.at(i-1) + fz * dxi;
+
+    FBrx.at(i) = FBrx.at(i-1) + Brx * dxi;
+    FBrz.at(i) = FBrz.at(i-1) + Brz * dxi;
   }
+
   Fx.at(NIP+1) = Fx.at(NIP) + 0.5 * fx * dxi;
   Fz.at(NIP+1) = Fz.at(NIP) + 0.5 * fz * dxi;
+
+  FBrx.at(NIP+1) = FBrx.at(NIP) + 0.5 * Brx * dxi;
+  FBrz.at(NIP+1) = FBrz.at(NIP) + 0.5 * Brz * dxi;
 }
 
 
 double 
-NlBeam_SM :: computeLoadAt(FloatArray &Px, FloatArray &Pz, TimeStep *tStep)
+NlBeam_SM :: computeLoadAt(FloatArray &Px, FloatArray &Pz, double &tBax, double &tBaz, TimeStep *tStep)
 {
   double m;
   if(fx_ltf != 0) {
@@ -176,6 +205,15 @@ NlBeam_SM :: computeLoadAt(FloatArray &Px, FloatArray &Pz, TimeStep *tStep)
     m = M;
   }
 
+  if(Ba_ltf != 0) {
+    tBax = Btildax * this->giveDomain()->giveFunction(Ba_ltf)->evaluate(tStep, VM_Total);
+    tBaz = Btildaz * this->giveDomain()->giveFunction(Ba_ltf)->evaluate(tStep, VM_Total);
+  } else {
+    tBax = Btildax;
+    tBaz = Btildaz;
+  }
+
+
   return m;
 
 }
@@ -187,7 +225,8 @@ NlBeam_SM :: computeLoadAt(FloatArray &Px, FloatArray &Pz, TimeStep *tStep)
 NlBeam_SM :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa, TimeStep *tStep)
  {
    FloatArray Px, Pz;
-   double m = this->computeLoadAt(Px, Pz, tStep);
+   double tBax, tBaz;
+   double m = this->computeLoadAt(Px, Pz, tBax, tBaz,  tStep);
    // initial configuration
    x.at(1) = xa.at(1);
    z.at(1) = xa.at(2);
@@ -207,6 +246,8 @@ NlBeam_SM :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa, Time
    double M = -Mab;
    double Mp = 0;
    FloatArray dMp;
+   double Mm = 0;
+   FloatArray dMm;
    for (int i=2; i <= NIP+1; i++) {
      //this->s.at(i) = this->s.at(i-1) + ds;
      //
@@ -219,8 +260,9 @@ NlBeam_SM :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa, Time
      //
      double c = cos(phi_mid);
      double s = sin(phi_mid);
-     double N_mid = - c * (Xab + Px.at(i)) + s * (Zab + Pz.at(i));
-     double Q_mid = - s * (Xab + Px.at(i)) - c * (Zab + Pz.at(i));
+     double N_mid = - c * (Xab + Px.at(i)) + s * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBax - s * tBaz);
+     //@todo: check wheter Fbrx or Fbrz
+     double Q_mid = - s * (Xab + Px.at(i)) - c * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBaz + s * tBax);
      //
      /*
      vN.at(2*(i-1)) = N_mid;
@@ -258,9 +300,12 @@ NlBeam_SM :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa, Time
      Mp += - m * dxi + Px.at(i-1) * delta_z - Pz.at(i-1) * delta_x;
      dMp += Px.at(i-1) * ddz - Pz.at(i-1) * ddx;
      //
-     M = -Mab + Xab *  (z.at(i) - z.at(1)) - Zab * (x.at(i) - x.at(1)) + Mp;
+     Mm +=  FBrx.at(i) * ( tBaz * delta_x - tBax*delta_z ) + FBrz.at(i) * ( s * tBaz - c * tBax ) * dxi;
+     dMm += FBrx.at(i) * ( tBaz * ddx - tBax * ddz ) + FBrz.at(i) * ( c * tBaz + s * tBax ) * dxi * dphi_mid;
      //
-     dM = dMp + FloatArray({z.at(i)-z.at(1) + Xab * dz.at(1) - Zab * dx.at(1), -x.at(i) + x.at(1) + Xab * dz.at(2) - Zab * dx.at(2), -1. + Xab * dz.at(3) - Zab * dx.at(3), Xab * dz.at(4) - Zab * dx.at(4)});
+     M = -Mab + Xab *  (z.at(i) - z.at(1)) - Zab * (x.at(i) - x.at(1)) + Mp + Mm;
+     //
+     dM = dMp + dMm + FloatArray({z.at(i)-z.at(1) + Xab * dz.at(1) - Zab * dx.at(1), -x.at(i) + x.at(1) + Xab * dz.at(2) - Zab * dx.at(2), -1. + Xab * dz.at(3) - Zab * dx.at(3), Xab * dz.at(4) - Zab * dx.at(4)});
      //
      //     vM.at(i) = M;
      //
@@ -284,7 +329,7 @@ NlBeam_SM :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa, Time
    Gr.at(1) = dx.at(4);
    Gr.at(2) = dz.at(4);
    Gr.at(3) = dphi.at(4);
-   return {xb, FloatMatrixF<3,3> (G), Gr, Mp, FloatArrayF<4> (dMp)};
+   return {xb, FloatMatrixF<3,3> (G), Gr, Mp+Mm, FloatArrayF<4> (dMp+dMm)};
 
  }
 
@@ -375,7 +420,8 @@ NlBeam_SM :: giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int u
    double c1 =  y.at(5) - y.at(2);
    double c2 =  y.at(4) - y.at(1);
    FloatArray Px, Pz;
-   this->computeLoadAt(Px, Pz, tStep);
+   double tBax, tBaz;
+   double m = this->computeLoadAt(Px, Pz, tBax, tBaz,  tStep);
      //
    answer.at(4) = -answer.at(1) - Px.at(NIP + 1);
    answer.at(5) = -answer.at(2) - Pz.at(NIP + 1);
@@ -523,8 +569,10 @@ NlBeam_SM :: giveInternalForcesVector_from_u(FloatArray &answer, TimeStep *tStep
    //
    double c1 =  y.at(5) - y.at(2);
    double c2 =  y.at(4) - y.at(1);
+  
    FloatArray Px, Pz;
-   this->computeLoadAt(Px, Pz, tStep);
+   double tBax, tBaz;
+   double m = this->computeLoadAt(Px, Pz, tBax, tBaz,  tStep);
      //
    answer.at(4) = -answer.at(1) - Px.at(NIP + 1);
    answer.at(5) = -answer.at(2) - Pz.at(NIP + 1);

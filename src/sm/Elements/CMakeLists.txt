@@ -130,11 +130,11 @@ set (sm_element
     structural3delement.C
     #phasefieldelement.C
     #qplanstrssphf.C
-	nlstructuralsurfaceelement.C
-	structural3dsurfaceelement.C
+    #nlstructuralsurfaceelement.C
+#	structural3dsurfaceelement.C
 	#surface elements
-	SurfaceElements/quadsurface.C
-	SurfaceElements/linesurface.C
+#	SurfaceElements/quadsurface.C
+#	SurfaceElements/linesurface.C
     )
 
 set (sm_interface_elements
