@@ -171,15 +171,15 @@ NlBeam_SM :: computeLoadingVariables(double fx, double fz, double Brx, double Br
     Fx.at(i) = Fx.at(i-1) + fx * dxi;
     Fz.at(i) = Fz.at(i-1) + fz * dxi;
 
-    FBrx.at(i) = FBrx.at(i-1) + Brx * dxi;
-    FBrz.at(i) = FBrz.at(i-1) + Brz * dxi;
+    FBrx.at(i) = Brx;//FBrx.at(i-1) + Brx * dxi;
+    FBrz.at(i) = Brz;//FBrz.at(i-1) + Brz * dxi;
   }
 
   Fx.at(NIP+1) = Fx.at(NIP) + 0.5 * fx * dxi;
   Fz.at(NIP+1) = Fz.at(NIP) + 0.5 * fz * dxi;
 
-  FBrx.at(NIP+1) = FBrx.at(NIP) + 0.5 * Brx * dxi;
-  FBrz.at(NIP+1) = FBrz.at(NIP) + 0.5 * Brz * dxi;
+  FBrx.at(NIP+1) = FBrx.at(NIP);// + 0.5 * Brx * dxi;
+  FBrz.at(NIP+1) = FBrz.at(NIP);// + 0.5 * Brz * dxi;
 }
 
 
