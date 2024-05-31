@@ -49,6 +49,7 @@
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha2 "alpha2"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_delta "delta"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF "gamma_ltf"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gaminit "gaminit"
 
 //@}
 
@@ -61,7 +62,7 @@ class IsotropicPolyconvexHyperelasticSurfaceMaterial : public HyperElasticSurfac
 protected:
     // Material parameters
     /*double gamma;*/
-    double gamma1, gamma2;
+    double gamma1, gamma2, gaminit;
     int gamma_ltf = 0;
     double alpha1, alpha2; 
     double delta; 

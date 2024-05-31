@@ -48,7 +48,8 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::IsotropicPolyconvexHyperelasticS
     gamma2( 0. ),
     alpha1( 0. ),
     alpha2( 0. ),
-    delta( 0. )
+    delta( 0. ),
+    gaminit( 0. )
 {
 }
 
@@ -68,7 +69,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3
         alpha_t2 = this->alpha2;
         delta_t   = this->delta;
     } else {
-        gamma_t1 = this->gamma1 * domain->giveFunction(gamma_ltf)->evaluateAtTime(tStep->giveIntrinsicTime());
+        gamma_t1 = this->gaminit + this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         gamma_t2  = this->gamma2 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         alpha_t1 = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         alpha_t2 = this->alpha2 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
@@ -136,7 +137,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMa
         alpha_t1 = this->alpha1;
         delta_t  = this->delta;
     } else {
-        gamma_t1 = this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        gamma_t1 = this->gaminit + this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         alpha_t1 = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         delta_t  = this->delta * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
@@ -168,6 +169,7 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord
     IR_GIVE_OPTIONAL_FIELD( ir, alpha2, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha2 );
     IR_GIVE_OPTIONAL_FIELD( ir, delta, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_delta );
     IR_GIVE_OPTIONAL_FIELD( ir, gamma_ltf, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF );
+    IR_GIVE_OPTIONAL_FIELD( ir, gaminit, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gaminit );
 
     // In case of old input fiule with only one alpha parameter
     double alphaTemp, gammaTemp;

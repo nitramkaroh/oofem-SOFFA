@@ -32,26 +32,59 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef sparsematrixtype_h
-#define sparsematrixtype_h
+#include "eigensolverstability.h"
+#include "eigensolver.h"
+#include "eigenmtrx.h"
+// #include <iostream>
+
+#include "compcol.h"
+#include "symcompcol.h"
+#include "engngm.h"
+#include "floatarray.h"
+#include "verbose.h"
+#include "timer.h"
+#include "error.h"
+#include "classfactory.h"
+
+//
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
+#include <Eigen/SparseQR>
 
 namespace oofem {
-/**
- * Enumerative type used to identify the sparse matrix type.
- */
-enum SparseMtrxType {
-    SMT_Skyline,       ///< Symmetric skyline.
-    SMT_SkylineU,      ///< Unsymmetric skyline.
-    SMT_CompCol,       ///< Compressed column.
-    SMT_DynCompCol,    ///< Dynamically growing compressed column.
-    SMT_SymCompCol,    ///< Symmetric compressed column.
-    SMT_DynCompRow,    ///< Dynamically growing compressed row.
-    SMT_SpoolesMtrx,   ///< Spooles sparse mtrx representation.
-    SMT_PetscMtrx,     ///< PETSc library mtrx representation.
-    SMT_DSS_sym_LDL,   ///< Richard Vondracek's sparse direct solver.
-    SMT_DSS_sym_LL,    ///< Richard Vondracek's sparse direct solver.
-    SMT_DSS_unsym_LU,   ///< Richard Vondracek's sparse direct solver.
-    SMT_EigenMtrx ///< Eigen library matrix representation.
-};
+REGISTER_SparseLinSolver( EigenSolverStability, ST_EigenStability );
+
+EigenSolverStability ::EigenSolverStability( Domain *d, EngngModel *m ) :
+    EigenSolver( d, m )
+{
+}
+
+EigenSolverStability ::~EigenSolverStability() {}
+
+void EigenSolverStability ::initializeFrom( InputRecord &ir )
+{
+    EigenSolver ::initializeFrom( ir );
+}
+
+
+void EigenSolverStability::solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x )
+{
+    SimplicialLDLTderived<Eigen::SparseMatrix<double> > A_factorization( A );
+
+    double minLam = 0.;
+    bool negEig   = false;
+
+     //negEig = A_factorization.updateD2( minLam, !isSingular );
+    negEig = A_factorization.updateD( minLam, true );
+
+    OOFEM_LOG_INFO( "lam_min = %.4f\n", minLam );
+
+    if ( negEig ) {
+        isSingular = true;
+        OOFEM_LOG_INFO( "Negative eigenvalue\n" );
+    }
+
+    x = A_factorization.solve( b ); // Solve the system
+}
+
 } // end namespace oofem
-#endif // sparsematrixtype_h

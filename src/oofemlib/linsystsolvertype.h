@@ -45,15 +45,17 @@ namespace oofem {
  * related to particular package.
  */
 enum LinSystSolverType {
-    ST_Direct = 0,
-    ST_IML    = 1,
-    ST_Spooles= 2,
-    ST_Petsc  = 3,
-    ST_DSS    = 4,
-    ST_Feti   = 5,
-    ST_MKLPardiso = 6,
-    ST_SuperLU_MT = 7,
-    ST_PardisoProjectOrg = 8 // experimental
+    ST_Direct            = 0,
+    ST_IML               = 1,
+    ST_Spooles           = 2,
+    ST_Petsc             = 3,
+    ST_DSS               = 4,
+    ST_Feti              = 5,
+    ST_MKLPardiso        = 6,
+    ST_SuperLU_MT        = 7,
+    ST_PardisoProjectOrg = 8, // experimental
+    ST_Eigen             = 9,
+    ST_EigenStability    = 10
 };
 } // end namespace oofem
 #endif // linsystsolvertype_h

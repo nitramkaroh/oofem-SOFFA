@@ -102,6 +102,7 @@ set (PARDISO_ORG_DIR CACHE PATH "Manual pardiso-project.org directory (sparse di
 set (PARDISO_ORG_LIB CACHE PATH "Manual pardiso-project.org library's name with complete path (sparse direct solver)")
 #set (BOOST_DIR CACHE PATH "Manual Boost directory")
 set (PYBIND_DIR CACHE PATH "Manual pybind11 directory")
+set (EIGEN_DIR CACHE PATH "Eigen directory")
 
 #######################################################################
 ######################## Options ######################################
@@ -126,6 +127,7 @@ option (USE_PETSC "Enable PETSc support (specify PETSC_DIR and/or PETSC_ARCH if 
 option (USE_SLEPC "Enable SLEPc support" OFF)
 option (USE_LAPACK "Use LAPACK" OFF)
 option (USE_SUPERLU_MT "Use SUPERLU_MT" OFF)
+option (USE_EIGEN "Use Eigen solver" OFF)
 # Other external libraries
 option (USE_TRIANGLE "Compile with Triangle bindings" OFF)
 option (USE_VTK "Enable VTK (for exporting binary VTU-files)" OFF)
@@ -391,6 +393,11 @@ if (USE_INTEL_MKL_PARDISO)
     #list (APPEND EXT_LIBS ${MKLPARDISO_LIB})
     list (APPEND MODULE_LIST "MKLPARDISO")
 endif ()
+
+if (USE_EIGEN)
+    include_directories ("${EIGEN_DIR}")
+endif ()
+
 
 if (USE_ONEAPI)
     if (USE_INTEL_MKL_PARDISO)

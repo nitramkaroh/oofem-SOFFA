@@ -32,26 +32,49 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef sparsematrixtype_h
-#define sparsematrixtype_h
+#ifndef eigensolver_h
+#define eigensolver_h
+
+#include "sparselinsystemnm.h"
+
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
+#include <Eigen/SparseQR>
+
+
+#define _IFT_EigenSolver_Name "eigen"
 
 namespace oofem {
 /**
- * Enumerative type used to identify the sparse matrix type.
+ * Implements the solution of linear system of equation in the form @f$ A\cdot x=b @f$ using solvers
+ * from eigen.tuxfamily.org. 
  */
-enum SparseMtrxType {
-    SMT_Skyline,       ///< Symmetric skyline.
-    SMT_SkylineU,      ///< Unsymmetric skyline.
-    SMT_CompCol,       ///< Compressed column.
-    SMT_DynCompCol,    ///< Dynamically growing compressed column.
-    SMT_SymCompCol,    ///< Symmetric compressed column.
-    SMT_DynCompRow,    ///< Dynamically growing compressed row.
-    SMT_SpoolesMtrx,   ///< Spooles sparse mtrx representation.
-    SMT_PetscMtrx,     ///< PETSc library mtrx representation.
-    SMT_DSS_sym_LDL,   ///< Richard Vondracek's sparse direct solver.
-    SMT_DSS_sym_LL,    ///< Richard Vondracek's sparse direct solver.
-    SMT_DSS_unsym_LU,   ///< Richard Vondracek's sparse direct solver.
-    SMT_EigenMtrx ///< Eigen library matrix representation.
+class OOFEM_EXPORT EigenSolver : public SparseLinearSystemNM
+{
+protected:
+    std::string method;
+    bool isSingular = false;
+
+public:
+    /**
+     * Constructor.
+     * @param d Domain which solver belongs to.
+     * @param m Engineering model which solver belongs to.
+     */
+    EigenSolver( Domain *d, EngngModel *m );
+
+    virtual ~EigenSolver();
+
+    /// Initializes receiver from given record.
+    void initializeFrom( InputRecord &ir ) override;
+
+    ConvergedReason solve( SparseMtrx &A, FloatArray &b, FloatArray &x ) override;
+
+    virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x );
+
+    const char *giveClassName() const override { return "EigenSolver"; }
+    LinSystSolverType giveLinSystSolverType() const override { return ST_Eigen; }
+    SparseMtrxType giveRecommendedMatrix( bool symmetric ) const override { return SMT_EigenMtrx; }
 };
 } // end namespace oofem
-#endif // sparsematrixtype_h
+#endif // eigensolver_h
