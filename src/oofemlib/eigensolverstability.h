@@ -66,8 +66,9 @@ public:
     explicit SimplicialLDLTderived( const MatrixType &matrix ) :
         Base( matrix ) {}
 
-    bool updateD( double &minEig, const bool update )
+    bool updateD( double &minEig, const bool update, int &numNegEigs )
     {
+        numNegEigs = 0;
         bool answ = false;
         eigen_assert( this->m_factorizationIsOk && "Simplicial LDLT not factorized" );
         minEig = m_diag.coeffRef( 0 );
@@ -76,6 +77,7 @@ public:
             if ( Di < 0 ) {
                 if ( update ) Di *= ( -1. );
                 answ = true;
+                numNegEigs++;
             };
         };
         return answ;
@@ -108,7 +110,8 @@ public:
     /// Initializes receiver from given record.
     void initializeFrom( InputRecord &ir ) override;
 
-    virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x ) override;
+    virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, bool doBifurcation ) override;
+    bool checkPD( SparseMtrx &A );
 
     const char *giveClassName() const override { return "EigenSolverStability"; }
     LinSystSolverType giveLinSystSolverType() const override { return ST_EigenStability; }

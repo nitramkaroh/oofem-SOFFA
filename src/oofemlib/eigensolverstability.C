@@ -51,6 +51,14 @@
 #include <Eigen/Sparse>
 #include <Eigen/SparseQR>
 
+// for spectra
+#include <Eigen/Core>
+#include <Eigen/SparseCore>
+#include <include/Spectra/GenEigsSolver.h>
+#include <include/Spectra/SymEigsSolver.h>
+#include <include/Spectra/MatOp/SparseGenMatProd.h>
+#include <include/Spectra/MatOp/SparseSymMatProd.h>
+
 namespace oofem {
 REGISTER_SparseLinSolver( EigenSolverStability, ST_EigenStability );
 
@@ -67,24 +75,112 @@ void EigenSolverStability ::initializeFrom( InputRecord &ir )
 }
 
 
-void EigenSolverStability::solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x )
+void EigenSolverStability::solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, bool doBifurcation )
 {
     SimplicialLDLTderived<Eigen::SparseMatrix<double> > A_factorization( A );
 
     double minLam = 0.;
     bool negEig   = false;
+    int numNegEigs = 0;
+    negEig = A_factorization.updateD( minLam, false, numNegEigs );
 
-     //negEig = A_factorization.updateD2( minLam, !isSingular );
-    negEig = A_factorization.updateD( minLam, true );
+    x = A_factorization.solve( b ); // Solve the system
 
-    OOFEM_LOG_INFO( "lam_min = %.4f\n", minLam );
+    //OOFEM_LOG_INFO( "lam_min = %.4f\n", minLam );
 
     if ( negEig ) {
         isSingular = true;
         OOFEM_LOG_INFO( "Negative eigenvalue\n" );
     }
 
-    x = A_factorization.solve( b ); // Solve the system
+    if ( minLam < 0. && doBifurcation ) { // if negative eigen value, compute eigenvectors and perturbe the solution
+    //if ( false ) { // if negative eigen value, compute eigenvectors and perturbe the solution
+        ///////////
+        //Eigen::SparseLU<Eigen::SparseMatrix<double> > A_factorization2( A );
+        //x = A_factorization2.solve( b ); // Solve the system
+        ///////////
+  
+        // Spectra eigenvalues
+        Spectra::SparseSymMatProd<double> op( A );
+        //int neigs = numNegEigs;
+        int neigs = 2;
+        Spectra::SymEigsSolver<Spectra::SparseSymMatProd<double> > eigs( op, neigs, 40 );
+
+        eigs.init();
+        int nconv = eigs.compute( Spectra::SortRule::SmallestAlge );
+        //OOFEM_LOG_INFO( "nconv = %i\n", nconv );
+
+        // Retrieve results
+        Eigen::VectorXd evalues, evector, xmod;
+        Eigen::MatrixXd evectors;
+
+        FloatArray evaluesFA, evectorFA, xFA;
+        double xdotx, vdotx, vdotv, xdotx2, vdotx2, vdotv2;
+
+        if ( eigs.info() == Spectra::CompInfo::Successful ) {
+            evalues   = eigs.eigenvalues();
+            evaluesFA = FloatArray( evalues.begin(), evalues.end() ); // eigenvalues floatarray
+
+            int indMin = evaluesFA.giveSize();
+
+            //OOFEM_LOG_INFO( "lam_min = %.8f\n", evaluesFA.at(1) );
+            OOFEM_LOG_INFO( "lam = ");
+            evaluesFA.printYourself();
+            OOFEM_LOG_INFO( "\n" );
+
+
+            evectors  = eigs.eigenvectors(); // vectors in matrix
+            evector    = Eigen::Map<Eigen::VectorXd>( evectors.data(), evectors.cols() * evectors.rows() ); // map to vector
+            evectorFA = FloatArray( evector.begin(), evector.end() ); // eigenvectors in floatarray
+
+
+            FloatMatrix evectorsFM;
+            evectorsFM.resize( evectors.rows(), neigs );
+            for ( size_t j = 0; j < neigs; j++ ) {     
+                for ( size_t k = 0; k < evectors.rows(); k++ ) {
+                    evectorsFM.at( k + 1, j + 1 ) = evectorFA.at( k + 1 + evectors.rows()*j );
+                }               
+            }
+            
+            FloatArray evectorFAmax;
+            evectorsFM.copyColumn( evectorFAmax, indMin );
+            
+
+            xFA = FloatArray( x.begin(), x.end() );
+            // perturbate the solution
+            xdotx2 = xFA.dotProduct( xFA );
+            vdotx2 = evectorFAmax.dotProduct( xFA );
+
+            if ( abs( evaluesFA.at( indMin ) ) > 1e-6 ) {
+                double alpha = 1 / sqrt( xdotx2 - vdotx2 * vdotx2 );
+                xFA          = 1e10*alpha * ( vdotx2 * xFA - xdotx2 * evectorFAmax );
+                x            = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( xFA.givePointer(), xFA.giveSize() );
+            }
+            
+            
+        } else {
+            OOFEM_LOG_INFO( "eigenvalues not found\n" );  
+        }
+
+    }
+
+
+    
+}
+
+bool EigenSolverStability::checkPD( SparseMtrx &A )
+{
+    EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &A );
+    Eigen::SparseMatrix<double> A_eig = Ae->giveMatrix();
+
+    SimplicialLDLTderived<Eigen::SparseMatrix<double> > A_factorization( A_eig );
+
+    double minLam  = 0.;
+    bool negEig    = false;
+    int numNegEigs = 0;
+    negEig         = A_factorization.updateD( minLam, false, numNegEigs );
+
+    return !negEig;
 }
 
 } // end namespace oofem

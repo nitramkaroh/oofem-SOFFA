@@ -103,6 +103,7 @@ set (PARDISO_ORG_LIB CACHE PATH "Manual pardiso-project.org library's name with 
 #set (BOOST_DIR CACHE PATH "Manual Boost directory")
 set (PYBIND_DIR CACHE PATH "Manual pybind11 directory")
 set (EIGEN_DIR CACHE PATH "Eigen directory")
+set (SPECTRA_DIR CACHE PATH "Spectra directory")
 
 #######################################################################
 ######################## Options ######################################
@@ -128,6 +129,7 @@ option (USE_SLEPC "Enable SLEPc support" OFF)
 option (USE_LAPACK "Use LAPACK" OFF)
 option (USE_SUPERLU_MT "Use SUPERLU_MT" OFF)
 option (USE_EIGEN "Use Eigen solver" OFF)
+option (USE_SPECTRA "Use spectra library" OFF)
 # Other external libraries
 option (USE_TRIANGLE "Compile with Triangle bindings" OFF)
 option (USE_VTK "Enable VTK (for exporting binary VTU-files)" OFF)
@@ -397,6 +399,11 @@ endif ()
 if (USE_EIGEN)
     include_directories ("${EIGEN_DIR}")
 endif ()
+
+if (USE_SPECTRA)
+	include_directories ("${SPECTRA_DIR}")
+endif ()
+
 
 
 if (USE_ONEAPI)

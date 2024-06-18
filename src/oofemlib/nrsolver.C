@@ -49,6 +49,8 @@
 #include "parallelcontext.h"
 #include "unknownnumberingscheme.h"
 
+#include "eigensolverstability.h"
+
 #ifdef __PETSC_MODULE
  #include "petscsolver.h"
  #include "petscsparsemtrx.h"
@@ -274,6 +276,19 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
         // convergence check
         converged = this->checkConvergence(RT, F, rhs, ddX, X, RRT, internalForcesEBENorm, nite, errorOutOfRangeFlag);
 
+        //////////////////
+        if ( converged && this->linSolver->giveLinSystSolverType() == ST_EigenStability ) {
+            EigenSolverStability* stabSolver = dynamic_cast<EigenSolverStability *>( this->linSolver.get());
+            bool isPD = stabSolver->checkPD( k );
+            if ( !isPD ) {
+                stabSolver->solveBifurcation( k, rhs, ddX);
+                converged = false;
+                X.add( ddX );
+                dX.add( ddX );
+            }     
+        }
+        //////////////////
+
         if ( errorOutOfRangeFlag ) {
             status = CR_DIVERGED_TOL;
             OOFEM_WARNING("Divergence reached after %d iterations", nite);
@@ -309,7 +324,8 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
         //
         // update solution
         //
-        if ( this->lsFlag && ( nite > 0 ) ) { // Why not nite == 0 ?
+        //if ( this->lsFlag && ( nite > 0 ) ) { // Why not nite == 0 ?
+        if ( this->lsFlag ) { // Why not nite == 0 ?
             // line search
             LineSearchNM :: LS_status LSstatus;
             double eta;

@@ -92,31 +92,8 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
         x_eig = A_factorization.solve( b_eig ); // Solve the system
 
     } else if ( method.compare( "ldlt" ) == 0 ) {
-        this->solveLDLT( A_eig, b_eig, x_eig );
 
-        //Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > A_factorization( A_eig ); 
-        //Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > A_factorization2( A_eig );
-        ////auto DvecEig = A_factorization.vectorD();
-        //
-
-        //double minLam = 0.; 
-        //bool negEig = false;
-
-        ////negEig = A_factorization.updadeD( minLam, !isSingular );
-        //negEig = A_factorization.updadeD( minLam, true );
-
-        //OOFEM_LOG_INFO( "lam_min = %.4f\n", minLam );
-
-        //if ( negEig ) {
-        //    isSingular = true;
-        //    OOFEM_LOG_INFO( "Negative eigenvalue\n" );
-        //}
-       
-        //x_eig = A_factorization.solve( b_eig ); // Solve the system
-        //////// Compare
-        //
-        //x_eig2 = A_factorization2.solve( b_eig ); 
-
+        this->solveLDLT( A_eig, b_eig, x_eig, false );
 
     } else if ( method.compare( "lu" ) == 0 ) {
 
@@ -145,22 +122,43 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
 
 }
 
-void EigenSolver::solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x )
+ConvergedReason EigenSolver ::solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x )
+{
+    int neqs = b.giveSize(); // Number of equations
+
+    EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &A );
+
+    Eigen::SparseMatrix<double> A_eig = Ae->giveMatrix();
+
+    // Construct right hand side vetor
+    Eigen::VectorXd b_eig = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( b.givePointer(), neqs );
+
+    Timer timer;
+    timer.startTimer();
+
+    Eigen::VectorXd x_eig; // Allocate vector of RHS
+
+    // Create factorization
+    if ( method.compare( "ldlt" ) == 0 ) {
+        this->solveLDLT( A_eig, b_eig, x_eig, true );
+
+    } else {
+        OOFEM_LOG_INFO( "Wrong factorization used, bifucration cannot be performed\n");
+    }
+
+    // Copy/move values to FloatArray x
+    x = FloatArray( x_eig.begin(), x_eig.end() );
+
+
+    timer.stopTimer();
+    OOFEM_LOG_INFO( "EigenSolver:  User time consumed by solution: %.2fs\n", timer.getUtime() );
+
+    return CR_CONVERGED;
+}
+
+void EigenSolver::solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, bool doBifurcation )
 {
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > A_factorization( A );
-
-    //double minLam = 0.;
-    //bool negEig   = false;
-
-    // negEig = A_factorization.updadeD( minLam, !isSingular );
-    ////negEig = A_factorization.updadeD( minLam, true );
-
-    //OOFEM_LOG_INFO( "lam_min = %.4f\n", minLam );
-
-    //if ( negEig ) {
-    //    isSingular = true;
-    //    OOFEM_LOG_INFO( "Negative eigenvalue\n" );
-    //}
 
     x = A_factorization.solve( b ); // Solve the system
 }

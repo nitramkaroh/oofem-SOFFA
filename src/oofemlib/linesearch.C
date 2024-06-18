@@ -90,7 +90,8 @@ LineSearchNM :: solve(FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &
     eta.resize(this->max_iter + 1);
     prod.resize(this->max_iter + 1);
     // prepare starting product ratios and step lengths
-    prod.at(1) = 1.0;
+    /*prod.at(1) = 1.0;*/
+    prod.at( 1 ) = s0;
     eta.at(1) = 0.0;
     eta.at(2) = 1.0;
     // following counter shows how many times the max or min step length has been reached
@@ -105,6 +106,7 @@ LineSearchNM :: solve(FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &
         tStep->incrementStateCounter();        // update solution state counter
         // update internal forces according to new state
         engngModel->updateComponent(tStep, InternalRhs, domain);
+        r = rb;
         // compute out-of balance forces g in new state
         g = R;
         g.times(lambda);
@@ -132,6 +134,17 @@ LineSearchNM :: solve(FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &
             status = ls_ok;
             return CR_CONVERGED;
         }
+
+        /////////
+        //double alpha = 1 / si;
+        //if ( si < 0 ) {
+        //    eta.at( ils + 1 ) = alpha / 2. + pow( alpha * alpha / 4. - alpha, 0.5 );
+        //} else {
+        //    eta.at( ils + 1 ) = alpha / 2.;
+        //}
+
+        
+        /////////
 
         // call line-search routine to get new estimate of eta.at(ils)
         this->search(ils, prod, eta, this->amplifFactor, this->maxEta, this->minEta, ico);

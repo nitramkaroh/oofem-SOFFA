@@ -70,7 +70,9 @@ public:
 
     ConvergedReason solve( SparseMtrx &A, FloatArray &b, FloatArray &x ) override;
 
-    virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x );
+    ConvergedReason solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x );
+
+    virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, bool doBifurcation );
 
     const char *giveClassName() const override { return "EigenSolver"; }
     LinSystSolverType giveLinSystSolverType() const override { return ST_Eigen; }
