@@ -112,6 +112,7 @@ public:
 
     virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, bool doBifurcation ) override;
     bool checkPD( SparseMtrx &A );
+    ConvergedReason solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x );
 
     const char *giveClassName() const override { return "EigenSolverStability"; }
     LinSystSolverType giveLinSystSolverType() const override { return ST_EigenStability; }

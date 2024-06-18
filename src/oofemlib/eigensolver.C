@@ -122,39 +122,7 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
 
 }
 
-ConvergedReason EigenSolver ::solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x )
-{
-    int neqs = b.giveSize(); // Number of equations
 
-    EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &A );
-
-    Eigen::SparseMatrix<double> A_eig = Ae->giveMatrix();
-
-    // Construct right hand side vetor
-    Eigen::VectorXd b_eig = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( b.givePointer(), neqs );
-
-    Timer timer;
-    timer.startTimer();
-
-    Eigen::VectorXd x_eig; // Allocate vector of RHS
-
-    // Create factorization
-    if ( method.compare( "ldlt" ) == 0 ) {
-        this->solveLDLT( A_eig, b_eig, x_eig, true );
-
-    } else {
-        OOFEM_LOG_INFO( "Wrong factorization used, bifucration cannot be performed\n");
-    }
-
-    // Copy/move values to FloatArray x
-    x = FloatArray( x_eig.begin(), x_eig.end() );
-
-
-    timer.stopTimer();
-    OOFEM_LOG_INFO( "EigenSolver:  User time consumed by solution: %.2fs\n", timer.getUtime() );
-
-    return CR_CONVERGED;
-}
 
 void EigenSolver::solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, bool doBifurcation )
 {
