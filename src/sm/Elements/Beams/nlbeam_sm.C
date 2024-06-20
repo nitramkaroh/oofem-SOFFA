@@ -85,7 +85,7 @@ NlBeam_SM :: initializeFrom(InputRecord &ir)
     this->z.resize(NIP+1);
     this->phi.resize(NIP+1);
     //compute alpha
-    this->alpha = 0;
+    this->alpha = this->computeAlpha();
     // Applied magnetic field
     double BaA = 0, mu0 = 1, theta = 0,rho = 0, Br = 0;
     IR_GIVE_OPTIONAL_FIELD(ir, BaA, "baa");
@@ -155,6 +155,24 @@ NlBeam_SM :: computeLength()
 
 
 
+double
+NlBeam_SM :: computeAlpha()
+{
+    double xA, xB, yA, yB;
+    Node *nodeA, *nodeB;
+    nodeA  = this->giveNode(1);
+    nodeB  = this->giveNode(2);
+    xA     = nodeA->giveCoordinate(1);
+    xB     = nodeB->giveCoordinate(1);
+    yA     = nodeA->giveCoordinate(3);
+    yB     = nodeB->giveCoordinate(3);
+    auto    alpha  = atan2(yB - yA, xB - xA);
+    return alpha;
+}
+
+
+
+  
   
 void
 NlBeam_SM :: computeLoadingVariables(double fx, double fz, double Brx, double Brz)

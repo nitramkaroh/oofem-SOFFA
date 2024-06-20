@@ -157,7 +157,11 @@ protected:
   /**
    **/
   double computeLength() override;
-  
+
+  /**
+   **/
+  double computeAlpha();
+
   /**
      Finite diference integration of the three first order differential equations
    **/
