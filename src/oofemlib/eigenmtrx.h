@@ -48,18 +48,74 @@ namespace oofem {
 /**
  * Implementation of sparse matrix stored using Eigen library.
  */
+template <typename _MatrixType, int _UpLo, typename _Ordering>
+// template <typename _MatrixType>
+class SimplicialLDLTderived : public Eigen::SimplicialLDLT<_MatrixType, _UpLo, _Ordering>
+{
+public:
+    typedef _MatrixType MatrixType;
+    typedef Eigen::SimplicialLDLT<_MatrixType, _UpLo, _Ordering> Base;
+
+
+public:
+    /** Default constructor */
+    SimplicialLDLTderived() :
+        Base() {}
+
+    /** Constructs and performs the LLT factorization of \a matrix */
+    explicit SimplicialLDLTderived( const MatrixType &matrix ) :
+        Base( matrix ) {}
+
+    bool updateD( double &minEig, const bool update, int &numNegEigs )
+    {
+        numNegEigs = 0;
+        bool answ  = false;
+        eigen_assert( this->m_factorizationIsOk && "Simplicial LDLT not factorized" );
+        minEig = m_diag.coeffRef( 0 );
+        for ( auto &Di : m_diag ) {
+            if ( Di < minEig ) minEig = Di;
+            if ( Di < 0 ) {
+                if ( update ) Di *= ( -1. );
+                answ = true;
+                numNegEigs++;
+            };
+        };
+        return answ;
+    }
+};
+
+template <typename _MatrixType, int _UpLo = Eigen ::Lower, typename _Ordering = Eigen ::AMDOrdering<typename _MatrixType::StorageIndex> >
+class SimplicialLDLTderived;
+
+
+enum FactorizationType {
+    FT_LLT,
+    FT_LU,
+    FT_QR,
+    FT_LDLT
+};
+
 class OOFEM_EXPORT EigenMtrx : public SparseMtrx
 {
+    
+
 protected:
     Eigen::SparseMatrix<double> EigMat;
-    //std::vector<Eigen::Triplet<double> > triplets; // Allocate vector of triplets
 
-    //FloatArray val; // data values (nz_ elements)
-    //IntArray rowind; // row_ind (nz_ elements)
-    //IntArray colptr; // col_ptr (dim_[1]+1 elements)
+    std::vector<bool> areFactorized = { false, false, false, false };
+    int versionUpdate;
 
-    //int base; // index base: offset of first element
-    //int nz; // number of nonzeros
+    // factorizations
+    Eigen::SimplicialLLT<Eigen::SparseMatrix<double> > LLT_factorization; 
+    Eigen::SparseLU<Eigen::SparseMatrix<double> > LU_factorization; 
+    Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int> > QR_factorization; 
+    SimplicialLDLTderived<Eigen::SparseMatrix<double> > LDLT_factorization; 
+
+    //bool factorized = false;
+
+    //template <typename Derived>
+    //Eigen::SparseSolverBase<Derived> factorization;
+
 
 public:
     /** Constructor. Before any operation an internal profile must be built.
@@ -90,7 +146,24 @@ public:
 
     Eigen::SparseMatrix<double> giveMatrix();
 
+    //template <typename Derived>
+    //std::shared_ptr<Eigen::SparseSolverBase<Derived> > giveFactorization( FactorizationType factorizationType );
 
+    template <typename Derived>
+    Eigen::SparseSolverBase<Derived>& giveFactorization( FactorizationType Factorization );
+
+
+    //template <typename Derived>
+    //void setFactorization( FactorizationType factorizationType, Eigen::SparseSolverBase<Derived> factorization );
+
+    //void setLDLTFactorization(Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> >& factorization );
+
+    //std::shared_ptr<SimplicialLDLTderived<Eigen::SparseMatrix<double> > > giveLDLTFactorization();
+    SimplicialLDLTderived<Eigen::SparseMatrix<double> >& EigenMtrx::giveLDLTFactorization();
+
+    void computeFactorization( FactorizationType factorizationType );
+    
+    bool isFactorized( FactorizationType factorizationType );
 
 };
 } // end namespace oofem

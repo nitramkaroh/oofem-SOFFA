@@ -83,7 +83,6 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
 
 
     Eigen::VectorXd x_eig; // Allocate vector of RHS
-    Eigen::VectorXd x_eig2; // Allocate vector of RHS
 
     // Create factorization
     if ( method.compare( "llt" ) == 0 ) {
@@ -93,7 +92,8 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
 
     } else if ( method.compare( "ldlt" ) == 0 ) {
 
-        this->solveLDLT( A_eig, b_eig, x_eig, false );
+        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > A_factorization( A_eig );
+        x_eig = A_factorization.solve( b_eig ); // Solve the system
 
     } else if ( method.compare( "lu" ) == 0 ) {
 
@@ -109,12 +109,6 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
     // Copy/move values to FloatArray x
     x = FloatArray( x_eig.begin(), x_eig.end() );
 
-    FloatArray x2( x_eig2.begin(), x_eig2.end() );
-
-    //FloatArray dx = x - x2;
-    //double norma  = dx.computeNorm();
-    //OOFEM_LOG_INFO( "norm = %.16f\n", norma );
-
     timer.stopTimer();
     OOFEM_LOG_INFO( "EigenSolver:  User time consumed by solution: %.2fs\n", timer.getUtime() );
 
@@ -123,12 +117,12 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
 }
 
 
-
-void EigenSolver::solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, bool doBifurcation )
-{
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > A_factorization( A );
-
-    x = A_factorization.solve( b ); // Solve the system
-}
+//
+//void EigenSolver::solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x )
+//{
+//    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > A_factorization( A );
+//
+//    x = A_factorization.solve( b ); // Solve the system
+//}
 
 } // end namespace oofem

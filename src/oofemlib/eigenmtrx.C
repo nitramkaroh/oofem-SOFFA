@@ -122,34 +122,6 @@ int EigenMtrx ::buildInternalStructure( EngngModel *eModel, int di, const Unknow
 
 int EigenMtrx ::assemble( const IntArray &loc, const FloatMatrix &mat )
 {
-/////////////////////////////////////////
-//    WHEN SET FROM TRIPLETS
-// 
-//    int dim = mat.giveNumberOfRows();
-//
-//#ifdef DEBUG
-//    if ( dim != loc.giveSize() ) {
-//        OOFEM_ERROR( "dimension of 'k' and 'loc' mismatch" );
-//    }
-//#endif
-//    
-//
-//    for ( int j = 0; j < dim; j++ ) {
-//
-//        for ( int i = 0; i < dim; i++ ) {    
-//
-//            Eigen::Triplet<double> T( loc[i] - 1, loc[j] - 1, mat( i, j ) ); // Create triplet storing (row, col, val)
-//            triplets.push_back( T ); // Add to vector of triplets
-//
-//        }
-//    }
-
-    //// increment version ??
-    //this->version++;
-
-    //return 1;
-///////////////////////////////////////
-
     int dim = mat.giveNumberOfRows();
 
     for ( int j = 0; j < dim; j++ ) {
@@ -169,37 +141,12 @@ int EigenMtrx ::assemble( const IntArray &loc, const FloatMatrix &mat )
     //          << EigMat << std::endl;
 
     this->version++;
-
     return 1;
 
 }
 
 int EigenMtrx ::assemble( const IntArray &rloc, const IntArray &cloc, const FloatMatrix &mat )
 {
- /////////////////////////////////////////
-    //    WHEN SET FROM TRIPLETS
-    // 
-    //int dim1, dim2;
-
-    //dim1 = mat.giveNumberOfRows();
-    //dim2 = mat.giveNumberOfColumns();
-
-
-    //for ( int j = 0; j < dim2; j++ ) {
-
-    //    for ( int i = 0; i < dim1; i++ ) {
-
-    //        Eigen::Triplet<double> T( rloc[i] - 1, cloc[j] - 1, mat( i, j ) ); // Create triplet storing (row, col, val)
-    //        triplets.push_back( T ); // Add to vector of triplets
-    //    }
-    //}
-
-    //// increment version ??
-    //this->version++;
-
-    //return 1;
-////////////////////////////////////
-
     int dim1, dim2;
 
     dim1 = mat.giveNumberOfRows();
@@ -225,17 +172,6 @@ int EigenMtrx ::assemble( const IntArray &rloc, const IntArray &cloc, const Floa
 
 void EigenMtrx ::zero()
 {
-    /////////////////////////////////////////
-    //    WHEN SET FROM TRIPLETS
-    //for ( int i = 0; i < triplets.size(); i++ ){
-
-    //    triplets[i] = Eigen::Triplet<double>( triplets[i].row(), triplets[i].col(), 0.0 );
-
-    //}
-
-    //this->version++;
-    /////////////////////////////////////////
-
     EigMat.setZero();
     this->version++;
 }
@@ -243,16 +179,11 @@ void EigenMtrx ::zero()
 double &EigenMtrx ::at( int i, int j )
 {
     if ( i > this->giveNumberOfRows() && j > this->giveNumberOfColumns() ) {
-
         OOFEM_ERROR( "Array accessing exception -- (%d,%d) out of bounds", i, j );
-
     } else {
-
         double a = EigMat.coeff( i, j );
-
         return a;
     }
-
 }
 
 
@@ -275,5 +206,76 @@ Eigen::SparseMatrix<double> EigenMtrx::giveMatrix()
 {
     return EigMat;
 }
+
+
+
+template <typename Derived>
+Eigen::SparseSolverBase<Derived>& EigenMtrx::giveFactorization( FactorizationType Factorization )
+{
+    if ( !this->isFactorized( Factorization ) ) {
+        this->computeFactorization( Factorization )
+    }
+
+    switch ( Factorization ) {
+    case FT_LLT:
+        return this->LLT_factorization;
+        break;
+    case FT_LU:
+        return this->LU_factorization;
+        break;
+    case FT_QR:
+        return this->QR_factorization;
+        break;
+    case FT_LDLT:
+        return this->LDLT_factorization;
+        break;
+    default:
+        OOFEM_ERROR( "Unknown factorization type" );
+    }
+
+}
+
+
+SimplicialLDLTderived<Eigen::SparseMatrix<double>>& EigenMtrx::giveLDLTFactorization()
+{
+    if ( !this->isFactorized( FT_LDLT ) ) {
+        this->computeFactorization( FT_LDLT );
+    }
+
+    return this->LDLT_factorization;
+}
+
+
+
+bool EigenMtrx::isFactorized(FactorizationType factorizationType) {
+    if ( this->versionUpdate != this->version ) {
+        areFactorized = { false, false, false, false };
+    } 
+    return this->areFactorized[factorizationType];
+}
+
+
+void EigenMtrx::computeFactorization( FactorizationType factorizationType )
+{
+    switch ( factorizationType ) {
+    case FT_LLT:
+        this->LLT_factorization.compute( EigMat );
+        break;
+    case FT_LU:
+        this->LU_factorization.compute( EigMat );
+        break;
+    case FT_QR:
+        this->QR_factorization.compute( EigMat );
+        break;
+    case FT_LDLT:
+        this->LDLT_factorization.compute( EigMat );
+        break;
+    default:
+        OOFEM_ERROR( "Unknown factorization type" );
+    }
+    this->versionUpdate = this->version;
+    this->areFactorized[factorizationType] = true;
+}
+
 
 } // end namespace oofem

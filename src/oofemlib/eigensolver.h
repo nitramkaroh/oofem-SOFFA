@@ -72,7 +72,7 @@ public:
 
     
 
-    virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, bool doBifurcation );
+    //virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x);
 
     const char *giveClassName() const override { return "EigenSolver"; }
     LinSystSolverType giveLinSystSolverType() const override { return ST_Eigen; }

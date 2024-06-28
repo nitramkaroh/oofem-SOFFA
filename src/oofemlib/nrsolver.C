@@ -264,6 +264,14 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
     }
 
     nite = 0;
+    //////
+    // Set some parameters for bifurcation analysis, this should be done in input file
+    bool isBifurcationSet = false;
+    int maxBifIte = 20;
+    int count = 0;
+    double alphaStability = 5;
+    bool LDLTbif = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
+    //////
     for ( nite = 0; ; ++nite ) {
         // Compute the residual
         engngModel->updateComponent(tStep, InternalRhs, domain);
@@ -276,17 +284,45 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
         // convergence check
         converged = this->checkConvergence(RT, F, rhs, ddX, X, RRT, internalForcesEBENorm, nite, errorOutOfRangeFlag);
 
-        //////////////////
-        if ( converged && this->linSolver->giveLinSystSolverType() == ST_EigenStability ) {
-            EigenSolverStability* stabSolver = dynamic_cast<EigenSolverStability *>( this->linSolver.get());
-            bool isPD = stabSolver->checkPD( k );
-            if ( !isPD ) {
-                stabSolver->solveBifurcation( k, rhs, ddX);
-                converged = false;
-                X.add( ddX );
-                dX.add( ddX );
-            }     
-        }
+        //////////////////  
+        // bifurcation analysis modifications  
+        if ( this->linSolver->giveLinSystSolverType() == ST_EigenStability ) {
+            EigenSolverStability *stabSolver = dynamic_cast<EigenSolverStability *>( this->linSolver.get() );
+            if ( converged ) {
+                engngModel->updateComponent( tStep, NonLinearLhs, domain );
+                applyConstraintsToStiffness( k );
+                bool isPD = stabSolver->checkPD( k );
+                if ( !isPD) { // If matrix is not PD
+                    if ( !isBifurcationSet ) { // If first time not PD 
+                        stabSolver->setBifurcation( true ); // perform bifurcation anaysis in the next step
+                        stabSolver->setAlpha( alphaStability ); // set eigenvector multiplicator
+                        // stabSolver->solveBifurcation( k, rhs, ddX);
+                        // converged = false;
+                        // X.add( ddX );
+                        // dX.add( ddX );
+                    } else if ( !LDLTbif ) { // bifurc. analysis using eigenvectors already performed, but failed
+                        // restart step
+                        if ( count < maxBifIte ) {
+                            converged = false;
+                            count++;
+                            stabSolver->setAlpha( (count+1) * alphaStability ); // increase alpha (eigenvector multiplicator)
+                            stabSolver->setBifurcation( true );  
+                        } else {
+                            stabSolver->setBifurcation( true );
+                            OOFEM_LOG_INFO( "Maximum bifurcation iterations reached\n");
+                        }
+                        
+                    }
+                    OOFEM_LOG_INFO( "alpha =  %f\n", stabSolver->giveAlpha() );
+                } else { // is PD, 
+                    stabSolver->setBifurcation( false ); // only needed for cholesky bifurcation
+                }
+
+            } else if ( nite == 0 ) { // check if the bifurcation analysis should be performed
+                stabSolver->setCholesky( LDLTbif );
+                isBifurcationSet = stabSolver->getBifurcation();
+            }
+        } 
         //////////////////
 
         if ( errorOutOfRangeFlag ) {

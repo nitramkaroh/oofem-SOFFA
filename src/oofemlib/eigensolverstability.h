@@ -36,6 +36,7 @@
 #define eigensolverstability_h
 
 #include "eigensolver.h"
+#include "eigenmtrx.h"
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -48,44 +49,44 @@
 
 namespace oofem {
 
-template <typename _MatrixType, int _UpLo, typename _Ordering>
-//template <typename _MatrixType>
-class SimplicialLDLTderived : public Eigen::SimplicialLDLT<_MatrixType, _UpLo, _Ordering>
-{
-public:
-    typedef _MatrixType MatrixType;
-    typedef Eigen::SimplicialLDLT<_MatrixType, _UpLo, _Ordering> Base;
-
-
-public:
-    /** Default constructor */
-    SimplicialLDLTderived() :
-        Base() {}
-
-    /** Constructs and performs the LLT factorization of \a matrix */
-    explicit SimplicialLDLTderived( const MatrixType &matrix ) :
-        Base( matrix ) {}
-
-    bool updateD( double &minEig, const bool update, int &numNegEigs )
-    {
-        numNegEigs = 0;
-        bool answ = false;
-        eigen_assert( this->m_factorizationIsOk && "Simplicial LDLT not factorized" );
-        minEig = m_diag.coeffRef( 0 );
-        for ( auto &Di : m_diag ) {
-            if ( Di < minEig ) minEig = Di;
-            if ( Di < 0 ) {
-                if ( update ) Di *= ( -1. );
-                answ = true;
-                numNegEigs++;
-            };
-        };
-        return answ;
-    }
-};
-
-template <typename _MatrixType, int _UpLo = Eigen ::Lower, typename _Ordering = Eigen ::AMDOrdering<typename _MatrixType::StorageIndex> >
-class SimplicialLDLTderived;
+//template <typename _MatrixType, int _UpLo, typename _Ordering>
+////template <typename _MatrixType>
+//class SimplicialLDLTderived : public Eigen::SimplicialLDLT<_MatrixType, _UpLo, _Ordering>
+//{
+//public:
+//    typedef _MatrixType MatrixType;
+//    typedef Eigen::SimplicialLDLT<_MatrixType, _UpLo, _Ordering> Base;
+//
+//
+//public:
+//    /** Default constructor */
+//    SimplicialLDLTderived() :
+//        Base() {}
+//
+//    /** Constructs and performs the LLT factorization of \a matrix */
+//    explicit SimplicialLDLTderived( const MatrixType &matrix ) :
+//        Base( matrix ) {}
+//
+//    bool updateD( double &minEig, const bool update, int &numNegEigs )
+//    {
+//        numNegEigs = 0;
+//        bool answ = false;
+//        eigen_assert( this->m_factorizationIsOk && "Simplicial LDLT not factorized" );
+//        minEig = m_diag.coeffRef( 0 );
+//        for ( auto &Di : m_diag ) {
+//            if ( Di < minEig ) minEig = Di;
+//            if ( Di < 0 ) {
+//                if ( update ) Di *= ( -1. );
+//                answ = true;
+//                numNegEigs++;
+//            };
+//        };
+//        return answ;
+//    }
+//};
+//
+//template <typename _MatrixType, int _UpLo = Eigen ::Lower, typename _Ordering = Eigen ::AMDOrdering<typename _MatrixType::StorageIndex> >
+//class SimplicialLDLTderived;
 
 
 /**
@@ -95,7 +96,10 @@ class SimplicialLDLTderived;
 class OOFEM_EXPORT EigenSolverStability : public EigenSolver
 {
 protected:
-
+    bool bifurcation = false;
+    double alpha = 10;
+    int ncv0 = 160;
+    bool choleskyBif = false;
 
 public:
     /**
@@ -110,13 +114,25 @@ public:
     /// Initializes receiver from given record.
     void initializeFrom( InputRecord &ir ) override;
 
-    virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, bool doBifurcation ) override;
+    ConvergedReason solve( SparseMtrx &A, FloatArray &b, FloatArray &x ) override;
+
+    //virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x ) override;
+    void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, SimplicialLDLTderived<Eigen::SparseMatrix<double> >& ldlt );
     bool checkPD( SparseMtrx &A );
     ConvergedReason solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x );
+
+    void setBifurcation( bool doBif ) { this->bifurcation = doBif; }
+    void setCholesky( bool doChol ) { this->choleskyBif = doChol; }
+    bool getBifurcation() const { return this->bifurcation; }
+    void setAlpha(double alphaNew ) { this->alpha = alphaNew; }
+    void setNcv0( double ncv0new ) { this->ncv0 = ncv0new; }
+    double giveAlpha() { return this->alpha; }
 
     const char *giveClassName() const override { return "EigenSolverStability"; }
     LinSystSolverType giveLinSystSolverType() const override { return ST_EigenStability; }
     SparseMtrxType giveRecommendedMatrix( bool symmetric ) const override { return SMT_EigenMtrx; }
+
+
 };
 } // end namespace oofem
 #endif // eigensolver_h
