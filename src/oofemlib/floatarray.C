@@ -900,6 +900,13 @@ FloatArray operator /( const FloatArray & x, const double & a )
 }
 
 
+FloatArray &operator /= ( FloatArray & x, const double & a )
+{
+    x.times(1./a);
+    return x;
+}
+
+
 
 
 

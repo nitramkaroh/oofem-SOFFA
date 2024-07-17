@@ -45,7 +45,6 @@
 
 ///@name Input fields for NlBeam_SM
 //@{
-#define _IFT_NlBeam_SM_Name "nlbeam_sm"
 #define _IFT_NlBeam_SM_NIP "nip"
 #define _IFT_NlBeam_SM_Material "materialtype"
 #define _IFT_NlBeam_SM_Beam_Tolerance "btol"
@@ -69,6 +68,14 @@
 
 
 #define _IFT_NlBeam_SM_num "num"
+
+
+
+#define _IFT_NlBeam_Reissner_Name "nlbeam_reissner"
+#define _IFT_NlBeam_Ziegler_Name  "nlbeam_ziegler"
+
+
+
 
 
 //@}
@@ -126,8 +133,6 @@ public:
 
   virtual void  printOutputAt(FILE *file, TimeStep *tStep) override{;}
 
-    const char *giveClassName() const override { return "NlBeam_SM"; }
-    const char *giveInputRecordName() const override { return _IFT_NlBeam_SM_Name; }
     virtual  void initializeFrom(InputRecord &ir) override;
 
   // composite type - so we can do the postprocessing in the next function
@@ -165,8 +170,8 @@ protected:
   /**
      Finite diference integration of the three first order differential equations
    **/
-  std::tuple<FloatArrayF<3>,FloatMatrixF<3,3>, FloatArrayF<3>, double, FloatArrayF<4>>
-  integrateAlongBeam(const FloatArray &fab, const FloatArray &ua, TimeStep *tStep);
+  virtual std::tuple<FloatArrayF<3>,FloatMatrixF<3,3>, FloatArrayF<3>, double, FloatArrayF<4>>
+  integrateAlongBeam(const FloatArray &fab, const FloatArray &ua, TimeStep *tStep) = 0;
   /**
      
    **/
@@ -201,5 +206,47 @@ protected:
 
 
 };
+
+  class NlBeam_Reissner : public NlBeam_SM
+  {
+  public:
+    NlBeam_Reissner(int n, Domain *aDomain) : NlBeam_SM(n, aDomain)
+    {;}
+    virtual ~NlBeam_Reissner(){;}
+ 
+  protected:
+    const char *giveClassName() const override { return "NlBeam_Reissner"; }
+    const char *giveInputRecordName() const override { return _IFT_NlBeam_Reissner_Name; }
+    /**
+       Finite diference integration of the three first order differential equations
+    **/
+    std::tuple<FloatArrayF<3>,FloatMatrixF<3,3>, FloatArrayF<3>, double, FloatArrayF<4>>
+    integrateAlongBeam(const FloatArray &fab, const FloatArray &ua, TimeStep *tStep) override;
+  };
+
+
+  
+  class NlBeam_Ziegler : public NlBeam_SM
+  {
+  public:
+     NlBeam_Ziegler(int n, Domain *aDomain) : NlBeam_SM(n, aDomain)
+    {;}
+    virtual ~NlBeam_Ziegler(){;}
+ 
+  private:
+    //@todo: to be added to initialization
+    double chi_tol = 1.e-10;
+    int chi_iter = 30;
+  protected:
+    const char *giveClassName() const override { return "NlBeam_Ziegler"; }
+    const char *giveInputRecordName() const override { return _IFT_NlBeam_Ziegler_Name; }
+
+    /**
+       Finite diference integration of the three first order differential equations
+    **/
+    std::tuple<FloatArrayF<3>,FloatMatrixF<3,3>, FloatArrayF<3>, double, FloatArrayF<4>>
+    integrateAlongBeam(const FloatArray &fab, const FloatArray &ua, TimeStep *tStep) override;
+  };
+  
 } // end namespace oofem
 #endif // beam2d_h

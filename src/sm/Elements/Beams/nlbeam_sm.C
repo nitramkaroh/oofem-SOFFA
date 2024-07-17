@@ -16,8 +16,8 @@
 
 
 namespace oofem {
-REGISTER_Element(NlBeam_SM);
-
+REGISTER_Element(NlBeam_Reissner);
+REGISTER_Element(NlBeam_Ziegler);
 
 
 
@@ -239,117 +239,6 @@ NlBeam_SM :: computeLoadAt(FloatArray &Px, FloatArray &Pz, double &tBax, double 
   
   
 
-  std::tuple<FloatArrayF<3>,FloatMatrixF<3,3>, FloatArrayF<3>, double, FloatArrayF<4>>
-NlBeam_SM :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa, TimeStep *tStep)
- {
-   FloatArray Px, Pz;
-   double tBax, tBaz;
-   double m = this->computeLoadAt(Px, Pz, tBax, tBaz,  tStep);
-   // initial configuration
-   x.at(1) = xa.at(1);
-   z.at(1) = xa.at(2);
-   phi.at(1) = xa.at(3) - alpha;
-   //
-   double Xab = fa.at(1), Zab = fa.at(2), Mab = fa.at(3);
-   //this->vM.at(1) = -Mab;
-   //
-   FloatArray dx(4), dz(4), dphi(3);
-   dphi  = {0,0,0,1};
-   //
-   FloatArray dN(4), dQ(4), dM(4);
-   dM = {0 , 0, -1, 0};
-   //
-   double dxi = beamLength/NIP;
-   //
-   double M = -Mab;
-   double Mp = 0;
-   FloatArray dMp;
-   double Mm = 0;
-   FloatArray dMm;
-   for (int i=2; i <= NIP+1; i++) {
-     //this->s.at(i) = this->s.at(i-1) + ds;
-     //
-     double kappa = computeCurvatureFromMoment(M);
-     double dMdKappa = computeDerMomentFromCurvature(kappa);
-     auto dkappa = dM / dMdKappa;
-     //
-     double phi_mid = phi.at(i-1) + 0.5 * kappa * dxi;
-     auto dphi_mid = dphi + 0.5 * dkappa * dxi;
-     //
-     double c = cos(phi_mid);
-     double s = sin(phi_mid);
-     double N_mid = - c * (Xab + Px.at(i)) + s * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBax - s * tBaz);
-     //@todo: check wheter Fbrx or Fbrz
-     double Q_mid = - s * (Xab + Px.at(i)) - c * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBaz + s * tBax);
-     //
-     /*
-     vN.at(2*(i-1)) = N_mid;
-     vQ.at(2*(i-1)) = Q_mid;
-     */
-     //
-     auto dN_mid = - Q_mid * dphi_mid;
-     dN_mid.at(1) += - c;
-     dN_mid.at(2) +=   s;
-     //
-     auto dQ_mid = N_mid * dphi_mid;
-     dQ_mid.at(1) += - s;
-     dQ_mid.at(2) +=   c;
-     //
-     double lambda_mid = 1 + N_mid / EA;
-     auto dLambda_mid = dN_mid / EA;
-     //
-     double gamma_mid = Q_mid / GAs;
-     auto dGamma_mid = dQ_mid / GAs;
-     //
-     double delta_x = ( c * lambda_mid + s * gamma_mid ) * dxi;
-     FloatArray ddx;
-     ddx = ( c * dLambda_mid + s * dGamma_mid - ( s * lambda_mid - c * gamma_mid) *dphi_mid ) * dxi;
-     //
-     double delta_z = ( c * gamma_mid - s * lambda_mid ) * dxi;
-     FloatArray ddz;
-     ddz =( c * dGamma_mid - s * dLambda_mid - ( s * gamma_mid + c * lambda_mid) * dphi_mid ) * dxi;
-     //
-     x.at(i) = x.at(i-1) + delta_x;
-     dx += ddx;
-     //
-     z.at(i) = z.at(i-1) + delta_z;
-     dz += ddz;
-     //
-     Mp += - m * dxi + Px.at(i-1) * delta_z - Pz.at(i-1) * delta_x;
-     dMp += Px.at(i-1) * ddz - Pz.at(i-1) * ddx;
-     //
-     Mm +=  FBrx.at(i) * ( tBaz * delta_x - tBax*delta_z ) + FBrz.at(i) * ( s * tBaz - c * tBax ) * dxi;
-     dMm += FBrx.at(i) * ( tBaz * ddx - tBax * ddz ) + FBrz.at(i) * ( c * tBaz + s * tBax ) * dxi * dphi_mid;
-     //
-     M = -Mab + Xab *  (z.at(i) - z.at(1)) - Zab * (x.at(i) - x.at(1)) + Mp + Mm;
-     //
-     dM = dMp + dMm + FloatArray({z.at(i)-z.at(1) + Xab * dz.at(1) - Zab * dx.at(1), -x.at(i) + x.at(1) + Xab * dz.at(2) - Zab * dx.at(2), -1. + Xab * dz.at(3) - Zab * dx.at(3), Xab * dz.at(4) - Zab * dx.at(4)});
-     //
-     //     vM.at(i) = M;
-     //
-     //
-     kappa = computeCurvatureFromMoment(M);
-     dMdKappa = computeDerMomentFromCurvature(kappa);
-     dkappa = dM / dMdKappa;
-     phi.at(i) = phi_mid + 0.5 * kappa * dxi;
-     dphi = dphi_mid + 0.5 * dxi * dkappa;
-   }
-   // right end displacements
-   FloatArrayF<3> xb;
-   xb.at(1) = x.at(NIP+1); xb.at(2) = z.at(NIP+1); xb.at(3) = phi.at(NIP+1);
-   // jacobi matrix G
-   FloatMatrix G(3,3);
-   G.copySubVectorRow(FloatArray({dx.at(1), dx.at(2), dx.at(3)}), 1,1);
-   G.copySubVectorRow(FloatArray({dz.at(1), dz.at(2), dz.at(3)}), 2,1);
-   G.copySubVectorRow(FloatArray({dphi.at(1), dphi.at(2), dphi.at(3)}), 3,1);
-   // 3rd column of Gr
-   FloatArrayF<3> Gr;
-   Gr.at(1) = dx.at(4);
-   Gr.at(2) = dz.at(4);
-   Gr.at(3) = dphi.at(4);
-   return {xb, FloatMatrixF<3,3> (G), Gr, Mp+Mm, FloatArrayF<4> (dMp+dMm)};
-
- }
 
  /*
  Find forces and moment at the left end that lead to given displacements and rotations
@@ -373,23 +262,26 @@ std::tuple<bool,FloatArrayF<3>, double>
    }
    auto [xb_shoot, G, Gr, Mp, dMp] = this->integrateAlongBeam(fa, xa, tStep);
    double Mpr = Mp;
-
-   //compute the jacobi matrix numerically
-   /*   FloatArray fnum, dMn(3);
-   FloatMatrix Gn(3,3);
-   double pert = 1.e-6;
-   for(int i = 1; i <= 3; i++) {
-     fnum = this->internalForces;
-     fnum.at(i) += pert;
-     auto [xb_pert, G, vGr, Mp_pert, dMp] = integrateAlongBeam(fnum, xa, tStep);
-     for(int j = 1; j <= 3; j++ ) {
-       Gn.at(j,i) = (xb_pert.at(j) - xb_shoot.at(j)) ;
-     }
-     dMn.at(i) = Mp_pert - Mp;
-   }
-   Gn.times(1./pert);
-   */
    
+   if(num == 1) {
+     //compute the jacobi matrix numerically
+     FloatArray fnum, dMn(3);
+     FloatMatrix Gn(3,3);
+     double pert = 1.e-7;
+     for(int i = 1; i <= 3; i++) {
+       fnum = this->internalForces;
+       fnum.at(i) += pert;
+       auto [xb_pert, Gpert, vGr, Mp_pert, dMp] = integrateAlongBeam(fnum, xa, tStep);
+       
+       for(int j = 1; j <= 3; j++ ) {
+	 Gn.at(j,i) = (xb_pert.at(j) - xb_shoot.at(j)) ;
+       }
+       dMn.at(i) = Mp_pert - Mp;
+     }
+     FloatMatrix tG(G);
+     Gn.times(1./pert);
+   }
+     
    ////
    FloatMatrix jacobi(G);
    auto res = xb_target-xb_shoot; 
@@ -551,7 +443,7 @@ NlBeam_SM :: giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int u
    this->computeVectorOf({D_u, D_w, R_v}, VM_Total, tStep, u);
    this->giveInternalForcesVector_from_u(iF, tStep, u);
 
-   double eps = 1.e-8;
+   double eps = 1.e-6;
    answer.resize(6,6);
     
    FloatArray du;
@@ -854,6 +746,257 @@ NlBeam_SM :: giveOutputStream(TimeStep *tStep)
     }
     return answer;
 }
+
+
+
+
+
+
+
+  /////////////////////////Reissner//////////////////////////////////////////
+
+  std::tuple<FloatArrayF<3>,FloatMatrixF<3,3>, FloatArrayF<3>, double, FloatArrayF<4>>
+NlBeam_Reissner :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa, TimeStep *tStep)
+ {
+   FloatArray Px, Pz;
+   double tBax, tBaz;
+   double m = this->computeLoadAt(Px, Pz, tBax, tBaz,  tStep);
+   // initial configuration
+   x.at(1) = xa.at(1);
+   z.at(1) = xa.at(2);
+   phi.at(1) = xa.at(3) - alpha;
+   //
+   double Xab = fa.at(1), Zab = fa.at(2), Mab = fa.at(3);
+   //this->vM.at(1) = -Mab;
+   //
+   FloatArray dx(4), dz(4), dphi(3);
+   dphi  = {0,0,0,1};
+   //
+   FloatArray dN(4), dQ(4), dM(4);
+   dM = {0 , 0, -1, 0};
+   //
+   double dxi = beamLength/NIP;
+   //
+   double M = -Mab;
+   double Mp = 0;
+   FloatArray dMp;
+   double Mm = 0;
+   FloatArray dMm;
+   for (int i=2; i <= NIP+1; i++) {
+     //this->s.at(i) = this->s.at(i-1) + ds;
+     //
+     double kappa = computeCurvatureFromMoment(M);
+     double dMdKappa = computeDerMomentFromCurvature(kappa);
+     auto dkappa = dM / dMdKappa;
+     //
+     double phi_mid = phi.at(i-1) + 0.5 * kappa * dxi;
+     auto dphi_mid = dphi + 0.5 * dkappa * dxi;
+     //
+     double c = cos(phi_mid);
+     double s = sin(phi_mid);
+     double N_mid = - c * (Xab + Px.at(i)) + s * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBax - s * tBaz);
+     //@todo: check wheter Fbrx or Fbrz
+     double Q_mid = - s * (Xab + Px.at(i)) - c * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBaz + s * tBax);
+     //
+     /*
+     vN.at(2*(i-1)) = N_mid;
+     vQ.at(2*(i-1)) = Q_mid;
+     */
+     //
+     auto dN_mid = - Q_mid * dphi_mid;
+     dN_mid.at(1) += - c;
+     dN_mid.at(2) +=   s;
+     //
+     auto dQ_mid = N_mid * dphi_mid;
+     dQ_mid.at(1) += - s;
+     dQ_mid.at(2) += - c;
+     //
+     double lambda_mid = 1 + N_mid / EA;
+     auto dLambda_mid = dN_mid / EA;
+     //
+     double gamma_mid = Q_mid / GAs;
+     auto dGamma_mid = dQ_mid / GAs;
+     //
+     double delta_x = ( c * lambda_mid + s * gamma_mid ) * dxi;
+     FloatArray ddx;
+     ddx = ( c * dLambda_mid + s * dGamma_mid - ( s * lambda_mid - c * gamma_mid) *dphi_mid ) * dxi;
+     //
+     double delta_z = ( c * gamma_mid - s * lambda_mid ) * dxi;
+     FloatArray ddz;
+     ddz =( c * dGamma_mid - s * dLambda_mid - ( s * gamma_mid + c * lambda_mid) * dphi_mid ) * dxi;
+     //
+     x.at(i) = x.at(i-1) + delta_x;
+     dx += ddx;
+     //
+     z.at(i) = z.at(i-1) + delta_z;
+     dz += ddz;
+     //
+     Mp += - m * dxi + Px.at(i-1) * delta_z - Pz.at(i-1) * delta_x;
+     dMp += Px.at(i-1) * ddz - Pz.at(i-1) * ddx;
+     //
+     Mm +=  FBrx.at(i) * ( tBaz * delta_x - tBax*delta_z ) + FBrz.at(i) * ( s * tBaz - c * tBax ) * dxi;
+     dMm += FBrx.at(i) * ( tBaz * ddx - tBax * ddz ) + FBrz.at(i) * ( c * tBaz + s * tBax ) * dxi * dphi_mid;
+     //
+     M = -Mab + Xab *  (z.at(i) - z.at(1)) - Zab * (x.at(i) - x.at(1)) + Mp + Mm;
+     //
+     dM = dMp + dMm + FloatArray({z.at(i)-z.at(1) + Xab * dz.at(1) - Zab * dx.at(1), -x.at(i) + x.at(1) + Xab * dz.at(2) - Zab * dx.at(2), -1. + Xab * dz.at(3) - Zab * dx.at(3), Xab * dz.at(4) - Zab * dx.at(4)});
+     //
+     //     vM.at(i) = M;
+     //
+     //
+     kappa = computeCurvatureFromMoment(M);
+     dMdKappa = computeDerMomentFromCurvature(kappa);
+     dkappa = dM / dMdKappa;
+     phi.at(i) = phi_mid + 0.5 * kappa * dxi;
+     dphi = dphi_mid + 0.5 * dxi * dkappa;
+   }
+   // right end displacements
+   FloatArrayF<3> xb;
+   xb.at(1) = x.at(NIP+1); xb.at(2) = z.at(NIP+1); xb.at(3) = phi.at(NIP+1);
+   // jacobi matrix G
+   FloatMatrix G(3,3);
+   G.copySubVectorRow(FloatArray({dx.at(1), dx.at(2), dx.at(3)}), 1,1);
+   G.copySubVectorRow(FloatArray({dz.at(1), dz.at(2), dz.at(3)}), 2,1);
+   G.copySubVectorRow(FloatArray({dphi.at(1), dphi.at(2), dphi.at(3)}), 3,1);
+   // 3rd column of Gr
+   FloatArrayF<3> Gr;
+   Gr.at(1) = dx.at(4);
+   Gr.at(2) = dz.at(4);
+   Gr.at(3) = dphi.at(4);
+   return {xb, FloatMatrixF<3,3> (G), Gr, Mp+Mm, FloatArrayF<4> (dMp+dMm)};
+
+ }
+
+
+
+
+
+  /////////////////////////Ziegler//////////////////////////////////////////
+  std::tuple<FloatArrayF<3>,FloatMatrixF<3,3>, FloatArrayF<3>, double, FloatArrayF<4>>
+NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa, TimeStep *tStep)
+ {
+   FloatArray Px, Pz;
+   double tBax, tBaz;
+   double m = this->computeLoadAt(Px, Pz, tBax, tBaz,  tStep);
+   // initial configuration
+   x.at(1) = xa.at(1);
+   z.at(1) = xa.at(2);
+   phi.at(1) = xa.at(3) - alpha;
+   //
+   double Xab = fa.at(1), Zab = fa.at(2), Mab = fa.at(3);
+   //this->vM.at(1) = -Mab;
+   //
+   FloatArray dx(4), dz(4), dphi(3);
+   dphi  = {0,0,0,1};
+   //
+   FloatArray dN(4), dQ(4), dM(4);
+   dM = {0 , 0, -1, 0};
+   //
+   double dxi = beamLength/NIP;
+   //
+   double M = -Mab;
+   double Mp = 0;
+   FloatArray dMp;
+   double Mm = 0;
+   FloatArray dMm;
+   //
+   auto chi_mid = 0.;
+   for (int i=2; i <= NIP+1; i++) {
+     //this->s.at(i) = this->s.at(i-1) + ds;
+     //
+     double kappa = computeCurvatureFromMoment(M);
+     double dMdKappa = computeDerMomentFromCurvature(kappa);
+     auto dkappa = dM / dMdKappa;
+     //
+     double phi_mid = phi.at(i-1) + 0.5 * kappa * dxi;
+     auto dphi_mid = dphi + 0.5 * dkappa * dxi;
+     //
+     auto iter = 0;
+     double c, s, N_mid, Q_mid, lambda_mid;
+     while (iter <= chi_iter) {
+       iter++;
+       c = cos(phi_mid - chi_mid);
+       s = sin(phi_mid - chi_mid);
+       N_mid = - c * (Xab + Px.at(i)) + s * (Zab + Pz.at(i));
+       Q_mid = - s * (Xab + Px.at(i)) - c * (Zab + Pz.at(i));
+       //
+       lambda_mid = 1 + N_mid / EA;
+       //
+       auto F = GAs * chi_mid - lambda_mid * Q_mid;
+       if(fabs(F) < chi_tol) {
+	 break;
+       }
+       auto dF = GAs + lambda_mid * N_mid - Q_mid * Q_mid / EA;
+       chi_mid -= F/dF;
+       if(iter == chi_iter){
+	 //@todo: cut the step...
+	 OOFEM_ERROR("Maximum number of iteraton for calculation of chi reached");
+       }
+     }
+     // linearization
+     auto denom  = (GAs + lambda_mid * N_mid - Q_mid * Q_mid / EA);
+     auto dchi_mid = (lambda_mid * N_mid - Q_mid * Q_mid / EA) * dphi_mid;
+     dchi_mid.at(1) += (-c * Q_mid / EA - s * lambda_mid);
+     dchi_mid.at(2) += (s * Q_mid / EA - c * lambda_mid);
+     dchi_mid /= denom;
+     //
+     auto dN_mid = - Q_mid * (dphi_mid - dchi_mid);
+     dN_mid.at(1) += - c;
+     dN_mid.at(2) +=   s;
+     // not needed ?
+     auto dQ_mid = N_mid * (dphi_mid - dchi_mid);
+     dQ_mid.at(1) += - s;
+     dQ_mid.at(2) += - c;
+     //
+     auto dLambda_mid = dN_mid / EA;
+     //
+     double delta_x = c * lambda_mid  * dxi;
+     FloatArray ddx;
+     ddx = ( c * dLambda_mid - s * lambda_mid * ( dphi_mid - dchi_mid) ) * dxi;
+     //
+     double delta_z = - s * lambda_mid * dxi;
+     FloatArray ddz;
+     ddz = (- s * dLambda_mid - c * lambda_mid * ( dphi_mid - dchi_mid ) ) * dxi;
+     //
+     x.at(i) = x.at(i-1) + delta_x;
+     dx += ddx;
+     //
+     z.at(i) = z.at(i-1) + delta_z;
+     dz += ddz;
+     //
+     Mp += - m * dxi + Px.at(i-1) * delta_z - Pz.at(i-1) * delta_x;
+     dMp += Px.at(i-1) * ddz - Pz.at(i-1) * ddx;
+     //
+     M = -Mab + Xab *  (z.at(i) - z.at(1)) - Zab * (x.at(i) - x.at(1)) + Mp;
+     //
+     dM = dMp + FloatArray({z.at(i)-z.at(1) + Xab * dz.at(1) - Zab * dx.at(1), -x.at(i) + x.at(1) + Xab * dz.at(2) - Zab * dx.at(2), -1. + Xab * dz.at(3) - Zab * dx.at(3), Xab * dz.at(4) - Zab * dx.at(4)});
+     //
+     //     vM.at(i) = M;
+     //
+     //
+     kappa = computeCurvatureFromMoment(M);
+     dMdKappa = computeDerMomentFromCurvature(kappa);
+     dkappa = dM / dMdKappa;
+     phi.at(i) = phi_mid + 0.5 * kappa * dxi;
+     dphi = dphi_mid + 0.5 * dxi * dkappa;
+   }
+   // right end displacements
+   FloatArrayF<3> xb;
+   xb.at(1) = x.at(NIP+1); xb.at(2) = z.at(NIP+1); xb.at(3) = phi.at(NIP+1);
+   // jacobi matrix G
+   FloatMatrix G(3,3);
+   G.copySubVectorRow(FloatArray({dx.at(1), dx.at(2), dx.at(3)}), 1,1);
+   G.copySubVectorRow(FloatArray({dz.at(1), dz.at(2), dz.at(3)}), 2,1);
+   G.copySubVectorRow(FloatArray({dphi.at(1), dphi.at(2), dphi.at(3)}), 3,1);
+   // 3rd column of Gr
+   FloatArrayF<3> Gr;
+   Gr.at(1) = dx.at(4);
+   Gr.at(2) = dz.at(4);
+   Gr.at(3) = dphi.at(4);
+   return {xb, FloatMatrixF<3,3> (G), Gr, Mp+Mm, FloatArrayF<4> (dMp+dMm)};
+
+ }
+
   
 
 } // end namespace oofem

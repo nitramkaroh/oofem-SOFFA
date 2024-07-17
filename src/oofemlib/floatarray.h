@@ -555,6 +555,7 @@ OOFEM_EXPORT FloatArray &operator *= ( FloatArray & x, const double & a );
 OOFEM_EXPORT FloatArray operator *( const double & a, const FloatArray & x );
 OOFEM_EXPORT FloatArray operator *( const FloatArray & x, const double & a );
 OOFEM_EXPORT FloatArray operator /( const FloatArray & x, const double & a );
+OOFEM_EXPORT FloatArray &operator /= ( FloatArray & x, const double & a );
 
 OOFEM_EXPORT FloatArray operator + ( const FloatArray & x, const FloatArray & y );
 OOFEM_EXPORT FloatArray operator - ( const FloatArray & x, const FloatArray & y );
