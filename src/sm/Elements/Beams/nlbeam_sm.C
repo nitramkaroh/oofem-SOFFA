@@ -73,6 +73,7 @@ NlBeam_SM :: initializeFrom(InputRecord &ir)
     IR_GIVE_FIELD(ir, GAs, "gas");
     //
     IR_GIVE_OPTIONAL_FIELD(ir, this->num, _IFT_NlBeam_SM_num);
+    IR_GIVE_OPTIONAL_FIELD(ir, this->sym, _IFT_NlBeam_SM_sym);
     // relative tolerance for iterations at the beam level
     IR_GIVE_OPTIONAL_FIELD(ir, beam_tol, _IFT_NlBeam_SM_Beam_Tolerance);
     // maximum number of iterations at the beam level
@@ -118,20 +119,18 @@ NlBeam_SM :: initializeFrom(InputRecord &ir)
     FBrx.resize(NIP+1);
     FBrz.resize(NIP+1);
     this->computeLoadingVariables(fx, fz, Brx, Brz);
-
-    /*    this->vN.resize(2*NIP+1);
+    ///
+    this->vN.resize(NIP+1);
     this->vQ.resize(NIP+1);
     this->vM.resize(NIP+1);
-    */
-    /*
-      
+    ///    
     this->s.resize(NIP+1);
     this->x.resize(NIP+1);
     this->z.resize(NIP+1);
+    //
     this->phi.resize(NIP+1);
-    this->kappa.resize(NIP+1);
-
-    */
+    this->vKappa.resize(NIP+1);
+    
 }
 
 
@@ -431,6 +430,12 @@ NlBeam_SM :: giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int u
      this->computeStiffnessMatrix_num(K, rMode, tStep);
      int test = 1;
    }
+   if(sym) {
+     FloatMatrix at;
+     at.beTranspositionOf(answer);
+     answer += at;
+     answer *= 0.5;
+   }
 }
   
 
@@ -607,146 +612,77 @@ NlBeam_SM :: giveCompositeExportData(std::vector< VTKPiece > &vtkPieces, IntArra
   
 }
 
-  /*
+ 
 void
-NlBeam_SM :: printOutputAt(FILE *file, TimeStep *tStep)
+NlBeam_SM :: doMatlabOutput(std::string fileName)
 {
 
-
   FILE *FID;
-  
-
-  char fext[100];
-  sprintf( fext, "_m%d_%d", this->number, tStep->giveNumber() );
-  std :: string fileName, functionname, temp;
-  fileName = this->giveDomain()->giveEngngModel()->giveOutputBaseFileName();
-  size_t foundDot;
-  foundDot = fileName.rfind(".");
-  
-  while (foundDot != std :: string :: npos) {
-    fileName.replace(foundDot, 1, "_");
-    foundDot = fileName.rfind(".");   
-  }
-  
-  fileName += fext;
-  temp = fileName;
+    fileName += "_element" + std::to_string(this->giveNumber());
+  auto temp = fileName;
+  std :: string functionname;
   size_t backslash = temp.rfind("/");
   if (backslash != std :: string :: npos ) {
     functionname = temp.substr(backslash+1, std :: string :: npos);
   } else {
     functionname = temp;
-  }
+  }  
 
-
-  
+  //
   fileName += ".m";
   if ( ( FID = fopen(fileName.c_str(), "w") ) == NULL ) {
     OOFEM_ERROR("failed to open file %s", fileName.c_str() );
   }
-
-
-
-  //transform displacements to global coordinate system
-  FloatArray uab, ug(NIP+1), wg(NIP+1), phig(NIP+1), u_l, u_g;
-  this->computeVectorOf({D_u, D_w, R_v}, VM_Total, tStep, uab);
-  ug.at(1) = uab.at(1);
-  wg.at(1) = uab.at(2);
-  phig.at(1) = uab.at(3);
-  double L = 0;
-  double dx = beamLength/NIP;
-  for (int i=2; i <= NIP+1; i++) {
-    L = L + dx;
-    FloatArray l;
-    FloatMatrix T;
-    this->construct_T(T, uab.at(3));
-    this->construct_l(l, uab.at(3), L);
-    u_l = {this->u.at(i), this->w.at(i), 0};
-    u_l.subtract(l);
-    u_g.beTProductOf(T, u_l);
-    ug.at(i) = u_g.at(1) + ug.at(1);
-    wg.at(i) = u_g.at(2) + wg.at(1);
-    phig.at(i) = this->phi.at(i) + phig.at(1);
-    
+  //
+  fprintf( FID, " function [x z phi kappa N Q M]= %s \n", functionname.c_str() );
+  //
+  fprintf(FID, "x=[");
+  for ( double val: this->x ) {
+    fprintf( FID, "%5.8f,", val);
+  }   
+  fprintf(FID, "];\n");
+  //
+  fprintf(FID, "z=[");
+  for ( double val: this->z ) {
+    fprintf( FID, "%5.8f,", val);
+  }   
+  fprintf(FID, "];\n");
+  //      
+  fprintf(FID, "phi=[");
+  for ( double val: this->phi ) {
+    fprintf( FID, "%5.8f,", val );
   }
-
+  fprintf(FID, "];\n");
+    //      
+  fprintf(FID, "kappa=[");
+  for ( double val: this->vKappa ) {
+    fprintf( FID, "%5.8f,", val );
+  }
+  fprintf(FID, "];\n");
+  //
   
-  
-
-  fprintf( FID, " function [x z u w phi N M]= %s \n", functionname.c_str() );
-
-   fprintf(FID, "x=[");
-   for ( double val: s ) {
-     fprintf( FID, "%f,", val * cosAlpha );
-   }   
-   fprintf(FID, "];\n");
-   
-   fprintf(FID, "z=[");
-   for ( double val: s ) {
-     fprintf( FID, "%f,", val * sinAlpha );
-   }   
-   fprintf(FID, "];\n");
-
-   
-   
-   fprintf(FID, "u=[");
-   for ( double val: ug ) {
-     fprintf( FID, "%f,", val );
-   }
-   fprintf(FID, "];\n");
-   
-   
-   fprintf(FID, "w=[");
-   for ( double val: wg ) {
-     fprintf( FID, "%f,", val );
-   }     
-   fprintf(FID, "];\n");
-   
-   fprintf(FID, "phi=[");
-   for ( double val: phig ) {
-     fprintf( FID, "%f,", val );
-   }
-   fprintf(FID, "];\n");
-
-
-   fprintf(FID, "N=[");
-   for ( double val: vN ) {
-     fprintf( FID, "%f,", val );
-   }
-   fprintf(FID, "];\n");
-
-
-   fprintf(FID, "M=[");
-   for ( double val: vM ) {
-     fprintf( FID, "%f,", val );
-   }
-   fprintf(FID, "];\n");
-
-   
-   fprintf(FID, "end\n");
-
-   fclose(FID);
-
+  fprintf(FID, "N=[");
+  for ( double val: this->vN ) {
+    fprintf( FID, "%5.8f,", val );
+  }
+  fprintf(FID, "];\n");
+  //
+  fprintf(FID, "Q=[");
+  for ( double val: this->vQ ) {
+    fprintf( FID, "%5.8f,", val );
+  }
+  fprintf(FID, "];\n");
+  //
+  fprintf(FID, "M=[");
+  for ( double val: this->vM ) {
+    fprintf( FID, "%5.8f,", val );
+  }
+  fprintf(FID, "];\n");
+  //
+  fprintf(FID, "end\n");
+  //
+  fclose(FID);
 }
-
-  */
-
-FILE *
-NlBeam_SM :: giveOutputStream(TimeStep *tStep)
-{
-    FILE *answer;
-
-    char fext[100];
-    sprintf( fext, "_m%d_%d", this->number, tStep->giveNumber() );
-    std :: string fileName;
-    fileName = this->giveDomain()->giveEngngModel()->giveOutputBaseFileName();
-    fileName += fext;
-    fileName += ".m";
-    if ( ( answer = fopen(fileName.c_str(), "w") ) == NULL ) {
-        OOFEM_ERROR("failed to open file %s", fileName.c_str() );
-    }
-    return answer;
-}
-
 
 
 
@@ -762,12 +698,14 @@ NlBeam_Reissner :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa
    double tBax, tBaz;
    double m = this->computeLoadAt(Px, Pz, tBax, tBaz,  tStep);
    // initial configuration
-   x.at(1) = xa.at(1);
-   z.at(1) = xa.at(2);
-   phi.at(1) = xa.at(3) - alpha;
+   this->x.at(1) = xa.at(1);
+   this->z.at(1) = xa.at(2);
+   this->phi.at(1) = xa.at(3) - alpha;
    //
    double Xab = fa.at(1), Zab = fa.at(2), Mab = fa.at(3);
-   //this->vM.at(1) = -Mab;
+   // store variables for postprocessing
+   this->s.at(1) = 0.;
+   this->vM.at(1) = -Mab;
    //
    FloatArray dx(4), dz(4), dphi(3);
    dphi  = {0,0,0,1};
@@ -783,25 +721,22 @@ NlBeam_Reissner :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa
    double Mm = 0;
    FloatArray dMm;
    for (int i=2; i <= NIP+1; i++) {
-     //this->s.at(i) = this->s.at(i-1) + ds;
+     this->s.at(i) = this->s.at(i-1) + dxi;
      //
      double kappa = computeCurvatureFromMoment(M);
      double dMdKappa = computeDerMomentFromCurvature(kappa);
      auto dkappa = dM / dMdKappa;
      //
-     double phi_mid = phi.at(i-1) + 0.5 * kappa * dxi;
+     double phi_mid = this->phi.at(i-1) + 0.5 * kappa * dxi;
      auto dphi_mid = dphi + 0.5 * dkappa * dxi;
      //
      double c = cos(phi_mid);
      double s = sin(phi_mid);
      double N_mid = - c * (Xab + Px.at(i)) + s * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBax - s * tBaz);
-     //@todo: check wheter Fbrx or Fbrz
      double Q_mid = - s * (Xab + Px.at(i)) - c * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBaz + s * tBax);
-     //
-     /*
-     vN.at(2*(i-1)) = N_mid;
-     vQ.at(2*(i-1)) = Q_mid;
-     */
+     // store variables for postprocessing
+     this->vN.at(i-1) = N_mid;
+     this->vQ.at(i-1) = Q_mid;
      //
      auto dN_mid = - Q_mid * dphi_mid;
      dN_mid.at(1) += - c;
@@ -825,10 +760,10 @@ NlBeam_Reissner :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa
      FloatArray ddz;
      ddz =( c * dGamma_mid - s * dLambda_mid - ( s * gamma_mid + c * lambda_mid) * dphi_mid ) * dxi;
      //
-     x.at(i) = x.at(i-1) + delta_x;
+     this->x.at(i) = x.at(i-1) + delta_x;
      dx += ddx;
      //
-     z.at(i) = z.at(i-1) + delta_z;
+     this->z.at(i) = z.at(i-1) + delta_z;
      dz += ddz;
      //
      Mp += - m * dxi + Px.at(i-1) * delta_z - Pz.at(i-1) * delta_x;
@@ -841,14 +776,17 @@ NlBeam_Reissner :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa
      //
      dM = dMp + dMm + FloatArray({z.at(i)-z.at(1) + Xab * dz.at(1) - Zab * dx.at(1), -x.at(i) + x.at(1) + Xab * dz.at(2) - Zab * dx.at(2), -1. + Xab * dz.at(3) - Zab * dx.at(3), Xab * dz.at(4) - Zab * dx.at(4)});
      //
-     //     vM.at(i) = M;
-     //
      //
      kappa = computeCurvatureFromMoment(M);
      dMdKappa = computeDerMomentFromCurvature(kappa);
      dkappa = dM / dMdKappa;
-     phi.at(i) = phi_mid + 0.5 * kappa * dxi;
+     this->phi.at(i) = phi_mid + 0.5 * kappa * dxi;
      dphi = dphi_mid + 0.5 * dxi * dkappa;
+     // store variables for postprocessing
+     this->vKappa.at(i) = kappa;
+     this->vM.at(i) = M;
+     //
+     
    }
    // right end displacements
    FloatArrayF<3> xb;
@@ -879,12 +817,14 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
    double tBax, tBaz;
    double m = this->computeLoadAt(Px, Pz, tBax, tBaz,  tStep);
    // initial configuration
-   x.at(1) = xa.at(1);
-   z.at(1) = xa.at(2);
-   phi.at(1) = xa.at(3) - alpha;
+   this->x.at(1) = xa.at(1);
+   this->z.at(1) = xa.at(2);
+   this->phi.at(1) = xa.at(3) - alpha;
    //
    double Xab = fa.at(1), Zab = fa.at(2), Mab = fa.at(3);
-   //this->vM.at(1) = -Mab;
+   // store variables for postprocessing
+   this->s.at(1) = 0.;
+   this->vM.at(1) = -Mab;
    //
    FloatArray dx(4), dz(4), dphi(3);
    dphi  = {0,0,0,1};
@@ -902,7 +842,7 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
    //
    auto chi_mid = 0.;
    for (int i=2; i <= NIP+1; i++) {
-     //this->s.at(i) = this->s.at(i-1) + ds;
+     this->s.at(i) = this->s.at(i-1) + dxi;
      //
      double kappa = computeCurvatureFromMoment(M);
      double dMdKappa = computeDerMomentFromCurvature(kappa);
@@ -933,6 +873,9 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
 	 OOFEM_ERROR("Maximum number of iteraton for calculation of chi reached");
        }
      }
+     // store variables for postprocessing
+     this->vN.at(i-1) = N_mid;
+     this->vQ.at(i-1) = Q_mid;
      // linearization
      auto denom  = (GAs + lambda_mid * N_mid - Q_mid * Q_mid / EA);
      auto dchi_mid = (lambda_mid * N_mid - Q_mid * Q_mid / EA) * dphi_mid;
@@ -944,9 +887,10 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
      dN_mid.at(1) += - c;
      dN_mid.at(2) +=   s;
      // not needed ?
-     auto dQ_mid = N_mid * (dphi_mid - dchi_mid);
+     /*     auto dQ_mid = N_mid * (dphi_mid - dchi_mid);
      dQ_mid.at(1) += - s;
      dQ_mid.at(2) += - c;
+     */
      //
      auto dLambda_mid = dN_mid / EA;
      //
@@ -958,10 +902,10 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
      FloatArray ddz;
      ddz = (- s * dLambda_mid - c * lambda_mid * ( dphi_mid - dchi_mid ) ) * dxi;
      //
-     x.at(i) = x.at(i-1) + delta_x;
+     this->x.at(i) = this->x.at(i-1) + delta_x;
      dx += ddx;
      //
-     z.at(i) = z.at(i-1) + delta_z;
+     this->z.at(i) = this->z.at(i-1) + delta_z;
      dz += ddz;
      //
      Mp += - m * dxi + Px.at(i-1) * delta_z - Pz.at(i-1) * delta_x;
@@ -971,14 +915,15 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
      //
      dM = dMp + FloatArray({z.at(i)-z.at(1) + Xab * dz.at(1) - Zab * dx.at(1), -x.at(i) + x.at(1) + Xab * dz.at(2) - Zab * dx.at(2), -1. + Xab * dz.at(3) - Zab * dx.at(3), Xab * dz.at(4) - Zab * dx.at(4)});
      //
-     //     vM.at(i) = M;
-     //
      //
      kappa = computeCurvatureFromMoment(M);
      dMdKappa = computeDerMomentFromCurvature(kappa);
      dkappa = dM / dMdKappa;
-     phi.at(i) = phi_mid + 0.5 * kappa * dxi;
+     this->phi.at(i) = phi_mid + 0.5 * kappa * dxi;
      dphi = dphi_mid + 0.5 * dxi * dkappa;
+     // store variables for postprocessing
+     vM.at(i) = M;
+     vKappa.at(i) = kappa;
    }
    // right end displacements
    FloatArrayF<3> xb;
@@ -994,7 +939,6 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
    Gr.at(2) = dz.at(4);
    Gr.at(3) = dphi.at(4);
    return {xb, FloatMatrixF<3,3> (G), Gr, Mp+Mm, FloatArrayF<4> (dMp+dMm)};
-
  }
 
   

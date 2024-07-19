@@ -277,7 +277,21 @@ public:
     /// Prints receiver to stdout. Works only for relatively small matrices.
     virtual void printYourself() const { OOFEM_LOG_INFO("Not implemented file %s, line %d\n", __FILE__, __LINE__); }
     /// Helpful for debugging, writes the matrix to given file.
-    virtual void writeToFile(const char *fname) const { OOFEM_LOG_INFO("Not implemented file %s, line %d\n", __FILE__, __LINE__); }
+    virtual void writeToFile(const char *fname) const 
+    {
+      FILE *file = fopen(fname, "w");
+      FloatMatrix copy;
+      this->toFloatMatrix(copy);
+      fprintf( file, "[  ");
+      for ( int i = 1; i <= nRows; ++i ) {
+        for ( int j = 1; j <= nColumns; ++j ) {
+	  fprintf( file, "%.16e ", copy.at(i, j) );
+        }
+        fprintf(file, ";\n");
+      }
+      fprintf( file, "];  ");
+      fclose(file);
+    }
     /// Sparse matrix type identification
     virtual SparseMtrxType giveType() const = 0;
     /// Returns true if asymmetric

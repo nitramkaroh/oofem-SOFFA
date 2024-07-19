@@ -40,6 +40,7 @@
 #include "Elements/nlstructuralelement.h"
 #include "scalarfunction.h"
 #include "vtkxmlexportmodule.h"
+#include "elementmatlabexportmoduleinterface.h"
 #include "floatarrayf.h"
 
 
@@ -68,6 +69,7 @@
 
 
 #define _IFT_NlBeam_SM_num "num"
+#define _IFT_NlBeam_SM_sym "sym"
 
 
 
@@ -88,7 +90,7 @@ namespace oofem {
  * The shooting method is used to calculate internal forces and stiffness matrix
  * Add more description 
  */
-  class NlBeam_SM : public NLStructuralElement, public VTKXMLExportModuleElementInterface
+  class NlBeam_SM : public NLStructuralElement, public VTKXMLExportModuleElementInterface, public ElementMatlabExportModuleInterface
 {
 protected:
   int NIP = 100;
@@ -107,7 +109,7 @@ protected:
    // loadtime function associated with the given loading
   int Ba_ltf;
   //
-  FloatArray x, z, phi;
+  FloatArray x, z, phi, vKappa, s;
   // angle of inclincation
   double alpha;
   // loading
@@ -115,8 +117,9 @@ protected:
   double M;
   // loadtime function associated with the given loading
   int fx_ltf, fz_ltf, m_ltf;
-  //
+  // testing parameters
   bool num = false;
+  bool sym = false;
   // storing internal forces for postrocessing purposes
   FloatArray vM, vQ, vN;
     
@@ -152,7 +155,8 @@ public:
   void computeConstitutiveMatrixAt(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override {OOFEM_ERROR("Shouldn't be called");}
   void computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override {OOFEM_ERROR("Shouldn't be called");}
   /////////////////////////////////////////////////////////////////////////
-  
+  void doMatlabOutput(std::string fileName) override;
+
 protected:
   /**
      Material mode is beam 2d
