@@ -732,8 +732,8 @@ NlBeam_Reissner :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa
      //
      double c = cos(phi_mid);
      double s = sin(phi_mid);
-     double N_mid = - c * (Xab + Px.at(i)) + s * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBax - s * tBaz);
-     double Q_mid = - s * (Xab + Px.at(i)) - c * (Zab + Pz.at(i)) + FBrx.at(i) * ( c * tBaz + s * tBax);
+     double N_mid = - c * (Xab + Px.at(i-1)) + s * (Zab + Pz.at(i-1)) + FBrx.at(i) * ( c * tBax - s * tBaz);
+     double Q_mid = - s * (Xab + Px.at(i-1)) - c * (Zab + Pz.at(i-1)) + FBrx.at(i) * ( c * tBaz + s * tBax);
      // store variables for postprocessing
      this->vN.at(i-1) = N_mid;
      this->vQ.at(i-1) = Q_mid;
@@ -857,8 +857,8 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
        iter++;
        c = cos(phi_mid - chi_mid);
        s = sin(phi_mid - chi_mid);
-       N_mid = - c * (Xab + Px.at(i)) + s * (Zab + Pz.at(i));
-       Q_mid = - s * (Xab + Px.at(i)) - c * (Zab + Pz.at(i));
+       N_mid = - c * (Xab + Px.at(i-1)) + s * (Zab + Pz.at(i-1));
+       Q_mid = - s * (Xab + Px.at(i-1)) - c * (Zab + Pz.at(i-1));
        //
        lambda_mid = 1 + N_mid / EA;
        //

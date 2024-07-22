@@ -107,7 +107,7 @@ protected:
   double Btildax, Btildaz;
   FloatArray FBrx, FBrz;
    // loadtime function associated with the given loading
-  int Ba_ltf;
+  int Ba_ltf = 0;
   //
   FloatArray x, z, phi, vKappa, s;
   // angle of inclincation
@@ -116,7 +116,7 @@ protected:
   FloatArray Fx, Fz;
   double M;
   // loadtime function associated with the given loading
-  int fx_ltf, fz_ltf, m_ltf;
+  int fx_ltf = 0, fz_ltf = 0, m_ltf = 0;
   // testing parameters
   bool num = false;
   bool sym = false;
