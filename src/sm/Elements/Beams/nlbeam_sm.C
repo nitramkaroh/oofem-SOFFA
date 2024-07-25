@@ -255,7 +255,7 @@ std::tuple<bool,FloatArrayF<3>, double>
    fa = this->internalForces;
    FloatArray xa = x[{0,1,2}];
    FloatArray xb_target = x[{3,4,5}];
-   
+  
    if(xb_target.computeNorm() > 1.e-10) {
      tolerance *= xb_target.computeNorm();
    }
@@ -790,7 +790,7 @@ NlBeam_Reissner :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa
    }
    // right end displacements
    FloatArrayF<3> xb;
-   xb.at(1) = x.at(NIP+1); xb.at(2) = z.at(NIP+1); xb.at(3) = phi.at(NIP+1);
+   xb.at(1) = x.at(NIP+1); xb.at(2) = z.at(NIP+1); xb.at(3) = phi.at(NIP+1) + alpha;
    // jacobi matrix G
    FloatMatrix G(3,3);
    G.copySubVectorRow(FloatArray({dx.at(1), dx.at(2), dx.at(3)}), 1,1);
@@ -927,7 +927,7 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
    }
    // right end displacements
    FloatArrayF<3> xb;
-   xb.at(1) = x.at(NIP+1); xb.at(2) = z.at(NIP+1); xb.at(3) = phi.at(NIP+1);
+   xb.at(1) = x.at(NIP+1); xb.at(2) = z.at(NIP+1); xb.at(3) = phi.at(NIP+1) + alpha;
    // jacobi matrix G
    FloatMatrix G(3,3);
    G.copySubVectorRow(FloatArray({dx.at(1), dx.at(2), dx.at(3)}), 1,1);
