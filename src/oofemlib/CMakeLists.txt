@@ -194,6 +194,8 @@ set (core_export
     matlabexportmodule.C
     gpexportmodule.C
     solutionstatusexportmodule.C
+    elementmatlabexportmodule.C
+    stiffnessexportmodule.C
     )
 
 set (core_monitors

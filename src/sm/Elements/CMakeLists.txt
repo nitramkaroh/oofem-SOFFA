@@ -36,6 +36,7 @@ set (sm_element
     Beams/beambaseelement.C
     Beams/beam2d.C 
     Beams/beam3d.C
+    Beams/nlbeam_sm.C
     Beams/libeam3dboundary.C
     Beams/libeam3dboundarytruss.C
     Beams/libeam3dboundarymembrane.C
@@ -129,7 +130,7 @@ set (sm_element
     structural3delement.C
     #phasefieldelement.C
     #qplanstrssphf.C
-	nlstructuralsurfaceelement.C
+    	nlstructuralsurfaceelement.C
 	structural3dsurfaceelement.C
 	structural2dsurfaceelement.C
 	#surface elements

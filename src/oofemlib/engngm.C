@@ -1605,6 +1605,14 @@ EngngModel :: updateComponent(TimeStep *tStep, NumericalCmpn cmpn, Domain *d)
 
 
 void
+EngngModel :: writeComponentToFile(const char *fname, TimeStep *tStep, NumericalCmpn cmpn, Domain *d)
+{
+    OOFEM_ERROR("Unknown Type of component.");
+}
+
+
+
+void
 EngngModel :: updateSolution(FloatArray &solutionVector, TimeStep *tStep, Domain *d)
 {
     OOFEM_ERROR("updateSolution is not implemented.");
