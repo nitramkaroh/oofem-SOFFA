@@ -100,6 +100,10 @@ protected:
     double alpha = 10;
     int ncv0 = 160;
     bool choleskyBif = false;
+    bool deflationBifurcation = false;
+
+    // for deflation bifurcation
+    FloatArray x0_Defl, dx_Defl; 
 
 public:
     /**
@@ -123,6 +127,14 @@ public:
 
     void setBifurcation( bool doBif ) { this->bifurcation = doBif; }
     void setCholesky( bool doChol ) { this->choleskyBif = doChol; }
+    void setDeflation( bool doDeflation ) { this->deflationBifurcation = doDeflation; }
+    void setX0Defl( FloatArray x0 ) { this->x0_Defl = x0; }
+    void compute_dx_defl( FloatArray xcurr ) { 
+        this->dx_Defl = xcurr - this->x0_Defl; 
+    }
+    FloatArray& giveX0Defl() { return this->x0_Defl; }
+
+
     bool getBifurcation() const { return this->bifurcation; }
     void setAlpha(double alphaNew ) { this->alpha = alphaNew; }
     void setNcv0( double ncv0new ) { this->ncv0 = ncv0new; }

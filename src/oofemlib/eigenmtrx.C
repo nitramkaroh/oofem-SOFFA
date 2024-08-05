@@ -41,6 +41,7 @@
 #include "sparsemtrxtype.h"
 #include "activebc.h"
 #include "classfactory.h"
+#include <iostream>
 
 #include <set>
 
@@ -277,5 +278,11 @@ void EigenMtrx::computeFactorization( FactorizationType factorizationType )
     this->areFactorized[factorizationType] = true;
 }
 
+
+void EigenMtrx::printYourself() const{
+    // xreate dense matrix
+    auto denseMat = Eigen::MatrixXd( this->EigMat );
+    std::cout << denseMat << std::endl;
+}
 
 } // end namespace oofem

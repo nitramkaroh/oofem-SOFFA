@@ -138,8 +138,8 @@ public:
     void zero() override;
     double &at( int i, int j ) override;
     double at( int i, int j ) const override;
-    /*void toFloatMatrix( FloatMatrix &answer ) const override;
-    void printYourself() const override;*/
+    /*void toFloatMatrix( FloatMatrix &answer ) const override;*/
+    void printYourself() const override;
     const char *giveClassName() const override { return "EigenMtrx"; }
     SparseMtrxType giveType() const override { return SMT_EigenMtrx; }
     bool isAsymmetric() const override { return true; }

@@ -118,24 +118,40 @@ void EigenSolverStability::solveLDLT( Eigen::SparseMatrix<double> &A, const Eige
 
     x = A_factorization.solve( b ); // Solve the system
 
-    //OOFEM_LOG_INFO( "lam_min = %.4f\n", minLam );
+    //OOFEM_LOG_INFO( "lam_min = %.4f\n", minLam );/
 
     if ( negEig ) {
         isSingular = true;
         OOFEM_LOG_INFO( "Negative eigenvalue\n" );
     }
 
-    if ( minLam < 0. && this->bifurcation ) { // if negative eigen value, compute eigenvectors and perturbe the solution
+    if ( (minLam < 0. || this->deflationBifurcation) && this->bifurcation ) { // if negative eigen value, compute eigenvectors and perturbe the solution
         if ( this->choleskyBif ) { // using cholesky
             negEig = A_factorization.updateD( minLam, true, numNegEigs );
             x      = A_factorization.solve( b ); // Solve the system
             //this->setBifurcation( false );
+        } 
+        else if ( this->deflationBifurcation ) {
+            //Eigen::VectorXd xold = A_factorization.solve( b );
+            FloatArray xoldFA  = FloatArray( x.begin(), x.end() );
+            int p = 2;
+            double alph_defl = 1.;
+            double dx_norm  = this->dx_Defl.computeNorm();
+            /*double gamma = p / (pow( dx_norm, p + 2 ) * ( 1/pow( dx_norm, p ) + alph_defl ));*/
+            double gamma = p / ( dx_norm * dx_norm  + alph_defl * pow( dx_norm, p + 2 ) );
+            
+            // apply Sherman-Morrison
+            double vt_xold = this->dx_Defl.dotProduct( xoldFA );
+            x = x*( 1 - gamma * vt_xold / ( 1 + gamma * vt_xold ) ); 
+
+        
         }
         else { // Spectra eigenvector bifurcation
             Spectra::SparseSymMatProd<double> op( A );
-            // int neigs = numNegEigs;
+            // int neigs = numNegEigs;0
             int neigs      = 1;
-            int ncv        = this->ncv0;
+            int Asize      = A.rows();
+            int ncv        = std::min( this->ncv0, Asize );
             int nconv      = 0; // number of converged eigenvalues
             int maxTrials  = 5;
             int count      = 0;
