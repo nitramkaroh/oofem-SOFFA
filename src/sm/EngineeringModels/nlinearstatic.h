@@ -87,7 +87,7 @@ enum NonLinearStatic_controlType {
  * - Interfacing Numerical method to Elements.
  * - Managing time steps.
  */
-class NonLinearStatic : public LinearStatic
+  class NonLinearStatic : public LinearStatic
 {
 protected:
     double prevStepLength, currentStepLength;
@@ -185,6 +185,8 @@ public:
     LoadBalancerMonitor *giveLoadBalancerMonitor() override;
 
 #endif
+  void writeComponentToFile(const char *fname, TimeStep *tStep, NumericalCmpn cmpn, Domain *d) override;
+
 
 protected:
     void assemble(SparseMtrx &answer, TimeStep *tStep, const MatrixAssembler &ma,

@@ -138,7 +138,7 @@ public:
     int giveNumberOfNonZeros() const { return this->mtrx.giveSize(); }
     void toFloatMatrix(FloatMatrix &answer) const override;
     void printYourself() const override;
-    void writeToFile(const char *fname) const override;
+    //void writeToFile(const char *fname) const override;
     int giveAllocatedSize() { return this->mtrx.giveSize(); }
 
     SparseMtrxType giveType() const override { return SMT_Skyline; }

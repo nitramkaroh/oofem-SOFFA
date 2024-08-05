@@ -88,7 +88,7 @@ public:
     void toFloatMatrix(FloatMatrix &answer) const override;
     void printYourself() const override;
     void printStatistics() const override;
-    void writeToFile(const char *fname) const override;
+    //void writeToFile(const char *fname) const override;
     SparseMtrxType giveType() const override { return SMT_SkylineU; }
     bool isAsymmetric() const override { return true; }
     const char *giveClassName() const override { return "SkylineU"; }

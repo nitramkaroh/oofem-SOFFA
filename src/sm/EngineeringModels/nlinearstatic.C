@@ -668,6 +668,31 @@ NonLinearStatic :: updateComponent(TimeStep *tStep, NumericalCmpn cmpn, Domain *
 }
 
 
+
+void
+NonLinearStatic :: writeComponentToFile(const char *fname, TimeStep *tStep, NumericalCmpn cmpn, Domain *d)
+//
+// updates some component, which is used by numerical method
+// to newly reached state. used mainly by numerical method
+// when new tangent stiffness is needed during finding
+// of new equilibrium stage.
+//
+{
+    switch ( cmpn ) {
+    case NonLinearLhs:
+      //updating firs as it could be destroyed while solving  -does it lead to the right matrix?
+      this->updateComponent(tStep, cmpn, d);
+     stiffnessMatrix->writeToFile(fname);
+        break;
+    default:
+        OOFEM_ERROR("Unknown Type of component for writing in a file.");
+    }
+}
+
+
+
+
+
 void
 NonLinearStatic :: printOutputAt(FILE *file, TimeStep *tStep)
 {

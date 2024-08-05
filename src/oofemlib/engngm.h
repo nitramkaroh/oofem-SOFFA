@@ -791,6 +791,8 @@ public:
      */
     std :: string giveDomainFileName(int domainNum, int domainSerNum) const;
     virtual void updateComponent(TimeStep *tStep, NumericalCmpn cmpn, Domain *d);
+    virtual void writeComponentToFile(const char *fname, TimeStep *tStep, NumericalCmpn cmpn, Domain *d);
+
     /**
      * Updates the solution (guess) according to the new values.
      * Callback for nonlinear solvers (e.g. Newton-Raphson), and are called before new internal forces are computed.
