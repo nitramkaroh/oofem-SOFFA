@@ -46,6 +46,7 @@
 #define _IFT_MooneyRivlinHardMagnetic_B_app "B_app"
 #define _IFT_MooneyRivlinHardMagnetic_B_res "B_res"
 #define _IFT_MooneyRivlinHardMagnetic_mu_0 "mu_0"
+#define _IFT_MooneyRivlinHardMagnetic_ltf "ltf"
 //@}
 
 namespace oofem {
@@ -63,6 +64,7 @@ protected:
     FloatArrayF<3> B_app;
     FloatArrayF<3> B_res;
     double mu_0;
+    int ltf_index;
 
 public:
     MooneyRivlinHardMagnetic( int n, Domain *d ) :

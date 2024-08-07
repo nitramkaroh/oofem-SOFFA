@@ -37,6 +37,8 @@
 #include "floatarray.h"
 #include "classfactory.h"
 #include "mathfem.h"
+#include "domain.h"
+#include "function.h"
 
 
 
@@ -54,9 +56,12 @@ MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d( const FloatArrayF<9> &vF, 
     // calculate the magnetoelastic 1PK
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
 
+    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    FloatArrayF<3> B_app_at_time = load_level * B_app;
+
     Tensor2_3d F( vF ), P_me, delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
     
-    Tensor1_3d Bapp( B_app ), Bres( B_res );
+    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res );
     auto [J, cofF] = F.compute_determinant_and_cofactor();
 
 
@@ -88,12 +93,16 @@ MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF( MatResponseMode mo
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
     FloatArrayF<9> vF( status->giveTempFVector() );
 
+    
+    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    FloatArrayF<3> B_app_at_time = load_level * B_app;
+
     Tensor2_3d F( vF );
     Tensor4_3d D_me;
 
     Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
 
-    Tensor1_3d Bapp ( B_app ), Bres( B_res );
+    Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res );
     auto [J, cofF] = F.compute_determinant_and_cofactor();
 
     D_me( k_3, l_3, p_3, q_3 ) = (1/(J*J*J*mu_0)) * ( Bapp(i_3) - 2.0 * Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bapp(j_3)*cofF(k_3, l_3)*cofF(p_3, q_3)
@@ -120,6 +129,7 @@ void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
     IR_GIVE_FIELD( ir, B_app_temp, _IFT_MooneyRivlinHardMagnetic_B_app );
     IR_GIVE_FIELD( ir, B_res_temp, _IFT_MooneyRivlinHardMagnetic_B_res );
     IR_GIVE_FIELD( ir, mu_0, _IFT_MooneyRivlinHardMagnetic_mu_0 );
+    IR_GIVE_FIELD( ir, ltf_index, _IFT_MooneyRivlinHardMagnetic_ltf );
 
     B_app = FloatArrayF<3>( B_app_temp );
     B_res = FloatArrayF<3>( B_res_temp );
