@@ -42,9 +42,9 @@
 
 ///@name Input fields for MooneyRivlinHardMagnetic
 //@{
-#define _IFT_MooneyRivlinHardMagnetic_Name "mooneyrivlincompressiblemat"
-#define _IFT_MooneyRivlinHardMagnetic_B_app "B_app"
-#define _IFT_MooneyRivlinHardMagnetic_B_res "B_res"
+#define _IFT_MooneyRivlinHardMagnetic_Name "mooneyrivlinhardmagnetic"
+#define _IFT_MooneyRivlinHardMagnetic_B_app "b_app"
+#define _IFT_MooneyRivlinHardMagnetic_B_res "b_res"
 #define _IFT_MooneyRivlinHardMagnetic_mu_0 "mu_0"
 #define _IFT_MooneyRivlinHardMagnetic_ltf "ltf"
 //@}
