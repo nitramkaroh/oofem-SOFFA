@@ -98,12 +98,17 @@ class OOFEM_EXPORT EigenSolverStability : public EigenSolver
 protected:
     bool bifurcation = false;
     double alpha = 10;
-    int ncv0 = 160;
+    int ncv0 = 5;
     bool choleskyBif = false;
     bool deflationBifurcation = false;
 
     // for deflation bifurcation
     FloatArray x0_Defl, dx_Defl; 
+
+    // Saved eigenvectors and eigenvalues
+    FloatArray eigenvalues; // stored eigenvalues
+    FloatMatrix evectors; // stored eigenvectors
+    FloatArray Xeigs; // computed at X
 
 public:
     /**
@@ -121,9 +126,10 @@ public:
     ConvergedReason solve( SparseMtrx &A, FloatArray &b, FloatArray &x ) override;
 
     //virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x ) override;
-    void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, SimplicialLDLTderived<Eigen::SparseMatrix<double> >& ldlt );
+    //void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, SimplicialLDLTderived<Eigen::SparseMatrix<double> >& ldlt );
+    void solveLDLT( EigenMtrx &A, const Eigen::VectorXd &b, Eigen::VectorXd &x);
     bool checkPD( SparseMtrx &A );
-    ConvergedReason solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x );
+    //ConvergedReason solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x );
 
     void setBifurcation( bool doBif ) { this->bifurcation = doBif; }
     void setCholesky( bool doChol ) { this->choleskyBif = doChol; }
@@ -144,7 +150,20 @@ public:
     LinSystSolverType giveLinSystSolverType() const override { return ST_EigenStability; }
     SparseMtrxType giveRecommendedMatrix( bool symmetric ) const override { return SMT_EigenMtrx; }
 
+    int computeEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &evaluesFA, FloatMatrix &evectorsFM );
+    void storeEigenValuesVectors( FloatArray &evaluesFA, FloatMatrix &evectorsFM, FloatArray &Xeigs ) {
+        this->eigenvalues = evaluesFA; 
+        this->evectors  = evectorsFM; 
+        this->Xeigs  = Xeigs; 
+    }
 
+    FloatMatrix &getEigenVectors() { return this->evectors; };
+
+    FloatArray &getEigenValues() { return this->eigenvalues; };
+
+    FloatArray &getXeigs() { return this->Xeigs; };
+
+    void setEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &Xeigs );
 };
 } // end namespace oofem
-#endif // eigensolver_h
+#endif // eigensolver_hj

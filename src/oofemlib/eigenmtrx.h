@@ -39,6 +39,7 @@
 
 #include "sparsemtrx.h"
 #include "intarray.h"
+#include <Eigen/Dense>
 
 #include <Eigen/Sparse>
 
@@ -165,6 +166,7 @@ public:
     
     bool isFactorized( FactorizationType factorizationType );
 
+    void times( const FloatArray &x, FloatArray &answer ) const override;
 };
 } // end namespace oofem
 #endif // eigenmtrx_h

@@ -80,7 +80,7 @@ ConvergedReason EigenSolverStability ::solve( SparseMtrx &A, FloatArray &b, Floa
 
     EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &A );
 
-    Eigen::SparseMatrix<double> A_eig = Ae->giveMatrix();
+    //Eigen::SparseMatrix<double> A_eig = Ae->giveMatrix();
 
     // Construct right hand side vetor
     Eigen::VectorXd b_eig = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( b.givePointer(), neqs );
@@ -91,13 +91,13 @@ ConvergedReason EigenSolverStability ::solve( SparseMtrx &A, FloatArray &b, Floa
     Eigen::VectorXd x_eig; // Allocate vector of RHS
 
     // Create factorization
-    SimplicialLDLTderived<Eigen::SparseMatrix<double> >& A_factorization_cast = Ae->giveLDLTFactorization(); // compute factorization and get it
+    //SimplicialLDLTderived<Eigen::SparseMatrix<double> >& A_factorization_cast = Ae->giveLDLTFactorization(); // compute factorization and get it
    
     //// Why doesnt work?
     //Eigen::SparseSolverBase<SimplicialLDLTderived<Eigen::SparseMatrix<double> > >* A_factorization = Ae->giveFactorization<SimplicialLDLTderived<Eigen::SparseMatrix<double> > >( FT_LDLT );
     //SimplicialLDLTderived<Eigen::SparseMatrix<double> > *A_factorization_cast   = dynamic_cast<SimplicialLDLTderived<Eigen::SparseMatrix<double> > *>( A_factorization );
 
-    this->solveLDLT( A_eig, b_eig, x_eig, A_factorization_cast );
+    this->solveLDLT( *Ae, b_eig, x_eig );
 
 
     // Copy/move values to FloatArray x
@@ -109,117 +109,49 @@ ConvergedReason EigenSolverStability ::solve( SparseMtrx &A, FloatArray &b, Floa
     return CR_CONVERGED;
 }
 
-void EigenSolverStability::solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, SimplicialLDLTderived<Eigen::SparseMatrix<double> > &A_factorization )
+void EigenSolverStability::solveLDLT( EigenMtrx &Ae, const Eigen::VectorXd &b, Eigen::VectorXd &x)
 {
-    double minLam = 0.;
-    bool negEig   = false;
-    int numNegEigs = 0;
-    negEig = A_factorization.updateD( minLam, false, numNegEigs );
+    // Get the matrix and LDLT factorization
+    Eigen::SparseMatrix<double> A = Ae.giveMatrix();
 
-    x = A_factorization.solve( b ); // Solve the system
-
-    //OOFEM_LOG_INFO( "lam_min = %.4f\n", minLam );/
-
-    if ( negEig ) {
-        isSingular = true;
-        OOFEM_LOG_INFO( "Negative eigenvalue\n" );
-    }
-
-    if ( (minLam < 0. || this->deflationBifurcation) && this->bifurcation ) { // if negative eigen value, compute eigenvectors and perturbe the solution
+    if (this->bifurcation ) { // if bifurcatuion should be performed
         if ( this->choleskyBif ) { // using cholesky
+            double minLam = 0.;
+            bool negEig = false;
+            int numNegEigs = 0;
+            SimplicialLDLTderived<Eigen::SparseMatrix<double> > &A_factorization = Ae.giveLDLTFactorization(); // compute factorization and get it
             negEig = A_factorization.updateD( minLam, true, numNegEigs );
+            OOFEM_LOG_INFO( "numNegEigs = %i\n", numNegEigs );
             x      = A_factorization.solve( b ); // Solve the system
             //this->setBifurcation( false );
         } 
         else if ( this->deflationBifurcation ) {
-            //Eigen::VectorXd xold = A_factorization.solve( b );
+            Eigen::SparseLU<Eigen::SparseMatrix<double> > A_LU_factorization( A );
+            x = A_LU_factorization.solve( b ); // Compute x using LU factorization
+
             FloatArray xoldFA  = FloatArray( x.begin(), x.end() );
             int p = 2;
             double alph_defl = 1.;
             double dx_norm  = this->dx_Defl.computeNorm();
-            /*double gamma = p / (pow( dx_norm, p + 2 ) * ( 1/pow( dx_norm, p ) + alph_defl ));*/
             double gamma = p / ( dx_norm * dx_norm  + alph_defl * pow( dx_norm, p + 2 ) );
             
             // apply Sherman-Morrison
             double vt_xold = this->dx_Defl.dotProduct( xoldFA );
             x = x*( 1 - gamma * vt_xold / ( 1 + gamma * vt_xold ) ); 
-
-        
         }
         else { // Spectra eigenvector bifurcation
-            Spectra::SparseSymMatProd<double> op( A );
-            // int neigs = numNegEigs;0
-            int neigs      = 1;
-            int Asize      = A.rows();
-            int ncv        = std::min( this->ncv0, Asize );
-            int nconv      = 0; // number of converged eigenvalues
-            int maxTrials  = 5;
-            int count      = 0;
-            double ncvMult = 2;
-            while ( nconv == 0 && count < maxTrials ) { // if ncv is too small, increase it ti find solution
-                Spectra::SymEigsSolver<Spectra::SparseSymMatProd<double> > eigs( op, neigs, ncv );
-                eigs.init();
-                nconv = eigs.compute( Spectra::SortRule::SmallestAlge ); // Compute eigenvalues
-                if ( eigs.info() == Spectra::CompInfo::Successful ) { // If succesfull, retrieve results
-                    this->setNcv0( ncv );
-                    // allocate some objects
-                    Eigen::VectorXd evalues, evector, xmod;
-                    Eigen::MatrixXd evectors;
-                    FloatArray evaluesFA, evectorFA, xFA, evectorFAmax;
-                    FloatMatrix evectorsFM;
-                    double xdotx2, vdotx2;
+            FloatArray evectorFAmax, xFA;
+            this->getEigenVectors().copyColumn( evectorFAmax, this->getEigenVectors().giveNumberOfColumns() ); // Chosen eigenvector in array
 
-                    evalues   = eigs.eigenvalues();
-                    evaluesFA = FloatArray( evalues.begin(), evalues.end() ); // eigenvalues in floatarray
-
-                    int indMin = evaluesFA.giveSize();
-
-                    OOFEM_LOG_INFO( "lam = " ); // print eigenvalues
-                    evaluesFA.printYourself();
-                    OOFEM_LOG_INFO( "\n" );
-
-                    evectors  = eigs.eigenvectors(); // vectors in matrix
-                    evector   = Eigen::Map<Eigen::VectorXd>( evectors.data(), evectors.cols() * evectors.rows() ); // map to vector
-                    evectorFA = FloatArray( evector.begin(), evector.end() ); // eigenvectors in floatarray
-
-                    // eigenvectors in float matrix
-                    evectorsFM.resize( evectors.rows(), neigs );
-                    for ( size_t j = 0; j < neigs; j++ ) {
-                        for ( size_t k = 0; k < evectors.rows(); k++ ) {
-                            evectorsFM.at( k + 1, j + 1 ) = evectorFA.at( k + 1 + evectors.rows() * j ); // Eigenvectors to float matrix
-                        }
-                    }
-                    evectorsFM.copyColumn( evectorFAmax, indMin ); // Chosen 1 eigenvector in array
-
-
-                    // perturbate the solution by the eigenvector
-                    xFA = this->alpha * evectorFAmax;
-                    x   = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( xFA.givePointer(), xFA.giveSize() );
-
-                    //// incorporate the instable solution
-                    // xFA    = FloatArray( x.begin(), x.end() ); // the instable solution
-                    // xdotx2 = xFA.dotProduct( xFA );
-                    // vdotx2 = evectorFAmax.dotProduct( xFA );
-                    //  if ( abs( evaluesFA.at( indMin ) ) > 1e-6 ) {
-                    //  double alpha = 1 / sqrt( xdotx2 - vdotx2 * vdotx2 );
-                    //  xFA          = alpha * ( vdotx2 * xFA - xdotx2 * evectorFAmax );
-                    //  double alpha = 3e1;
-                    // xFA = this->alpha * evectorFAmax;
-                    // x   = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( xFA.givePointer(), xFA.giveSize() );
-                    // }
-
-                    this->setBifurcation( false );
-
-                } else { // if not succesfull
-                    count++;
-                    ncv = (int)ncvMult * ncv; // Increase ncv
-                    OOFEM_LOG_INFO( "eigenvalues not found\n" );
-                    OOFEM_LOG_INFO( "ncv =  %i\n", ncv );
-                    this->setBifurcation( false );
-                }
-            }
+            // perturbate the solution by the eigenvector
+            xFA = this->alpha * evectorFAmax;
+            x   = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( xFA.givePointer(), xFA.giveSize() );
+            this->setBifurcation( false );
         }        
-    } 
+    } else {
+        SimplicialLDLTderived<Eigen::SparseMatrix<double> > &A_factorization = Ae.giveLDLTFactorization(); // compute factorization and get it
+        x = A_factorization.solve( b ); 
+    }
 }
 
 bool EigenSolverStability::checkPD( SparseMtrx &A )
@@ -230,48 +162,98 @@ bool EigenSolverStability::checkPD( SparseMtrx &A )
     SimplicialLDLTderived<Eigen::SparseMatrix<double> >& A_factorization = Ae->giveLDLTFactorization();
 
     double minLam  = 0.;
-    bool negEig    = false;
+    bool negEig;
     int numNegEigs = 0;
-    negEig         = A_factorization.updateD( minLam, false, numNegEigs );
+    negEig = A_factorization.updateD( minLam, false, numNegEigs );
 
     return !negEig;
 }
 
-ConvergedReason EigenSolverStability ::solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x )
+//ConvergedReason EigenSolverStability ::solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x )
+//{
+//    int neqs = b.giveSize(); // Number of equations
+//    EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &A );
+//    Eigen::VectorXd x_eig; // Allocate vector of RHS
+//
+//    // Construct right hand side vetor
+//    Eigen::VectorXd b_eig = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( b.givePointer(), neqs );
+//
+//    Timer timer;
+//    timer.startTimer();
+//
+//    // Create factorization
+//    if ( method.compare( "ldlt" ) == 0 ) {
+//        this->setBifurcation( true );
+//        this->solveLDLT( *Ae, b_eig, x_eig );
+//
+//    } else {
+//        OOFEM_LOG_INFO( "Wrong factorization used, bifucration cannot be performed\n" );
+//    }
+//
+//    // Copy/move values to FloatArray x
+//    x = FloatArray( x_eig.begin(), x_eig.end() );
+//
+//    timer.stopTimer();
+//    OOFEM_LOG_INFO( "EigenSolver:  User time consumed by solution: %.2fs\n", timer.getUtime() );
+//
+//    return CR_CONVERGED;
+//}
+
+int EigenSolverStability ::computeEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &evaluesFA, FloatMatrix &evectorsFM )
 {
-    int neqs = b.giveSize(); // Number of equations
+    int neigs = 1, maxTrials = 5, ncvMult = 2, ncv = 200;// Predefined values, should be in input file
+    int nconv = 0, count = 0;
+  
+    int Asize = (int)A.rows();
+    Spectra::SparseSymMatProd<double> op( A );
 
-    EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &A );
+    evectorsFM.resize( Asize, neigs );
+    evaluesFA.resize( neigs );
 
-    Eigen::SparseMatrix<double> A_eig = Ae->giveMatrix();
+    while ( nconv == 0 && count < maxTrials ) { // if ncv is too small, increase it ti find solution 
+        int ncv2 = std::min( ncv, Asize );
+        Spectra::SymEigsSolver<Spectra::SparseSymMatProd<double> > eigs( op, neigs, ncv2 );
+        eigs.init();
 
-    // Construct right hand side vetor
-    Eigen::VectorXd b_eig = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( b.givePointer(), neqs );
+        nconv = eigs.compute( Spectra::SortRule::SmallestAlge ); // Compute eigenvalues
+        if ( eigs.info() == Spectra::CompInfo::Successful ) { // If succesfull, retrieve results
+            // allocate some objects
+            this->setNcv0( ncv );
+            Eigen::VectorXd evector;
+            Eigen::MatrixXd evectors;
+            FloatArray evectorFA;
+            evectorFA.resize( Asize * neigs );
 
-    Timer timer;
-    timer.startTimer();
+            Eigen::VectorXd evalues = eigs.eigenvalues();
+            evaluesFA               = FloatArray( evalues.begin(), evalues.end() ); // eigenvalues in floatarray
 
-    Eigen::VectorXd x_eig; // Allocate vector of RHS
+            evectors  = eigs.eigenvectors(); // vectors in matrix
+            evector   = Eigen::Map<Eigen::VectorXd>( evectors.data(), evectors.cols() * evectors.rows() ); // map to vector
+            evectorFA = FloatArray( evector.begin(), evector.end() ); // eigenvectors in floatarray
 
-    SimplicialLDLTderived<Eigen::SparseMatrix<double> >& A_factorization_cast = Ae->giveLDLTFactorization(); // compute factorization and get it
-
-    // Create factorization
-    if ( method.compare( "ldlt" ) == 0 ) {
-        this->setBifurcation( true );
-        this->solveLDLT( A_eig, b_eig, x_eig, A_factorization_cast );
-
-    } else {
-        OOFEM_LOG_INFO( "Wrong factorization used, bifucration cannot be performed\n" );
+            // eigenvectors in float matrix
+            for ( size_t j = 0; j < neigs; j++ ) {
+                for ( size_t k = 0; k < evectors.rows(); k++ ) {
+                    evectorsFM.at( k + 1, j + 1 ) = evectorFA.at( k + 1 + evectors.rows() * j ); // Eigenvectors to float matrix
+                }
+            }
+        } else { // if not succesfull
+            count++;
+            ncv = (int)ncvMult * ncv; // Increase ncv
+            OOFEM_LOG_INFO( "eigenvalues not found\n" );
+            OOFEM_LOG_INFO( "ncv =  %i\n", ncv );
+        }
     }
+    return nconv;
+}
 
-    // Copy/move values to FloatArray x
-    x = FloatArray( x_eig.begin(), x_eig.end() );
 
-
-    timer.stopTimer();
-    OOFEM_LOG_INFO( "EigenSolver:  User time consumed by solution: %.2fs\n", timer.getUtime() );
-
-    return CR_CONVERGED;
+void EigenSolverStability::setEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &Xeigs )
+{
+    FloatArray evaluesFA;
+    FloatMatrix evectorsFM;
+    int tmp = this->computeEigenValuesVectors( A, evaluesFA, evectorsFM );
+    this->storeEigenValuesVectors( evaluesFA, evectorsFM, Xeigs );
 }
 
 } // end namespace oofem

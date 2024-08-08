@@ -46,6 +46,8 @@
 #include "linesearch.h"
 #include "convergedreason.h"
 
+#include "eigensolverstability.h"
+
 #include <memory>
 #include <map>
 
@@ -195,6 +197,10 @@ public:
     }
 
     SparseLinearSystemNM *giveLinearSolver() override;
+
+    void performBifurcation( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, const FloatArray &internalForcesEBENorm,
+        referenceLoadInputModeType rlm, int &nite, TimeStep *tStep, FloatArray &rhs, bool &converged, FloatArray &RT, double &RRT,
+        bool &errorOutOfRangeFlag, EigenSolverStability *stabSolver, bool &isBifurcationSet, double &alphamax, double &alphaStability, FloatArray &ddX );
 
 protected:
     /// Constructs and returns a line search solver.

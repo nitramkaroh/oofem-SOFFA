@@ -49,7 +49,6 @@
 #include "parallelcontext.h"
 #include "unknownnumberingscheme.h"
 
-#include "eigensolverstability.h"
 
 #ifdef __PETSC_MODULE
  #include "petscsolver.h"
@@ -264,109 +263,34 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
     }
 
     nite = 0;
-    //////
-    // Set some parameters for bifurcation analysis, this should be done in input file
-    bool isBifurcationSet   = false;
-    int maxBifIte = 100;
-    int count = 0;
-    double alphaStability = 0.0001;
 
-    bool performBifurcation   = true; // Any bifurcation is on, eigenvectors are default
-    bool LDLTbif = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
-    bool deflationBifurcation = true; // only if deflation bifurcation if performed
-    //////
+    //////////////////
+    // bifurcatiuon modification
+    EigenSolverStability *stabSolver = dynamic_cast<EigenSolverStability *>( this->linSolver.get() ); // Check if eigen stability solver is used 
+    bool isBifurcationSet = false;
+    double alphaStability  = 0.0001; // eigenvector multiplicator
+    double alphamax        = 1e8;
+    //////////////////
+
     for ( nite = 0; ; ++nite ) {
         // Compute the residual
         engngModel->updateComponent(tStep, InternalRhs, domain);
+
         rhs.beDifferenceOf(RT, F);
 
         if ( this->prescribedDofsFlag ) {
             this->applyConstraintsToLoadIncrement(nite, k, rhs, rlm, tStep);
         }
-
+        
         // convergence check
-        converged = this->checkConvergence(RT, F, rhs, ddX, X, RRT, internalForcesEBENorm, nite, errorOutOfRangeFlag);
-
+        converged = this->checkConvergence( RT, F, rhs, ddX, X, RRT, internalForcesEBENorm, nite, errorOutOfRangeFlag);
+        
         //////////////////  
-        // bifurcation analysis modifications  
-        if ( this->linSolver->giveLinSystSolverType() == ST_EigenStability && performBifurcation ) {
-            EigenSolverStability *stabSolver = dynamic_cast<EigenSolverStability *>( this->linSolver.get() );
-            if ( deflationBifurcation && isBifurcationSet ) {
-                double dx_defl_Norm = ( X - stabSolver->giveX0Defl() ).computeNorm();
-                FloatArray rhs_mod  = rhs * ( 1 / dx_defl_Norm * dx_defl_Norm + 1 );
-                converged = this->checkConvergence( RT, F,rhs_mod , ddX, X, RRT, internalForcesEBENorm, nite, errorOutOfRangeFlag ); // Residuum needs to be modified
-            }
-
-            if ( converged ) {
-                engngModel->updateComponent( tStep, NonLinearLhs, domain );
-                applyConstraintsToStiffness( k );
-                bool isPD = stabSolver->checkPD( k );
-                if ( !isPD) { // If matrix is not PD
-                    if ( deflationBifurcation) {
-                        stabSolver->setX0Defl(X);
-                        converged = false;
-                        X = X - dX; // Start from the skretch
-
-                        // create array of random numbers between -1 and 1, and then normilize it
-                        FloatArray randNums;
-                        randNums.resize( X.giveSize() );
-                        srand( (unsigned)time( NULL ) );
-                        for ( int i = 0; i < X.giveSize(); i++ ) {
-                            randNums.at( i + 1 ) = ( 2. * (float)rand() / RAND_MAX - 1. );
-                        }
-                        randNums.normalize();
-                        FloatArray perturbation = X.computeNorm() * randNums;
-                        X = X + 0.5 * perturbation; // and perturbe the solution
-
-                        dX.zero();
-                        stabSolver->compute_dx_defl( X );
-
-                        // Update residuum
-                        engngModel->updateComponent( tStep, InternalRhs, domain );
-                        rhs.beDifferenceOf( RT, F );
-                        if ( this->prescribedDofsFlag ) {
-                            this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
-                        }
-                    };
-
-                    if ( !isBifurcationSet ) { // If first time not PD 
-                        stabSolver->setBifurcation( true ); // perform bifurcation anaysis in the next step
-                        stabSolver->setAlpha( alphaStability ); // set eigenvector multiplicator
-                        isBifurcationSet = true; // Not sure if correct
-                        
-                        // stabSolver->solveBifurcation( k, rhs, ddX);
-                        // converged = false;
-                        // X.add( ddX );
-                        // dX.add( ddX );
-                    } else if ( !LDLTbif && !deflationBifurcation ) { // bifurc. analysis using eigenvectors already performed, but failed
-                        // restart step
-                        if ( count < maxBifIte ) {
-                            converged = false;
-                            count++;
-                            stabSolver->setAlpha( (count+1) * alphaStability ); // increase alpha (eigenvector multiplicator)
-                            stabSolver->setBifurcation( true );  
-                        } else {
-                            stabSolver->setBifurcation( true );
-                            OOFEM_LOG_INFO( "Maximum bifurcation iterations reached\n");
-                        }
-                        
-                    }
-                    OOFEM_LOG_INFO( "alpha =  %f\n", stabSolver->giveAlpha() );
-                } else { // is PD, 
-                    stabSolver->setBifurcation( false ); // only needed for cholesky bifurcation
-                    isBifurcationSet = false; // Not sure if correct
-                }
-
-            } else if ( nite == 0 ) { // check if the bifurcation analysis should be performed
-                stabSolver->setCholesky( LDLTbif ); // This should be done only once
-                stabSolver->setDeflation( deflationBifurcation ); // This should be done only once
-                isBifurcationSet = stabSolver->getBifurcation();
-
-            } else if ( stabSolver->getBifurcation() && deflationBifurcation ) {
-                stabSolver->compute_dx_defl( X );
-            }
-        } 
-        //////////////////
+        // bifurcatiuon modification
+        if ( stabSolver ) this->performBifurcation( k, X, dX, F, internalForcesEBENorm, rlm, nite, tStep, rhs, converged, RT, RRT,
+            errorOutOfRangeFlag, stabSolver, isBifurcationSet, alphamax, alphaStability, ddX );
+        ////////////////// 
+        
 
         if ( errorOutOfRangeFlag ) {
             status = CR_DIVERGED_TOL;
@@ -493,6 +417,155 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
     return status;
 }
 
+void NRSolver::performBifurcation( SparseMtrx &k,FloatArray &X, FloatArray &dX, FloatArray &F,const FloatArray &internalForcesEBENorm, 
+    referenceLoadInputModeType rlm, int &nite, TimeStep *tStep, FloatArray &rhs, bool &converged, FloatArray &RT, double &RRT, 
+    bool &errorOutOfRangeFlag, EigenSolverStability *stabSolver, bool &isBifurcationSet, double &alphamax, double &alphaStability, FloatArray &ddX )
+{
+    // Choose bifurcation type
+    bool LDLTbif                = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
+    bool deflationBifurcation   = true; // only if deflation bifurcation if performed
+    bool eigenvectorBifurcation = true; // only if deflation bifurcation if performed
+
+    bool performBifurcation = LDLTbif || deflationBifurcation || eigenvectorBifurcation; // Any bifurcation is on, eigenvectors are default
+
+    // For bifurcation using eigenvectors
+    double alphaStability0 = alphaStability;
+
+    int maxBifIte = 100, count = 0;
+    //FloatArray ddX;
+    //ddX.resize( X.giveSize());
+    //ddX.zero();
+    
+    //////////////////
+    // bifurcation analysis modifications
+    if ( stabSolver && performBifurcation ) {
+        if ( deflationBifurcation && isBifurcationSet ) { // If deflation, modify residuum and recheck convergence
+            double dx_defl_Norm = ( X - stabSolver->giveX0Defl() ).computeNorm();
+            FloatArray rhs_mod  = rhs * ( 1 / ( dx_defl_Norm * dx_defl_Norm ) + 1 );
+            converged           = this->checkConvergence( RT, F, rhs_mod, ddX, X, RRT, internalForcesEBENorm, nite, errorOutOfRangeFlag ); // Residuum needs to be modified
+        } else if ( isnan( F.computeNorm() ) && isBifurcationSet && eigenvectorBifurcation ) { // if eigenvector bif. and not defl. and NaNs appear
+            OOFEM_LOG_INFO( "Retarting step due to NaN\n" );
+            X -= dX; // go back to start of the step
+            dX.zero();
+            alphamax = stabSolver->giveAlpha(); // modify amplitude of the perturbation
+            stabSolver->setAlpha( alphamax - alphaStability );
+            alphaStability = alphaStability / 2;
+
+            engngModel->updateComponent( tStep, InternalRhs, domain );
+            rhs.beDifferenceOf( RT, F );
+            if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
+
+            converged = this->checkConvergence( RT, F, rhs, ddX, X, RRT, internalForcesEBENorm, nite, errorOutOfRangeFlag ); // recheck the convergence
+        }
+
+
+        if ( converged ) {
+            engngModel->updateComponent( tStep, NonLinearLhs, domain );
+            applyConstraintsToStiffness( k );
+            bool isPD = stabSolver->checkPD( k );
+            if ( !isPD ) { // If matrix is not PD
+                OOFEM_LOG_INFO( "Negative eigenvalue\n" );
+
+                if ( !isBifurcationSet ) { // If first time not PD
+                    stabSolver->setBifurcation( true ); // perform bifurcation anaysis
+                    stabSolver->setAlpha( alphaStability0 - alphaStability ); // set eigenvector multiplicator to starting value
+                    isBifurcationSet = true; // Not sure if correct
+                }
+
+                if ( deflationBifurcation || eigenvectorBifurcation ) {
+                    converged = false;
+
+                    FloatArray X0 = X; // Store the instable root
+
+                    // Find out if eigenvalues should be recomputed
+                    if ( stabSolver->getXeigs().giveSize() == 0 || ( X - stabSolver->getXeigs() ).computeNorm() > 1e-8 ) { // if not the same, recompute the eigenvectors
+                        engngModel->updateComponent( tStep, NonLinearLhs, domain );
+                        applyConstraintsToStiffness( k );
+                        stabSolver->setEigenValuesVectors( dynamic_cast<EigenMtrx *>( &k )->giveMatrix(), X );
+                    }
+                    // get eigenvectors
+                    FloatArray direction;
+                    stabSolver->getEigenVectors().copyColumn( direction, stabSolver->getEigenVectors().giveNumberOfColumns() );
+                    if ( !eigenvectorBifurcation ) { // Only deflation
+                        stabSolver->setX0Defl( X0 ); // set the instable root to the solver
+                        ddX = alphaStability * direction; // perturbation in direction of eigenvector
+                        X   = X + ddX; // Perturbe the solution with chosen amplitude
+                        dX  = dX + ddX;
+                        stabSolver->compute_dx_defl( X ); // compute deflation difference
+
+                        // Update residuum
+                        engngModel->updateComponent( tStep, InternalRhs, domain );
+                        rhs.beDifferenceOf( RT, F );
+                        if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
+
+                    } else { // Eigenvector bifurcation with/without deflation
+                        if ( deflationBifurcation ) { // If combination of deflation and eigenvector bifurcation
+                            // do exact linesearch including delfation
+                            int maxIteLS = 40, p = 2;
+                            double RHS, tolLS = 1e-12, ResNormLS, RHSdefl, deta = 0., Eta = 0., alph_defl = 1., dx_norm, gamma;
+                            FloatArray Ku( X.giveSize() ), dx_Defl, rhsDefl;
+
+                            Eta += alphaStability; // start guess
+                            ddX = alphaStability * direction;
+                            dX  = dX + ddX;
+                            X   = X + ddX; // Initial moification of the solution
+                            for ( size_t niteLS = 0; niteLS < maxIteLS; niteLS++ ) { // inner Newton loop to find local minimum in the direction
+                                engngModel->updateComponent( tStep, InternalRhs, domain );
+                                rhs.beDifferenceOf( RT, F );
+                                if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
+
+                                dx_Defl = X - X0;
+                                dx_norm = dx_Defl.computeNorm();
+
+                                // Compute defrlated residuum
+                                RHS     = rhs.dotProduct( direction );
+                                RHSdefl = RHS * ( 1 / ( dx_norm * dx_norm ) + 1 );
+
+                                // Check convergence
+                                OOFEM_LOG_INFO( "|resLS| = %.3e\n", abs( RHSdefl ) );
+                                if ( abs( RHSdefl ) < tolLS ) break;
+
+                                engngModel->updateComponent( tStep, NonLinearLhs, domain );
+                                applyConstraintsToStiffness( k );
+                                k.times( direction, Ku );
+                                gamma = p / ( dx_norm * dx_norm + alph_defl * pow( dx_norm, p + 2 ) );
+
+                                deta = RHS / ( Ku.dotProduct( direction ) + gamma * RHS * dx_Defl.dotProduct( direction ) );
+                                Eta += deta;
+                                ddX = deta * direction;
+                                X   = X + ddX;
+                                dX  = dX + ddX;
+                            }
+                            OOFEM_LOG_INFO( "Eta = %.3e\n", Eta );
+
+                            stabSolver->setX0Defl( X0 );
+                            stabSolver->compute_dx_defl( X );
+                        } else if ( count < maxBifIte ) { // if just eigenvectors
+                            count++;
+                            if ( stabSolver->giveAlpha() + alphaStability >= alphamax ) alphaStability = alphaStability / 2;
+                            stabSolver->setAlpha( stabSolver->giveAlpha() + alphaStability ); // increase alpha (eigenvector multiplicator)
+                            OOFEM_LOG_INFO( "alpha =  %f\n", stabSolver->giveAlpha() );
+                            stabSolver->setBifurcation( true );
+                        } else { // if eigenvectors and maximum iterations reached
+                            OOFEM_LOG_INFO( "Maximum bifurcation iterations reached\n" );
+                        }
+                    }
+                }
+            } else { // is PD,
+                stabSolver->setBifurcation( false ); // only needed for cholesky bifurcation
+                isBifurcationSet = false; // Not sure if correct
+            }
+
+        } else if ( nite == 0 ) { // not converged, check if the bifurcation analysis should be performed
+            stabSolver->setCholesky( LDLTbif ); // This should be done only once
+            stabSolver->setDeflation( deflationBifurcation ); // This should be done only once
+            isBifurcationSet = stabSolver->getBifurcation();
+
+        } else if ( stabSolver->getBifurcation() && deflationBifurcation ) {
+            stabSolver->compute_dx_defl( X );
+        }
+    }
+}
 
 SparseLinearSystemNM *
 NRSolver :: giveLinearSolver()

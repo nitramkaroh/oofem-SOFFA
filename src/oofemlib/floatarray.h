@@ -561,6 +561,8 @@ OOFEM_EXPORT FloatArray operator + ( const FloatArray & x, const FloatArray & y 
 OOFEM_EXPORT FloatArray operator - ( const FloatArray & x, const FloatArray & y );
 OOFEM_EXPORT FloatArray &operator += ( FloatArray & x, const FloatArray & y );
 OOFEM_EXPORT FloatArray &operator -= ( FloatArray & x, const FloatArray & y );
+OOFEM_EXPORT FloatArray &operator/=( FloatArray &x, const double &a );
+OOFEM_EXPORT FloatArray operator/( const FloatArray &x, const double &a );
 
 OOFEM_EXPORT double norm(const FloatArray &x);
 OOFEM_EXPORT double norm_square(const FloatArray &x);

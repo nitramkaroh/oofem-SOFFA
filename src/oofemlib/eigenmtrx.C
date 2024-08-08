@@ -45,6 +45,10 @@
 
 #include <set>
 
+
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
+#include <Eigen/SparseQR>
 //#include <iostream>
 
 namespace oofem {
@@ -283,6 +287,15 @@ void EigenMtrx::printYourself() const{
     // xreate dense matrix
     auto denseMat = Eigen::MatrixXd( this->EigMat );
     std::cout << denseMat << std::endl;
+}
+
+
+void EigenMtrx::times( const FloatArray &x, FloatArray &answer ) const
+{
+    FloatArray xcopy = x;
+    Eigen::VectorXd xeig = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( xcopy.givePointer(), x.giveSize() );
+    Eigen::VectorXd answereig = this->EigMat * xeig;
+    answer = FloatArray( answereig.begin(), answereig.end() );
 }
 
 } // end namespace oofem

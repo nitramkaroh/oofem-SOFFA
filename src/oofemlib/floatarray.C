@@ -891,25 +891,6 @@ FloatArray operator *( const FloatArray & x, const double & a )
 }
 
 
-
-FloatArray operator /( const FloatArray & x, const double & a )
-{
-    FloatArray result;
-    result.beScaled(1./a, x);
-    return result;
-}
-
-
-FloatArray &operator /= ( FloatArray & x, const double & a )
-{
-    x.times(1./a);
-    return x;
-}
-
-
-
-
-
 FloatArray operator + ( const FloatArray & x, const FloatArray & y )
 {
     FloatArray result(x);
@@ -921,6 +902,19 @@ FloatArray operator - ( const FloatArray & x, const FloatArray & y )
 {
     FloatArray result;
     result.beDifferenceOf(x, y);
+    return result;
+}
+
+FloatArray &operator/=( FloatArray &x, const double &a )
+{
+    x.times( 1. / a );
+    return x;
+}
+
+FloatArray operator/( const FloatArray &x, const double &a )
+{
+    FloatArray result;
+    result.beScaled( 1. / a, x );
     return result;
 }
 

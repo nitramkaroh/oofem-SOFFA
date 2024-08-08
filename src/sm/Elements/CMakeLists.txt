@@ -43,6 +43,7 @@ set (sm_element
     Beams/libeam3dboundarybeam.C
     Beams/libeam3dboundaryplate.C
     Beams/libeam3dboundaryvoigt.C
+	Beams/nlbeam_sm.C
     Plates/cct.C
     Plates/dkt.C 
     Plates/qdkt.C
