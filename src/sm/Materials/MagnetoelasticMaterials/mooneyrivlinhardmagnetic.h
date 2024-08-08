@@ -47,6 +47,7 @@
 #define _IFT_MooneyRivlinHardMagnetic_B_res "b_res"
 #define _IFT_MooneyRivlinHardMagnetic_mu_0 "mu_0"
 #define _IFT_MooneyRivlinHardMagnetic_ltf "ltf"
+#define _IFT_MooneyRivlinHardMagnetic_mode "mode"
 //@}
 
 namespace oofem {
@@ -64,7 +65,7 @@ protected:
     FloatArrayF<3> B_app;
     FloatArrayF<3> B_res;
     double mu_0;
-    int ltf_index;
+    int ltf_index, materialMode;
 
 public:
     MooneyRivlinHardMagnetic( int n, Domain *d ) :
@@ -72,7 +73,7 @@ public:
 
     void initializeFrom(InputRecord &ir) override;
 
-    FloatMatrixF< 9, 9 >give3dMaterialStiffnessMatrix_dPdF(MatResponseMode,
+    FloatMatrixF< 9, 9 >give3dMaterialStiffnessMatrix_dPdF(MatResponseMode matResponseMode,
                                                            GaussPoint *gp,
                                                            TimeStep *tStep) const override;
 
@@ -80,5 +81,16 @@ public:
 
     const char *giveInputRecordName() const override { return _IFT_MooneyRivlinHardMagnetic_Name; }
     const char *giveClassName() const override { return "MooneyRivlinHardMagnetic"; }
+
+private:
+      FloatArrayF< 9 >giveFirstPKStressVector_3d_consistent(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
+      FloatMatrixF< 9, 9 >give3dMaterialStiffnessMatrix_dPdF_consistent(MatResponseMode matResponseMode,
+                                                           GaussPoint *gp,
+                                                           TimeStep *tStep) const;
+
+      FloatArrayF< 9 >giveFirstPKStressVector_3d_mit(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
+      FloatMatrixF< 9, 9 >give3dMaterialStiffnessMatrix_dPdF_mit(MatResponseMode matResponseMode,
+                                                           GaussPoint *gp,
+                                                           TimeStep *tStep) const;
 };
 } // end namespace oofem
