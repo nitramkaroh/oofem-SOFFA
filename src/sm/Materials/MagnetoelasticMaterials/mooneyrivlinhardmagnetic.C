@@ -182,7 +182,7 @@ FloatArrayF<9> MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d_mit( const F
     Tensor2_3d F( vF ), P_me;
     Tensor1_3d Bapp( B_app_at_time ), Bres( B_res );
 
-    P_me( k_3, l_3 ) = -1 / mu_0 * Bapp( k_3 ) * Bres( l_3 );
+    P_me( k_3, l_3 ) = -1.0 / mu_0 * Bapp( k_3 ) * Bres( l_3 );
 
     auto vP_me = P_me.to_voigt_form();
 
