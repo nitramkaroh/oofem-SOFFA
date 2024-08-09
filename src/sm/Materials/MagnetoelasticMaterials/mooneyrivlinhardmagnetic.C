@@ -115,11 +115,15 @@ void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
 
     FloatArray B_app_temp, B_res_temp;
 
+    //default values
+    mu_0 = 1.25663706143e-6;
+    materialMode = 1;
+
     IR_GIVE_FIELD( ir, B_app_temp, _IFT_MooneyRivlinHardMagnetic_B_app );
     IR_GIVE_FIELD( ir, B_res_temp, _IFT_MooneyRivlinHardMagnetic_B_res );
-    IR_GIVE_FIELD( ir, mu_0, _IFT_MooneyRivlinHardMagnetic_mu_0 );
+    IR_GIVE_OPTIONAL_FIELD( ir, mu_0, _IFT_MooneyRivlinHardMagnetic_mu_0 );
     IR_GIVE_FIELD( ir, ltf_index, _IFT_MooneyRivlinHardMagnetic_ltf );
-    IR_GIVE_FIELD( ir, materialMode, _IFT_MooneyRivlinHardMagnetic_mode );
+    IR_GIVE_OPTIONAL_FIELD( ir, materialMode, _IFT_MooneyRivlinHardMagnetic_mode );
 
     B_app = FloatArrayF<3>( B_app_temp );
     B_res = FloatArrayF<3>( B_res_temp );

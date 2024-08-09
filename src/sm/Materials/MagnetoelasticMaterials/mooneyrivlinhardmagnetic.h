@@ -43,11 +43,11 @@
 ///@name Input fields for MooneyRivlinHardMagnetic
 //@{
 #define _IFT_MooneyRivlinHardMagnetic_Name "mooneyrivlinhardmagnetic"
-#define _IFT_MooneyRivlinHardMagnetic_B_app "b_app"
-#define _IFT_MooneyRivlinHardMagnetic_B_res "b_res"
-#define _IFT_MooneyRivlinHardMagnetic_mu_0 "mu_0"
-#define _IFT_MooneyRivlinHardMagnetic_ltf "ltf"
-#define _IFT_MooneyRivlinHardMagnetic_mode "mode"
+#define _IFT_MooneyRivlinHardMagnetic_B_app "b_app" //applied magnetic field
+#define _IFT_MooneyRivlinHardMagnetic_B_res "b_res" //residual magnetic field in material
+#define _IFT_MooneyRivlinHardMagnetic_mu_0 "mu_0" //magnetic permeability of free space (optional, default value is 4*pi*10^7)
+#define _IFT_MooneyRivlinHardMagnetic_ltf "ltf" //load time function for applied field
+#define _IFT_MooneyRivlinHardMagnetic_mode "mode" //mode of magnetic energy 1 = consistent (default), 2 = MIT
 //@}
 
 namespace oofem {
