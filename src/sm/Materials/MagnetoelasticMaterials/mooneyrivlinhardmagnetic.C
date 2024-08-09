@@ -137,12 +137,14 @@ FloatArrayF<9> MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d_consistent( 
 
     Tensor2_3d F( vF ), P_me, delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
     
-    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res );
+    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res ), Bappref;
     auto [J, cofF] = F.compute_determinant_and_cofactor();
 
+    Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
 
-    P_me( k_3, l_3 ) = -(1/(2*J*J*mu_0))*(Bapp(i_3) - 2.0*Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bapp(j_3)*cofF(k_3, l_3)
-        + (1/(2*J*mu_0)) * ( Bapp( i_3 ) - 2.0 * Bres( i_3 ) ) * Bapp(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3));
+
+    P_me( k_3, l_3 ) = -(1/(2*J*J*mu_0))*(Bappref(i_3) - 2.0*Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)
+        + (1/(2*J*mu_0)) * ( Bappref( i_3 ) - 2.0 * Bres( i_3 ) ) * Bappref(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3));
 
     auto vP_me = P_me.to_voigt_form();
 
@@ -163,14 +165,16 @@ FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF_
 
     Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
 
-    Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res );
+    Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res ), Bappref;
     auto [J, cofF] = F.compute_determinant_and_cofactor();
 
-    D_me( k_3, l_3, p_3, q_3 ) = (1/(J*J*J*mu_0)) * ( Bapp(i_3) - 2.0 * Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bapp(j_3)*cofF(k_3, l_3)*cofF(p_3, q_3)
-        - (1/(2*J*J*mu_0)) * ( Bapp(i_3) - 2.0 * Bres(i_3)) * Bapp(j_3) * (delta(i_3, q_3)*F(p_3,j_3) + delta(j_3, q_3)*F(p_3,i_3)) * cofF(k_3, l_3) 
-        - (1/(2*J*J*mu_0)) * ( Bapp(i_3) - 2.0 * Bres(i_3)) * F(m_3,i_3)*F(m_3,j_3) * Bapp(j_3) * F.compute_tensor_cross_product()(k_3, l_3, p_3, q_3)
-        - (1/(2*J*J*mu_0)) * ( Bapp(i_3) - 2.0 * Bres(i_3)) * Bapp(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3)) * cofF(p_3, q_3)
-        + (1/(2*J*mu_0)) * delta(k_3,p_3) * (( Bapp(l_3) - 2.0 * Bres(l_3))*Bapp(q_3) + ( Bapp(q_3) - 2.0 * Bres(q_3))*Bapp(l_3));
+    Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
+
+    D_me( k_3, l_3, p_3, q_3 ) = (1/(J*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)*cofF(p_3, q_3)
+        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * Bappref(j_3) * (delta(i_3, q_3)*F(p_3,j_3) + delta(j_3, q_3)*F(p_3,i_3)) * cofF(k_3, l_3) 
+        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * F(m_3,i_3)*F(m_3,j_3) * Bappref(j_3) * F.compute_tensor_cross_product()(k_3, l_3, p_3, q_3)
+        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * Bappref(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3)) * cofF(p_3, q_3)
+        + (1/(2*J*mu_0)) * delta(k_3,p_3) * (( Bappref(l_3) - 2.0 * Bres(l_3))*Bappref(q_3) + ( Bappref(q_3) - 2.0 * Bres(q_3))*Bappref(l_3));
     
     auto vD_me = D_me.to_voigt_form();
 
