@@ -63,6 +63,9 @@ MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d( const FloatArrayF<9> &vF, 
     case 2:
         vP_me = giveFirstPKStressVector_3d_mit( vF, gp, tStep );
         break;
+    case 3:
+        vP_me = giveFirstPKStressVector_3d_consistentfix( vF, gp, tStep );
+        break;
     default:
         OOFEM_ERROR( "Unknown hard magnetic material mode %i", materialMode );
         break;
@@ -96,6 +99,9 @@ MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF( MatResponseMode ma
         break;
     case 2:
         vD_me = give3dMaterialStiffnessMatrix_dPdF_mit( matResponseMode, gp, tStep );
+        break;
+    case 3:
+        vD_me = give3dMaterialStiffnessMatrix_dPdF_consistentfix( matResponseMode, gp, tStep );
         break;
     default:
         OOFEM_ERROR( "Unknown hard magnetic material mode %i", materialMode );
@@ -200,6 +206,49 @@ FloatArrayF<9> MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d_mit( const F
 FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF_mit( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
 {
     return FloatMatrixF<9, 9>();
+}
+
+FloatArrayF<9> MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d_consistentfix( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
+{
+
+    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    FloatArrayF<3> B_app_at_time = load_level * B_app;
+
+    Tensor2_3d F( vF ), P_me;
+    
+    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res );
+    auto [J, cofF] = F.compute_determinant_and_cofactor();
+
+
+    P_me( k_3, l_3 ) = (1/(2*mu_0))*Bapp( j_3 ) * Bapp(j_3) * cofF(k_3, l_3) - (1/mu_0)*Bapp(k_3)*Bres(l_3);
+
+    auto vP_me = P_me.to_voigt_form();
+
+    return vP_me;
+}
+
+FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF_consistentfix( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
+{
+    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
+    FloatArrayF<9> vF( status->giveTempFVector() );
+
+    
+    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    FloatArrayF<3> B_app_at_time = load_level * B_app;
+
+    Tensor2_3d F( vF );
+    Tensor4_3d D_me;
+
+    Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
+
+    Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res );
+    auto [J, cofF] = F.compute_determinant_and_cofactor();
+
+    D_me( k_3, l_3, p_3, q_3 ) = (1/(2*mu_0))*Bapp( j_3 ) * Bapp(j_3) * F.compute_tensor_cross_product() (k_3, l_3, p_3, q_3);
+    
+    auto vD_me = D_me.to_voigt_form();
+
+    return vD_me;
 }
 
 } // end namespace oofem

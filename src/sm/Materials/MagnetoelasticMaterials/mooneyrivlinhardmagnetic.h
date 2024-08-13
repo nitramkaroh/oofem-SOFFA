@@ -83,13 +83,18 @@ public:
     const char *giveClassName() const override { return "MooneyRivlinHardMagnetic"; }
 
 private:
-      FloatArrayF< 9 >giveFirstPKStressVector_3d_consistent(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
-      FloatMatrixF< 9, 9 >give3dMaterialStiffnessMatrix_dPdF_consistent(MatResponseMode matResponseMode,
+      FloatArrayF< 9 > giveFirstPKStressVector_3d_consistent(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
+      FloatMatrixF< 9, 9 > give3dMaterialStiffnessMatrix_dPdF_consistent(MatResponseMode matResponseMode,
                                                            GaussPoint *gp,
                                                            TimeStep *tStep) const;
 
-      FloatArrayF< 9 >giveFirstPKStressVector_3d_mit(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
-      FloatMatrixF< 9, 9 >give3dMaterialStiffnessMatrix_dPdF_mit(MatResponseMode matResponseMode,
+      FloatArrayF< 9 > giveFirstPKStressVector_3d_mit(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
+      FloatMatrixF< 9, 9 > give3dMaterialStiffnessMatrix_dPdF_mit(MatResponseMode matResponseMode,
+                                                           GaussPoint *gp,
+                                                           TimeStep *tStep) const;
+
+      FloatArrayF< 9 > giveFirstPKStressVector_3d_consistentfix(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
+      FloatMatrixF< 9, 9 > give3dMaterialStiffnessMatrix_dPdF_consistentfix(MatResponseMode matResponseMode,
                                                            GaussPoint *gp,
                                                            TimeStep *tStep) const;
 };
