@@ -37,6 +37,7 @@
 
 #include "eigensolver.h"
 #include "eigenmtrx.h"
+#include "bifurcationinterface.h"
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -48,68 +49,14 @@
 #define _IFT_EigenSolverStability_Name "eigenstability"
 
 namespace oofem {
-
-//template <typename _MatrixType, int _UpLo, typename _Ordering>
-////template <typename _MatrixType>
-//class SimplicialLDLTderived : public Eigen::SimplicialLDLT<_MatrixType, _UpLo, _Ordering>
-//{
-//public:
-//    typedef _MatrixType MatrixType;
-//    typedef Eigen::SimplicialLDLT<_MatrixType, _UpLo, _Ordering> Base;
-//
-//
-//public:
-//    /** Default constructor */
-//    SimplicialLDLTderived() :
-//        Base() {}
-//
-//    /** Constructs and performs the LLT factorization of \a matrix */
-//    explicit SimplicialLDLTderived( const MatrixType &matrix ) :
-//        Base( matrix ) {}
-//
-//    bool updateD( double &minEig, const bool update, int &numNegEigs )
-//    {
-//        numNegEigs = 0;
-//        bool answ = false;
-//        eigen_assert( this->m_factorizationIsOk && "Simplicial LDLT not factorized" );
-//        minEig = m_diag.coeffRef( 0 );
-//        for ( auto &Di : m_diag ) {
-//            if ( Di < minEig ) minEig = Di;
-//            if ( Di < 0 ) {
-//                if ( update ) Di *= ( -1. );
-//                answ = true;
-//                numNegEigs++;
-//            };
-//        };
-//        return answ;
-//    }
-//};
-//
-//template <typename _MatrixType, int _UpLo = Eigen ::Lower, typename _Ordering = Eigen ::AMDOrdering<typename _MatrixType::StorageIndex> >
-//class SimplicialLDLTderived;
-
-
 /**
  * Implements the solution of linear system of equation in the form @f$ A\cdot x=b @f$ using solvers
  * from eigen.tuxfamily.org.
  */
-class OOFEM_EXPORT EigenSolverStability : public EigenSolver
+class OOFEM_EXPORT EigenSolverStability : public EigenSolver, public BifurcationInterface
 {
 protected:
-    bool bifurcation = false;
-    double alpha = 10;
-    int ncv0 = 5;
-    bool choleskyBif = false;
-    bool deflationBifurcation = false;
-
-    // for deflation bifurcation
-    FloatArray x0_Defl, dx_Defl; 
-
-    // Saved eigenvectors and eigenvalues
-    FloatArray eigenvalues; // stored eigenvalues
-    FloatMatrix evectors; // stored eigenvectors
-    FloatArray Xeigs; // computed at X
-
+    int ncv0 = 5; // multiplier for eigenvector analysis
 public:
     /**
      * Constructor.
@@ -122,48 +69,22 @@ public:
 
     /// Initializes receiver from given record.
     void initializeFrom( InputRecord &ir ) override;
-
     ConvergedReason solve( SparseMtrx &A, FloatArray &b, FloatArray &x ) override;
 
-    //virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x ) override;
-    //void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x, SimplicialLDLTderived<Eigen::SparseMatrix<double> >& ldlt );
-    void solveLDLT( EigenMtrx &A, const Eigen::VectorXd &b, Eigen::VectorXd &x);
-    bool checkPD( SparseMtrx &A );
-    //ConvergedReason solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x );
-
-    void setBifurcation( bool doBif ) { this->bifurcation = doBif; }
-    void setCholesky( bool doChol ) { this->choleskyBif = doChol; }
-    void setDeflation( bool doDeflation ) { this->deflationBifurcation = doDeflation; }
-    void setX0Defl( FloatArray x0 ) { this->x0_Defl = x0; }
-    void compute_dx_defl( FloatArray xcurr ) { 
-        this->dx_Defl = xcurr - this->x0_Defl; 
-    }
-    FloatArray& giveX0Defl() { return this->x0_Defl; }
-
-
-    bool getBifurcation() const { return this->bifurcation; }
-    void setAlpha(double alphaNew ) { this->alpha = alphaNew; }
+    //void solveLDLT( EigenMtrx &A, const Eigen::VectorXd &b, Eigen::VectorXd &x);
+    bool checkPD( SparseMtrx &A ) override;
+    void CholeskyUpdate( SparseMtrx &Ae, FloatArray &b, FloatArray &x ) override;
     void setNcv0( double ncv0new ) { this->ncv0 = ncv0new; }
-    double giveAlpha() { return this->alpha; }
-
     const char *giveClassName() const override { return "EigenSolverStability"; }
     LinSystSolverType giveLinSystSolverType() const override { return ST_EigenStability; }
     SparseMtrxType giveRecommendedMatrix( bool symmetric ) const override { return SMT_EigenMtrx; }
 
-    int computeEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &evaluesFA, FloatMatrix &evectorsFM );
-    void storeEigenValuesVectors( FloatArray &evaluesFA, FloatMatrix &evectorsFM, FloatArray &Xeigs ) {
-        this->eigenvalues = evaluesFA; 
-        this->evectors  = evectorsFM; 
-        this->Xeigs  = Xeigs; 
-    }
-
-    FloatMatrix &getEigenVectors() { return this->evectors; };
-
-    FloatArray &getEigenValues() { return this->eigenvalues; };
-
-    FloatArray &getXeigs() { return this->Xeigs; };
-
-    void setEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &Xeigs );
+    //int computeEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &evaluesFA, FloatMatrix &evectorsFM );
+    int computeEigenValuesVectors( SparseMtrx &Ag, FloatArray &evaluesFA, FloatMatrix &evectorsFM ) override;
+    // ConvergedReason solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x );
+    //void setEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &Xeigs );
+    bool canCholeskyBifurcation() override { return true; };
+    bool canComputeEigenVectors() override { return true; };
 };
 } // end namespace oofem
 #endif // eigensolver_hj

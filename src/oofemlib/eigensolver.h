@@ -70,7 +70,7 @@ public:
 
     ConvergedReason solve( SparseMtrx &A, FloatArray &b, FloatArray &x ) override;
 
-    
+    void setMethod( std::string methodSet ) { this->method = methodSet; };
 
     //virtual void solveLDLT( Eigen::SparseMatrix<double> &A, const Eigen::VectorXd &b, Eigen::VectorXd &x);
 

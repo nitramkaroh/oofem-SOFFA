@@ -40,6 +40,7 @@ set (core_unsorted
     unstructuredgridfield.C
     # 
     loadbalancer.C
+	bifurcationinterface.C
     )
 
 #oofegutils

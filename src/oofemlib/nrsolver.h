@@ -47,6 +47,7 @@
 #include "convergedreason.h"
 
 #include "eigensolverstability.h"
+#include "bifurcationinterface.h"
 
 #include <memory>
 #include <map>
@@ -198,9 +199,16 @@ public:
 
     SparseLinearSystemNM *giveLinearSolver() override;
 
-    void performBifurcation( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, const FloatArray &internalForcesEBENorm,
+    void performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, const FloatArray &internalForcesEBENorm,
         referenceLoadInputModeType rlm, int &nite, TimeStep *tStep, FloatArray &rhs, bool &converged, FloatArray &RT, double &RRT,
-        bool &errorOutOfRangeFlag, EigenSolverStability *stabSolver, bool &isBifurcationSet, double &alphamax, double &alphaStability, FloatArray &ddX );
+        bool &errorOutOfRangeFlag, BifurcationInterface *stabSolver, bool &isBifurcationSet, double &alphamax, double &alphaStability, 
+        FloatArray &ddX, std::vector<bool> &bifurcTypes );
+
+    void exactLineSearch( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, referenceLoadInputModeType rlm,
+        int &nite, TimeStep *tStep, FloatArray &rhs, FloatArray &RT, double &alphaStability, double &Eta,
+        FloatArray &X0, FloatArray &direction, double mult );
+
+    void provisionalOutput( FloatArray &X, FloatArray &F, TimeStep *tStep, FloatArray &RT, FloatArray &direction, FloatArray &X0);
 
 protected:
     /// Constructs and returns a line search solver.
