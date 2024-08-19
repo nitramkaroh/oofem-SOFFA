@@ -202,11 +202,11 @@ public:
     void performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, const FloatArray &internalForcesEBENorm,
         referenceLoadInputModeType rlm, int &nite, TimeStep *tStep, FloatArray &rhs, bool &converged, FloatArray &RT, double &RRT,
         bool &errorOutOfRangeFlag, BifurcationInterface *stabSolver, bool &isBifurcationSet, double &alphamax, double &alphaStability, 
-        FloatArray &ddX, std::vector<bool> &bifurcTypes );
+        FloatArray &ddX, std::vector<bool> &bifurcTypes, bool &postBifurcationLineSearch );
 
     void exactLineSearch( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, referenceLoadInputModeType rlm,
         int &nite, TimeStep *tStep, FloatArray &rhs, FloatArray &RT, double &alphaStability, double &Eta,
-        FloatArray &X0, FloatArray &direction, double mult );
+        FloatArray &X0, FloatArray &direction, double mult, bool deflation );
 
     void provisionalOutput( FloatArray &X, FloatArray &F, TimeStep *tStep, FloatArray &RT, FloatArray &direction, FloatArray &X0);
 

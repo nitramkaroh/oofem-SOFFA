@@ -61,6 +61,8 @@ protected:
     double alpha              = 10;
     bool choleskyBif          = false;
     bool deflationBifurcation = false;
+    bool foundLimitPoint      = false;
+    bool postBifurcationLineSearchSolver = false;
 
     // for deflation bifurcation
     FloatArray x0_Defl, dx_Defl;
@@ -95,12 +97,16 @@ public:
     void setBifurcation( bool doBif ) { this->bifurcation = doBif; }
     void setCholesky( bool doChol ) { this->choleskyBif = doChol; }
     void setDeflation( bool doDeflation ) { this->deflationBifurcation = doDeflation; }
-    void setX0Defl( FloatArray x0 ) { this->x0_Defl = x0; }
-    void compute_dx_defl( FloatArray xcurr ){this->dx_Defl = xcurr - this->x0_Defl;}
+    void setX0Defl( FloatArray &x0 ) { this->x0_Defl = x0; }
+    void setFoundLimitPoint( bool setLP ) { this->foundLimitPoint = setLP; }
+    bool giveFoundLimitPoint() const { return this->foundLimitPoint; }
+    void setPostBifurcationLineSearchSolver( bool setPBLS ) { this->postBifurcationLineSearchSolver = setPBLS; }
+    bool givePostBifurcationLineSearchSolver() const { return this->postBifurcationLineSearchSolver; }
+    void compute_dx_defl( FloatArray &xcurr ){this->dx_Defl = xcurr - this->x0_Defl;}
     FloatArray &giveX0Defl() { return this->x0_Defl; }
     bool getBifurcation() const { return this->bifurcation; }
     void setAlpha( double alphaNew ) { this->alpha = alphaNew; }
-    double giveAlpha() { return this->alpha; }
+    double giveAlpha() const { return this->alpha; }
     void storeEigenValuesVectors( FloatArray &evaluesFA, FloatMatrix &evectorsFM, FloatArray &Xeigs ) {
         this->eigenvalues = evaluesFA;
         this->evectors    = evectorsFM;

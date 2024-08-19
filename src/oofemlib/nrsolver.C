@@ -266,20 +266,19 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
 
     //////////////////
     // bifurcatiuon modification
-    //EigenSolverStability *stabSolver = dynamic_cast<EigenSolverStability *>( this->linSolver.get() ); // Check if eigen stability solver is used 
     BifurcationInterface *stabSolver = dynamic_cast<BifurcationInterface *>( this->linSolver.get() ); // Check if bifurcation solver is used 
     bool isBifurcationSet = false;
-    double alphaStability  = 0.0007; // eigenvector multiplicator
+    double alphaStability  = 1e-8; // eigenvector multiplicator
     double alphamax        = 1e8;
 
     bool LDLTbif                = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
     bool deflationBifurcation   = true; // only if deflation bifurcation if performed
     bool eigenvectorBifurcation = true; // only if eigenvector bifurcation if performed
+    bool postBifurcationLineSearch = true;
     std::vector<bool> bifurcTypes( { LDLTbif, deflationBifurcation, eigenvectorBifurcation } );
 
     ///// for provisional data extracting 
     //FloatArray detasDil, detasRot;
-    // ////
     //////////////////
 
     for ( nite = 0; ; ++nite ) {
@@ -298,7 +297,7 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
         //////////////////  
         // bifurcatiuon modification
         if ( stabSolver ) this->performBifurcationAnalysis( k, X, dX, F, internalForcesEBENorm, rlm, nite, tStep, rhs, converged, RT, RRT,
-            errorOutOfRangeFlag, stabSolver, isBifurcationSet, alphamax, alphaStability, ddX, bifurcTypes );
+            errorOutOfRangeFlag, stabSolver, isBifurcationSet, alphamax, alphaStability, ddX, bifurcTypes, postBifurcationLineSearch );
         
         // for provisional data extracting 
         //if ( false ) {
@@ -308,13 +307,9 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
 
         //        detasRot.push_back( dX.at( 1 ) / direction.at( 1 ) );
         //        detasDil.push_back( -X.at( 2 ) + stabSolver->giveX0Defl().at( 2 ) );
-        //        if ( converged || nite >= 50  ) {
-        //            //detasDil.printYourselfToFile( "detasDil2.txt", false );
-        //            //detasRot.printYourselfToFile( "detasRot2.txt", false );
-        //            //detasDil.printYourselfToFile( "detasDil3.txt", false );
-        //            //detasRot.printYourselfToFile( "detasRot3.txt", false );
-        //             detasDil.printYourselfToFile( "detasDil3mod.txt", false );
-        //             detasRot.printYourselfToFile( "detasRot3mod.txt", false );
+        //        if ( converged || nite >= 20  ) {
+        //             detasDil.printYourselfToFile( "detasDil2LS.txt", false );
+        //             detasRot.printYourselfToFile( "detasRot2LS.txt", false );
         //        }
         //    }
         //}
@@ -449,13 +444,14 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
 void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, const FloatArray &internalForcesEBENorm, 
     referenceLoadInputModeType rlm, int &nite, TimeStep *tStep, FloatArray &rhs, bool &converged, FloatArray &RT, double &RRT, 
     bool &errorOutOfRangeFlag, BifurcationInterface *stabSolver, bool &isBifurcationSet, double &alphamax, double &alphaStability, 
-    FloatArray &ddX,std::vector<bool> &bifurcTypes )
+    FloatArray &ddX, std::vector<bool> &bifurcTypes, bool &postBifurcationLineSearch )
 {
     // Choose bifurcation type
     bool LDLTbif                = bifurcTypes[0]; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
     bool deflationBifurcation   = bifurcTypes[1]; // only if deflation bifurcation if performed
     bool eigenvectorBifurcation = bifurcTypes[2]; // only if deflation bifurcation if performed
-    bool postDeflation          = true;
+    bool postDeflation          = false;
+    
 
     bool performBifurcation = LDLTbif || deflationBifurcation || eigenvectorBifurcation; // Any bifurcation is on, eigenvectors are default
 
@@ -491,6 +487,8 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
             bool isPD = stabSolver->checkPD( k );
             if ( !isPD ) { // If matrix is not PD
                 OOFEM_LOG_INFO( "Negative eigenvalue\n" );
+                stabSolver->setFoundLimitPoint( true );
+                stabSolver->setPostBifurcationLineSearchSolver( postBifurcationLineSearch ); // Set the post bifurcation exact linesearch
 
                 if ( !isBifurcationSet ) { // If first time not PD
                     stabSolver->setBifurcation( true ); // perform bifurcation anaysis
@@ -531,7 +529,7 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
 
                             // do exact linesearch including delfation
                             double Eta;
-                            this->exactLineSearch( k, X, dX, F, rlm, nite, tStep, rhs, RT, alphaStability, Eta, X0,direction, 0. );
+                            this->exactLineSearch( k, X, dX, F, rlm, nite, tStep, rhs, RT, alphaStability, Eta, X0,direction, 0.,true );
                             OOFEM_LOG_INFO( "Eta = %.3e\n", Eta );
 
                             stabSolver->compute_dx_defl( X );
@@ -561,16 +559,27 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
                 }
                 stabSolver->setBifurcation( false ); // only needed for cholesky bifurcation
                 isBifurcationSet = false; // Not sure if correct
-                
+                // Turn the linesearch off after the limit point is found
+                //if ( stabSolver->giveFoundLimitPoint() && stabSolver->givePostBifurcationLineSearchSolver() ) stabSolver->setPostBifurcationLineSearchSolver( false );
             }
-
         } else if ( nite == 0 ) { // not converged, check if the bifurcation analysis should be performed
             stabSolver->setCholesky( LDLTbif ); // This should be done only once
             stabSolver->setDeflation( deflationBifurcation ); // This should be done only once
             isBifurcationSet = stabSolver->getBifurcation();
-
         } else if ( stabSolver->getBifurcation() && deflationBifurcation ) {
             stabSolver->compute_dx_defl( X );
+        } else if ( stabSolver->giveFoundLimitPoint() && stabSolver->givePostBifurcationLineSearchSolver( ) ) { // if limit point found and exact LS should be done
+            X = X - ddX;
+            dX = dX - ddX;
+            FloatArray X0 = stabSolver->giveX0Defl();
+            double Eta;
+            this->exactLineSearch( k, X, dX, F, rlm, nite, tStep, rhs, RT, alphaStability, Eta, X0, ddX, 0. ,true);
+            OOFEM_LOG_INFO( "Eta = %.3e\n", Eta );
+            if ( Eta == alphaStability ) {
+                stabSolver->setPostBifurcationLineSearchSolver( false ); // dont line search anymore
+            } else {
+                ddX       = Eta * ddX;
+            }            
         }
     }
     bifurcTypes[0] = LDLTbif;
@@ -580,11 +589,14 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
 
 void NRSolver::exactLineSearch(SparseMtrx& k, FloatArray& X, FloatArray& dX, FloatArray& F, referenceLoadInputModeType rlm, 
                                 int &nite, TimeStep *tStep, FloatArray &rhs, FloatArray &RT, double &alphaStability, double &Eta,
-                                FloatArray &X0, FloatArray &direction, double mult )
+                                FloatArray &X0, FloatArray &directionOrig, double mult, bool deflation )
 {
+    // Normalize the direction
+    FloatArray direction = directionOrig;
+    direction.normalize();
     // do exact linesearch including delfation
     int maxIteLS = 40, p = 2;
-    double RHS, tolLS = 1e-12, ResNormLS, RHSdefl, deta = 0., alph_defl = 1., dx_norm, gamma;
+    double RHS, tolLS = 1e-12, ResNormLS, RHSdefl, deta = 0., alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
     FloatArray Ku( X.giveSize() ), dx_Defl, rhsDefl;
 
     deta = alphaStability;
@@ -597,14 +609,13 @@ void NRSolver::exactLineSearch(SparseMtrx& k, FloatArray& X, FloatArray& dX, Flo
         rhs.beDifferenceOf( RT, F );
         if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
 
-        dx_Defl = X - X0;
-        double dx_normSq = dx_Defl.dotProduct( dx_Defl );
-        // double dx_normSqInv = 1/dx_Defl.dotProduct( dx_Defl );
-
-        // Compute defrlated residuum
-        RHS     = rhs.dotProduct( direction );
-        RHSdefl = RHS * ( 1. / dx_normSq + 1. );
-        // RHSdefl = RHS;
+        RHS = rhs.dotProduct( direction );
+        RHSdefl = RHS;
+        if ( deflation ) { // Compute defrlated residuum
+            dx_Defl          = X - X0;
+            dx_normSq = dx_Defl.dotProduct( dx_Defl );
+            RHSdefl *= 1. / dx_normSq + 1.; 
+        }  
 
         // Check convergence
         OOFEM_LOG_INFO( "|resLS| = %.3e\n", abs( RHSdefl ) );
@@ -613,9 +624,14 @@ void NRSolver::exactLineSearch(SparseMtrx& k, FloatArray& X, FloatArray& dX, Flo
         engngModel->updateComponent( tStep, NonLinearLhs, domain );
         applyConstraintsToStiffness( k );
         k.times( direction, Ku );
-        gamma = p / ( dx_normSq + alph_defl * pow( dx_normSq, p ) );
+        kdefl = Ku.dotProduct( direction );
 
-        deta = RHS / ( Ku.dotProduct( direction ) + gamma * RHS * dx_Defl.dotProduct( direction ) );
+        if ( deflation ) {
+            gamma = p / ( dx_normSq + alph_defl * pow( dx_normSq, p ) );
+            kdefl +=  gamma * RHS * dx_Defl.dotProduct( direction );
+        }
+        
+        deta = RHS / kdefl;
         Eta += deta;
         ddX = deta * direction;
         X   = X + ddX;
