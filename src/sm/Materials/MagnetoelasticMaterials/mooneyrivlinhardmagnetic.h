@@ -97,5 +97,10 @@ private:
       FloatMatrixF< 9, 9 > give3dMaterialStiffnessMatrix_dPdF_consistentfix(MatResponseMode matResponseMode,
                                                            GaussPoint *gp,
                                                            TimeStep *tStep) const;
+
+      FloatArrayF< 9 > giveFirstPKStressVector_3d_ogdenpullback(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
+      FloatMatrixF< 9, 9 > give3dMaterialStiffnessMatrix_dPdF_ogdenpullback(MatResponseMode matResponseMode,
+                                                           GaussPoint *gp,
+                                                           TimeStep *tStep) const;
 };
 } // end namespace oofem
