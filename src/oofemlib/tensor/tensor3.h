@@ -36,8 +36,7 @@
 #include "floatarray.h"
 #include "mathfem.h"
 #include "index.h"
-#include "tensor1.h"
-#include "tensor4.h"
+#include "tensor2.h"
 #pragma once
 
 using namespace FTensor;
@@ -54,116 +53,121 @@ using namespace FTensor;
  **/
 
 namespace oofem {
-class Tensor3_3d : public Tensor2< double, 3, 3 >
+class Tensor3_3d : public Tensor3<double, 3, 3, 3>
 {
 public:
-    using Tensor3< double, 3, 3, 3 >::Tensor3;
+    using Tensor3<double, 3, 3, 3>::Tensor3;
 
     /**
      * Creates second-order tensor in 3d
      * Initialized with zeros
      */
 
-    Tensor3_3d() {
-        this->data [ 0 ] [ 0 ] [ 0 ] = 0;
-        this->data [ 0 ] [ 0 ] [ 1 ] = 0.;
-        this->data [ 0 ] [ 0 ] [ 2 ] = 0.;
-        this->data [ 0 ] [ 1 ] [ 0 ] = 0.;
-        this->data [ 0 ] [ 1 ] [ 1 ] = 0.;
-        this->data [ 0 ] [ 1 ] [ 2 ] = 0.;
-        this->data [ 0 ] [ 2 ] [ 0 ] = 0.;
-        this->data [ 0 ] [ 2 ] [ 1 ] = 0.;
-        this->data [ 0 ] [ 2 ] [ 2 ] = 0.;
-        this->data [ 1 ] [ 0 ] [ 0 ] = 0;
-        this->data [ 1 ] [ 0 ] [ 1 ] = 0.;
-        this->data [ 1 ] [ 0 ] [ 2 ] = 0.;
-        this->data [ 1 ] [ 1 ] [ 0 ] = 0.;
-        this->data [ 1 ] [ 1 ] [ 1 ] = 0.;
-        this->data [ 1 ] [ 1 ] [ 2 ] = 0.;
-        this->data [ 1 ] [ 2 ] [ 0 ] = 0.;
-        this->data [ 1 ] [ 2 ] [ 1 ] = 0.;
-        this->data [ 1 ] [ 2 ] [ 2 ] = 0.;
-        this->data [ 2 ] [ 0 ] [ 0 ] = 0;
-        this->data [ 2 ] [ 0 ] [ 1 ] = 0.;
-        this->data [ 2 ] [ 0 ] [ 2 ] = 0.;
-        this->data [ 2 ] [ 1 ] [ 0 ] = 0.;
-        this->data [ 2 ] [ 1 ] [ 1 ] = 0.;
-        this->data [ 2 ] [ 1 ] [ 2 ] = 0.;
-        this->data [ 2 ] [ 2 ] [ 0 ] = 0.;
-        this->data [ 2 ] [ 2 ] [ 1 ] = 0.;
-        this->data [ 2 ] [ 2 ] [ 2 ] = 0.;
+    Tensor3_3d()
+    {
+        this->operator()( 0, 0, 0 ) = 0;
+        this->operator()( 0, 0, 1 ) = 0.;
+        this->operator()( 0, 0, 2 ) = 0.;
+        this->operator()( 0, 1, 0 ) = 0.;
+        this->operator()( 0, 1, 1 ) = 0.;
+        this->operator()( 0, 1, 2 ) = 0.;
+        this->operator()( 0, 2, 0 ) = 0.;
+        this->operator()( 0, 2, 1 ) = 0.;
+        this->operator()( 0, 2, 2 ) = 0.;
+        this->operator()( 1, 0, 0 ) = 0;
+        this->operator()( 1, 0, 1 ) = 0.;
+        this->operator()( 1, 0, 2 ) = 0.;
+        this->operator()( 1, 1, 0 ) = 0.;
+        this->operator()( 1, 1, 1 ) = 0.;
+        this->operator()( 1, 1, 2 ) = 0.;
+        this->operator()( 1, 2, 0 ) = 0.;
+        this->operator()( 1, 2, 1 ) = 0.;
+        this->operator()( 1, 2, 2 ) = 0.;
+        this->operator()( 2, 0, 0 ) = 0;
+        this->operator()( 2, 0, 1 ) = 0.;
+        this->operator()( 2, 0, 2 ) = 0.;
+        this->operator()( 2, 1, 0 ) = 0.;
+        this->operator()( 2, 1, 1 ) = 0.;
+        this->operator()( 2, 1, 2 ) = 0.;
+        this->operator()( 2, 2, 0 ) = 0.;
+        this->operator()( 2, 2, 1 ) = 0.;
+        this->operator()( 2, 2, 2 ) = 0.;
     }
 
     /**
      * Creates a second-order order tensor in 3d from floatmatrixf<3, 9>
      */
 
-    Tensor2_3d(const oofem::FloatMatrixF< 3, 9 > &matrix) {
-        this->data [ 0 ] [ 0 ] [ 0 ] = matrix.at(1,1);
-        this->data [ 0 ] [ 0 ] [ 1 ] = matrix.at(1,6);
-        this->data [ 0 ] [ 0 ] [ 2 ] = matrix.at(1,5);
-        this->data [ 0 ] [ 1 ] [ 0 ] = matrix.at(1,9);
-        this->data [ 0 ] [ 1 ] [ 1 ] = matrix.at(1,2);
-        this->data [ 0 ] [ 1 ] [ 2 ] = matrix.at(1,4);
-        this->data [ 0 ] [ 2 ] [ 0 ] = matrix.at(1,8);
-        this->data [ 0 ] [ 2 ] [ 1 ] = matrix.at(1,7);
-        this->data [ 0 ] [ 2 ] [ 2 ] = matrix.at(1,3);
+    Tensor3_3d( const FloatMatrixF<3, 9> &matrix )
+    {
 
-        this->data [ 1 ] [ 0 ] [ 0 ] = matrix.at(2,1);
-        this->data [ 1 ] [ 0 ] [ 1 ] = matrix.at(2,6);
-        this->data [ 1 ] [ 0 ] [ 2 ] = matrix.at(2,5);
-        this->data [ 1 ] [ 1 ] [ 0 ] = matrix.at(2,9);
-        this->data [ 1 ] [ 1 ] [ 1 ] = matrix.at(2,2);
-        this->data [ 1 ] [ 1 ] [ 2 ] = matrix.at(2,4);
-        this->data [ 1 ] [ 2 ] [ 0 ] = matrix.at(2,8);
-        this->data [ 1 ] [ 2 ] [ 1 ] = matrix.at(2,7);
-        this->data [ 1 ] [ 2 ] [ 2 ] = matrix.at(2,3);
+        this->operator()( 0, 0, 0 ) = matrix.at( 1, 1 );
+        this->operator()( 0, 0, 1 ) = matrix.at( 1, 6 );
+        this->operator()( 0, 0, 2 ) = matrix.at( 1, 5 );
+        this->operator()( 0, 1, 0 ) = matrix.at( 1, 9 );
+        this->operator()( 0, 1, 1 ) = matrix.at( 1, 2 );
+        this->operator()( 0, 1, 2 ) = matrix.at( 1, 4 );
+        this->operator()( 0, 2, 0 ) = matrix.at( 1, 8 );
+        this->operator()( 0, 2, 1 ) = matrix.at( 1, 7 );
+        this->operator()( 0, 2, 2 ) = matrix.at( 1, 3 );
 
-        this->data [ 2 ] [ 0 ] [ 0 ] = matrix.at(3,1);
-        this->data [ 2 ] [ 0 ] [ 1 ] = matrix.at(3,6);
-        this->data [ 2 ] [ 0 ] [ 2 ] = matrix.at(3,5);
-        this->data [ 2 ] [ 1 ] [ 0 ] = matrix.at(3,9);
-        this->data [ 2 ] [ 1 ] [ 1 ] = matrix.at(3,2);
-        this->data [ 2 ] [ 1 ] [ 2 ] = matrix.at(3,4);
-        this->data [ 2 ] [ 2 ] [ 0 ] = matrix.at(3,8);
-        this->data [ 2 ] [ 2 ] [ 1 ] = matrix.at(3,7);
-        this->data [ 2 ] [ 2 ] [ 2 ] = matrix.at(3,3);
+        this->operator()( 1, 0, 0 ) = matrix.at( 2, 1 );
+        this->operator()( 1, 0, 1 ) = matrix.at( 2, 6 );
+        this->operator()( 1, 0, 2 ) = matrix.at( 2, 5 );
+        this->operator()( 1, 1, 0 ) = matrix.at( 2, 9 );
+        this->operator()( 1, 1, 1 ) = matrix.at( 2, 2 );
+        this->operator()( 1, 1, 2 ) = matrix.at( 2, 4 );
+        this->operator()( 1, 2, 0 ) = matrix.at( 2, 8 );
+        this->operator()( 1, 2, 1 ) = matrix.at( 2, 7 );
+        this->operator()( 1, 2, 2 ) = matrix.at( 2, 3 );
+
+        this->operator()( 2, 0, 0 ) = matrix.at( 3, 1 );
+        this->operator()( 2, 0, 1 ) = matrix.at( 3, 6 );
+        this->operator()( 2, 0, 2 ) = matrix.at( 3, 5 );
+        this->operator()( 2, 1, 0 ) = matrix.at( 3, 9 );
+        this->operator()( 2, 1, 1 ) = matrix.at( 3, 2 );
+        this->operator()( 2, 1, 2 ) = matrix.at( 3, 4 );
+        this->operator()( 2, 2, 0 ) = matrix.at( 3, 8 );
+        this->operator()( 2, 2, 1 ) = matrix.at( 3, 7 );
+        this->operator()( 2, 2, 2 ) = matrix.at( 3, 3 );
     }
 
-     /**
+    /**
      * Creates a second-order order tensor in 3d from floatmatrixf<9, 3>
      */
 
-    Tensor2_3d(const oofem::FloatMatrixF< 9, 3 > &matrix) {
-        this->data [ 0 ] [ 0 ] [ 0 ] = matrix.at(1,1);
-        this->data [ 0 ] [ 1 ] [ 0 ] = matrix.at(6,1);
-        this->data [ 0 ] [ 2 ] [ 0 ] = matrix.at(5,1);
-        this->data [ 1 ] [ 0 ] [ 0 ] = matrix.at(9,1);
-        this->data [ 1 ] [ 1 ] [ 0 ] = matrix.at(2,1);
-        this->data [ 1 ] [ 2 ] [ 0 ] = matrix.at(4,1);
-        this->data [ 2 ] [ 0 ] [ 0 ] = matrix.at(8,1);
-        this->data [ 2 ] [ 1 ] [ 0 ] = matrix.at(7,1);
-        this->data [ 2 ] [ 2 ] [ 0 ] = matrix.at(3,1);
+    Tensor3_3d( const FloatMatrixF<9, 3> &matrix )
+    {
 
-        this->data [ 0 ] [ 0 ] [ 1 ] = matrix.at(1,2);
-        this->data [ 0 ] [ 1 ] [ 1 ] = matrix.at(6,2);
-        this->data [ 0 ] [ 2 ] [ 1 ] = matrix.at(5,2);
-        this->data [ 1 ] [ 0 ] [ 1 ] = matrix.at(9,2);
-        this->data [ 1 ] [ 1 ] [ 1 ] = matrix.at(2,2);
-        this->data [ 1 ] [ 2 ] [ 1 ] = matrix.at(4,2);
-        this->data [ 2 ] [ 0 ] [ 1 ] = matrix.at(8,2);
-        this->data [ 2 ] [ 1 ] [ 1 ] = matrix.at(7,2);
-        this->data [ 2 ] [ 2 ] [ 1 ] = matrix.at(3,2);
+        this->operator()( 0, 0, 0 ) = matrix.at( 1, 1 );
+        this->operator()( 0, 1, 0 ) = matrix.at( 6, 1 );
+        this->operator()( 0, 2, 0 ) = matrix.at( 5, 1 );
+        this->operator()( 1, 0, 0 ) = matrix.at( 9, 1 );
+        this->operator()( 1, 1, 0 ) = matrix.at( 2, 1 );
+        this->operator()( 1, 2, 0 ) = matrix.at( 4, 1 );
+        this->operator()( 2, 0, 0 ) = matrix.at( 8, 1 );
+        this->operator()( 2, 1, 0 ) = matrix.at( 7, 1 );
+        this->operator()( 2, 2, 0 ) = matrix.at( 3, 1 );
 
-        this->data [ 0 ] [ 0 ] [ 2 ] = matrix.at(1,3);
-        this->data [ 0 ] [ 1 ] [ 2 ] = matrix.at(6,3);
-        this->data [ 0 ] [ 2 ] [ 2 ] = matrix.at(5,3);
-        this->data [ 1 ] [ 0 ] [ 2 ] = matrix.at(9,3);
-        this->data [ 1 ] [ 1 ] [ 2 ] = matrix.at(2,3);
-        this->data [ 1 ] [ 2 ] [ 2 ] = matrix.at(4,3);
-        this->data [ 2 ] [ 0 ] [ 2 ] = matrix.at(8,3);
-        this->data [ 2 ] [ 1 ] [ 2 ] = matrix.at(7,3);
-        this->data [ 2 ] [ 2 ] [ 2 ] = matrix.at(3,3);
+        this->operator()( 0, 0, 1 ) = matrix.at( 1, 2 );
+        this->operator()( 0, 1, 1 ) = matrix.at( 6, 2 );
+        this->operator()( 0, 2, 1 ) = matrix.at( 5, 2 );
+        this->operator()( 1, 0, 1 ) = matrix.at( 9, 2 );
+        this->operator()( 1, 1, 1 ) = matrix.at( 2, 2 );
+        this->operator()( 1, 2, 1 ) = matrix.at( 4, 2 );
+        this->operator()( 2, 0, 1 ) = matrix.at( 8, 2 );
+        this->operator()( 2, 1, 1 ) = matrix.at( 7, 2 );
+        this->operator()( 2, 2, 1 ) = matrix.at( 3, 2 );
+
+        this->operator()( 0, 0, 2 ) = matrix.at( 1, 3 );
+        this->operator()( 0, 1, 2 ) = matrix.at( 6, 3 );
+        this->operator()( 0, 2, 2 ) = matrix.at( 5, 3 );
+        this->operator()( 1, 0, 2 ) = matrix.at( 9, 3 );
+        this->operator()( 1, 1, 2 ) = matrix.at( 2, 3 );
+        this->operator()( 1, 2, 2 ) = matrix.at( 4, 3 );
+        this->operator()( 2, 0, 2 ) = matrix.at( 8, 3 );
+        this->operator()( 2, 1, 2 ) = matrix.at( 7, 3 );
+        this->operator()( 2, 2, 2 ) = matrix.at( 3, 3 );
     }
 
 
@@ -171,83 +175,82 @@ public:
      * Transforms a second-order tensor into a floatmatrixf<3, 9>,  using the Voigt notation
      */
 
-    const inline FloatMatrixF<3, 9 >to_voigt_form()
+    const inline FloatMatrixF<3, 9> to_voigt_form_3x9()
     {
         FloatMatrixF<3, 9> answer;
-        answer.at( 1, 1 ) = this.operator()( 0, 0, 0 );
-        answer.at( 1, 2 ) = this.operator()( 0, 1, 1 );
-        answer.at( 1, 3 ) = this.operator()( 0, 2, 2 );
-        answer.at( 1, 4 ) = this.operator()( 0, 1, 2 );
-        answer.at( 1, 5 ) = this.operator()( 0, 0, 2 );
-        answer.at( 1, 6 ) = this.operator()( 0, 0, 1 );
-        answer.at( 1, 7 ) = this.operator()( 0, 2, 1 );
-        answer.at( 1, 8 ) = this.operator()( 0, 2, 0 );
-        answer.at( 1, 9 ) = this.operator()( 0, 1, 0 );
+        answer.at( 1, 1 ) = this->operator()( 0, 0, 0 );
+        answer.at( 1, 2 ) = this->operator()( 0, 1, 1 );
+        answer.at( 1, 3 ) = this->operator()( 0, 2, 2 );
+        answer.at( 1, 4 ) = this->operator()( 0, 1, 2 );
+        answer.at( 1, 5 ) = this->operator()( 0, 0, 2 );
+        answer.at( 1, 6 ) = this->operator()( 0, 0, 1 );
+        answer.at( 1, 7 ) = this->operator()( 0, 2, 1 );
+        answer.at( 1, 8 ) = this->operator()( 0, 2, 0 );
+        answer.at( 1, 9 ) = this->operator()( 0, 1, 0 );
 
-        answer.at( 2, 1 ) = this.operator()( 1, 0, 0 );
-        answer.at( 2, 2 ) = this.operator()( 1, 1, 1 );
-        answer.at( 2, 3 ) = this.operator()( 1, 2, 2 );
-        answer.at( 2, 4 ) = this.operator()( 1, 1, 2 );
-        answer.at( 2, 5 ) = this.operator()( 1, 0, 2 );
-        answer.at( 2, 6 ) = this.operator()( 1, 0, 1 );
-        answer.at( 2, 7 ) = this.operator()( 1, 2, 1 );
-        answer.at( 2, 8 ) = this.operator()( 1, 2, 0 );
-        answer.at( 2, 9 ) = this.operator()( 1, 1, 0 );
+        answer.at( 2, 1 ) = this->operator()( 1, 0, 0 );
+        answer.at( 2, 2 ) = this->operator()( 1, 1, 1 );
+        answer.at( 2, 3 ) = this->operator()( 1, 2, 2 );
+        answer.at( 2, 4 ) = this->operator()( 1, 1, 2 );
+        answer.at( 2, 5 ) = this->operator()( 1, 0, 2 );
+        answer.at( 2, 6 ) = this->operator()( 1, 0, 1 );
+        answer.at( 2, 7 ) = this->operator()( 1, 2, 1 );
+        answer.at( 2, 8 ) = this->operator()( 1, 2, 0 );
+        answer.at( 2, 9 ) = this->operator()( 1, 1, 0 );
 
-        answer.at( 3, 1 ) = this.operator()( 2, 0, 0 );
-        answer.at( 3, 2 ) = this.operator()( 2, 1, 1 );
-        answer.at( 3, 3 ) = this.operator()( 2, 2, 2 );
-        answer.at( 3, 4 ) = this.operator()( 2, 1, 2 );
-        answer.at( 3, 5 ) = this.operator()( 2, 0, 2 );
-        answer.at( 3, 6 ) = this.operator()( 2, 0, 1 );
-        answer.at( 3, 7 ) = this.operator()( 2, 2, 1 );
-        answer.at( 3, 8 ) = this.operator()( 2, 2, 0 );
-        answer.at( 3, 9 ) = this.operator()( 2, 1, 0 );
+        answer.at( 3, 1 ) = this->operator()( 2, 0, 0 );
+        answer.at( 3, 2 ) = this->operator()( 2, 1, 1 );
+        answer.at( 3, 3 ) = this->operator()( 2, 2, 2 );
+        answer.at( 3, 4 ) = this->operator()( 2, 1, 2 );
+        answer.at( 3, 5 ) = this->operator()( 2, 0, 2 );
+        answer.at( 3, 6 ) = this->operator()( 2, 0, 1 );
+        answer.at( 3, 7 ) = this->operator()( 2, 2, 1 );
+        answer.at( 3, 8 ) = this->operator()( 2, 2, 0 );
+        answer.at( 3, 9 ) = this->operator()( 2, 1, 0 );
 
         return answer;
     }
 
-    
+
     /**
      * Transforms a second-order tensor into a floatmatrixf<9, 3>,  using the Voigt notation
      */
 
-    const inline FloatMatrixF<9, 3 >to_voigt_form()
+    const inline FloatMatrixF<9, 3> to_voigt_form_9x3()
     {
         FloatMatrixF<9, 3> answer;
-        answer.at( 1, 1 ) = this.operator()( 0, 0, 0 );
-        answer.at( 2, 1 ) = this.operator()( 1, 1, 0 );
-        answer.at( 3, 1 ) = this.operator()( 2, 2, 0 );
-        answer.at( 4, 1 ) = this.operator()( 1, 2, 0 );
-        answer.at( 5, 1 ) = this.operator()( 0, 2, 0 );
-        answer.at( 6, 1 ) = this.operator()( 0, 1, 0 );
-        answer.at( 7, 1 ) = this.operator()( 2, 1, 0 );
-        answer.at( 8, 1 ) = this.operator()( 2, 0, 0 );
-        answer.at( 9, 1 ) = this.operator()( 1, 0, 0 );
+        answer.at( 1, 1 ) = this->operator()( 0, 0, 0 );
+        answer.at( 2, 1 ) = this->operator()( 1, 1, 0 );
+        answer.at( 3, 1 ) = this->operator()( 2, 2, 0 );
+        answer.at( 4, 1 ) = this->operator()( 1, 2, 0 );
+        answer.at( 5, 1 ) = this->operator()( 0, 2, 0 );
+        answer.at( 6, 1 ) = this->operator()( 0, 1, 0 );
+        answer.at( 7, 1 ) = this->operator()( 2, 1, 0 );
+        answer.at( 8, 1 ) = this->operator()( 2, 0, 0 );
+        answer.at( 9, 1 ) = this->operator()( 1, 0, 0 );
 
-        answer.at( 1, 2 ) = this.operator()( 0, 0, 1 );
-        answer.at( 2, 2 ) = this.operator()( 1, 1, 1 );
-        answer.at( 3, 2 ) = this.operator()( 2, 2, 1 );
-        answer.at( 4, 2 ) = this.operator()( 1, 2, 1 );
-        answer.at( 5, 2 ) = this.operator()( 0, 2, 1 );
-        answer.at( 6, 2 ) = this.operator()( 0, 1, 1 );
-        answer.at( 7, 2 ) = this.operator()( 2, 1, 1 );
-        answer.at( 8, 2 ) = this.operator()( 2, 0, 1 );
-        answer.at( 9, 2 ) = this.operator()( 1, 0, 1 );
+        answer.at( 1, 2 ) = this->operator()( 0, 0, 1 );
+        answer.at( 2, 2 ) = this->operator()( 1, 1, 1 );
+        answer.at( 3, 2 ) = this->operator()( 2, 2, 1 );
+        answer.at( 4, 2 ) = this->operator()( 1, 2, 1 );
+        answer.at( 5, 2 ) = this->operator()( 0, 2, 1 );
+        answer.at( 6, 2 ) = this->operator()( 0, 1, 1 );
+        answer.at( 7, 2 ) = this->operator()( 2, 1, 1 );
+        answer.at( 8, 2 ) = this->operator()( 2, 0, 1 );
+        answer.at( 9, 2 ) = this->operator()( 1, 0, 1 );
 
-        answer.at( 1, 3 ) = this.operator()( 0, 0, 2 );
-        answer.at( 2, 3 ) = this.operator()( 1, 1, 2 );
-        answer.at( 3, 3 ) = this.operator()( 2, 2, 2 );
-        answer.at( 4, 3 ) = this.operator()( 1, 2, 2 );
-        answer.at( 5, 3 ) = this.operator()( 0, 2, 2 );
-        answer.at( 6, 3 ) = this.operator()( 0, 1, 2 );
-        answer.at( 7, 3 ) = this.operator()( 2, 1, 2 );
-        answer.at( 8, 3 ) = this.operator()( 2, 0, 2 );
-        answer.at( 9, 3 ) = this.operator()( 1, 0, 2 );
-
+        answer.at( 1, 3 ) = this->operator()( 0, 0, 2 );
+        answer.at( 2, 3 ) = this->operator()( 1, 1, 2 );
+        answer.at( 3, 3 ) = this->operator()( 2, 2, 2 );
+        answer.at( 4, 3 ) = this->operator()( 1, 2, 2 );
+        answer.at( 5, 3 ) = this->operator()( 0, 2, 2 );
+        answer.at( 6, 3 ) = this->operator()( 0, 1, 2 );
+        answer.at( 7, 3 ) = this->operator()( 2, 1, 2 );
+        answer.at( 8, 3 ) = this->operator()( 2, 0, 2 );
+        answer.at( 9, 3 ) = this->operator()( 1, 0, 2 );
 
 
         return answer;
     }
-
 };
+} // namespace oofem
