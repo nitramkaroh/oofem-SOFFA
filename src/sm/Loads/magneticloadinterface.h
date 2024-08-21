@@ -66,7 +66,8 @@ public:
     
     // private:
     virtual void surfaceEvalNmatrixAt( FloatMatrix &answer, int iSurf, GaussPoint *gp ) = 0;
-    virtual void surfaceEvaldNdxi( FloatMatrix &answer, int iSurf, GaussPoint *gp ) = 0;
+    virtual void surfaceEvalBmatrixAt( FloatMatrix &answer, int iSurf, GaussPoint *gp ) = 0;
+    //virtual void surfaceEvaldNdxi( FloatMatrix &answer, int iSurf, GaussPoint *gp ) = 0;
     virtual void surfaceEvalNormalAt(FloatArray &answer, FloatArray &dxdksi, FloatArray &dxdeta, int iSurf, GaussPoint *gp, TimeStep *tStep){;}
     virtual void surfaceEvalDeformationGradientAt( FloatArray &answer, int isurf, GaussPoint *gp, TimeStep *tStep ) { ; }
     
