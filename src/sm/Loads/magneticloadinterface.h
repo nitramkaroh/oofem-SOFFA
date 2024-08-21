@@ -32,60 +32,45 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef interfacetype_h
-#define interfacetype_h
+#pragma once
+
+#include "interface.h"
+#include "floatarray.h"
+#include "floatmatrix.h"
+#include "element.h"
+#include "feinterpol.h"
+#include "gausspoint.h"
+
 
 namespace oofem {
+class GaussPoint;
+class IntegrationRule;
+class TimeStep;
 /**
- * Enumerative type, used to identify interface type.
- * @see Interface More details.
+ * Provides Pressure Follower Load for an element.
+ * @author Martin Horak
  */
-enum InterfaceType {
-    UnknownInterfaceType,
+class OOFEM_EXPORT MagneticLoadElementInterface : public Interface
+{
+public:
+    Element *element;
 
-    LayeredCrossSectionInterfaceType,
-    FiberedCrossSectionInterfaceType,
 
-    ZZNodalRecoveryModelInterfaceType,
-    NodalAveragingRecoveryModelInterfaceType,
-    SPRNodalRecoveryModelInterfaceType,
+    /// Constructor.
+    MagneticLoadElementInterface(Element *e);
+    virtual ~MagneticLoadElementInterface();
 
-    ZZErrorEstimatorInterfaceType,
-    HuertaErrorEstimatorInterfaceType,
-    Huerta1dErrorEstimatorInterfaceType, // experimental
+    virtual const char *giveClassName() const { return "MagneticLoadElementInterface"; }
 
-    SpatialLocalizerInterfaceType,
 
-    EIPrimaryUnknownMapperInterfaceType,
-    EIPrimaryFieldInterfaceType,
+    
+    // private:
+    virtual void surfaceEvalNmatrixAt( FloatMatrix &answer, int iSurf, GaussPoint *gp ) = 0;
+    virtual void surfaceEvaldNdxi( FloatMatrix &answer, int iSurf, GaussPoint *gp ) = 0;
+    virtual void surfaceEvalNormalAt(FloatArray &answer, FloatArray &dxdksi, FloatArray &dxdeta, int iSurf, GaussPoint *gp, TimeStep *tStep){;}
+    virtual void surfaceEvalDeformationGradientAt( FloatArray &answer, int isurf, GaussPoint *gp, TimeStep *tStep ) { ; }
+    
+    virtual IntegrationRule* surfaceGiveIntegrationRule(int order, int iSurf) = 0;
 
-    NonlocalMaterialStatusExtensionInterfaceType,
-    GradientDamageMaterialExtensionInterfaceType,
-    GradientDamageMaterialStatusExtensionInterfaceType,
-
-    NonlocalMaterialExtensionInterfaceType,
-    NonlocalMaterialStiffnessInterfaceType,
-    MaterialModelMapperInterfaceType,
-    RandomMaterialStatusExtensionInterfaceType,
-
-    HydrationModelInterfaceType,
-    HydrationModelStatusInterfaceType,
-
-    LEPlicElementInterfaceType,
-    LevelSetPCSElementInterfaceType,
-
-    XfemElementInterfaceType,
-    VTKXMLExportModuleElementInterfaceType,
-    FailureModuleElementInterfaceType,
-
-    Beam3dSubsoilElementInterfaceType,
-    Beam3dSubsoilMaterialInterfaceType,
-
-    QCMaterialExtensionInterfaceType,
-
-    MixedPressureMaterialExtensionInterfaceType,
-
-    MagneticLoadElementInterfaceType
 };
 } // end namespace oofem
-#endif // interfacetype_h
