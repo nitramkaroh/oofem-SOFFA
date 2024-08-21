@@ -50,6 +50,9 @@
 #define _IFT_MooneyRivlinHardMagnetic_mode "mode" //mode of magnetic energy 1 = consistent (default), 2 = MIT
 //@}
 
+// base vacuum permeability constant definition for OOFEM, in basic SI units
+#define BASE_VACUUM_PERMEABILITY_MU_0 1.25663706143e-6
+
 namespace oofem {
 /**
  * This class implements a hard magnetic material based on Mooney-Rivlin.

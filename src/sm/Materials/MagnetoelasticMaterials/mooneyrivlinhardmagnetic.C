@@ -128,7 +128,7 @@ void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
     FloatArray B_app_temp, B_res_temp;
 
     //default values
-    mu_0 = 1.25663706143e-6;
+    mu_0 = BASE_VACUUM_PERMEABILITY_MU_0;
     materialMode = 1;
 
     IR_GIVE_FIELD( ir, B_app_temp, _IFT_MooneyRivlinHardMagnetic_B_app );
