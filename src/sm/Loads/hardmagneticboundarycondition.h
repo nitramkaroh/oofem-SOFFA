@@ -37,7 +37,8 @@
 #include "activebc.h"
 #include "element.h"
 #include "inputrecord.h"
-
+#include "tensor/tensor1.h"
+#include "tensor/tensor2.h"
 ///@name Input fields for HardMagneticBoundaryCondition
 //@{
 #define _IFT_HardMagneticBoundaryCondition_Name "hardmagneticboundarycondition"
@@ -61,7 +62,7 @@ protected:
 
     double mu0; //vacuum permeability
     FloatArray b_ext; //external magnetic field in free space
-    FloatArray sigma_star; //precomputed free space stress
+    FloatArrayF<9> sigma_star; //precomputed free space stress
     int ltf_index; //index of load time function for applied load
 
 public:

@@ -160,12 +160,12 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
 
         answer.clear();
+	/*
         int order = 4;
         IntegrationRule *iRule = mfli->surfaceGiveIntegrationRule( order, iSurf );
-        double a = 0;
-        
+       
         Tensor1_3d SigStarTimesCofN, Normal;
-        Tensor2_3d SigStar( load_level*load_level*sigma_star );
+	Tensor2_3d SigStar( load_level*load_level*sigma_star );
         Tensor2_3d F;
         FloatArray vF;
 
@@ -189,11 +189,13 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
             answer.plusProduct( N, SigStarTimesCofN.to_voigt_form(), gp->giveWeight() );
         }
+	*/
         
     }
 
     void HardMagneticBoundaryCondition::computeTangentFromElement( FloatMatrix &answer, Element *e, int iSurf, TimeStep *tStep )
     {
+       
         MagneticLoadElementInterface *mfli = static_cast<MagneticLoadElementInterface *>( e->giveInterface( MagneticLoadElementInterfaceType ) );
 
         if ( !mfli ) {
@@ -215,20 +217,22 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
         double nNodes = bNodes.giveSize();
         FloatMatrix K;
         FloatMatrix testAnswer( 12, 12 );
+	
         if ( e->giveSpatialDimension() == 3 ) {
 
             Tensor1_3d Normal;
-            Tensor2_3d SigStar( load_level * load_level * sigma_star );
+	    //@todo: this is not possible
+	    Tensor2_3d SigStar( load_level * load_level * sigma_star );         
             Tensor2_3d F;
             Tensor3_3d SigStarFcrossN;
             FloatArray vF;
-
+	   
             for ( GaussPoint *gp : *iRule ) {
                 FloatMatrix dN;
 
                 // compute normal vector
-                FloatArray n, dxdk, dxde;
-                mfli->surfaceEvalNormalAt( n, dxdk, dxde, iSurf, gp, tStep );
+                FloatArray n;
+                mfli->surfaceEvalNormalAt( n, iSurf, gp, tStep );
 
                 // compute surface N and B matrix
                 FloatMatrix N, B;
@@ -239,8 +243,8 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 mfli->surfaceEvalDeformationGradientAt( vF, iSurf, gp, tStep );
 
                 //compute the force vector
-                F = Tensor2_3d( vF );
-                Normal = Tensor2_3d( n );
+                F = Tensor2_3d( FloatArrayF< 9 >(vF) );
+		Normal = Tensor1_3d( FloatArrayF< 3 >(n) );
                 auto [J, cofF] = F.compute_determinant_and_cofactor();
 
                 SigStarFcrossN( i_3, m_3, n_3 ) = SigStar( i_3, j_3) * F.compute_tensor_cross_product()( j_3, k_3, m_3, n_3) * Normal(k_3);
@@ -256,17 +260,21 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
         } else if ( e->giveSpatialDimension() == 2 ) {
             OOFEM_ERROR( "Magnetic boundary condition not implemented for 2D domains." );
         }
+	    
     }
 
     void HardMagneticBoundaryCondition::evaluateFreeSpaceStress()
     {
+      
         Tensor2_3d SigStar;
-        Tensor1_3d Bext( b_ext );
+	FloatArrayF<3> bb( b_ext );
+        Tensor1_3d Bext(bb);
         Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
 
-        SigStar( i_3, j_3 ) = 1 / mu0 * (Bext(i_3)*Bext(j_3) - 0.5*Bext(p_3)*Bext(p_3)*delta(i_3,j_3));
+        SigStar( i_3, j_3 ) = 1 / mu0 * (Bext(i_3) * Bext(j_3) - 0.5 * Bext(p_3) * Bext(p_3) * delta(i_3,j_3));
 
         sigma_star = SigStar.to_voigt_form();
+      
     }
 
     

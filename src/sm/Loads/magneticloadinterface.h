@@ -60,15 +60,14 @@ public:
     MagneticLoadElementInterface(Element *e);
     virtual ~MagneticLoadElementInterface();
 
-    virtual const char *giveClassName() const { return "MagneticLoadElementInterface"; }
+    virtual const char *giveClassName() const override { return "MagneticLoadElementInterface"; }
 
 
     
     // private:
     virtual void surfaceEvalNmatrixAt( FloatMatrix &answer, int iSurf, GaussPoint *gp ) = 0;
     virtual void surfaceEvalBmatrixAt( FloatMatrix &answer, int iSurf, GaussPoint *gp ) = 0;
-    //virtual void surfaceEvaldNdxi( FloatMatrix &answer, int iSurf, GaussPoint *gp ) = 0;
-    virtual void surfaceEvalNormalAt(FloatArray &answer, FloatArray &dxdksi, FloatArray &dxdeta, int iSurf, GaussPoint *gp, TimeStep *tStep){;}
+    virtual void surfaceEvalNormalAt(FloatArray &answer, int iSurf, GaussPoint *gp, TimeStep *tStep){;}
     virtual void surfaceEvalDeformationGradientAt( FloatArray &answer, int isurf, GaussPoint *gp, TimeStep *tStep ) { ; }
     
     virtual IntegrationRule* surfaceGiveIntegrationRule(int order, int iSurf) = 0;
