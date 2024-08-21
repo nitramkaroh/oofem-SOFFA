@@ -47,6 +47,7 @@ set (sm_loads
     Loads/structtemperatureload.C
     Loads/structeigenstrainload.C
     Loads/hardmagneticboundarycondition.C
+    Loads/magneticloadinterface.C
     )
 
 set (sm_error
