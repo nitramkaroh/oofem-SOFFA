@@ -449,6 +449,9 @@ public:
      */
     virtual std::unique_ptr<IntegrationRule> giveBoundaryIntegrationRule(int order, int boundary) const;
     //@}
+    
+    virtual void surfaceEvaldNdxi(FloatMatrix &answer, int isurf, const FloatArray &lcoords) const {;}
+
 
     /**@name Methods to support interpolation defined on patch by patch basis. */
     //@{

@@ -232,6 +232,11 @@ public:
     // definition
     const char *giveClassName() const override { return "NLStructuralElement"; }
 
+  virtual void computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer) {
+    OOFEM_ERROR("method not implemented for this element");
+    return;
+  }
+
 protected:
     int checkConsistency() override;
     /**
@@ -242,10 +247,6 @@ protected:
      * @param gp Integration point.
      * @param answer BF matrix at this point.
      */
-    virtual void computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer) {
-        OOFEM_ERROR("method not implemented for this element");
-        return;
-    }
     friend class GradientDamageElement;
     friend class PhaseFieldElement;
     friend class XfemStructuralElementInterface;

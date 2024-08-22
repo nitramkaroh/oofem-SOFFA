@@ -66,8 +66,9 @@ public:
     { this->surfaceEvalN(answer, isurf, lcoords, cellgeo); }
     void boundarySurfaceEvaldNdx(FloatMatrix &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override
     { this->surfaceEvaldNdx(answer, isurf, lcoords, cellgeo); }
-    double boundarySurfaceEvalNormal(FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override
-    { return surfaceEvalNormal(answer, isurf, lcoords, cellgeo); }
+    double boundarySurfaceEvalNormal(FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
+    //{ return surfaceEvalNormal(answer, isurf, lcoords, cellgeo); }
+    
     void boundarySurfaceLocal2global(FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override
     { this->surfaceLocal2global(answer, isurf, lcoords, cellgeo); }
     double boundarySurfaceGiveTransformationJacobian(int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override
@@ -197,6 +198,35 @@ public:
         return nullptr;
     };
     IntArray boundarySurfaceGiveNodes(int boundary) const override;
+
+    ///////////////
+    virtual void surfaceEvaldNdxi(FloatMatrix &answer, int isurf,const FloatArray &lcoords) const override;
+        /**
+     * Evaluates the tangent vectors of the surface at given point.
+     * @param isurf Determines the surface number.
+     * @param lcoords Array containing (local) coordinates.
+     * @param cellgeo Underlying cell geometry.
+     * @return Surface mapping jacobian .
+     * @return tangent vectors
+     */
+
+    virtual std::tuple<FloatArrayF<3>,FloatArrayF<3>> surfaceEvalBaseVectorsAt(int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const;
+    
+    /**
+     * Evaluates the unit normal out of the surface at given point.
+     * @param isurf Determines the surface number.
+     * @param lcoords Array containing (local) coordinates.
+     * @param cellgeo Underlying cell geometry.
+     * @return Surface mapping jacobian .
+     * @return unit normal vector
+     */
+    virtual std::tuple<double, FloatArrayF<3>> surfaceEvalUnitNormal(int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const ;
+
+    FloatMatrixF<3,3> surfaceGiveJacobianMatrixAt(int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const;
+	
+
+
+    
 };
 } // end namespace oofem
 #endif // feinterpol3d_h

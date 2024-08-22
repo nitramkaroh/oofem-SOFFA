@@ -42,8 +42,8 @@
 #include "mathfem.h"
 #include "function.h"
 #include "tensor/tensor3.h"
-
-
+#include "nlstructuralelement.h"
+#include "feinterpol3d.h"
 namespace oofem {
 REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
@@ -51,7 +51,9 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
     {
         ActiveBoundaryCondition::initializeFrom( ir );
 
-        IR_GIVE_FIELD( ir, b_ext, _IFT_HardMagneticBoundaryCondition_b_ext );
+	FloatArray b;
+        IR_GIVE_FIELD( ir, b, _IFT_HardMagneticBoundaryCondition_b_ext );
+	b_ext = Tensor1_3d( FloatArrayF< 3 >(b) );
         IR_GIVE_FIELD( ir, ltf_index, _IFT_HardMagneticBoundaryCondition_ltf );
 
         mu0 = BASE_VACUUM_PERMEABILITY_MU_0;
@@ -147,6 +149,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
     void HardMagneticBoundaryCondition::computeLoadVectorFromElement( FloatArray &answer, Element *e, int iSurf, TimeStep *tStep, ValueModeType mode )
     {
         MagneticLoadElementInterface *mfli = static_cast<MagneticLoadElementInterface *>( e->giveInterface( MagneticLoadElementInterfaceType ) );
+	NLStructuralElement *nle = dynamic_cast<NLStructuralElement *> (e);
 
         if ( !mfli ) {
             OOFEM_ERROR( "Element doesn't implement the required magnetic load interface!" );
@@ -160,36 +163,41 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
 
         answer.clear();
-	/*
+	
         int order = 4;
-        IntegrationRule *iRule = mfli->surfaceGiveIntegrationRule( order, iSurf );
-       
-        Tensor1_3d SigStarTimesCofN, Normal;
-	Tensor2_3d SigStar( load_level*load_level*sigma_star );
+      	auto iRule = nle->giveBoundarySurfaceIntegrationRule( order, iSurf );
+        
+        Tensor1_3d maxwellStressCofFN;
         Tensor2_3d F;
         FloatArray vF;
 
         for ( GaussPoint *gp : *iRule ) {
             // compute normal vector
-            FloatArray n, dxdksi, dxdeta;
-            mfli->surfaceEvalNormalAt( n, dxdksi, dxdeta, iSurf, gp, tStep );
+	    //FloatArray n;
+            //mfli->surfaceEvalNormalAt( n, iSurf, gp, tStep );
+	    FEInterpolation3d *interpolation = dynamic_cast<FEInterpolation3d *> (e->giveInterpolation());
+	    auto [dA, n] = interpolation->surfaceEvalUnitNormal(iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(e));
             // compute surface N matirx
-            FloatMatrix N;
-            mfli->surfaceEvalNmatrixAt( N, iSurf, gp );
+            FloatMatrix N, B;
+	    // compute deformation gradient
+            //mfli->surfaceEvalDeformationGradientAt( vF, iSurf, gp, tStep );
+	    //mfli->surfaceEvalNmatrixAt( N, iSurf, gp );
+	    //mfli->surfaceEvalBmatrixAt( B, iSurf, gp );
+	    nle->computeSurfaceNMatrix(N, iSurf, gp->giveNaturalCoordinates());
+	    nle->computeBHmatrixAt(gp, B);
+	    // compute deformation gradient
+	    nle->computeDeformationGradientVector(vF, gp, tStep);
 
-            // compute deformation gradient
-            mfli->surfaceEvalDeformationGradientAt( vF, iSurf, gp, tStep );
-
+	    
             //compute the force vector
-            F = Tensor2_3d( vF );
-            Normal = Tensor2_3d( n );
+            auto F = Tensor2_3d( FloatArrayF<9> (vF) );
+            auto Normal = Tensor1_3d( FloatArrayF<3> (n) );
             auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-            SigStarTimesCofN( i_3 ) = SigStar( i_3, j_3 ) * cofF( j_3, k_3 ) * Normal(k_3);
-
-            answer.plusProduct( N, SigStarTimesCofN.to_voigt_form(), gp->giveWeight() );
+            maxwellStressCofFN( i_3 ) = load_level * load_level * maxwell_stress( i_3, j_3 ) * cofF( j_3, k_3 ) * Normal(k_3);
+	    //
+            answer.plusProduct( N, maxwellStressCofFN.to_voigt_form(), -gp->giveWeight() * dA );  
         }
-	*/
+	
         
     }
 
@@ -197,6 +205,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
     {
        
         MagneticLoadElementInterface *mfli = static_cast<MagneticLoadElementInterface *>( e->giveInterface( MagneticLoadElementInterfaceType ) );
+	NLStructuralElement *nle = dynamic_cast<NLStructuralElement *> (e);
 
         if ( !mfli ) {
             OOFEM_ERROR( "Element doesn't implement the required magnetic load interface!" );
@@ -210,51 +219,41 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
         answer.clear();
         int order = 4;
-        IntegrationRule *iRule = mfli->surfaceGiveIntegrationRule( order, iSurf );
-
-        IntArray bNodes;
-        bNodes = e->giveBoundarySurfaceNodes( iSurf );
+        auto iRule = nle->giveBoundarySurfaceIntegrationRule( order, iSurf );
+        auto bNodes = e->giveBoundarySurfaceNodes( iSurf );
         double nNodes = bNodes.giveSize();
         FloatMatrix K;
         FloatMatrix testAnswer( 12, 12 );
 	
         if ( e->giveSpatialDimension() == 3 ) {
-
-            Tensor1_3d Normal;
-	    //@todo: this is not possible
-	    Tensor2_3d SigStar( load_level * load_level * sigma_star );         
-            Tensor2_3d F;
-            Tensor3_3d SigStarFcrossN;
+            Tensor3_3d maxwellStressFcrossN;
             FloatArray vF;
 	   
             for ( GaussPoint *gp : *iRule ) {
-                FloatMatrix dN;
-
                 // compute normal vector
-                FloatArray n;
-                mfli->surfaceEvalNormalAt( n, iSurf, gp, tStep );
-
+                //FloatArray n;
+	      FEInterpolation3d *interpolation = dynamic_cast<FEInterpolation3d *> (e->giveInterpolation());
+	      auto [dA, n] = interpolation->surfaceEvalUnitNormal(iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(e));
+		//                mfli->surfaceEvalNormalAt( n, iSurf, gp, tStep );
                 // compute surface N and B matrix
                 FloatMatrix N, B;
-                mfli->surfaceEvalNmatrixAt( N, iSurf, gp );
-                mfli->surfaceEvalBmatrixAt( B, iSurf, gp );
-
+		nle->computeSurfaceNMatrix(N, iSurf, gp->giveNaturalCoordinates());
+		//mfli->surfaceEvalNmatrixAt( N, iSurf, gp );
+                //mfli->surfaceEvalBmatrixAt( B, iSurf, gp );
+		nle->computeBHmatrixAt(gp, B);
                 // compute deformation gradient
-                mfli->surfaceEvalDeformationGradientAt( vF, iSurf, gp, tStep );
-
+		nle->computeDeformationGradientVector(vF, gp, tStep);
+		//mfli->surfaceEvalDeformationGradientAt( vF, iSurf, gp, tStep );
                 //compute the force vector
-                F = Tensor2_3d( FloatArrayF< 9 >(vF) );
-		Normal = Tensor1_3d( FloatArrayF< 3 >(n) );
+                auto F = Tensor2_3d( FloatArrayF< 9 >(vF) );
+		auto Normal = Tensor1_3d( FloatArrayF< 3 >(n) );
                 auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-                SigStarFcrossN( i_3, m_3, n_3 ) = SigStar( i_3, j_3) * F.compute_tensor_cross_product()( j_3, k_3, m_3, n_3) * Normal(k_3);
-
+		//
+                maxwellStressFcrossN( i_3, m_3, n_3 ) =  load_level * load_level * maxwell_stress( i_3, j_3) * F.compute_tensor_cross_product()( j_3, k_3, m_3, n_3) * Normal(k_3);
+		//
                 N.beTranspositionOf(N);
-                FloatMatrix NtimesTensor, NtimesTensortimesB;
-                NtimesTensor.beProductOf(N, SigStarFcrossN.to_voigt_form_3x9());
-                NtimesTensortimesB.beProductOf(NtimesTensor, B);
-                NtimesTensortimesB.times(gp->giveWeight());
-                answer.add(NtimesTensortimesB);
+		answer +=  -gp->giveWeight() * dA * (N * maxwellStressFcrossN.to_voigt_form_3x9() * B);
+		
 
             }
         } else if ( e->giveSpatialDimension() == 2 ) {
@@ -265,15 +264,8 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
     void HardMagneticBoundaryCondition::evaluateFreeSpaceStress()
     {
-      
-        Tensor2_3d SigStar;
-	FloatArrayF<3> bb( b_ext );
-        Tensor1_3d Bext(bb);
-        Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-
-        SigStar( i_3, j_3 ) = 1 / mu0 * (Bext(i_3) * Bext(j_3) - 0.5 * Bext(p_3) * Bext(p_3) * delta(i_3,j_3));
-
-        sigma_star = SigStar.to_voigt_form();
+      Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
+      maxwell_stress( i_3, j_3 ) = 1 / mu0 * (b_ext(i_3) * b_ext(j_3) - 0.5 * b_ext(p_3) * b_ext(p_3) * delta(i_3,j_3));
       
     }
 

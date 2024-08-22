@@ -510,6 +510,50 @@ FEI3dHexaLin :: surfaceEvaldNdx(FloatMatrix &answer, int isurf, const FloatArray
     }
 }
 
+
+void
+FEI3dHexaLin :: surfaceEvaldNdxi(FloatMatrix &answer, int isurf, const FloatArray &lcoords) const
+{
+    const double ksi = lcoords[0];
+    const double eta = lcoords[1];
+
+    answer.resize(4,2);
+    // dn/dxi
+    /*
+    answer.at(1, 1) =  0.25 * ( 1. + eta );
+    answer.at(2, 1) = -0.25 * ( 1. + eta );
+    answer.at(3, 1) = -0.25 * ( 1. - eta );
+    answer.at(4, 1) =  0.25 * ( 1. - eta );
+    */
+    answer.at(1,1) =  - ( 1. - eta ) * 0.25;
+    answer.at(2,1) =    ( 1. - eta ) * 0.25;
+    answer.at(3,1) =    ( 1. + eta ) * 0.25;
+    answer.at(4,1) =  - ( 1. + eta ) * 0.25;
+    
+
+
+    // dn/deta
+    /*
+    answer.at(1, 2) =  0.25 * ( 1. + ksi );
+    answer.at(2, 2) =  0.25 * ( 1. - ksi );
+    answer.at(3, 2) = -0.25 * ( 1. - ksi );
+    answer.at(4, 2) = -0.25 * ( 1. + ksi );
+    */
+    
+    answer.at(1,2) = - ( 1. - ksi ) * 0.25;
+    answer.at(2,2) = - ( 1. + ksi ) * 0.25;
+    answer.at(3,2) =   ( 1. + ksi ) * 0.25;
+    answer.at(4,2) =   ( 1. - ksi ) * 0.25;
+    
+}
+
+
+
+
+
+
+
+
 void
 FEI3dHexaLin :: surfaceLocal2global(FloatArray &answer, int iedge,
                                     const FloatArray &lcoords, const FEICellGeometry &cellgeo) const

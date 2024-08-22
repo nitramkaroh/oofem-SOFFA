@@ -61,8 +61,9 @@ class HardMagneticBoundaryCondition : public ActiveBoundaryCondition {
 protected:
 
     double mu0; //vacuum permeability
-    FloatArray b_ext; //external magnetic field in free space
-    FloatArrayF<9> sigma_star; //precomputed free space stress
+    Tensor1_3d b_ext; //external magnetic field in free space
+  //FloatArrayF<9> sigma_star; //precomputed free space stress
+    Tensor2_3d maxwell_stress;
     int ltf_index; //index of load time function for applied load
 
 public:
