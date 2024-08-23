@@ -44,7 +44,7 @@
 #define _IFT_HardMagneticBoundaryCondition_Name "hardmagneticboundarycondition"
 #define _IFT_HardMagneticBoundaryCondition_mu_0 "mu_0"
 #define _IFT_HardMagneticBoundaryCondition_b_ext "b_ext"
-#define _IFT_HardMagneticBoundaryCondition_ltf "ltf" //load time function for applied field
+#define _IFT_HardMagneticBoundaryCondition_ltf "loadtimefunction" //load time function for applied field
 //@}
 
 namespace oofem {
