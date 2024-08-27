@@ -137,6 +137,9 @@ void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
     IR_GIVE_FIELD( ir, ltf_index, _IFT_MooneyRivlinHardMagnetic_ltf );
     IR_GIVE_OPTIONAL_FIELD( ir, materialMode, _IFT_MooneyRivlinHardMagnetic_mode );
 
+    referenceB = false;
+    IR_GIVE_OPTIONAL_FIELD( ir, referenceB, _IFT_MooneyRivlinHardMagnetic_referenceB );
+
     B_app = FloatArrayF<3>( B_app_temp );
     B_res = FloatArrayF<3>( B_res_temp );
 }
@@ -144,16 +147,19 @@ void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
 FloatArrayF<9> MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d_consistent( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
 {
 
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    double load_level            = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
     FloatArrayF<3> B_app_at_time = load_level * B_app;
 
-    Tensor2_3d F( vF ), P_me, delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-    
+    Tensor2_3d F( vF ), P_me, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+
     Tensor1_3d Bapp( B_app_at_time ), Bres( B_res ), Bappref;
     auto [J, cofF] = F.compute_determinant_and_cofactor();
 
-    Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
-
+    if ( !referenceB ) {
+        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
+    } else {
+        Bappref = Bapp;
+    }
 
     P_me( k_3, l_3 ) = -(1/(2*J*J*mu_0))*(Bappref(i_3) - 2.0*Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)
         + (1/(2*J*mu_0)) * ( Bappref( i_3 ) - 2.0 * Bres( i_3 ) ) * Bappref(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3));
@@ -180,7 +186,11 @@ FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF_
     Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res ), Bappref;
     auto [J, cofF] = F.compute_determinant_and_cofactor();
 
-    Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
+    if ( !referenceB ) {
+        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
+    } else {
+        Bappref = Bapp;
+    }
 
     D_me( k_3, l_3, p_3, q_3 ) = (1/(J*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)*cofF(p_3, q_3)
         - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * Bappref(j_3) * (delta(i_3, q_3)*F(p_3,j_3) + delta(j_3, q_3)*F(p_3,i_3)) * cofF(k_3, l_3) 

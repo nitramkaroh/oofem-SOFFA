@@ -48,6 +48,7 @@
 #define _IFT_MooneyRivlinHardMagnetic_mu_0 "mu_0" //magnetic permeability of free space (optional, default value is 4*pi*10^7)
 #define _IFT_MooneyRivlinHardMagnetic_ltf "ltf" //load time function for applied field
 #define _IFT_MooneyRivlinHardMagnetic_mode "mode" //mode of magnetic energy 1 = consistent (default), 2 = MIT
+#define _IFT_MooneyRivlinHardMagnetic_referenceB "referenceb" //whether b_app is given in reference configuration, default false
 //@}
 
 // base vacuum permeability constant definition for OOFEM, in basic SI units
@@ -69,6 +70,7 @@ protected:
     FloatArrayF<3> B_res;
     double mu_0;
     int ltf_index, materialMode;
+    bool referenceB;
 
 public:
     MooneyRivlinHardMagnetic( int n, Domain *d ) :
