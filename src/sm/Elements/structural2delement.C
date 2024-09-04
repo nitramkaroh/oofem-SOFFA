@@ -390,7 +390,7 @@ PlaneStrainElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
     FloatMatrix dNdx;
     this->giveInterpolation()->evaldNdx(dNdx, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
 
-    answer.resize(4, dNdx.giveNumberOfRows() * 2);
+    answer.resize(5, dNdx.giveNumberOfRows() * 2);
     answer.zero();
 
     for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {

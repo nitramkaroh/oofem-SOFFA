@@ -117,6 +117,38 @@ public:
 
 
 /**
+ * Callback class for assembling mid point effective tangents. 
+ * @todo Need to parametrize individual contributing terms, ther locations and multilication factors.
+ */
+class MELhsAssembler : public MatrixAssembler
+{
+protected:
+    double alpha;
+    double deltaT;
+
+public:
+    MELhsAssembler(double alpha, double deltaT);
+    void matrixFromElement(FloatMatrix &mat, Element &element, TimeStep *tStep) const override;
+};
+
+/**
+ * Callback class for assembling residuals
+ */
+class MEResidualAssembler : public VectorAssembler
+{
+    protected:
+    double alpha;
+    double deltaT;
+public:
+    MEResidualAssembler(double alpha, double deltaT) : VectorAssembler(), alpha(alpha), deltaT(deltaT) {}
+    void vectorFromElement(FloatArray &vec, Element &element, TimeStep *tStep, ValueModeType mode) const override;
+};
+
+
+  
+
+
+/**
  * This class represents generic nonlinear multi-physics problem. The problem can be growing/decreasing, signalized by flag "changingproblemsize"
  * in the problem description. The solution is stored in UnknownsField, which can obtain/ project solution from/to DOFs (nodes). If the problem
  * keeps the same equation numbers, solution is taken from UnknownsField without any projection, which is more efficient. See the matlibmanual

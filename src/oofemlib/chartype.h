@@ -132,9 +132,10 @@ namespace oofem {
     ENUM_ITEM_WITH_VALUE(MomentumBalance_ThermalCouplingMatrix, 307) \
     ENUM_ITEM_WITH_VALUE(EnergyBalance_ConvectionBCMatrix, 308) \
     ENUM_ITEM_WITH_VALUE(EnergyBalance_ConvectionBCResidual, 309) \
-    ENUM_ITEM_WITH_VALUE(EnergyBalance_InternalSourceVector, 310) 
-
-
+    ENUM_ITEM_WITH_VALUE(EnergyBalance_InternalSourceVector, 310)  \
+     /* MagnetoElasticity */\
+    ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_Flux, 311)	\
+    ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_dFluxdGrad, 312) 
     
 
 

@@ -227,20 +227,6 @@ void TMResidualAssembler :: vectorFromElement(FloatArray &vec, Element &element,
 
 
 
-MPMProblem :: MPMProblem(int i, EngngModel *_master = nullptr) : EngngModel(i, _master)
-{
-    ndomains = 1;
-}
-
-NumericalMethod *MPMProblem :: giveNumericalMethod(MetaStep *mStep)
-{
-    if ( !nMethod ) {
-        nMethod = std::make_unique<NRSolver>(this->giveDomain(1), this);
-    }
-    return nMethod.get();
-}
-
-
   
 void
 MPMProblem :: initializeFrom(InputRecord &ir)
@@ -268,7 +254,7 @@ MPMProblem :: initializeFrom(InputRecord &ir)
     IR_GIVE_FIELD(ir, alpha, _IFT_MPMProblem_alpha);
     problemType = "up"; // compatibility mode @TODO Remove default value
     IR_GIVE_OPTIONAL_FIELD(ir, problemType, _IFT_MPMProblem_problemType);
-    if (!((problemType == "up")||(problemType == "tm"))) {
+    if (!((problemType == "up")||(problemType == "tm")||(problemType == "me"))) {
       throw ValueInputException(ir, "none", "Problem type not recognized");
     }
     OOFEM_LOG_RELEVANT("MPM: %s formulation\n", problemType.c_str());
@@ -390,7 +376,7 @@ void MPMProblem :: solveYourselfAt(TimeStep *tStep)
     FloatArray incrementOfSolution;
     double loadLevel;
     int currentIterations = 0;
-    this->updateInternalRHS(this->internalForces, tStep, this->giveDomain(1), &this->eNorm); /// @todo Hack to ensure that internal RHS is evaluated before the tangent. This is not ideal, causing this to be evaluated twice for a linearproblem. We have to find a better way to handle this.
+    //this->updateInternalRHS(this->internalForces, tStep, this->giveDomain(1), &this->eNorm); /// @todo Hack to ensure that internal RHS is evaluated before the tangent. This is not ideal, causing this to be evaluated twice for a linearproblem. We have to find a better way to handle this.
     ConvergedReason status = this->nMethod->solve(*this->effectiveMatrix,
                                                   externalForces,
                                                   nullptr, // ignore
@@ -427,6 +413,8 @@ MPMProblem :: updateInternalRHS(FloatArray &answer, TimeStep *tStep, Domain *d, 
       this->assembleVector(answer, tStep, UPResidualAssembler(this->alpha, tStep->giveTimeIncrement()), VM_Total, EModelDefaultEquationNumbering(), d, eNorm);
     } else if (this->problemType == "tm") {
       this->assembleVector(answer, tStep, TMResidualAssembler(this->alpha, tStep->giveTimeIncrement()), VM_Total, EModelDefaultEquationNumbering(), d, eNorm);
+    } else if (this->problemType == "me") {
+      this->assembleVector(answer, tStep, MEResidualAssembler(this->alpha, tStep->giveTimeIncrement()), VM_Total, EModelDefaultEquationNumbering(), d, eNorm);
     } else {
       OOFEM_ERROR ("unsupported problemType");
     }
@@ -475,6 +463,8 @@ MPMProblem :: updateComponent(TimeStep *tStep, NumericalCmpn cmpn, Domain *d)
           this->assembleVector(this->internalForces, tStep, UPResidualAssembler(this->alpha, tStep->giveTimeIncrement()), VM_Total, EModelDefaultEquationNumbering(), d, &eNorm);
         } else if (this->problemType == "tm") {
           this->assembleVector(this->internalForces, tStep, TMResidualAssembler(this->alpha, tStep->giveTimeIncrement()), VM_Total, EModelDefaultEquationNumbering(), d, &eNorm);
+        } else if (this->problemType == "me") {
+          this->assembleVector(this->internalForces, tStep, MEResidualAssembler(this->alpha, tStep->giveTimeIncrement()), VM_Total, EModelDefaultEquationNumbering(), d, &eNorm);
         } else {
           OOFEM_ERROR ("unsupported problemType");
         }
@@ -490,6 +480,11 @@ MPMProblem :: updateComponent(TimeStep *tStep, NumericalCmpn cmpn, Domain *d)
                               EModelDefaultEquationNumbering(), d );
             } else if (this->problemType == "tm") {
                 TMLhsAssembler jacobianAssembler(this->alpha, tStep->giveTimeIncrement());
+                //Assembling left hand side 
+                this->assemble( *effectiveMatrix, tStep, jacobianAssembler,
+                                EModelDefaultEquationNumbering(), d );
+            } else if (this->problemType == "me") {
+                MELhsAssembler jacobianAssembler(this->alpha, tStep->giveTimeIncrement());
                 //Assembling left hand side 
                 this->assemble( *effectiveMatrix, tStep, jacobianAssembler,
                                 EModelDefaultEquationNumbering(), d );
@@ -702,11 +697,75 @@ FieldPtr MPMProblem::giveField(FieldType key, TimeStep *tStep)
         return std::make_shared<MaskedPrimaryField>( key, this->field.get(), IntArray{P_f} );
     } else if ( key == FT_Temperature ) {
         return std::make_shared<MaskedPrimaryField>( key, this->field.get(), IntArray{T_f} );
+    } else if ( key == FT_MagneticPotential ) {
+        return std::make_shared<MaskedPrimaryField>( key, this->field.get(), IntArray{M_Pot} );
     } else {
         return FieldPtr();
     }
 }
 
 
+
+
+MPMProblem :: MPMProblem(int i, EngngModel *_master = nullptr) : EngngModel(i, _master)
+{
+    ndomains = 1;
+}
+
+NumericalMethod *MPMProblem :: giveNumericalMethod(MetaStep *mStep)
+{
+    if ( !nMethod ) {
+        nMethod = std::make_unique<NRSolver>(this->giveDomain(1), this);
+    }
+    return nMethod.get();
+}
+
+
+
+
+
+MELhsAssembler :: MELhsAssembler(double alpha, double deltaT) : 
+    MatrixAssembler(), alpha(alpha), deltaT(deltaT)
+{}
+
+
+void MELhsAssembler :: matrixFromElement(FloatMatrix &answer, Element &el, TimeStep *tStep) const
+{
+    FloatMatrix contrib;
+    IntArray loc, locphi;
+    MPElement *e = dynamic_cast<MPElement*>(&el);
+    int ndofs = e->giveNumberOfDofs();
+    answer.resize(ndofs, ndofs);
+    answer.zero();
+    
+    e->getLocalCodeNumbers (loc, Variable::VariableQuantity::Displacement);
+    e->getLocalCodeNumbers (locphi, Variable::VariableQuantity::MagneticPotential);
+    loc.followedBy(locphi);
+    
+    e->giveCharacteristicMatrix(contrib, MagnetoElasticity_GradGrad_dFluxdGrad, tStep);
+    answer.assemble(contrib, loc, loc);
+}
+  
+
+void MEResidualAssembler :: vectorFromElement(FloatArray &vec, Element &element, TimeStep *tStep, ValueModeType mode) const
+{
+    FloatArray contrib;
+    IntArray loc, locphi;
+    MPElement *e = dynamic_cast<MPElement*>(&element);
+    int ndofs = e->giveNumberOfDofs();
+    vec.resize(ndofs);
+    vec.zero();
+    //
+    e->getLocalCodeNumbers (loc, Variable::VariableQuantity::Displacement);
+    e->getLocalCodeNumbers (locphi, Variable::VariableQuantity::MagneticPotential);
+    loc.followedBy(locphi);
+    e->giveCharacteristicVector(contrib, MagnetoElasticity_GradGrad_Flux, mode, tStep);
+    vec.assemble(contrib, loc);   
+}
+
+
+
+
+  
 
 } // end namespace oofem

@@ -81,7 +81,8 @@ class Variable {
         Velocity,
         Temperature,
         Pressure,
-        VolumeFraction
+        VolumeFraction,
+	MagneticPotential
     };
 
     const FEInterpolation& interpolation;  
