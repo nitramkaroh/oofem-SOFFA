@@ -106,6 +106,10 @@ protected:
     std::vector<bool> areFactorized = { false, false, false, false };
     int versionUpdate;
 
+    std::vector<Eigen::Triplet<double> > triplets; // Allocate vector of triplets
+    int BuiltFromTripletsAtVersion = 0;
+
+
     // factorizations
     Eigen::SimplicialLLT<Eigen::SparseMatrix<double> > LLT_factorization; 
     Eigen::SparseLU<Eigen::SparseMatrix<double> > LU_factorization; 
@@ -145,7 +149,7 @@ public:
     SparseMtrxType giveType() const override { return SMT_EigenMtrx; }
     bool isAsymmetric() const override { return true; }
 
-    Eigen::SparseMatrix<double> giveMatrix();
+    Eigen::SparseMatrix<double>& giveMatrix();
 
     //template <typename Derived>
     //std::shared_ptr<Eigen::SparseSolverBase<Derived> > giveFactorization( FactorizationType factorizationType );
@@ -167,6 +171,8 @@ public:
     bool isFactorized( FactorizationType factorizationType );
 
     void times( const FloatArray &x, FloatArray &answer ) const override;
+
+    void createMatrixFromTriplets();
 };
 } // end namespace oofem
 #endif // eigenmtrx_h

@@ -268,7 +268,7 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
     // bifurcatiuon modification
     BifurcationInterface *stabSolver = dynamic_cast<BifurcationInterface *>( this->linSolver.get() ); // Check if bifurcation solver is used 
     bool isBifurcationSet = false;
-    double alphaStability  = 1e-8; // eigenvector multiplicator
+    double alphaStability  = 1e-6; // eigenvector multiplicator
     double alphamax        = 1e8;
 
     bool LDLTbif                = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
@@ -559,8 +559,9 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
                 }
                 stabSolver->setBifurcation( false ); // only needed for cholesky bifurcation
                 isBifurcationSet = false; // Not sure if correct
-                // Turn the linesearch off after the limit point is found
-                //if ( stabSolver->giveFoundLimitPoint() && stabSolver->givePostBifurcationLineSearchSolver() ) stabSolver->setPostBifurcationLineSearchSolver( false );
+
+                // Turn the linesearch off after the limit point is found (turn it on only if NAN appears)
+                if ( stabSolver->giveFoundLimitPoint() && stabSolver->givePostBifurcationLineSearchSolver() ) stabSolver->setPostBifurcationLineSearchSolver( false );
             }
         } else if ( nite == 0 ) { // not converged, check if the bifurcation analysis should be performed
             stabSolver->setCholesky( LDLTbif ); // This should be done only once
@@ -568,9 +569,17 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
             isBifurcationSet = stabSolver->getBifurcation();
         } else if ( stabSolver->getBifurcation() && deflationBifurcation ) {
             stabSolver->compute_dx_defl( X );
-        } else if ( stabSolver->giveFoundLimitPoint() && stabSolver->givePostBifurcationLineSearchSolver( ) ) { // if limit point found and exact LS should be done
-            X = X - ddX;
-            dX = dX - ddX;
+        } else if ( stabSolver->giveFoundLimitPoint() && (stabSolver->givePostBifurcationLineSearchSolver( ) ||  isnan( F.computeNorm()))) { // if limit point found and exact LS should be done
+            if ( !stabSolver->givePostBifurcationLineSearchSolver() && isnan( F.computeNorm() ) ) { // If nan, perform linesearch (if enabled)
+                stabSolver->setPostBifurcationLineSearchSolver( postBifurcationLineSearch ); // turn ON if nan
+                X  = X - dX;
+                dX.zero();
+            } else {
+                X  = X - ddX;
+                dX = dX - ddX;
+            }
+
+            
             FloatArray X0 = stabSolver->giveX0Defl();
             double Eta;
             this->exactLineSearch( k, X, dX, F, rlm, nite, tStep, rhs, RT, alphaStability, Eta, X0, ddX, 0. ,true);
@@ -595,7 +604,7 @@ void NRSolver::exactLineSearch(SparseMtrx& k, FloatArray& X, FloatArray& dX, Flo
     FloatArray direction = directionOrig;
     direction.normalize();
     // do exact linesearch including delfation
-    int maxIteLS = 40, p = 2;
+    int maxIteLS = 100, p = 2;
     double RHS, tolLS = 1e-12, ResNormLS, RHSdefl, deta = 0., alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
     FloatArray Ku( X.giveSize() ), dx_Defl, rhsDefl;
 
