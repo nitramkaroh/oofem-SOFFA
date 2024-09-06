@@ -63,6 +63,7 @@ protected:
     bool deflationBifurcation = false;
     bool foundLimitPoint      = false;
     bool postBifurcationLineSearchSolver = false;
+    bool LineSearchState                 = false;
 
     // for deflation bifurcation
     FloatArray x0_Defl, dx_Defl;
@@ -103,6 +104,8 @@ public:
     void setPostBifurcationLineSearchSolver( bool setPBLS ) { this->postBifurcationLineSearchSolver = setPBLS; }
     bool givePostBifurcationLineSearchSolver() const { return this->postBifurcationLineSearchSolver; }
     void compute_dx_defl( FloatArray &xcurr ){this->dx_Defl = xcurr - this->x0_Defl;}
+    void setLineSearchState( bool lsstate ) { this->LineSearchState = lsstate; }
+    bool giveLineSearchState() const { return this->LineSearchState; }
     FloatArray &giveX0Defl() { return this->x0_Defl; }
     bool getBifurcation() const { return this->bifurcation; }
     void setAlpha( double alphaNew ) { this->alpha = alphaNew; }

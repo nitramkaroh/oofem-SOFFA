@@ -275,22 +275,14 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
     // bifurcatiuon modification
     BifurcationInterface *stabSolver = dynamic_cast<BifurcationInterface *>( this->linSolver.get() ); // Check if bifurcation solver is used 
     bool isBifurcationSet = false;
-    double alphaStability  = 1e-6; // eigenvector multiplicator
-    double alphamax        = 1e8;
+    double alphaStability = 1e-6, alphamax = 1e8; // eigenvector multiplicator
 
-    bool LDLTbif                = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
-    bool deflationBifurcation   = true; // only if deflation bifurcation if performed
-    bool eigenvectorBifurcation = true; // only if eigenvector bifurcation if performed
-    bool postBifurcationLineSearch = true;
+    bool LDLTbif = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
+    bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation/eigenvector/postbif. LS options
     std::vector<bool> bifurcTypes( { LDLTbif, deflationBifurcation, eigenvectorBifurcation } );
 
-    if ( this->LsType == LST_Exact_Adaptive ) this->lsFlag = false;
-    //bool exactLineSearchBeforeBifurcation = true;
-    //this->setExactPreBifurcationLineSearch( exactLineSearchBeforeBifurcation );
-    //bool adaptiveLS = true;
-    //if ( adaptiveLS ) this->lsFlag = false; // turn LS of every step
-    ///// for provisional data extracting 
-    //FloatArray detasDil, detasRot;
+    if ( this->LsType == LST_Exact_Adaptive ) this->lsFlag = false; // For adaptive LS
+    bool afterBeforeBifurcation = true;
     //////////////////
 
     for ( nite = 0; ; ++nite ) {
@@ -308,7 +300,6 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
         
         ////////////////////  
         // adaptive linesearch
-        bool afterBeforeBifurcation = true;
         if ( stabSolver ) afterBeforeBifurcation = stabSolver->giveFoundLimitPoint() && !stabSolver->givePostBifurcationLineSearchSolver();
         if ( this->LsType == LST_Exact_Adaptive && isnan( F.computeNorm() ) && afterBeforeBifurcation ) { // restart step and turn Linesearch on
             X = X - dX;
@@ -322,7 +313,6 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
         // bifurcatiuon modification
         if ( stabSolver ) this->performBifurcationAnalysis( k, X, dX, F, internalForcesEBENorm, rlm, nite, tStep, rhs, converged, RT, RRT,
             errorOutOfRangeFlag, stabSolver, isBifurcationSet, alphamax, alphaStability, ddX, bifurcTypes, postBifurcationLineSearch );
-        
         ////////////////// 
         
 
@@ -501,6 +491,7 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
                 stabSolver->setFoundLimitPoint( true );
                 stabSolver->setPostBifurcationLineSearchSolver( postBifurcationLineSearch ); // Set the post bifurcation exact linesearch
                 //this->setExactPreBifurcationLineSearch( false ); // turn off the pre Bifurcational LS
+                stabSolver->setLineSearchState( this->lsFlag ); // remember linesearch status
                 this->lsFlag = false; // turn off the pre Bifurcational LS
 
                 if ( !isBifurcationSet ) { // If first time not PD
@@ -573,7 +564,10 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
                 isBifurcationSet = false; // Not sure if correct
 
                 // Turn the post bifurcation linesearch off after the limit point is found (turn it on only if NAN appears)
-                if ( stabSolver->giveFoundLimitPoint() && stabSolver->givePostBifurcationLineSearchSolver() ) stabSolver->setPostBifurcationLineSearchSolver( false );
+                if ( stabSolver->giveFoundLimitPoint()  ) {
+                    stabSolver->setPostBifurcationLineSearchSolver( false );
+                    this->lsFlag = stabSolver->giveLineSearchState(); // Set the lsflag to the value it was before bifurcation
+                }
             }
         } else if ( nite == 0 ) { // not converged, check if the bifurcation analysis should be performed
             stabSolver->setCholesky( LDLTbif ); // This should be done only once
@@ -583,29 +577,10 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
             stabSolver->compute_dx_defl( X );
 
         } else if ( stabSolver->giveFoundLimitPoint() && ( stabSolver->givePostBifurcationLineSearchSolver() ) ) { // if limit point found and exact post bif LS should be done
-            
-            //if ( !stabSolver->givePostBifurcationLineSearchSolver() && isnan( F.computeNorm() ) ) { // If nan, perform linesearch (if enabled)
-            //    stabSolver->setPostBifurcationLineSearchSolver( postBifurcationLineSearch ); // turn ON if nan
-            //    X  = X - dX;
-            //    dX.zero();
-
-            //    // update components
-            //    engngModel->updateComponent( tStep, InternalRhs, domain );
-            //    rhs.beDifferenceOf( RT, F );
-            //    if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
-            //    engngModel->updateComponent( tStep, NonLinearLhs, domain );
-            //    applyConstraintsToStiffness( k );
-
-            //    this->linSolver->solve( k, rhs, ddX ); // Direction must be recomputed
-            //} else {
-            //    X  = X - ddX;
-            //    dX = dX - ddX;
-            //}
-
             X  = X - ddX;
             dX = dX - ddX;
-
-            this->giveSetPostBifurcationLineSearchSolver( FloatArray(0), true )->solve( X, ddX, F, RT, prescribedEqs, tStep, k );
+            FloatArray dummy( 0 );
+            this->giveSetPostBifurcationLineSearchSolver( dummy, true )->solve( X, ddX, F, RT, prescribedEqs, tStep, k );
             X += ddX;
             dX += ddX;
 
