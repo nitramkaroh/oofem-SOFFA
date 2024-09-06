@@ -53,6 +53,11 @@ class SparseMtrx;
 class FloatArray;
 class TimeStep;
 
+enum LineSearchType {
+    LST_Default = 1,
+    LST_Exact   = 2
+};
+
 /**
  * This base class is an abstraction/implementation for numerical method solving
  * line search optimization problem.
@@ -90,12 +95,40 @@ public:
      */
     ConvergedReason solve(FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &R, FloatArray *R0,
                     IntArray &eqnmask, double lambda, double &etaValue, LS_status &status, TimeStep *tStep);
+    virtual ConvergedReason solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &R, FloatArray *R0,
+        IntArray &eqnmask, double lambda, double &etaValue, LS_status &status, TimeStep *tStep, SparseMtrx &k );
 
     void initializeFrom(InputRecord &ir) override;
     const char *giveClassName() const { return "LineSearchNM"; }
 
 protected:
     void search(int istep, FloatArray &prod, FloatArray &eta, double amp, double maxeta, double mineta, int &status);
+};
+
+
+
+class OOFEM_EXPORT ExactLineSearchNM : public LineSearchNM
+{
+protected:
+    bool deflation = false;
+    FloatArray X0defl;
+
+public:
+    /// Constructor
+    ExactLineSearchNM( Domain *d, EngngModel *m );
+
+    ConvergedReason solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &R, FloatArray *R0,
+        IntArray &eqnmask, double lambda, double &etaValue, LS_status &status, TimeStep *tStep, SparseMtrx &k ) override;
+
+    ConvergedReason solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &RT, IntArray &eqnmask, TimeStep *tStep, SparseMtrx &k);
+
+    void initializeFrom( InputRecord &ir ) override;
+    const char *giveClassName() const { return "ExactLineSearchNM"; }
+
+    void setX0defl( FloatArray &X0 ) { this->X0defl = X0; }
+    void setDeflation( bool doDeflation ) { this->deflation = doDeflation; }
+
+
 };
 } // end namespace oofem
 #endif // linesearch_h

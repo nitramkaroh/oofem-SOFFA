@@ -167,6 +167,11 @@ NRSolver :: initializeFrom(InputRecord &ir)
     this->lsFlag = 0;
     IR_GIVE_OPTIONAL_FIELD(ir, lsFlag, _IFT_NRSolver_linesearch);
 
+    ////////
+    IR_GIVE_OPTIONAL_FIELD( ir, this->LsType, "linesearchtype" );
+    ////////
+    
+
     if ( this->lsFlag ) {
         this->giveLineSearchSolver()->initializeFrom(ir);
     }
@@ -276,7 +281,8 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
     bool eigenvectorBifurcation = true; // only if eigenvector bifurcation if performed
     bool postBifurcationLineSearch = true;
     std::vector<bool> bifurcTypes( { LDLTbif, deflationBifurcation, eigenvectorBifurcation } );
-
+    bool exactLineSearchBeforeBifurcation = true;
+    //this->setExactPreBifurcationLineSearch( exactLineSearchBeforeBifurcation );
     ///// for provisional data extracting 
     //FloatArray detasDil, detasRot;
     //////////////////
@@ -292,8 +298,39 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
         }
         
         // convergence check
-        converged = this->checkConvergence( RT, F, rhs, ddX, X, RRT, internalForcesEBENorm, nite, errorOutOfRangeFlag);
+        converged = this->checkConvergence( RT, F , rhs, ddX, X, RRT, internalForcesEBENorm, nite, errorOutOfRangeFlag);
         
+        ////////////////////  
+        //// linesearch
+        //if ( isnan( F.computeNorm() ) ) { // restart step and tunr Linesearch on
+        //    X = X - dX;
+        //    dX.zero();
+        //    this->setExactPreBifurcationLineSearch( true );
+        //    engngModel->updateComponent( tStep, InternalRhs, domain );
+        //    rhs.beDifferenceOf( RT, F );
+        //    if ( this->prescribedDofsFlag )  this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
+        //}
+
+
+        //if ( nite > 0 && this->doExactPreBifurcationLineSearch) {
+        //    if ( !converged ) {
+        //        FloatArray direction, X0;
+        //        double Eta, alp = 1e-8;
+        //        if ( isnan( F.computeNorm() ) ) { // start from skretch
+        //            X = X - dX;
+        //            dX.zero();
+        //        } else {
+        //            X  = X - ddX;
+        //            dX = dX - ddX;
+        //            direction = ddX;
+        //        }
+        //        this->exactLineSearch( k, X, dX, F, rlm, nite, tStep, rhs, RT, alp, Eta, X0, direction, 0., false );
+        //    } else {
+        //        this->doExactPreBifurcationLineSearch = false;
+        //    }
+        //    
+        //}
+
         //////////////////  
         // bifurcatiuon modification
         if ( stabSolver ) this->performBifurcationAnalysis( k, X, dX, F, internalForcesEBENorm, rlm, nite, tStep, rhs, converged, RT, RRT,
@@ -356,7 +393,7 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
             // line search
             LineSearchNM :: LS_status LSstatus;
             double eta;
-            this->giveLineSearchSolver()->solve(X, ddX, F, R, R0, prescribedEqs, 1.0, eta, LSstatus, tStep);
+            this->giveLineSearchSolver()->solve(X, ddX, F, R, R0, prescribedEqs, 1.0, eta, LSstatus, tStep, k);
         } else if ( this->constrainedNRFlag && ( nite > this->constrainedNRminiter ) ) {
             ///@todo This doesn't check units, it is nonsense and must be corrected / Mikael
             if ( this->forceErrVec.computeSquaredNorm() > this->forceErrVecOld.computeSquaredNorm() ) {
@@ -451,6 +488,7 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
     bool deflationBifurcation   = bifurcTypes[1]; // only if deflation bifurcation if performed
     bool eigenvectorBifurcation = bifurcTypes[2]; // only if deflation bifurcation if performed
     bool postDeflation          = false;
+    bool exactLineSearchBeforeBifurcation = true;
     
 
     bool performBifurcation = LDLTbif || deflationBifurcation || eigenvectorBifurcation; // Any bifurcation is on, eigenvectors are default
@@ -458,6 +496,16 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
     // For bifurcation using eigenvectors
     double alphaStability0 = alphaStability;
     int maxBifIte = 100, count = 0;
+
+    //if ( exactLineSearchBeforeBifurcation && isnan( F.computeNorm() ) ) { 
+    //    X  = X - ddX;
+    //    dX = dX - ddX;
+
+
+    //    FloatArray X0;
+    //    double Eta;
+    //    this->exactLineSearch( k, X, dX, F, rlm, nite, tStep, rhs, RT, alphaStability, Eta, X0, ddX, 0., false );
+    //}
 
     // bifurcation analysis modifications
     if ( stabSolver && performBifurcation ) {
@@ -489,6 +537,7 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
                 OOFEM_LOG_INFO( "Negative eigenvalue\n" );
                 stabSolver->setFoundLimitPoint( true );
                 stabSolver->setPostBifurcationLineSearchSolver( postBifurcationLineSearch ); // Set the post bifurcation exact linesearch
+                this->setExactPreBifurcationLineSearch( false ); // turn off the pre Bifurcational LS
 
                 if ( !isBifurcationSet ) { // If first time not PD
                     stabSolver->setBifurcation( true ); // perform bifurcation anaysis
@@ -527,10 +576,15 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
 
                             //if ( false ) this->provisionalOutput( X, F, tStep, RT, direction, X0 ); // PROVISIONAL output residual
 
-                            // do exact linesearch including delfation
-                            double Eta;
-                            this->exactLineSearch( k, X, dX, F, rlm, nite, tStep, rhs, RT, alphaStability, Eta, X0,direction, 0.,true );
-                            OOFEM_LOG_INFO( "Eta = %.3e\n", Eta );
+
+                            ddX = direction;
+                            this->giveSetPostBifurcationLineSearchSolver( X0, true )->solve( X, ddX, F, RT, prescribedEqs, tStep, k ); // Do linesearch with deflation
+                            X += ddX;
+                            dX += ddX;
+                            engngModel->updateComponent( tStep, InternalRhs, domain );
+                            rhs.beDifferenceOf( RT, F );
+                            if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
+
 
                             stabSolver->compute_dx_defl( X );
                             if ( !postDeflation ) { // Continue without deflation
@@ -569,26 +623,44 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
             isBifurcationSet = stabSolver->getBifurcation();
         } else if ( stabSolver->getBifurcation() && deflationBifurcation ) {
             stabSolver->compute_dx_defl( X );
-        } else if ( stabSolver->giveFoundLimitPoint() && (stabSolver->givePostBifurcationLineSearchSolver( ) ||  isnan( F.computeNorm()))) { // if limit point found and exact LS should be done
+        //} else if ( stabSolver->giveFoundLimitPoint() && (stabSolver->givePostBifurcationLineSearchSolver( ) ||  isnan( F.computeNorm()))) { // if limit point found and exact LS should be done
+        } else if ( stabSolver->giveFoundLimitPoint() && ( stabSolver->givePostBifurcationLineSearchSolver() ) ) { // if limit point found and exact LS should be done
+            FloatArray directionLS;
             if ( !stabSolver->givePostBifurcationLineSearchSolver() && isnan( F.computeNorm() ) ) { // If nan, perform linesearch (if enabled)
                 stabSolver->setPostBifurcationLineSearchSolver( postBifurcationLineSearch ); // turn ON if nan
                 X  = X - dX;
                 dX.zero();
+
+                // update components
+                engngModel->updateComponent( tStep, InternalRhs, domain );
+                rhs.beDifferenceOf( RT, F );
+                if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
+                engngModel->updateComponent( tStep, NonLinearLhs, domain );
+                applyConstraintsToStiffness( k );
+
+                this->linSolver->solve( k, rhs, ddX ); // Direction must be recomputed
             } else {
                 X  = X - ddX;
                 dX = dX - ddX;
             }
 
+
+            this->giveSetPostBifurcationLineSearchSolver( stabSolver->giveX0Defl(), true )->solve( X, ddX, F, RT, prescribedEqs, tStep, k );
+            X += ddX;
+            dX += ddX;
+
+            engngModel->updateComponent( tStep, InternalRhs, domain );
+            rhs.beDifferenceOf( RT, F );
+            if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
+
+            double Eta = directionLS.computeNorm();
+            //this->exactLineSearch( k, X, dX, F, rlm, nite, tStep, rhs, RT, alphaStability, Eta, X0, directionLS, 0., true );
+
+            OOFEM_LOG_INFO( "Eta = %.7e\n", Eta );
             
-            FloatArray X0 = stabSolver->giveX0Defl();
-            double Eta;
-            this->exactLineSearch( k, X, dX, F, rlm, nite, tStep, rhs, RT, alphaStability, Eta, X0, ddX, 0. ,true);
-            OOFEM_LOG_INFO( "Eta = %.3e\n", Eta );
-            if ( Eta == alphaStability ) {
-                stabSolver->setPostBifurcationLineSearchSolver( false ); // dont line search anymore
-            } else {
-                ddX       = Eta * ddX;
-            }            
+            //if ( Eta == alphaStability ) {
+            //    stabSolver->setPostBifurcationLineSearchSolver( false ); // dont line search anymore
+            //}            
         }
     }
     bifurcTypes[0] = LDLTbif;
@@ -608,19 +680,20 @@ void NRSolver::exactLineSearch(SparseMtrx& k, FloatArray& X, FloatArray& dX, Flo
     double RHS, tolLS = 1e-12, ResNormLS, RHSdefl, deta = 0., alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
     FloatArray Ku( X.giveSize() ), dx_Defl, rhsDefl;
 
-    deta = alphaStability;
+    /*deta = alphaStability;*/
+    deta           = 1e-6;
     Eta = deta; // start guess
-    FloatArray ddX = alphaStability * direction;
+    FloatArray ddX = deta * direction;
     dX  = dX + ddX;
     X   = X + ddX; // Initial moification of the solution
     for ( size_t niteLS = 0; niteLS < maxIteLS; niteLS++ ) { // inner Newton loop to find local minimum in the direction
         engngModel->updateComponent( tStep, InternalRhs, domain );
         rhs.beDifferenceOf( RT, F );
-        if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
+        //if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
 
         RHS = rhs.dotProduct( direction );
         RHSdefl = RHS;
-        if ( deflation ) { // Compute defrlated residuum
+        if ( deflation ) { // Compute deflated residuum
             dx_Defl          = X - X0;
             dx_normSq = dx_Defl.dotProduct( dx_Defl );
             RHSdefl *= 1. / dx_normSq + 1.; 
@@ -631,7 +704,7 @@ void NRSolver::exactLineSearch(SparseMtrx& k, FloatArray& X, FloatArray& dX, Flo
         if ( abs( RHSdefl ) < tolLS ) break;
 
         engngModel->updateComponent( tStep, NonLinearLhs, domain );
-        applyConstraintsToStiffness( k );
+        //applyConstraintsToStiffness( k );
         k.times( direction, Ku );
         kdefl = Ku.dotProduct( direction );
 
@@ -647,17 +720,19 @@ void NRSolver::exactLineSearch(SparseMtrx& k, FloatArray& X, FloatArray& dX, Flo
         dX  = dX + ddX;
     } 
 
-    // In case eta should be modified
-    if ( abs(mult) > 1e-10 ) {
-        ddX = mult* Eta * direction;
-        dX  = dX + ddX;
-        X   = X + ddX; // Increase the step to get out of the valley
-        // Update residuum
-        engngModel->updateComponent( tStep, InternalRhs, domain );
-        rhs.beDifferenceOf( RT, F );
-        if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
-    }
+    //// In case eta should be modified
+    //if ( abs(mult) > 1e-10 ) {
+    //    ddX = mult* Eta * direction;
+    //    dX  = dX + ddX;
+    //    X   = X + ddX; // Increase the step to get out of the valley
+    //    // Update residuum
+    //    engngModel->updateComponent( tStep, InternalRhs, domain );
+    //    rhs.beDifferenceOf( RT, F );
+    //    if ( this->prescribedDofsFlag ) this->applyConstraintsToLoadIncrement( nite, k, rhs, rlm, tStep );
+    //}
  }
+
+
 
 void NRSolver::provisionalOutput( FloatArray &X, FloatArray &F, TimeStep *tStep, FloatArray &RT, FloatArray &direction,FloatArray &X0 )
  {
@@ -728,10 +803,27 @@ LineSearchNM *
 NRSolver :: giveLineSearchSolver()
 {
     if ( !linesearchSolver ) {
-        linesearchSolver = std :: make_unique< LineSearchNM >(domain, engngModel);
+        switch ( this->LsType ) {
+        case LST_Default:
+            linesearchSolver = std ::make_unique<LineSearchNM>( domain, engngModel );
+            break;
+        case LST_Exact:
+            linesearchSolver = std ::make_unique<ExactLineSearchNM>( domain, engngModel );
+            break;
+        }
     }
 
     return linesearchSolver.get();
+}
+
+ExactLineSearchNM *NRSolver ::giveSetPostBifurcationLineSearchSolver(  FloatArray & X0, bool doDeflation )
+{
+    if ( !linesearchSolverPostBifurcation ) {
+        linesearchSolverPostBifurcation = std ::make_unique<ExactLineSearchNM>( domain, engngModel );
+    }
+    this->linesearchSolverPostBifurcation->setDeflation( doDeflation );
+    this->linesearchSolverPostBifurcation->setX0defl( X0 );
+    return linesearchSolverPostBifurcation.get();
 }
 
 void

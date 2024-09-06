@@ -167,6 +167,12 @@ protected:
     std :: map< int, double >dg_forceScale;
 
     double maxIncAllowed;
+
+    //////
+    int LsType = 1;
+    /// Line search solver for postbifurcation analysis
+    std ::unique_ptr<ExactLineSearchNM> linesearchSolverPostBifurcation;
+    //////
 public:
     NRSolver(Domain *d, EngngModel *m);
     virtual ~NRSolver();
@@ -209,6 +215,17 @@ public:
         FloatArray &X0, FloatArray &direction, double mult, bool deflation );
 
     void provisionalOutput( FloatArray &X, FloatArray &F, TimeStep *tStep, FloatArray &RT, FloatArray &direction, FloatArray &X0);
+
+    void setExactPreBifurcationLineSearch( bool preBifurLS )
+    {
+        this->lsFlag = preBifurLS;
+        if ( preBifurLS ) {
+            this->LsType = LST_Exact;
+        } 
+    };
+
+    /// Constructs and returns a line search solver.
+    ExactLineSearchNM *giveSetPostBifurcationLineSearchSolver( FloatArray &X0 , bool doDeflation);
 
 protected:
     /// Constructs and returns a line search solver.

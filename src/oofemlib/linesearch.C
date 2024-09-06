@@ -39,8 +39,10 @@
 #include "mathfem.h"
 #include "convergedreason.h"
 #include "engngm.h"
+#include "sparsemtrx.h"
 
 namespace oofem {
+
 LineSearchNM :: LineSearchNM(Domain *d, EngngModel *m) :
     NumericalMethod(d, m)
 {
@@ -49,6 +51,12 @@ LineSearchNM :: LineSearchNM(Domain *d, EngngModel *m) :
     amplifFactor = 2.5;
     maxEta = 4.0;
     minEta = 0.2;
+}
+
+ConvergedReason LineSearchNM::solve(FloatArray& r, FloatArray& dr, FloatArray& F, FloatArray& R, FloatArray* R0,
+    IntArray& eqnmask, double lambda, double& etaValue, LS_status& status, TimeStep* tStep, SparseMtrx& k) 
+{
+    return this->solve(r,dr,F,R, R0,eqnmask, lambda, etaValue, status, tStep);
 }
 
 ConvergedReason
@@ -294,4 +302,85 @@ LineSearchNM :: initializeFrom(InputRecord &ir)
     //printf ("\nLineSearchNM::initializeFrom: tol=%e, ampl=%e, maxEta=%e\n",
     //    ls_tolerance, amplifFactor,maxEta);
 }
+
+///////////////////////////////////////////////////////
+// ExactLineSearchNM
+///////////////////////////////////////////////////////
+ExactLineSearchNM ::ExactLineSearchNM( Domain *d, EngngModel *m ) :
+    LineSearchNM( d, m )
+{
+
+}
+
+ConvergedReason
+ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &RT, IntArray &eqnmask, TimeStep *tStep, SparseMtrx &k )
+{
+    // Normalize the direction
+    FloatArray direction = dr, rold = r, rhs, Ku( r.giveSize() ), dx_Defl, rhsDefl;
+    direction.normalize();
+
+    // do exact linesearch including delfation
+    int p = 2;
+    double RHS, ResNormLS, RHSdefl, deta = 1e-6, alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
+    double Eta     = min( deta, dr.computeNorm() ); // start guess
+    FloatArray ddr = Eta * direction;
+    r  = r + ddr; // Initial moification of the solution
+
+    for ( size_t niteLS = 0; niteLS < this->max_iter; niteLS++ ) { // inner Newton loop to find local minimum in the direction
+        engngModel->updateComponent( tStep, InternalRhs, domain );
+        rhs = RT - F;
+        RHS     = rhs.dotProduct( direction );
+        RHSdefl = RHS;
+        if ( this->deflation ) { // Compute deflated residuum
+            dx_Defl   = r - this->X0defl;
+            dx_normSq = dx_Defl.dotProduct( dx_Defl );
+            RHSdefl *= 1. / dx_normSq + 1.;
+        }
+
+        // Check convergence
+        OOFEM_LOG_INFO( "|resLS| = %.3e\n", abs( RHSdefl ) );
+        if ( abs( RHSdefl ) < this->ls_tolerance ) {
+            dr = r - rold;
+            r = rold;
+            return CR_CONVERGED;
+        }
+
+        engngModel->updateComponent( tStep, NonLinearLhs, domain );
+        k.times( direction, Ku );
+        kdefl = Ku.dotProduct( direction );
+
+        if ( this->deflation ) {
+            gamma = p / ( dx_normSq + alph_defl * pow( dx_normSq, p ) );
+            kdefl += gamma * RHS * dx_Defl.dotProduct( direction );
+        }
+
+        deta = RHS / kdefl;
+        Eta += deta;
+        ddr = deta * direction;
+        r   = r + ddr;
+    }
+
+    dr = r - rold;
+    r  = rold;
+    return CR_DIVERGED_ITS;
+}
+
+ConvergedReason
+ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &R, FloatArray *R0,
+    IntArray &eqnmask, double lambda, double &etaValue, LS_status &status, TimeStep *tStep, SparseMtrx &k )
+{
+    FloatArray RT( R );
+    if ( R0 ) RT += *R0;
+    return this->solve( r, dr, F, RT, eqnmask, tStep, k );
+}
+
+void ExactLineSearchNM ::initializeFrom( InputRecord &ir )
+{
+    LineSearchNM ::initializeFrom( ir );
+
+    // Rewrite the values from LineSearchNM
+    this->max_iter     = 100;
+    this->ls_tolerance = 1e-10;
+}
+
 } // end namespace oofem
