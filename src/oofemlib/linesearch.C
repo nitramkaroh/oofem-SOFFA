@@ -342,6 +342,7 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
         if ( fabs( RHSdefl ) < this->ls_tolerance ) {
             dr = r - rold;
             r = rold;
+            OOFEM_LOG_INFO( "Eta = %.7e\n", Eta );
             return CR_CONVERGED;
         }
 

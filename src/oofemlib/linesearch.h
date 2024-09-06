@@ -55,7 +55,8 @@ class TimeStep;
 
 enum LineSearchType {
     LST_Default = 1,
-    LST_Exact   = 2
+    LST_Exact   = 2,
+    LST_Exact_Adaptive   = 3
 };
 
 /**
@@ -101,6 +102,9 @@ public:
     void initializeFrom(InputRecord &ir) override;
     const char *giveClassName() const { return "LineSearchNM"; }
 
+    void setMaxIter( int maxit ) { this->max_iter = maxit; }
+    void setTolerance( double tol ) { this->ls_tolerance = tol; }
+
 protected:
     void search(int istep, FloatArray &prod, FloatArray &eta, double amp, double maxeta, double mineta, int &status);
 };
@@ -127,7 +131,6 @@ public:
 
     void setX0defl( FloatArray &X0 ) { this->X0defl = X0; }
     void setDeflation( bool doDeflation ) { this->deflation = doDeflation; }
-
 
 };
 } // end namespace oofem

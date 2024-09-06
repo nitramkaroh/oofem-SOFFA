@@ -64,6 +64,7 @@
 #define _IFT_NRSolver_ddv "ddv"
 #define _IFT_NRSolver_ddfunc "ddltf"
 #define _IFT_NRSolver_linesearch "linesearch"
+#define _IFT_NRSolver_linesearchtype "linesearchtype"
 #define _IFT_NRSolver_rtolv "rtolv"
 #define _IFT_NRSolver_rtolf "rtolf"
 #define _IFT_NRSolver_rtold "rtold"
@@ -169,7 +170,7 @@ protected:
     double maxIncAllowed;
 
     //////
-    int LsType = 1;
+    LineSearchType LsType = LST_Default;
     /// Line search solver for postbifurcation analysis
     std ::unique_ptr<ExactLineSearchNM> linesearchSolverPostBifurcation;
     //////
@@ -210,22 +211,26 @@ public:
         bool &errorOutOfRangeFlag, BifurcationInterface *stabSolver, bool &isBifurcationSet, double &alphamax, double &alphaStability, 
         FloatArray &ddX, std::vector<bool> &bifurcTypes, bool &postBifurcationLineSearch );
 
-    void exactLineSearch( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, referenceLoadInputModeType rlm,
-        int &nite, TimeStep *tStep, FloatArray &rhs, FloatArray &RT, double &alphaStability, double &Eta,
-        FloatArray &X0, FloatArray &direction, double mult, bool deflation );
-
-    void provisionalOutput( FloatArray &X, FloatArray &F, TimeStep *tStep, FloatArray &RT, FloatArray &direction, FloatArray &X0);
-
-    void setExactPreBifurcationLineSearch( bool preBifurLS )
-    {
-        this->lsFlag = preBifurLS;
-        if ( preBifurLS ) {
-            this->LsType = LST_Exact;
-        } 
-    };
 
     /// Constructs and returns a line search solver.
     ExactLineSearchNM *giveSetPostBifurcationLineSearchSolver( FloatArray &X0 , bool doDeflation);
+
+    // void setExactPreBifurcationLineSearch( bool preBifurLS )
+    //{
+    //    this->lsFlag = preBifurLS;
+    //    if ( preBifurLS ) {
+    //        this->LsType = LST_Exact;
+    //        auto LS = giveLineSearchSolver();
+    //        LS->setMaxIter( 100 );
+    //        LS->setTolerance( 1e-10 );
+    //    }
+    //};
+
+    /*void exactLineSearch( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, referenceLoadInputModeType rlm,
+    int &nite, TimeStep *tStep, FloatArray &rhs, FloatArray &RT, double &alphaStability, double &Eta,
+    FloatArray &X0, FloatArray &direction, double mult, bool deflation );*/
+
+    // void provisionalOutput( FloatArray &X, FloatArray &F, TimeStep *tStep, FloatArray &RT, FloatArray &direction, FloatArray &X0);
 
 protected:
     /// Constructs and returns a line search solver.
