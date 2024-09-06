@@ -72,8 +72,8 @@ public:
         numNegEigs = 0;
         bool answ  = false;
         eigen_assert( this->m_factorizationIsOk && "Simplicial LDLT not factorized" );
-        minEig = m_diag.coeffRef( 0 );
-        for ( auto &Di : m_diag ) {
+        minEig = this->m_diag.coeffRef( 0 );
+        for ( auto &Di : this->m_diag ) {
             if ( Di < minEig ) minEig = Di;
             if ( Di < 0 ) {
                 if ( update ) Di *= ( -1. );
@@ -164,7 +164,8 @@ public:
     //void setLDLTFactorization(Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> >& factorization );
 
     //std::shared_ptr<SimplicialLDLTderived<Eigen::SparseMatrix<double> > > giveLDLTFactorization();
-    SimplicialLDLTderived<Eigen::SparseMatrix<double> >& EigenMtrx::giveLDLTFactorization();
+    //    SimplicialLDLTderived<Eigen::SparseMatrix<double> >& EigenMtrx::giveLDLTFactorization();
+    SimplicialLDLTderived<Eigen::SparseMatrix<double> >& giveLDLTFactorization();
 
     void computeFactorization( FactorizationType factorizationType );
     

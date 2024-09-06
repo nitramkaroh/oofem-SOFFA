@@ -228,7 +228,7 @@ template <typename Derived>
 Eigen::SparseSolverBase<Derived> &EigenMtrx::giveFactorization( FactorizationType Factorization )
 {
     if ( !this->isFactorized( Factorization ) ) {
-        this->computeFactorization( Factorization )
+      this->computeFactorization( Factorization );
     }
 
     switch ( Factorization ) {

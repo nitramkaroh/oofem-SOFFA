@@ -33,7 +33,7 @@
  */
 
 #include "bifurcationinterface.h"
-
+#include "mathfem.h"
 namespace oofem {
 
 void BifurcationInterface::setEigenValuesVectors( SparseMtrx&A, FloatArray &Xeigs )

@@ -2151,8 +2151,8 @@ void FloatMatrix::computeSVD2x2(FloatMatrix &U, FloatMatrix &S, FloatMatrix &V) 
     Scor.beProductOf(Ut,AW);
     
     C.resize( 2, 2 );
-    C.at( 1, 1 ) = Scor.at( 1, 1 ) / abs( Scor.at( 1, 1 ) );
-    C.at( 2, 2 ) = Scor.at( 2, 2 ) / abs( Scor.at( 2, 2 ) );
+    C.at( 1, 1 ) = Scor.at( 1, 1 ) / fabs( Scor.at( 1, 1 ) );
+    C.at( 2, 2 ) = Scor.at( 2, 2 ) / fabs( Scor.at( 2, 2 ) );
     V.beProductOf(W,C);
 }
 

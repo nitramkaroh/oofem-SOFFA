@@ -338,8 +338,8 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
         }
 
         // Check convergence
-        OOFEM_LOG_INFO( "|resLS| = %.3e\n", abs( RHSdefl ) );
-        if ( abs( RHSdefl ) < this->ls_tolerance ) {
+        OOFEM_LOG_INFO( "|resLS| = %.3e\n", fabs( RHSdefl ) );
+        if ( fabs( RHSdefl ) < this->ls_tolerance ) {
             dr = r - rold;
             r = rold;
             return CR_CONVERGED;
