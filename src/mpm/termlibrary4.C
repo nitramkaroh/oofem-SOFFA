@@ -229,7 +229,7 @@ MagnetoElasticity_GradGrad_Term :: evaluate_lin (FloatMatrix& answer, MPElement&
   // Grad contains deformation gradient and magnetic field
   auto size = this->computeGradientFields(vGrad, vB, cell, gp->giveNaturalCoordinates(), gp->giveMaterialMode(), tstep);
   FloatMatrix D1,D2,D3,D4;
-  this->compute_lin_num(D1,D2,D3,D4, cell, gp, tstep);
+  //  this->compute_lin_num(D1,D2,D3,D4, cell, gp, tstep);
   //
   auto cs = cell.giveCrossSection();
   auto mcs = dynamic_cast<MagnetoElasticCrossSection *> (cs);

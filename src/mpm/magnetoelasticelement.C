@@ -42,6 +42,7 @@
 #include "intarray.h"
 #include "classfactory.h"
 #include "gaussintegrationrule.h"
+#include "crosssection.h"
 
 #include "fei2dquadquad.h"
 #include "fei2dquadlin.h"
@@ -95,7 +96,8 @@ class MagnetoElasticElement : public MPElement {
 	} else {
 	  OOFEM_ERROR("Unknown characteristic vector type");
 	}
-    }    
+    }
+
 };
 
 
@@ -182,6 +184,84 @@ const Variable&   MagnetoElasticQuad_ql::u = Variable(MagnetoElasticQuad_ql::uIn
 
 #define _IFT_MagnetoElasticQuad_ql_Name "magnetoelasticquad_ql"
 REGISTER_Element(MagnetoElasticQuad_ql)
+
+
+
+/**
+ * @brief 2D Magneto elatic element with linear interpolation of displacements and magnetic potential
+ * 
+ */
+class MagnetoElasticQuad_ll : public MagnetoElasticElement {
+    protected:
+        const static FEInterpolation & phiInterpol;
+        const static FEInterpolation & uInterpol;
+        const static Variable& phi;
+        const static Variable& u;
+      
+    public:
+  MagnetoElasticQuad_ll(int n, Domain* d):  MagnetoElasticElement(n,d)
+    {
+        numberOfDofMans  = 4;
+        numberOfGaussPoints = 4;
+        this->computeGaussPoints();
+    }
+
+  int getNumberOfSurfaceDOFs() const override {return 0;}
+  int getNumberOfEdgeDOFs() const override {return 0;}
+  void getSurfaceLocalCodeNumbers(oofem::IntArray&, oofem::Variable::VariableQuantity) const override {;}
+
+  void getDofManLocalCodeNumbers (IntArray& answer, const Variable::VariableQuantity q, int num ) const  override {
+        /* dof ordering: u1 v1 phi1  u2 v2 phi2  u3 v3 phi3  u4 v4 phi4   u5 v5 u6 v6 */
+        if (q == Variable::VariableQuantity::Displacement) {
+          //answer={1,2, 4,5,  7,8, 10,11,  13,14  15,16, 17,18  19,20};
+	  int o = (num-1)*3+1;
+          answer={o, o+1};
+        } else if (q == Variable::VariableQuantity::MagneticPotential) {
+	    answer={num*3};
+        }
+    }
+    void getInternalDofManLocalCodeNumbers (IntArray& answer, const Variable::VariableQuantity q, int num ) const  override {
+        answer={};
+    }
+
+    void giveDofManDofIDMask(int inode, IntArray &answer) const override {
+      answer = {1,2,55};      
+    }
+    int giveNumberOfDofs() override { return 12; }
+    const char *giveInputRecordName() const override {return "MagnetoElasticQuad_ll";}
+    const char *giveClassName() const override { return "MagnetoElasticQuad_ll"; }
+
+    
+    const FEInterpolation& getGeometryInterpolation() const override {return this->uInterpol;}
+  
+    Element_Geometry_Type giveGeometryType() const override {
+        return EGT_quad_1;
+    }
+    void getEdgeLocalCodeNumbers(IntArray& answer, const Variable::VariableQuantity q) const override {}
+
+
+private:
+        virtual int  giveNumberOfUDofs() const override {return 8;} 
+        virtual int  giveNumberOfPhiDofs() const override {return 4;}
+        virtual const Variable& getU() const override {return u;}
+        virtual const Variable& getPhi() const override {return phi;}
+        void computeGaussPoints() override {
+            if ( integrationRulesArray.size() == 0 ) {
+                integrationRulesArray.resize( 1 );
+                integrationRulesArray [ 0 ] = std::make_unique<GaussIntegrationRule>(1, this);
+                integrationRulesArray [ 0 ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStrain);
+            }
+        }
+};
+
+  const FEInterpolation &  MagnetoElasticQuad_ll :: uInterpol = FEI2dQuadLin(1,2);
+  const FEInterpolation &  MagnetoElasticQuad_ll :: phiInterpol = FEI2dQuadLin(1,2);
+const Variable&   MagnetoElasticQuad_ll::phi = Variable(  MagnetoElasticQuad_ll::phiInterpol, Variable::VariableQuantity::MagneticPotential, Variable::VariableType::scalar, 1, NULL, {55});
+const Variable&   MagnetoElasticQuad_ll::u = Variable(MagnetoElasticQuad_ll::uInterpol, Variable::VariableQuantity::Displacement, Variable::VariableType::vector, 2, NULL, {1,2});
+
+#define _IFT_MagnetoElasticQuad_ll_Name "magnetoelasticquad_ll"
+REGISTER_Element(MagnetoElasticQuad_ll)
+
 
 
 

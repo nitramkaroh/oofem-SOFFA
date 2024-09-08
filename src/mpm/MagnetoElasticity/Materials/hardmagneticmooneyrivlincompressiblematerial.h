@@ -44,6 +44,7 @@
 //@{
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_Name "hardmagneticmooneyrivlincompressiblemat"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_magnetization "magnetization"
+#define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_m_ltf "m_ltf"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c1 "c1"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c2 "c2"
 
@@ -65,6 +66,7 @@ protected:
     double C1;
     double C2;
     double mu_0 = 1.25663706143e-6;
+    int m_ltf = 0;
 
 
 
@@ -86,6 +88,10 @@ public:
 
     const char *giveInputRecordName() const override { return _IFT_HardMagneticMooneyRivlinCompressibleMaterial_Name; }
     const char *giveClassName() const override { return "HardMagneticMooneyRivlinCompressibleMaterial"; }
+
+  int giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep);
+
+  
 };
 } // end namespace oofem
 #endif

@@ -493,7 +493,11 @@ VTKBaseExportModule::getNodalVariableFromPrimaryField(FloatArray &answer, DofMan
             answer.resize(3);
         }
         iState = IST_MacroSlipVector;
-     } else {
+     } else if ( type == MagneticPotential ) {
+        dofIDMask.followedBy(M_Pot);
+        iState = IST_MagneticPotential;
+        answer.resize(1);
+    } else {
         OOFEM_ERROR("unsupported unknownType %s", __UnknownTypeToString(type) );
     }
 

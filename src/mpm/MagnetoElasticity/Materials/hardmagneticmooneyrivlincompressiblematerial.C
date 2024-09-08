@@ -39,7 +39,8 @@
 #include "classfactory.h"
 #include "mathfem.h"
 #include "tensor/tensor3.h"
-
+#include "domain.h"
+#include "function.h"
 
 
 namespace oofem {
@@ -56,21 +57,14 @@ HardMagneticMooneyRivlinCompressibleMaterial :: give_FirstPKStressVector_Magneti
   Tensor1_3d H(vH), Q, B;
   Tensor2_3d F(vF), P;
   //Q = (H+M)
-  Q(i_3) = H(i_3) + M(i_3);
+  double m_level = this->giveDomain()->giveFunction( m_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+  Q(i_3) = H(i_3) + m_level * M(i_3);
   // compute the first Piola-Kirchhoff
   auto [J, cofF] = F.compute_determinant_and_cofactor();
   //
   P( i_3, j_3 ) = C1 * this->compute_dI1_Cdev_dF(F)(i_3, j_3) + C2 * this->compute_dI2_Cdev_dF(F)(i_3, j_3) + this->compute_dVolumetricEnergy_dF(F)(i_3, j_3)
-        - ( mu_0 / J ) * F.compute_tensor_cross_product()( i_3, j_3, m_3, n_3 ) * (cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ));
-  //+ (mu_0 / (2*J*J)) * cofF(m_3, n_3) * Q(n_3) * cofF(m_3, k_3) * Q(k_3) * cofF(i_3, j_3);
-
-  /*
-  Tensor2_3d TT, TL;
-  TT( i_3, j_3 ) = - ( mu_0 / J ) * F.compute_tensor_cross_product()( i_3, j_3, m_3, n_3 ) * (cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ));
-  Tensor3_3d eps;
-  eps.be_Levi_Civita();
-  TL( i_3, j_3 ) = - ( mu_0 / J ) * eps(i_3, k_3, m_3) *  F( k_3, l_3) * eps(j_3, l_3, n_3) * (cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ));
-  */
+               - ( mu_0 / J ) * F.compute_tensor_cross_product()( i_3, j_3, m_3, n_3 ) * (cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ))
+               + (mu_0 / (2*J*J)) * cofF(m_3, n_3) * Q(n_3) * cofF(m_3, k_3) * Q(k_3) * cofF(i_3, j_3);
   
   B( i_3 ) = mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 ) * Q( k_3 );
   auto vP = P.to_voigt_form();
@@ -110,24 +104,51 @@ HardMagneticMooneyRivlinCompressibleMaterial :: giveConstitutiveMatrices_dPdF_dB
 
   //
   //Q = (H+M)
-  Q(i_3) = H(i_3) + M(i_3);
+  double m_level = this->giveDomain()->giveFunction( m_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+  Q(i_3) = H(i_3) + m_level * M(i_3);
   GQQ( i_3, j_3 ) = G( i_3, k_3 ) * Q( k_3 ) * Q( j_3 );
   auto GQQcross   = GQQ.compute_tensor_cross_product();
-  //
-  
+  //  
   Tensor4_3d dPdF;
   Tensor3_3d dPdH;
   Tensor3_3d dBdF;
   Tensor2_3d dBdH;
   dPdF(i_3, j_3, k_3, l_3) = C1 * this->compute_d2I1_Cdev_dF2(F)(i_3, j_3, k_3, l_3)
-    + C2 * this->compute_d2I2_Cdev_dF2(F)(i_3, j_3, k_3, l_3) 
-                         + this->compute_d2VolumetricEnergy_dF2(F)(i_3, j_3, k_3, l_3)
+                           + C2 * this->compute_d2I2_Cdev_dF2(F)(i_3, j_3, k_3, l_3) 
+                           + this->compute_d2VolumetricEnergy_dF2(F)(i_3, j_3, k_3, l_3)
                            - mu_0 / J * (GQQcross(i_3, j_3, k_3, l_3) + ( Fcross( i_3, j_3, m_3, n_3 ) * Q(n_3) ) * ( Fcross( m_3, q_3, k_3, l_3 ) * Q( q_3 ) ))
-                           + mu_0/J/J * Fcross( i_3, j_3, m_3, n_3 ) * GQQ(m_3, n_3) * G(k_3, l_3) ;
-  //                     + ( mu_0 / ( 2 * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q( k_3 ) * Fcross( i_3, j_3, k_3, l_3 ) )
-  //                      - ( mu_0 / ( J * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q(k_3) * G(i_3, j_3) * G(k_3, l_3)
-  //                       + ( mu_0 / (  J * J ) ) * G(i_3, j_3) * (Fcross(k_3, l_3, m_3, n_3) * G(m_3,q_3) * Q(q_3) * Q(n_3)));
+                           + mu_0/J/J * Fcross( i_3, j_3, m_3, n_3 ) * GQQ(m_3, n_3) * G(k_3, l_3) 
+                           + ( mu_0 / ( 2 * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q( k_3 ) * Fcross( i_3, j_3, k_3, l_3 ) )
+                           - ( mu_0 / ( J * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q(k_3) * G(i_3, j_3) * G(k_3, l_3))
+                           + ( mu_0 / (  J * J ) ) * G(i_3, j_3) * (Fcross(k_3, l_3, m_3, n_3) * G(m_3,q_3) * Q(q_3) * Q(n_3));
   //
+  
+  Tensor4_3d A1, A2, A2t, A3;
+  //A1(i_3, j_3, k_3, l_3) =  + ( mu_0 / ( 2 * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q( k_3 ) * Fcross( i_3, j_3, k_3, l_3 ) );
+  //A1(i_3, j_3, k_3, l_3) =  - ( mu_0 / ( J * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q(k_3) * G(i_3, j_3) * G(k_3, l_3);
+  //							   A1(i_3, j_3, k_3, l_3) =    + ( mu_0 / (  J * J ) ) * G(i_3, j_3) * (Fcross(k_3, l_3, m_3, n_3) * G(m_3,q_3) * Q(q_3) * Q(n_3)));
+
+  /*
+  A1(i_3, j_3, k_3, l_3) = - mu_0 / J * GQQcross(i_3, j_3, k_3, l_3);
+  Tensor3_3d FcQ1, FcQ2, FcQ3, FcQ4;
+  FcQ1(i_3, j_3, m_3) =  Fcross( i_3, j_3, m_3, n_3 ) * Q(n_3);
+  FcQ2(m_3, k_3, l_3) =  Fcross( m_3, q_3, k_3, l_3 ) * Q( q_3 );
+  FcQ3(m_3, q_3, l_3) =  Q( k_3 ) * Fcross( m_3, q_3, k_3, l_3 );
+  FcQ4(m_3, q_3, k_3) =  Q( l_3 ) * Fcross( m_3, q_3, k_3, l_3 );
+  auto Fc = FloatMatrix(Fcross.to_voigt_form());
+
+  auto FcQ1m = FloatMatrix(FcQ1.to_voigt_form_3x9());
+  auto FcQ2m = FloatMatrix(FcQ2.to_voigt_form_3x9());
+  auto FcQ3m = FloatMatrix(FcQ3.to_voigt_form_3x9());
+  auto FcQ4m = FloatMatrix(FcQ4.to_voigt_form_3x9());
+  A2t(i_3, j_3, k_3, l_3) = FcQ1(i_3, j_3, m_3) * FcQ2(m_3, k_3, l_3);
+  A2(i_3, j_3, k_3, l_3) =- mu_0 / J * ( Fcross( i_3, j_3, m_3, n_3 ) * Q(n_3) ) * ( Fcross( m_3, q_3, k_3, l_3 ) * Q( q_3 ) );
+  A3(i_3, j_3, k_3, l_3) =  + mu_0/J/J * Fcross( i_3, j_3, m_3, n_3 ) * GQQ(m_3, n_3) * G(k_3, l_3) ;
+  //
+  auto A1v = FloatMatrix(A1.to_voigt_form());
+  auto A2v = FloatMatrix(A2.to_voigt_form());
+  auto A3v = FloatMatrix(A3.to_voigt_form());
+  */
    dBdH( i_3, k_3 ) = -mu_0 / J * G( j_3, i_3 ) * G( j_3, k_3 );
    //
    dBdF( i_3, k_3, l_3 ) = mu_0 / J *  (G( j_3, m_3 ) * Q( m_3 )* Fcross( j_3, i_3, k_3, l_3 )) + G( j_3, i_3 ) * (Q( m_3 )  * Fcross( j_3, m_3, k_3, l_3 )) - mu_0 / ( J * J ) * ( G( j_3, i_3 ) * G( j_3, m_3 ) * Q( m_3 ) * G( k_3, l_3 ) );
@@ -139,7 +160,7 @@ HardMagneticMooneyRivlinCompressibleMaterial :: giveConstitutiveMatrices_dPdF_dB
 
    auto [K1, K2, K3, K4] = this->compute_stiff_num(vF, vH, gp, tStep);
 
-
+   
    auto D1 = FloatMatrix(dPdF.to_voigt_form());
    auto D2 = FloatMatrix(dPdH.to_voigt_form_9x3());
    auto D3 = FloatMatrix(dBdF.to_voigt_form_3x9());
@@ -223,11 +244,40 @@ HardMagneticMooneyRivlinCompressibleMaterial::initializeFrom(InputRecord &ir)
     IR_GIVE_FIELD(ir, C2, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c2);
     FloatArray m;
     IR_GIVE_FIELD(ir, m, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_magnetization);
+    IR_GIVE_FIELD(ir, m_ltf, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_m_ltf);
     if(m.giveSize() != 3){
       OOFEM_ERROR("Magnetization has to be vector of size 3");
     } else {
       M = Tensor1_3d(FloatArrayF<3>(m));
     }
 }
+
+
+
+
+int
+HardMagneticMooneyRivlinCompressibleMaterial :: giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep)
+{
+
+    MagnetoElasticMaterialStatus *status = static_cast< MagnetoElasticMaterialStatus * >( this->giveStatus(gp) );
+   if ( type == IST_DeformationGradientTensor ) {
+        answer = status->giveFVector();
+        return 1;
+    } else if ( type == IST_FirstPKStressTensor ) {
+        answer = status->givePVector();
+        return 1;
+    } else if ( type == IST_MagneticInductionVector ) {
+             answer = status->giveBVector();
+	     return 1;
+    } else if ( type == IST_MagneticFieldVector ) {
+        answer = status->giveHVector();
+        return 1;
+    } else {
+        return Material::giveIPValue(answer, gp, type, tStep);
+    }
+}
+
+
+  
   
 } // end namespace oofem
