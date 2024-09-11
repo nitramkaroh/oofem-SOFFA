@@ -1,0 +1,170 @@
+/*
+ *
+ *                 #####    #####   ######  ######  ###   ###
+ *               ##   ##  ##   ##  ##      ##      ## ### ##
+ *              ##   ##  ##   ##  ####    ####    ##  #  ##
+ *             ##   ##  ##   ##  ##      ##      ##     ##
+ *            ##   ##  ##   ##  ##      ##      ##     ##
+ *            #####    #####   ##      ######  ##     ##
+ *
+ *
+ *             OOFEM : Object Oriented Finite Element Code
+ *
+ *               Copyright (C) 1993 - 2020   Borek Patzak
+ *
+ *
+ *
+ *       Czech Technical University, Faculty of Civil Engineering,
+ *   Department of Structural Mechanics, 166 29 Prague, Czech Republic
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#include "mooneyrivlinhardmagnetic.h"
+#include "floatmatrix.h"
+#include "floatarray.h"
+#include "classfactory.h"
+#include "mathfem.h"
+#include "domain.h"
+#include "function.h"
+
+
+
+namespace oofem {
+REGISTER_Material(MooneyRivlinHardMagnetic);
+
+
+void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
+{   
+    MooneyRivlinCompressibleMaterial::initializeFrom( ir );
+
+    FloatArray B_app_temp, B_res_temp;
+
+    //default values
+    mu_0 = BASE_VACUUM_PERMEABILITY_MU_0;
+    materialMode = 1;
+    //
+    IR_GIVE_FIELD( ir, M, _IFT_MooneyRivlinHardMagnetic_M );
+    IR_GIVE_OPTIONAL_FIELD( ir, mu_0, _IFT_MooneyRivlinHardMagnetic_mu_0 );
+}
+
+FloatArrayF<9> MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d_consistent( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
+{
+
+    double load_level            = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    FloatArrayF<3> B_app_at_time = load_level * B_app;
+
+    Tensor2_3d F( vF ), P_me, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+
+    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res ), Bappref;
+    auto [J, cofF] = F.compute_determinant_and_cofactor();
+
+    if ( !referenceB ) {
+        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
+    } else {
+        Bappref = Bapp;
+    }
+
+    P_me( k_3, l_3 ) = -(1/(2*J*J*mu_0))*(Bappref(i_3) - 2.0*Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)
+        + (1/(2*J*mu_0)) * ( Bappref( i_3 ) - 2.0 * Bres( i_3 ) ) * Bappref(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3));
+
+    auto vP_me = P_me.to_voigt_form();
+
+    return vP_me;
+}
+
+FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF_consistent( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
+{
+    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
+    FloatArrayF<9> vF( status->giveTempFVector() );
+
+    
+    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    FloatArrayF<3> B_app_at_time = load_level * B_app;
+
+    Tensor2_3d F( vF );
+    Tensor4_3d D_me;
+
+    Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
+
+    Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res ), Bappref;
+    auto [J, cofF] = F.compute_determinant_and_cofactor();
+
+    if ( !referenceB ) {
+        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
+    } else {
+        Bappref = Bapp;
+    }
+
+    D_me( k_3, l_3, p_3, q_3 ) = (1/(J*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)*cofF(p_3, q_3)
+        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * Bappref(j_3) * (delta(i_3, q_3)*F(p_3,j_3) + delta(j_3, q_3)*F(p_3,i_3)) * cofF(k_3, l_3) 
+        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * F(m_3,i_3)*F(m_3,j_3) * Bappref(j_3) * F.compute_tensor_cross_product()(k_3, l_3, p_3, q_3)
+        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * Bappref(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3)) * cofF(p_3, q_3)
+        + (1/(2*J*mu_0)) * delta(k_3,p_3) * (( Bappref(l_3) - 2.0 * Bres(l_3))*Bappref(q_3) + ( Bappref(q_3) - 2.0 * Bres(q_3))*Bappref(l_3));
+    
+    auto vD_me = D_me.to_voigt_form();
+
+    return vD_me;
+}
+
+
+
+  //////////////////////////////////////////////////////////////////////////////////////
+FloatArrayF< 3 >  MooneyRivlinHardMagnetic :: giveMagneticInductionVector_3d(const FloatArrayF<3> &bH, const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const
+{
+  Tensor1_3d H(vH);
+  Tensor2_3d F(vF), B;
+  auto [J, cofF] = F.compute_determinant_and_cofactor();
+  B(i_3) = mu0 * (1/J * cofF(k_3, i_3) * cofF(k_3, l_3) * H(l_3) + M(i_3));
+  //  
+  return B.to_voigt_form();
+}
+FloatMatrixF< 3, 3 > give3dMaterialPermeabilityMatrix_dDdH(MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep) const
+{
+  Tensor2_3d PM
+  FloatArrayF<9> vF( status->giveTempFVector() );
+  auto [J, cofF] = F.compute_determinant_and_cofactor();
+  PM(i_3, j_3) = mu0 * (1/J * cofF(k_3, i_3) * cofF(k_3, j_3));
+  //  
+  return PM.to_voigt_form(); 
+}
+
+  
+  FloatMatrixF< 9, 3 > give3dElastoMechanicalCouplingMatrix_dPdH(MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep) const;
+
+
+
+
+
+
+
+  
+
+
+int
+MooneyRivlinHardMagnetic :: giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep)
+{
+  
+  if ( type == IST_CrackVector ) {
+    answer = B_app;
+    return 1;
+  }  else {
+    return MooneyRivlinCompressibleMaterial:: giveIPValue(answer, gp, type, tStep);
+  }
+  
+}
+
+  
+} // end namespace oofem

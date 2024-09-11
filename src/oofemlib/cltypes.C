@@ -162,6 +162,8 @@ InternalStateValueType giveInternalStateValueType(InternalStateType type)
     case IST_X_LCS:
     case IST_Y_LCS:
     case IST_Z_LCS:
+    case IST_MagneticFieldVector:
+    case IST_MagneticInductionVector:
         return ISVT_VECTOR;
 
     case IST_MaxEquivalentStrainLevel:
@@ -252,7 +254,7 @@ InternalStateValueType giveInternalStateValueType(UnknownType type)
 {
     if ( type == DisplacementVector || type == EigenVector || type == VelocityVector || type == DirectorField || type == MacroSlipVector || type == ResidualForce ) {
         return ISVT_VECTOR;
-    } else if ( type == FluxVector || type == PressureVector || type == Temperature || type == Humidity || type == DeplanationFunction ) {
+    } else if ( type == FluxVector || type == PressureVector || type == Temperature || type == Humidity || type == DeplanationFunction || type == MagneticPotential ) {
         return ISVT_SCALAR;
     } else {
         OOFEM_ERROR( "unsupported UnknownType %s", __UnknownTypeToString(type) );

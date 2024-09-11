@@ -46,6 +46,11 @@ static FTensor::Index<'k', 3> k_3;
 static FTensor::Index<'l', 3> l_3;
 static FTensor::Index<'m', 3> m_3;
 static FTensor::Index<'n', 3> n_3;
+static FTensor::Index<'o', 3> o_3;
+static FTensor::Index<'p', 3> p_3;
+static FTensor::Index<'q', 3> q_3;
+
+/*static FTensor::Index<'o', 3> o_3;
 static FTensor::Index<'p', 3> p_3;
 static FTensor::Index<'q', 3> q_3;
 
