@@ -63,7 +63,7 @@ namespace oofem {
  *
  * @note
  */
-class MooneyRivlinHardMagnetic : public MooneyRivlinCompressibleMaterial, public MagnetoelasticMaterial
+class MooneyRivlinHardMagnetic : public MooneyRivlinCompressibleMaterial//, public MagnetoelasticMaterial
 {
 protected:
     // Material parameters
@@ -84,10 +84,10 @@ public:
     FloatMatrixF< 9, 9 >give3dMaterialStiffnessMatrix_dPdF(MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep) const override;
     FloatArrayF< 9 >giveFirstPKStressVector_3d(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const override;
 
-    //magnetoelastic multiphysics
-    FloatArrayF<3> giveMagneticInduction_3d( const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep ) const override;
-    FloatMatrixF<3, 9> give3dMagnetoelasticCouplingTensor_dBdF(MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep) const override;
-    FloatMatrixF<3, 3> give3dPermeabilityMatrix_dBdH( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const override;
+    ////magnetoelastic multiphysics
+    //FloatArrayF<3> giveMagneticInduction_3d( const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep ) const override;
+    //FloatMatrixF<3, 9> give3dMagnetoelasticCouplingTensor_dBdF(MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep) const override;
+    //FloatMatrixF<3, 3> give3dPermeabilityMatrix_dBdH( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const override;
 
     const char *giveInputRecordName() const override { return _IFT_MooneyRivlinHardMagnetic_Name; }
     const char *giveClassName() const override { return "MooneyRivlinHardMagnetic"; }
@@ -112,13 +112,13 @@ private:
       FloatMatrixF< 9, 9 > compute3dMaterialStiffnessMatrix_dPdF_ogdenpullback(MatResponseMode matResponseMode,
                                                            GaussPoint *gp, TimeStep *tStep ) const;
 
-      FloatArrayF< 9 > computeFirstPKStressVector_3d_multiphysics(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
-      FloatMatrixF<9, 9> compute3dMaterialStiffnessMatrix_dPdF_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const;
-      FloatArrayF<3> computeMagneticInduction_3d_multiphysics( const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep ) const;
-      FloatMatrixF<3, 9> compute3dMagnetoelasticCouplingTensor_dBdF_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const;
-      FloatMatrixF<3, 3> compute3dPermeabilityMatrix_dBdH_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const;
+      //FloatArrayF< 9 > computeFirstPKStressVector_3d_multiphysics(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
+      //FloatMatrixF<9, 9> compute3dMaterialStiffnessMatrix_dPdF_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const;
+      //FloatArrayF<3> computeMagneticInduction_3d_multiphysics( const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep ) const;
+      //FloatMatrixF<3, 9> compute3dMagnetoelasticCouplingTensor_dBdF_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const;
+      //FloatMatrixF<3, 3> compute3dPermeabilityMatrix_dBdH_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const;
 
       //todo remove this \/
-      int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
+      //int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
 };
 } // end namespace oofem
