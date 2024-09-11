@@ -162,7 +162,7 @@ FEI1dQuad :: giveLength(const FEICellGeometry &cellgeo) const
 }
 
 
-IntArray FEI1dQuad :: boundaryEdgeGiveNodes(int boundary, Element_Geometry_Type egt) const
+IntArray FEI1dQuad :: boundaryEdgeGiveNodes(int boundary) const
 {
     return {1, 2, 3};
 }

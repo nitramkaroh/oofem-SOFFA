@@ -105,7 +105,6 @@ namespace oofem {
         ENUM_ITEM_WITH_VALUE(S_w, 53) /* Macroscopic reinforcement slip field in z-direction */          \
 \
         ENUM_ITEM_WITH_VALUE(VF, 54) /* Volume fraction */          \
-        ENUM_ITEM_WITH_VALUE(M_Pot, 55) /* magnetic potential */		    \
       
 /**
  * Type representing particular dof type. Values of this type describe the physical meaning of

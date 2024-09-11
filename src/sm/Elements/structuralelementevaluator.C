@@ -89,7 +89,7 @@ int StructuralElementEvaluator :: giveIntegrationElementLocalCodeNumbers(IntArra
     elem->giveDofManDofIDMask(1, nodeDofIDMask);
     dofmandof = nodeDofIDMask.giveSize();
 
-    nsd = elem->giveInterpolation()->giveNsd(elem->giveGeometryType());
+    nsd = elem->giveInterpolation()->giveNsd();
 
     // first evaluate nonzero basis function mask
     if ( elem->giveInterpolation()->hasSubPatchFormulation() ) {

@@ -50,7 +50,7 @@ ConstantEdgeLoad :: initializeFrom(InputRecord &ir)
 void
 ConstantEdgeLoad :: computeValueAt(FloatArray &answer, TimeStep *tStep, const FloatArray &coords, ValueModeType mode)
 {
-    if ( ( mode != VM_Total ) && ( mode != VM_Incremental ) && (mode != VM_TotalIntrinsic)) {
+    if ( ( mode != VM_Total ) && ( mode != VM_Incremental ) ) {
         OOFEM_ERROR("mode not supported");
     }
 

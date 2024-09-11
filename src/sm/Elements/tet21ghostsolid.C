@@ -1398,10 +1398,10 @@ tet21ghostsolid::computeBoundarySurfaceLoadVector(FloatArray &answer, BoundaryLo
     FloatArray n_vec, f(18);
     FloatMatrix n, T;
     FloatArray force;
-    int nsd = fei->giveNsd(this->giveGeometryType());
+    int nsd = fei->giveNsd();
 
     f.zero();
-    auto iRule = fei->giveBoundaryIntegrationRule(load->giveApproxOrder(), boundary, this->giveGeometryType());
+    auto iRule = fei->giveBoundaryIntegrationRule(load->giveApproxOrder(), boundary);
 
     for ( auto &gp : * iRule ) {
         FloatArray lcoords = gp->giveNaturalCoordinates();

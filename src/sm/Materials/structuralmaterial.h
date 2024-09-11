@@ -153,8 +153,6 @@ public:
 
     void initializeFrom(InputRecord &ir) override;
     void giveInputRecord(DynamicInputRecord &input) override;
-    void giveCharacteristicMatrix(FloatMatrix &answer, CharType type, GaussPoint* gp, TimeStep *tStep) override;
-
 
     /**
      * Computes the stiffness matrix for giveRealStressVector of receiver in given integration point, respecting its history.

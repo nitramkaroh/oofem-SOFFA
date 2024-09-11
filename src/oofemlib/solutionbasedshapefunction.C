@@ -159,7 +159,7 @@ SolutionbasedShapeFunction :: computeCorrectionFactors(modeStruct &myMode, IntAr
         IntArray zNodes, pNodes, mNodes;
         FloatMatrix nodeValues;
 
-        auto bnodes = geoInterpolation->boundaryGiveNodes(Boundary, thisElement->giveGeometryType() );
+        auto bnodes = geoInterpolation->boundaryGiveNodes(Boundary);
 
         nodeValues.resize( this->dofs.giveSize(), bnodes.giveSize() );
         nodeValues.zero();
@@ -167,7 +167,7 @@ SolutionbasedShapeFunction :: computeCorrectionFactors(modeStruct &myMode, IntAr
         // Change to global ID for bnodes and identify the intersection of bnodes and the zero boundary
         splitBoundaryNodeIDs(myMode, * thisElement, bnodes, pNodes, mNodes, zNodes, nodeValues);
 
-        std :: unique_ptr< IntegrationRule >iRule(geoInterpolation->giveBoundaryIntegrationRule(order, Boundary, thisElement->giveGeometryType()));
+        std :: unique_ptr< IntegrationRule >iRule(geoInterpolation->giveBoundaryIntegrationRule(order, Boundary));
 
         for ( auto &gp: *iRule ) {
             const FloatArray &lcoords = gp->giveNaturalCoordinates();
@@ -646,7 +646,7 @@ SolutionbasedShapeFunction :: initializeSurfaceData(modeStruct &mode)
 #define usePoints 1
 #if usePoints == 1
         // Check if all nodes are on the boundary
-        auto bnodes = geoInterpolation->boundaryGiveNodes(Boundary, e->giveGeometryType());
+        auto bnodes = geoInterpolation->boundaryGiveNodes(Boundary);
         for ( int k = 1; k <= bnodes.giveSize(); k++ ) {
             DofManager *dman = e->giveDofManager( bnodes.at(k) );
             for ( int l = 1; l <= dman->giveCoordinates().giveSize(); l++ ) {

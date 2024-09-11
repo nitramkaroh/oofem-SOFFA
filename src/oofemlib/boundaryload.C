@@ -64,7 +64,7 @@ BoundaryLoad :: computeValueAt(FloatArray &answer, TimeStep *tStep, const FloatA
     double factor;
     FloatArray N;
 
-    if ( ( mode != VM_Total ) && ( mode != VM_Incremental ) && (mode != VM_TotalIntrinsic) ) {
+    if ( ( mode != VM_Total ) && ( mode != VM_Incremental ) ) {
         OOFEM_ERROR("unknown mode");
     }
 
@@ -129,7 +129,7 @@ BoundaryLoad :: giveInputRecord(DynamicInputRecord &input)
 
 
 double
-BoundaryLoad :: giveProperty(int aProperty, TimeStep *tStep, const std :: map< std :: string, FunctionArgument > &valDict) const
+BoundaryLoad :: giveProperty(int aProperty, TimeStep *tStep, const std :: map< std :: string, FunctionArgument > &valDict)
 {
     double answer;
     if ( propertyDictionary.includes(aProperty) ) {
@@ -150,7 +150,7 @@ BoundaryLoad :: giveProperty(int aProperty, TimeStep *tStep, const std :: map< s
 }
 
 double
-BoundaryLoad :: giveProperty(int aProperty, TimeStep *tStep) const
+BoundaryLoad :: giveProperty(int aProperty, TimeStep *tStep)
 {
     return this->giveProperty(aProperty, tStep, {});
 }

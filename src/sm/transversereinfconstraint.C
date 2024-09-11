@@ -332,7 +332,7 @@ void TransverseReinfConstraint :: integrateTangentOnSteel(FloatMatrix& oTangent,
     FEInterpolation *interp = e->giveInterpolation();
     int order = interp->giveInterpolationOrder();
     std :: unique_ptr< IntegrationRule > ir;
-    ir = interp->giveIntegrationRule(order, e->giveGeometryType());
+    ir = interp->giveIntegrationRule(order);
 
     oTangent.clear();
 
@@ -375,7 +375,7 @@ void TransverseReinfConstraint :: integrateTangentOnConcrete(FloatMatrix &oTange
     FEInterpolation *interp = e->giveInterpolation();
     int order = interp->giveInterpolationOrder();
     std :: unique_ptr< IntegrationRule > ir;
-    ir = interp->giveBoundaryIntegrationRule(order, iBndIndex, e->giveGeometryType());
+    ir = interp->giveBoundaryIntegrationRule(order, iBndIndex);
 
     oTangent.clear();
 

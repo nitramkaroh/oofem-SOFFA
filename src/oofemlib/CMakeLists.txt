@@ -40,10 +40,6 @@ set (core_unsorted
     unstructuredgridfield.C
     # 
     loadbalancer.C
-    #
-    vtkhdf5reader.C
-    #
-    oofemcfg.C
     )
 
 #oofegutils

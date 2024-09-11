@@ -252,28 +252,5 @@ public:
 
         return answer;
     }
-
-  void be_Levi_Civita()
-  {
-    for(int  i = 0; i < 3; i++) {
-      for(int  j = 0; j < 3; j++) {
-	for(int  k = 0; k < 3; k++) {
-	  if ((i != j) &&(j != k) && (i != k)) {
-	      if (((i == 1 ) && (j ==  2) && (k == 3 )) || ((i == 3 ) && (j ==  1) && (k == 2 )) || ((i == 2 ) && (j ==  3) && (k == 1 ))) {
-		    this->operator()( i, j, k ) = 1.;
-	      } else if (((i == 1 ) && (j ==  3) && (k == 2 )) || ((i == 3 ) && (j ==  2) && (k == 1 )) || ((i == 2 ) && (j ==  1) && (k == 3 ))) {
-		this->operator()( i, j, k ) = -1.;
-	      }
-	  } else {
-	    this->operator()( i, j, k ) = 0.;
-	  }
-	}
-      }
-    }
-
-  }
-  
-
-  
 };
 } // namespace oofem

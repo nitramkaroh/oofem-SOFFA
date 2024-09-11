@@ -49,9 +49,9 @@ FEInterpolation :: giveTransformationJacobian(const FloatArray &lcoords, const F
 
 
 std::unique_ptr<IntegrationRule>
-FEInterpolation:: giveIntegrationRule(int order, Element_Geometry_Type egt) const
+FEInterpolation:: giveIntegrationRule(int order) const
 {
-    integrationDomain id = this->giveIntegrationDomain(egt);
+    integrationDomain id = this->giveIntegrationDomain();
     auto iRule = std::make_unique<GaussIntegrationRule>(1, nullptr);
 
     int points = iRule->getRequiredNumberOfIntegrationPoints(id, order + this->order);
@@ -60,9 +60,9 @@ FEInterpolation:: giveIntegrationRule(int order, Element_Geometry_Type egt) cons
 }
 
 std::unique_ptr<IntegrationRule>
-FEInterpolation::giveBoundaryIntegrationRule(int order, int boundary, Element_Geometry_Type egt) const 
+FEInterpolation::giveBoundaryIntegrationRule(int order, int boundary) const 
 {
-    integrationDomain id = this->giveBoundaryIntegrationDomain(boundary, egt);
+    integrationDomain id = this->giveBoundaryIntegrationDomain(boundary);
     auto iRule = std::make_unique<GaussIntegrationRule>(1, nullptr);
 
     int points = iRule->getRequiredNumberOfIntegrationPoints(id, order + this->order);
@@ -71,9 +71,9 @@ FEInterpolation::giveBoundaryIntegrationRule(int order, int boundary, Element_Ge
 }
 
 std::unique_ptr<IntegrationRule>
-FEInterpolation::giveBoundaryEdgeIntegrationRule(int order, int boundary, Element_Geometry_Type egt) const 
+FEInterpolation::giveBoundaryEdgeIntegrationRule(int order, int boundary) const 
 {
-    integrationDomain id = this->giveBoundaryEdgeIntegrationDomain(boundary, egt);
+    integrationDomain id = this->giveBoundaryEdgeIntegrationDomain(boundary);
     auto iRule = std::make_unique<GaussIntegrationRule>(1, nullptr);
 
     int points = iRule->getRequiredNumberOfIntegrationPoints(id, order + this->order);
@@ -82,9 +82,9 @@ FEInterpolation::giveBoundaryEdgeIntegrationRule(int order, int boundary, Elemen
 }
 
 std::unique_ptr<IntegrationRule>
-FEInterpolation::giveBoundarySurfaceIntegrationRule(int order, int boundary, Element_Geometry_Type egt) const
+FEInterpolation::giveBoundarySurfaceIntegrationRule(int order, int boundary) const
 {
-    integrationDomain id = this->giveBoundarySurfaceIntegrationDomain(boundary, egt);
+    integrationDomain id = this->giveBoundarySurfaceIntegrationDomain(boundary);
     auto iRule = std::make_unique<GaussIntegrationRule>(1, nullptr);
 
     int points = iRule->getRequiredNumberOfIntegrationPoints(id, order + this->order);

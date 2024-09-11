@@ -535,14 +535,14 @@ void XfemElementInterface :: XfemElementInterface_prepareNodesForDelaunay(std ::
             foundTip = true;
             tipCoord.resizeWithValues(dim);
         }
-        int nEdges = this->element->giveInterpolation()->giveNumberOfEdges(element->giveGeometryType());
+        int nEdges = this->element->giveInterpolation()->giveNumberOfEdges();
         if ( foundTip ) {
             oPointPartitions.clear();
 
             // Divide into subdomains
             int triPassed = 0;
             for ( int i = 1; i <= nEdges; i++ ) {
-                const auto &bNodes = this->element->giveInterpolation()->boundaryGiveNodes(i, element->giveGeometryType());
+                const auto &bNodes = this->element->giveInterpolation()->boundaryGiveNodes(i);
 
                 if ( bNodes.giveSize() == 2 ) {
 

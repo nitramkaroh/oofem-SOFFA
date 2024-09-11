@@ -81,8 +81,6 @@ public:
     // definition & identification
     const char *giveInputRecordName() const override { return _IFT_QSpace_Name; }
     const char *giveClassName() const override { return "QSpace"; }
-    Element_Geometry_Type giveGeometryType() const override {return EGT_hexa_2;}
-
 
 protected:
     int giveNumberOfIPForMassMtrxIntegration() override { return 27; }

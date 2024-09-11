@@ -143,7 +143,7 @@ InterfaceElement3dTrLin :: computeVolumeAround(GaussPoint *gp)
         lncp[ i - 1 ].beProductOf(lcs, this->giveNode(i)->giveCoordinates());
     }
 
-    determinant = fabs( this->interpolation.giveTransformationJacobian( gp->giveNaturalCoordinates(), FEIVertexListGeometryWrapper(lncp, this->giveGeometryType()) ) );
+    determinant = fabs( this->interpolation.giveTransformationJacobian( gp->giveNaturalCoordinates(), FEIVertexListGeometryWrapper(lncp) ) );
     weight      = gp->giveWeight();
     thickness   = this->giveCrossSection()->give(CS_Thickness, gp);
     volume      = determinant * weight * thickness;

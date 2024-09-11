@@ -116,9 +116,6 @@ public:
             {
                 return ( ( cell->getVertex(i) )->getCoordinates() );
             }
-            const Element_Geometry_Type giveGeometryType() const override {
-                return cell->itype;
-            }
         };
 
 public:
@@ -126,7 +123,7 @@ public:
             itype = EGT_unknown;
             mesh = NULL;
         }
-        Cell(const Element_Geometry_Type t, IntArray &v, UnstructuredGridField *m) {
+        Cell(Element_Geometry_Type t, IntArray &v, UnstructuredGridField *m) {
             itype = t;
             vertices = v;
             mesh = m;
@@ -315,17 +312,6 @@ public:
     }
     virtual ~UnstructuredGridField() { }
 
-    void initialize(int nvert, int ncells, double octreeOriginShift = 0.0) 
-    {
-        this->timeStamp = this->octreeTimeStamp = 0;
-        this->vertexList.resize(nvert);
-        this->cellList.resize(ncells);
-        this->valueList.resize(nvert);
-        this->octreeOriginShift = octreeOriginShift;
-    }
-    int giveNumberOfVertices() const { return vertexList.size(); }
-    int giveNumberOfCells() const { return cellList.size(); }
-    
     void setVertexValue(int num, const FloatArray &vv) {
         valueList [ num - 1 ] = vv;
     }
@@ -344,7 +330,7 @@ public:
         return & this->vertexList [ num - 1 ];
     }
 
-    void addCell(int num, const Element_Geometry_Type type, IntArray &vertices) { //1-based
+    void addCell(int num, Element_Geometry_Type type, IntArray &vertices) { //1-based
         cellList [ num - 1 ] = Cell(type, vertices, this);
         this->timeStamp++;
     }

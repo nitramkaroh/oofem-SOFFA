@@ -1711,7 +1711,7 @@ TR1_2D_SUPG2 :: updateIntegrationRules()
 
         // remap ip coords into area coords of receiver
         for ( GaussPoint *gp: *integrationRulesArray [ i ] ) {
-            approx->local2global( gc, gp->giveNaturalCoordinates(), FEIVertexListGeometryWrapper(vcoords [ i ], approx->giveGeometryType()) );
+            approx->local2global( gc, gp->giveNaturalCoordinates(), FEIVertexListGeometryWrapper(vcoords [ i ]) );
             triaApprox.global2local( lc, gc, FEIElementGeometryWrapper(this) );
             // modify original ip coords to target ones
             gp->setSubPatchCoordinates( gp->giveNaturalCoordinates() );
@@ -1753,10 +1753,10 @@ TR1_2D_SUPG2 :: computeVolumeAroundID(GaussPoint *gp, integrationDomain id, cons
 
     if ( id == _Triangle ) {
         FEI2dTrLin __interpolation(1, 2);
-        return weight *fabs( __interpolation.giveTransformationJacobian ( gp->giveSubPatchCoordinates(), FEIVertexListGeometryWrapper(idpoly, __interpolation.giveGeometryType()) ) );
+        return weight *fabs( __interpolation.giveTransformationJacobian ( gp->giveSubPatchCoordinates(), FEIVertexListGeometryWrapper(idpoly) ) );
     } else {
         FEI2dQuadLin __interpolation(1, 2);
-        double det = fabs( __interpolation.giveTransformationJacobian( gp->giveSubPatchCoordinates(), FEIVertexListGeometryWrapper(idpoly, __interpolation.giveGeometryType()) ) );
+        double det = fabs( __interpolation.giveTransformationJacobian( gp->giveSubPatchCoordinates(), FEIVertexListGeometryWrapper(idpoly) ) );
         return det * weight;
     }
 }

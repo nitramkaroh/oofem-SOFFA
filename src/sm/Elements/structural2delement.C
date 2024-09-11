@@ -75,7 +75,7 @@ Structural2DElement::postInitialize()
 int
 Structural2DElement::giveNumberOfNodes() const
 {
-    return numberOfDofMans;//this->giveInterpolation()->giveNumberOfNodes(this->giveGeometryType());
+    return this->giveInterpolation()->giveNumberOfNodes();
 }
 
 
@@ -96,7 +96,7 @@ Structural2DElement::computeNumberOfDofs()
     ///@todo move one hiearchy up and generalize
     IntArray dofIdMask;
     this->giveDofManDofIDMask(-1, dofIdMask); // ok for standard elements
-    return this->giveInterpolation()->giveNumberOfNodes(this->giveGeometryType()) * dofIdMask.giveSize();
+    return this->giveInterpolation()->giveNumberOfNodes() * dofIdMask.giveSize();
 }
 
 
@@ -390,7 +390,7 @@ PlaneStrainElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
     FloatMatrix dNdx;
     this->giveInterpolation()->evaldNdx(dNdx, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
 
-    answer.resize(5, dNdx.giveNumberOfRows() * 2);
+    answer.resize(4, dNdx.giveNumberOfRows() * 2);
     answer.zero();
 
     for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {

@@ -58,9 +58,6 @@
 #include "exportmodulemanager.h"
 #include "initmodulemanager.h"
 #include "monitormanager.h"
-#ifdef __MPM_MODULE
-#include "../mpm/integral.h"
-#endif
 
 #ifdef __PARALLEL_MODE
  #include "parallel.h"
@@ -293,6 +290,7 @@ protected:
     /// Communication object for this engineering model.
     MPI_Comm comm;
  #endif
+
     /**@name Load balancing attributes */
     //@{
     /// Load Balancer.
@@ -311,10 +309,6 @@ protected:
 
     /// NonLocal Communicator. Necessary when nonlocal constitutive models are used.
     ProblemCommunicator *nonlocCommunicator;
-#endif
-#ifdef __MPM_MODULE
-    /// experimental mpm 
-    std :: vector < std :: unique_ptr< Integral > > integralList;
 #endif
     /// Message tags
     enum { InternalForcesExchangeTag, MassExchangeTag, LoadExchangeTag, ReactionExchangeTag, RemoteElementExchangeTag };
@@ -1003,23 +997,6 @@ public:
 
     void assembleVectorFromContacts(FloatArray &answer, TimeStep *tStep, CharType type, ValueModeType mode,
                                     const UnknownNumberingScheme &s, Domain *domain, FloatArray *eNorms = NULL);
-
-#ifdef __MPM_MODULE
-    /// mpm experimental
-    std :: vector < std :: unique_ptr< Integral > > & giveIntegralList() {
-        return this->integralList;
-    }
-    void addIntegral (std :: unique_ptr< Integral > obj) {
-        integralList.push_back(std::move(obj));
-    }
-    // Needed for some of the boost-python bindings. NOTE: This takes ownership of the pointers, so it's actually completely unsafe.
-    void py_addIntegral(Integral *obj) {
-        int size = integralList.size();
-        integralList.resize(size+1);
-        integralList[size].reset(obj);
-    }
-    // end mpm experimental
-#endif
 
 protected:
     /**
