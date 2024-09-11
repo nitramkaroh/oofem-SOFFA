@@ -65,7 +65,7 @@ HardMagneticMooneyRivlinCompressibleMaterial :: give_FirstPKStressVector_Magneti
   P( i_3, j_3 ) = C1 * this->compute_dI1_Cdev_dF(F)(i_3, j_3) + C2 * this->compute_dI2_Cdev_dF(F)(i_3, j_3) + this->compute_dVolumetricEnergy_dF(F)(i_3, j_3)
                - ( mu_0 / J ) * F.compute_tensor_cross_product()( i_3, j_3, m_3, n_3 ) * (cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ))
                + (mu_0 / (2*J*J)) * cofF(m_3, n_3) * Q(n_3) * cofF(m_3, k_3) * Q(k_3) * cofF(i_3, j_3);
-  
+  //
   B( i_3 ) = mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 ) * Q( k_3 );
   auto vP = P.to_voigt_form();
   auto vB = B.to_voigt_form();
@@ -122,8 +122,19 @@ HardMagneticMooneyRivlinCompressibleMaterial :: giveConstitutiveMatrices_dPdF_dB
                            - ( mu_0 / ( J * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q(k_3) * G(i_3, j_3) * G(k_3, l_3))
                            + ( mu_0 / (  J * J ) ) * G(i_3, j_3) * (Fcross(k_3, l_3, m_3, n_3) * G(m_3,q_3) * Q(q_3) * Q(n_3));
   //
+  dBdH( i_3, k_3 ) = -mu_0 / J * G( j_3, i_3 ) * G( j_3, k_3 );
+  //
+   dBdF( i_3, k_3, l_3 ) = mu_0 / J *  (G( j_3, m_3 ) * Q( m_3 )* Fcross( j_3, i_3, k_3, l_3 )) + G( j_3, i_3 ) * (Q( m_3 )  * Fcross( j_3, m_3, k_3, l_3 )) - mu_0 / ( J * J ) * ( G( j_3, i_3 ) * G( j_3, m_3 ) * Q( m_3 ) * G( k_3, l_3 ) );
+   //
+   dPdH( i_3, j_3, k_3 ) = mu_0 / J *  (Fcross( i_3, j_3, m_3, n_3 ) * Q( n_3 ) *  G( m_3, k_3 ) + Fcross( i_3, j_3, m_3, k_3 ) * G( m_3, q_3 ) * Q( q_3 ) ) - mu_0 / J / J * (G(m_3,k_3) * G(m_3, o_3) * Q(o_3)) * G(i_3, j_3);
+   //
+   dBdF( l_3, i_3, k_3) = dPdH( i_3, k_3, l_3 );
+   //
+   return std::make_tuple(dPdF.to_voigt_form(), dPdH.to_voigt_form_9x3(), dBdF.to_voigt_form_3x9(), dBdH.to_matrix_form());
+
+  //
   
-  Tensor4_3d A1, A2, A2t, A3;
+  //Tensor4_3d A1, A2, A2t, A3;
   //A1(i_3, j_3, k_3, l_3) =  + ( mu_0 / ( 2 * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q( k_3 ) * Fcross( i_3, j_3, k_3, l_3 ) );
   //A1(i_3, j_3, k_3, l_3) =  - ( mu_0 / ( J * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q(k_3) * G(i_3, j_3) * G(k_3, l_3);
   //							   A1(i_3, j_3, k_3, l_3) =    + ( mu_0 / (  J * J ) ) * G(i_3, j_3) * (Fcross(k_3, l_3, m_3, n_3) * G(m_3,q_3) * Q(q_3) * Q(n_3)));
@@ -149,15 +160,7 @@ HardMagneticMooneyRivlinCompressibleMaterial :: giveConstitutiveMatrices_dPdF_dB
   auto A2v = FloatMatrix(A2.to_voigt_form());
   auto A3v = FloatMatrix(A3.to_voigt_form());
   */
-   dBdH( i_3, k_3 ) = -mu_0 / J * G( j_3, i_3 ) * G( j_3, k_3 );
-   //
-   dBdF( i_3, k_3, l_3 ) = mu_0 / J *  (G( j_3, m_3 ) * Q( m_3 )* Fcross( j_3, i_3, k_3, l_3 )) + G( j_3, i_3 ) * (Q( m_3 )  * Fcross( j_3, m_3, k_3, l_3 )) - mu_0 / ( J * J ) * ( G( j_3, i_3 ) * G( j_3, m_3 ) * Q( m_3 ) * G( k_3, l_3 ) );
-   //
-   //dPdH( i_3, k_3, l_3 ) = dBdF( l_3, i_3, k_3);
-   dPdH( i_3, j_3, k_3 ) = mu_0 / J *  (Fcross( i_3, j_3, m_3, n_3 ) * Q( n_3 ) *  G( m_3, k_3 ) + Fcross( i_3, j_3, m_3, k_3 ) * G( m_3, q_3 ) * Q( q_3 ) ) - mu_0 / J / J * (G(m_3,k_3) * G(m_3, o_3) * Q(o_3)) * G(i_3, j_3);
-   //   dPdH( l_3, i_3, k_3) = -0. * dPdH( l_3, i_3, k_3 );
-   dBdF( l_3, i_3, k_3) = dPdH( i_3, k_3, l_3 );
-
+   /*
    auto [K1, K2, K3, K4] = this->compute_stiff_num(vF, vH, gp, tStep);
 
    
@@ -175,9 +178,8 @@ HardMagneticMooneyRivlinCompressibleMaterial :: giveConstitutiveMatrices_dPdF_dB
    auto T2 = FloatMatrix(K2 - dPdH.to_voigt_form_9x3());
    auto T3 = FloatMatrix(K3 - dBdF.to_voigt_form_3x9());
    auto T4 = FloatMatrix(K4 - dBdH.to_matrix_form());
+   */
    
-   return std::make_tuple(dPdF.to_voigt_form(), dPdH.to_voigt_form_9x3(), dBdF.to_voigt_form_3x9(), dBdH.to_matrix_form());
-
 
    
  }
@@ -266,13 +268,39 @@ HardMagneticMooneyRivlinCompressibleMaterial :: giveIPValue(FloatArray &answer, 
     } else if ( type == IST_FirstPKStressTensor ) {
         answer = status->givePVector();
         return 1;
-    } else if ( type == IST_MagneticInductionVector ) {
-             answer = status->giveBVector();
-	     return 1;
-    } else if ( type == IST_MagneticFieldVector ) {
-        answer = status->giveHVector();
-        return 1;
-    } else {
+    } else if ( type == IST_LagrangianMagneticInductionVector ) {
+       answer = status->giveBVector();
+       return 1;
+    } else if ( type == IST_LagrangianMagneticFieldVector ) {
+       answer = status->giveHVector();
+       return 1;
+   }  else if (type == IST_CauchyStressTensor) {
+       FloatArrayF< 9 >vF(status->giveFVector() );
+       FloatArrayF< 9 >vP(status->givePVector() );
+       Tensor2_3d F(vF), P(vP), sigma;
+       auto [J, G] = F.compute_determinant_and_cofactor();
+       sigma(i_3, j_3) = 1. / J * P(i_3, k_3) * F(j_3, k_3);
+       answer = sigma.to_voigt_form();
+       return 1;
+   } else if ( type == IST_EulerianMagneticInductionVector ) {
+       FloatArrayF<3> vB (status->giveBVector());
+       FloatArrayF< 9 >vF(status->giveFVector() );
+       Tensor1_3d B(vB), b;
+       Tensor2_3d F(vF);
+       auto [J, G] = F.compute_determinant_and_cofactor();
+       b(i_3) = 1./J * F(i_3, j_3) * B(j_3); 
+       answer = b.to_voigt_form();
+       return 1;
+   } else if ( type == IST_EulerianMagneticFieldVector ) {
+       FloatArrayF<3> vH (status->giveHVector());
+       FloatArrayF< 9 >vF(status->giveFVector() );
+       Tensor1_3d H(vH), h;
+       Tensor2_3d F(vF);
+       auto [J, G] = F.compute_determinant_and_cofactor();
+       h(i_3) = J * G(i_3, j_3) * H(j_3); 
+       answer = h.to_voigt_form();
+     return 1;
+   }  else {
         return Material::giveIPValue(answer, gp, type, tStep);
     }
 }

@@ -198,8 +198,11 @@ namespace oofem {
     ENUM_ITEM_WITH_VALUE(IST_Y_LCS, 148) \
     ENUM_ITEM_WITH_VALUE(IST_Z_LCS, 149) \
     ENUM_ITEM_WITH_VALUE(IST_MagneticPotential, 150) \
-    ENUM_ITEM_WITH_VALUE(IST_MagneticFieldVector, 151) \
-    ENUM_ITEM_WITH_VALUE(IST_MagneticInductionVector, 152) 
+    ENUM_ITEM_WITH_VALUE(IST_LagrangianMagneticFieldVector, 151) \
+    ENUM_ITEM_WITH_VALUE(IST_LagrangianMagneticInductionVector, 152) \
+    ENUM_ITEM_WITH_VALUE(IST_EulerianMagneticFieldVector, 153)	   \
+    ENUM_ITEM_WITH_VALUE(IST_EulerianMagneticInductionVector, 154) 
+
     
 
 /**
