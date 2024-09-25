@@ -164,7 +164,7 @@ void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
 
     IR_GIVE_FIELD( ir, B_app_temp, _IFT_MooneyRivlinHardMagnetic_B_app );
     IR_GIVE_FIELD( ir, B_res_temp, _IFT_MooneyRivlinHardMagnetic_B_res );
-    IR_GIVE_FIELD( ir, H_temp, _IFT_MooneyRivlinHardMagnetic_H );
+    //IR_GIVE_FIELD( ir, H_temp, _IFT_MooneyRivlinHardMagnetic_H );
     IR_GIVE_OPTIONAL_FIELD( ir, mu_0, _IFT_MooneyRivlinHardMagnetic_mu_0 );
     IR_GIVE_FIELD( ir, ltf_index, _IFT_MooneyRivlinHardMagnetic_ltf );
     IR_GIVE_OPTIONAL_FIELD( ir, materialMode, _IFT_MooneyRivlinHardMagnetic_mode );
@@ -174,7 +174,7 @@ void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
 
     B_app = FloatArrayF<3>( B_app_temp );
     B_res = FloatArrayF<3>( B_res_temp );
-    H = FloatArrayF<3>( H_temp );
+    //H = FloatArrayF<3>( H_temp );
 }
 
 FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_consistent( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
