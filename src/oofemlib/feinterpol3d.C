@@ -90,6 +90,11 @@ void FEInterpolation3d :: boundaryLocal2Global(FloatArray &answer, int boundary,
     return this->surfaceLocal2global(answer, boundary, lcoords, cellgeo);
 }
 
+void FEInterpolation3d::boundaryLocal2fullLocal( FloatArray &answer, int boundary, const FloatArray &boundarylcoords, const FEICellGeometry &cellgeo ) const
+{
+    return this->surfaceLocal2fullLocal( answer, boundary, boundarylcoords, cellgeo );
+}
+
 IntArray FEInterpolation3d :: computeEdgeMapping(const IntArray &elemNodes, int iedge) const
 {
     const auto &ln = this->computeLocalEdgeMapping(iedge);

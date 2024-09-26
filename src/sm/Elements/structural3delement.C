@@ -38,6 +38,7 @@
 #include "sm/CrossSections/structuralcrosssection.h"
 #include "gaussintegrationrule.h"
 #include "mathfem.h"
+#include "integrationdomain.h"
 
 namespace oofem {
 Structural3DElement::Structural3DElement(int n, Domain *aDomain) :
@@ -75,6 +76,32 @@ Structural3DElement::computeBmatrixAt(GaussPoint *gp, FloatMatrix &answer, int l
         answer.at(5, 3 * i - 2) = answer.at(4, 3 * i - 1) = dNdx.at(i, 3);
         answer.at(6, 3 * i - 2) = answer.at(4, 3 * i - 0) = dNdx.at(i, 2);
         answer.at(6, 3 * i - 1) = answer.at(5, 3 * i - 0) = dNdx.at(i, 1);
+    }
+}
+
+void Structural3DElement::computeBHmatrixAtBoundary( GaussPoint *gp, FloatMatrix &answer, int iBoundary )
+// Does the same as computeBHmatrixAt, with the exception of having to calculate the missing coordinate of the boundary GP
+{
+    FEInterpolation *interp = this->giveInterpolation();
+    FloatMatrix dNdx;
+    FloatArray nCoords;
+    interp->boundaryLocal2fullLocal( nCoords, iBoundary, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
+    
+    interp->evaldNdx(dNdx, nCoords , FEIElementGeometryWrapper(this) );
+
+    answer.resize(9, dNdx.giveNumberOfRows() * 3);
+    answer.zero();
+
+    for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
+        answer.at(1, 3 * i - 2) = dNdx.at(i, 1);     // du/dx
+        answer.at(2, 3 * i - 1) = dNdx.at(i, 2);     // dv/dy
+        answer.at(3, 3 * i - 0) = dNdx.at(i, 3);     // dw/dz
+        answer.at(4, 3 * i - 1) = dNdx.at(i, 3);     // dv/dz
+        answer.at(7, 3 * i - 0) = dNdx.at(i, 2);     // dw/dy
+        answer.at(5, 3 * i - 2) = dNdx.at(i, 3);     // du/dz
+        answer.at(8, 3 * i - 0) = dNdx.at(i, 1);     // dw/dx
+        answer.at(6, 3 * i - 2) = dNdx.at(i, 2);     // du/dy
+        answer.at(9, 3 * i - 1) = dNdx.at(i, 1);     // dv/dx
     }
 }
 

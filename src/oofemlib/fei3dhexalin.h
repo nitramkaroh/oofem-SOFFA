@@ -81,6 +81,7 @@ public:
     void surfaceEvaldNdxi(FloatMatrix &answer, int isurf, const FloatArray &lcoords) const override;
 
     void surfaceLocal2global(FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
+    void surfaceLocal2fullLocal( FloatArray &answer, int iSurf, const FloatArray &surfacelcoords, const FEICellGeometry &cellgeo ) const override;
     double surfaceEvalNormal(FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
     double surfaceGiveTransformationJacobian(int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
     IntArray computeLocalSurfaceMapping(int iedge) const override;

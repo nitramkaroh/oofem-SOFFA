@@ -1,3 +1,4 @@
+#include "nlstructuralelement.h"
 /*
  *
  *                 #####    #####   ######  ######  ###   ###
@@ -56,6 +57,39 @@ NLStructuralElement::NLStructuralElement(int n, Domain *aDomain) :
     nlGeometry = 0; // Geometrical nonlinearities disabled as default
 }
 
+
+void NLStructuralElement::computeDeformationGradientVectorAtBoundary( FloatArray &answer, GaussPoint *gp, int iSurf, TimeStep *tStep )
+{
+    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
+    // the receiver at time step tStep.
+    // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
+
+    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    FloatArray u;
+    this->computeVectorOf({ D_u, D_v, D_w }, VM_Total, tStep, u); // solution vector
+    if ( initialDisplacements ) {
+        u.subtract(* initialDisplacements);
+    }
+
+    // Displacement gradient H = du/dX
+    FloatMatrix B;
+    this->computeBHmatrixAtBoundary(gp, B, iSurf);
+    answer.beProductOf(B, u);
+
+    // Deformation gradient F = H + I
+    // Cannot determine material mode from GP, since it will always say "Unknown" for a boundary GP
+    // Therefore have to do it from integration domain somehow
+    integrationDomain gpDomain = gp->giveIntegrationRule()->giveIntegrationDomain();
+    if ( gpDomain == _Square || gpDomain == _Triangle)
+    {
+        // boundary is 2D, therefore full element is 3D
+        answer.at(1) += 1.0;
+        answer.at(2) += 1.0;
+        answer.at(3) += 1.0;
+    } else {
+        OOFEM_ERROR( "Cannot determine geometry order from boundary Gauss point, or otherwise it is not supported." );
+    }
+}
 
 double
 NLStructuralElement::computeCurrentVolume(TimeStep *tStep)

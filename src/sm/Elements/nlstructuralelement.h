@@ -221,21 +221,37 @@ public:
     virtual void computeDeformationGradientVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep);
 
     /**
+     * Computes the deformation gradient in Voigt form at integration point ip and at time
+     * step tStep. Computes the displacement gradient and adds an identitiy tensor.
+     *
+     * @param answer Deformation gradient vector
+     * @param gp Gauss point.
+     * @param tStep Time step.
+     */
+    virtual void computeDeformationGradientVectorAtBoundary(FloatArray &answer, GaussPoint *gp, int iSurf, TimeStep *tStep);
+
+    /**
      * Computes the current volume of element
      */
     double computeCurrentVolume(TimeStep *tStep);
 
     // data management
     void initializeFrom(InputRecord &ir) override;
-    void giveInputRecord(DynamicInputRecord &input) override;
+    void giveInputRecord( DynamicInputRecord &input ) override;
 
     // definition
     const char *giveClassName() const override { return "NLStructuralElement"; }
 
-  virtual void computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer) {
-    OOFEM_ERROR("method not implemented for this element");
-    return;
-  }
+    virtual void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
+        return;
+    }
+    virtual void computeBHmatrixAtBoundary( GaussPoint *gp, FloatMatrix &answer, int iBoundary )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
+        return;
+    }
 
 protected:
     int checkConsistency() override;

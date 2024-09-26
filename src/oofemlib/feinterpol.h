@@ -353,6 +353,7 @@ public:
      * @param cellgeo Underlying cell geometry.
      */
     virtual void boundarySurfaceLocal2global(FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const =0;
+
     /**
      * Evaluates the edge jacobian of transformation between local and global coordinates.
      * @param isurf Determines the surface number.
@@ -428,6 +429,19 @@ public:
      * @param cellgeo Underlying cell geometry.
      */
     virtual void boundaryLocal2Global(FloatArray &answer, int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const = 0;
+    
+    /**
+    * Maps the local coordinates on boundary to local coordinates of entire geometry
+    * @param answer Full local coordinates.
+    * @param boundary Boundary number.
+    * @param boundarylcoords The local coordinates in the boundary local coordinate system
+    * @param cellgeo Underlying cell geometry.
+    */
+    virtual void boundaryLocal2fullLocal( FloatArray &answer, int boundary, const FloatArray &boundarylcoords, const FEICellGeometry &cellgeo ) const
+    {
+        OOFEM_ERROR( "Not implemented." );
+    }
+
     /**
      * Computes the integral @f$ \int_S n \cdot x \mathrm{d}s @f$.
      * @param boundary Boundary number.

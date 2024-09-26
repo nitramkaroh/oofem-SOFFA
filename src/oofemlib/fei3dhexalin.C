@@ -572,6 +572,53 @@ FEI3dHexaLin :: surfaceLocal2global(FloatArray &answer, int iedge,
                    n.at(3) * cellgeo.giveVertexCoordinates( nodes.at(3) ).at(3) + n.at(4) * cellgeo.giveVertexCoordinates( nodes.at(4) ).at(3);
 }
 
+void FEI3dHexaLin::surfaceLocal2fullLocal( FloatArray &answer, int iSurf, const FloatArray &surfacelcoords, const FEICellGeometry &cellgeo ) const
+//based on iSurf, calculates the full local coordinate array
+{
+    answer.resize( 3 );
+
+    //the ordering and flipping of the local coordinates has been determined empirically on simple cube example
+    //by comparison of global coordinates returned from surface and full coordinate arrays
+    switch ( iSurf ) {
+    case 1:
+        // zeta = 1
+        answer = { -surfacelcoords.at( 1 ), -surfacelcoords.at( 2 ), 1.0 };
+        break;
+    case 2:
+        // zeta = -1
+        answer = { -surfacelcoords.at( 2 ), -surfacelcoords.at( 1 ), -1.0 };
+        break;
+    case 3:
+        // ksi = -1
+        answer = { -1.0, -surfacelcoords.at( 1 ), surfacelcoords.at( 2 ) };
+        break;
+    case 4:
+        // eta = 1
+        answer = { -surfacelcoords.at( 1 ), 1.0, surfacelcoords.at( 2 ) };
+        break;
+    case 5:
+        // ksi = 1
+        answer = { 1.0, surfacelcoords.at( 1 ), surfacelcoords.at( 2 ) };
+        break;
+    case 6:
+        // eta = -1
+        answer = { surfacelcoords.at( 1 ), -1.0, surfacelcoords.at( 2 ) };
+        break;
+    }
+
+    //debug: check whether this works
+   /* FloatArray globalFromSurface, globalFromFull, error;
+    this->surfaceLocal2global( globalFromSurface, iSurf, surfacelcoords, cellgeo );
+    this->local2global( globalFromFull, answer, cellgeo );
+
+    error = globalFromSurface - globalFromFull;
+
+    OOFEM_LOG_INFO("\n\nIsurf %i -- surface/global/error\n --", iSurf);
+    globalFromSurface.printYourself();
+    globalFromFull.printYourself();
+    error.printYourself();*/
+}
+
 double
 FEI3dHexaLin :: surfaceEvalNormal(FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const
 {

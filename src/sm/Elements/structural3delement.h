@@ -97,6 +97,7 @@ protected:
     { return ( ( ( ext == Element_EdgeLoadSupport ) || ( ext == Element_SurfaceLoadSupport ) ) ? 1 : 0 ); }
 
     void computeSurfaceNMatrixAt(FloatMatrix &answer, int iSurf, GaussPoint *gp);
+    virtual void computeBHmatrixAtBoundary( GaussPoint *gp, FloatMatrix &answer, int iBoundary ) override;
     void giveSurfaceDofMapping(IntArray &answer, int) const override;
     double computeSurfaceVolumeAround(GaussPoint *gp, int) override;
     int computeLoadLSToLRotationMatrix(FloatMatrix &answer, int, GaussPoint *gp) override;
