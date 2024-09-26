@@ -100,7 +100,8 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
         }
 
         FloatArray fe;
-        IntArray loc, masterdofids, bNodes;
+        IntArray loc, masterdofids, bNodes, dofIDs;
+        dofIDs = domain->giveDefaultNodeDofIDArry();
 
         Set *set                   = this->giveDomain()->giveSet( this->set );
         const IntArray &boundaries = set->giveBoundaryList();
@@ -112,7 +113,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             } else {
                 bNodes = e->giveInterpolation()->boundarySurfaceGiveNodes( boundary );
             }
-            e->giveBoundaryLocationArray( loc, bNodes, this->dofs, s, &masterdofids );
+            e->giveBoundaryLocationArray( loc, bNodes, dofIDs /* this->dofs*/, s, &masterdofids );
             this->computeLoadVectorFromElement( fe, e, boundary, tStep, mode );
             answer.assemble( fe, loc );
             if ( eNorms ) {
@@ -130,7 +131,8 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
         Set *set                   = this->giveDomain()->giveSet( this->set );
         const IntArray &boundaries = set->giveBoundaryList();
-        IntArray bNodes;
+        IntArray bNodes, dofIDs;
+        dofIDs = domain->giveDefaultNodeDofIDArry();
 
         rows.resize( boundaries.giveSize() / 2 );
         cols.resize( boundaries.giveSize() / 2 );
@@ -141,8 +143,8 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
             bNodes = e->giveInterpolation()->boundaryGiveNodes( boundary );
 
-            e->giveBoundaryLocationArray( rows[pos], bNodes, this->dofs, r_s );
-            e->giveBoundaryLocationArray( cols[pos], bNodes, this->dofs, c_s );
+            e->giveBoundaryLocationArray( rows[pos], bNodes, dofIDs /* this->dofs*/, r_s );
+            e->giveBoundaryLocationArray( cols[pos], bNodes, dofIDs /* this->dofs*/, c_s );
         }
     }
 
@@ -188,9 +190,9 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             // mfli->surfaceEvalNmatrixAt( N, iSurf, gp );
             // mfli->surfaceEvalBmatrixAt( B, iSurf, gp );
             nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
-            nle->computeBHmatrixAt( gp, B );
+            nle->computeBHmatrixAtBoundary( gp, B, iSurf );
             // compute deformation gradient
-            nle->computeDeformationGradientVector( vF, gp, tStep );
+            nle->computeDeformationGradientVectorAtBoundary( vF, gp, iSurf, tStep );
 
 
             // compute the force vector
@@ -245,13 +247,13 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 auto [dA, n] = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
                 //                mfli->surfaceEvalNormalAt( n, iSurf, gp, tStep );
                 // compute surface N and B matrix
-                FloatMatrix N, B;
+                FloatMatrix N, B, Nt;
                 nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
                 // mfli->surfaceEvalNmatrixAt( N, iSurf, gp );
                 // mfli->surfaceEvalBmatrixAt( B, iSurf, gp );
-                nle->computeBHmatrixAt( gp, B );
+                nle->computeBHmatrixAtBoundary( gp, B, iSurf );
                 // compute deformation gradient
-                nle->computeDeformationGradientVector( vF, gp, tStep );
+                nle->computeDeformationGradientVectorAtBoundary( vF, gp, iSurf, tStep );
                 // mfli->surfaceEvalDeformationGradientAt( vF, iSurf, gp, tStep );
                 // compute the force vector
                 auto F         = Tensor2_3d( FloatArrayF<9>( vF ) );
@@ -260,8 +262,8 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 //
                 maxwellStressFcrossN( i_3, m_3, n_3 ) = load_level * load_level * maxwell_stress( i_3, j_3 ) * F.compute_tensor_cross_product()( j_3, k_3, m_3, n_3 ) * Normal( k_3 );
                 //
-                N.beTranspositionOf( N );
-                answer += -gp->giveWeight() * dA * ( N * maxwellStressFcrossN.to_voigt_form_3x9() * B );
+                Nt.beTranspositionOf( N );
+                answer += -gp->giveWeight() * dA * ( Nt * maxwellStressFcrossN.to_voigt_form_3x9() * B );
             }
         } else if ( e->giveSpatialDimension() == 2 ) {
             OOFEM_ERROR( "Magnetic boundary condition not implemented for 2D domains." );
