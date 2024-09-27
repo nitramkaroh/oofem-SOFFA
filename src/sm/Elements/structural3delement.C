@@ -80,14 +80,15 @@ Structural3DElement::computeBmatrixAt(GaussPoint *gp, FloatMatrix &answer, int l
 }
 
 void Structural3DElement::computeBHmatrixAtBoundary( GaussPoint *gp, FloatMatrix &answer, int iBoundary )
-// Does the same as computeBHmatrixAt, with the exception of having to calculate the missing coordinate of the boundary GP
+// Does the same as computeBHmatrixAt, with the exception of having to calculate the missing coordinate of the boundary GP and experiencing other nodes
 {
     FEInterpolation *interp = this->giveInterpolation();
     FloatMatrix dNdx;
-    FloatArray nCoords;
-    interp->boundaryLocal2fullLocal( nCoords, iBoundary, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
+    //FloatArray nCoords;
+    //interp->boundaryLocal2fullLocal( nCoords, iBoundary, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
     
-    interp->evaldNdx(dNdx, nCoords , FEIElementGeometryWrapper(this) );
+    interp->boundarySurfaceEvaldNdx( dNdx, iBoundary, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( this ) );
+    //interp->evaldNdx( dNdx, nCoords, FEIElementGeometryWrapper( this ) );
 
     answer.resize(9, dNdx.giveNumberOfRows() * 3);
     answer.zero();

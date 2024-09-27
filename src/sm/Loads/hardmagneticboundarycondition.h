@@ -140,5 +140,8 @@ protected:
 private:
 
     void evaluateFreeSpaceStress();
+
+    void computeNumericalTangentFromElement( FloatMatrix &answer, Element *e, int side, TimeStep *tStep, double perturb ); //for debugging
+    void computePerturbedLoadVectorFromElement( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
 };
 } // end namespace oofem

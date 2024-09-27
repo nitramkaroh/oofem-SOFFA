@@ -64,10 +64,14 @@ void NLStructuralElement::computeDeformationGradientVectorAtBoundary( FloatArray
     // the receiver at time step tStep.
     // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
 
+    IntArray bNodes = this->giveInterpolation()->boundaryGiveNodes( iSurf );
+
     // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+
     FloatArray u;
-    this->computeVectorOf({ D_u, D_v, D_w }, VM_Total, tStep, u); // solution vector
+    this->computeBoundaryVectorOf(bNodes, { D_u, D_v, D_w }, VM_Total, tStep, u); // solution vector
     if ( initialDisplacements ) {
+        //possible source of future errors? Can this be subtracted from boundary u?
         u.subtract(* initialDisplacements);
     }
 

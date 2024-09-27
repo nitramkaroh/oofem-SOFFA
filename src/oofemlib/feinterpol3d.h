@@ -79,7 +79,6 @@ public:
     double boundaryEvalNormal(FloatArray &answer, int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
     double boundaryGiveTransformationJacobian(int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
     void boundaryLocal2Global(FloatArray &answer, int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
-    void boundaryLocal2fullLocal( FloatArray &answer, int boundary, const FloatArray &boundarylcoords, const FEICellGeometry &cellgeo ) const override;
 
     /**@name Edge interpolation services */
     //@{
@@ -179,18 +178,6 @@ public:
      * @param cellgeo Underlying cell geometry.
      */
     virtual void surfaceLocal2global(FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const = 0;
-
-    /**
-    * Maps the local coordinates on boundary to local coordinates of entire geometry
-    * @param answer Full local coordinates.
-    * @param boundary Boundary number.
-    * @param boundarylcoords The local coordinates in the boundary local coordinate system
-    * @param cellgeo Underlying cell geometry.
-    */
-    virtual void surfaceLocal2fullLocal( FloatArray &answer, int iSurf, const FloatArray &surfacelcoords, const FEICellGeometry &cellgeo ) const
-    {
-        OOFEM_ERROR( "Not implemented." );
-    }
 
     /**
      * Evaluates the edge jacobian of transformation between local and global coordinates.

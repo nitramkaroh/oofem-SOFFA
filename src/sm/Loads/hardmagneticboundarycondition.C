@@ -70,7 +70,9 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
         }
 
         FloatMatrix Ke;
-        IntArray r_loc, c_loc, bNodes;
+        IntArray r_loc, c_loc, bNodes, dofIDs;
+
+        dofIDs = domain->giveDefaultNodeDofIDArry();
 
         Set *set                   = this->giveDomain()->giveSet( this->set );
         const IntArray &boundaries = set->giveBoundaryList();
@@ -84,12 +86,27 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 bNodes = e->giveInterpolation()->boundarySurfaceGiveNodes( boundary );
             }
 
-            e->giveBoundaryLocationArray( r_loc, bNodes, this->dofs, r_s );
-            e->giveBoundaryLocationArray( c_loc, bNodes, this->dofs, c_s );
+            e->giveBoundaryLocationArray( r_loc, bNodes, dofIDs /* this->dofs*/, r_s );
+            e->giveBoundaryLocationArray( c_loc, bNodes, dofIDs /* this->dofs*/, c_s );
             this->computeTangentFromElement( Ke, e, boundary, tStep );
             answer.assemble( r_loc, c_loc, Ke );
+
+            //debug
+            if ( pos == 1 ) {
+                //compute numerical tangent
+                FloatMatrix Ke_num;
+                double pert = 1.e-6;
+                this->computeNumericalTangentFromElement( Ke_num, e, boundary, tStep, pert);
+
+                OOFEM_LOG_INFO( "Debugging surface %i\n", boundary );
+                OOFEM_LOG_INFO( "-------Analytical stiffness-----------\n" );
+                Ke.printYourself();
+                OOFEM_LOG_INFO( "-------Numerical stiffness------------\n" );
+                Ke_num.printYourself();
+
+            }
         }
-    }
+    }    
     
     void HardMagneticBoundaryCondition::assembleVector(FloatArray& answer , TimeStep* tStep ,
         CharType type , ValueModeType mode ,
@@ -278,5 +295,36 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
       
     }
 
-    
-}//end namespace oofem;
+
+    //----------------------------------------------------------------------DEBUG-------------------------------------------------------------------------------------
+
+    void HardMagneticBoundaryCondition::computeNumericalTangentFromElement( FloatMatrix &answer, Element *e, int side, TimeStep *tStep, double perturb )
+    {
+        // debugging, numerically computing stiffness
+        answer.resize( 12, 12 );
+
+        FloatArray perturbedForceFront, perturbedForceBack;
+        for ( int i = 1; i <= 12; i++ ) {
+
+            this->computePerturbedLoadVectorFromElement( perturbedForceFront, e, side, tStep, perturb, i );
+            this->computePerturbedLoadVectorFromElement( perturbedForceBack, e, side, tStep, -perturb, i );
+
+            for ( int j = 1; j <= 12; j++ ) {
+
+                answer.at( i, j ) = ( perturbedForceFront.at( j ) - perturbedForceBack.at( j ) ) / 2 * perturb;
+            }
+        }
+    }
+
+    void HardMagneticBoundaryCondition::computePerturbedLoadVectorFromElement( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index )
+    {
+        // debugging, numerically perturbed load vector
+        IntArray boundaryNodes = e->giveInterpolation()->boundarySurfaceGiveNodes( side );
+
+        int ndof = 3 * boundaryNodes.giveSize();
+        answer.resize( ndof );
+
+        //todo
+    }
+
+    }//end namespace oofem;
