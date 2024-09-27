@@ -89,22 +89,23 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             e->giveBoundaryLocationArray( r_loc, bNodes, dofIDs /* this->dofs*/, r_s );
             e->giveBoundaryLocationArray( c_loc, bNodes, dofIDs /* this->dofs*/, c_s );
             this->computeTangentFromElement( Ke, e, boundary, tStep );
-            answer.assemble( r_loc, c_loc, Ke );
 
-            //debug
-            if ( pos == 1 ) {
-                //compute numerical tangent
-                FloatMatrix Ke_num;
-                double pert = 1.e-6;
-                this->computeNumericalTangentFromElement( Ke_num, e, boundary, tStep, pert);
+            // debug
+            // compute numerical tangent
+            FloatMatrix Ke_num;
+            double pert = 1.e-3;
+            this->computeNumericalTangentFromElement( Ke_num, e, boundary, tStep, pert );
 
+            if ( pos == 2 ) {
+                
                 OOFEM_LOG_INFO( "Debugging surface %i\n", boundary );
                 OOFEM_LOG_INFO( "-------Analytical stiffness-----------\n" );
                 Ke.printYourself();
                 OOFEM_LOG_INFO( "-------Numerical stiffness------------\n" );
                 Ke_num.printYourself();
-
             }
+
+            answer.assemble( r_loc, c_loc, Ke );
         }
     }    
     
@@ -311,20 +312,79 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
             for ( int j = 1; j <= 12; j++ ) {
 
-                answer.at( i, j ) = ( perturbedForceFront.at( j ) - perturbedForceBack.at( j ) ) / 2 * perturb;
+                answer.at( j, i ) = ( perturbedForceFront.at( j ) - perturbedForceBack.at( j ) ) / 2 * perturb;
             }
         }
     }
 
-    void HardMagneticBoundaryCondition::computePerturbedLoadVectorFromElement( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index )
+    void HardMagneticBoundaryCondition::computePerturbedLoadVectorFromElement( FloatArray &answer, Element *e, int iSurf, TimeStep *tStep, double perturb, int index )
     {
         // debugging, numerically perturbed load vector
-        IntArray boundaryNodes = e->giveInterpolation()->boundarySurfaceGiveNodes( side );
+        IntArray bNodes = e->giveInterpolation()->boundarySurfaceGiveNodes( iSurf );
 
-        int ndof = 3 * boundaryNodes.giveSize();
+        int ndof = 3 * bNodes.giveSize();
         answer.resize( ndof );
 
-        //todo
+        //standard load vector computation... almost:
+        //MagneticLoadElementInterface *mfli = static_cast<MagneticLoadElementInterface *>( e->giveInterface( MagneticLoadElementInterfaceType ) );
+        NLStructuralElement *nle           = dynamic_cast<NLStructuralElement *>( e );
+        FEInterpolation3d *interpolation = dynamic_cast<FEInterpolation3d *>( e->giveInterpolation() );
+
+        /*if ( !mfli ) {
+            OOFEM_ERROR( "Element doesn't implement the required magnetic load interface!" );
+        }*/
+
+        if ( nle == nullptr || interpolation == nullptr) {
+            OOFEM_ERROR( "Nonlinear elements required for magnetic BCs" );
+        }
+
+        if ( iSurf == -1 ) {
+            iSurf = 1;
+        }
+
+        double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+
+
+        answer.clear();
+
+        int order  = 4;
+        auto iRule = nle->giveBoundarySurfaceIntegrationRule( order, iSurf );
+
+        Tensor1_3d maxwellStressCofFN;
+        Tensor2_3d F;
+        FloatArray vF, uPert;
+
+        for ( GaussPoint *gp : *iRule ) {
+            // compute normal vector
+            // FloatArray n;
+            // mfli->surfaceEvalNormalAt( n, iSurf, gp, tStep );
+            auto [dA, n] = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
+            // compute surface N matirx
+            FloatMatrix N, B;
+            // compute deformation gradient
+            // mfli->surfaceEvalDeformationGradientAt( vF, iSurf, gp, tStep );
+            // mfli->surfaceEvalNmatrixAt( N, iSurf, gp );
+            // mfli->surfaceEvalBmatrixAt( B, iSurf, gp );
+            nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
+            nle->computeBHmatrixAtBoundary( gp, B, iSurf );
+            // compute deformation gradient
+            // do it from perturbed displacements
+            nle->computeBoundaryVectorOf( bNodes, { D_u, D_v, D_w }, VM_Total, tStep, uPert );
+            uPert.at( index ) += perturb;
+            vF.beProductOf( B, uPert );
+            vF.at( 1 ) += 1.0;
+            vF.at( 2 ) += 1.0;
+            vF.at( 3 ) += 1.0;
+
+            // compute the force vector
+            auto F                    = Tensor2_3d( FloatArrayF<9>( vF ) );
+            auto Normal               = Tensor1_3d( FloatArrayF<3>( n ) );
+            auto [J, cofF]            = F.compute_determinant_and_cofactor();
+            maxwellStressCofFN( i_3 ) = load_level * load_level * maxwell_stress( i_3, j_3 ) * cofF( j_3, k_3 ) * Normal( k_3 );
+            //
+            answer.plusProduct( N, maxwellStressCofFN.to_voigt_form(), -gp->giveWeight() * dA );
+        }
+
     }
 
     }//end namespace oofem;
