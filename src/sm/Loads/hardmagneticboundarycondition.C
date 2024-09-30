@@ -93,10 +93,10 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             // debug
             // compute numerical tangent
             FloatMatrix Ke_num;
-            double pert = 1.e-3;
+            double pert = 1.e-6;
             this->computeNumericalTangentFromElement( Ke_num, e, boundary, tStep, pert );
 
-            if ( pos == 2 ) {
+            if ( pos == 3 ) {
                 
                 OOFEM_LOG_INFO( "Debugging surface %i\n", boundary );
                 OOFEM_LOG_INFO( "-------Analytical stiffness-----------\n" );
@@ -105,7 +105,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 Ke_num.printYourself();
             }
 
-            answer.assemble( r_loc, c_loc, Ke );
+            answer.assemble( r_loc, c_loc, Ke_num );
         }
     }    
     
@@ -312,7 +312,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
             for ( int j = 1; j <= 12; j++ ) {
 
-                answer.at( j, i ) = ( perturbedForceFront.at( j ) - perturbedForceBack.at( j ) ) / 2 * perturb;
+                answer.at( j, i ) = ( perturbedForceFront.at( j ) - perturbedForceBack.at( j ) ) / (2 * perturb);
             }
         }
     }
@@ -326,13 +326,8 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
         answer.resize( ndof );
 
         //standard load vector computation... almost:
-        //MagneticLoadElementInterface *mfli = static_cast<MagneticLoadElementInterface *>( e->giveInterface( MagneticLoadElementInterfaceType ) );
         NLStructuralElement *nle           = dynamic_cast<NLStructuralElement *>( e );
         FEInterpolation3d *interpolation = dynamic_cast<FEInterpolation3d *>( e->giveInterpolation() );
-
-        /*if ( !mfli ) {
-            OOFEM_ERROR( "Element doesn't implement the required magnetic load interface!" );
-        }*/
 
         if ( nle == nullptr || interpolation == nullptr) {
             OOFEM_ERROR( "Nonlinear elements required for magnetic BCs" );
@@ -356,15 +351,9 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
         for ( GaussPoint *gp : *iRule ) {
             // compute normal vector
-            // FloatArray n;
-            // mfli->surfaceEvalNormalAt( n, iSurf, gp, tStep );
             auto [dA, n] = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
             // compute surface N matirx
             FloatMatrix N, B;
-            // compute deformation gradient
-            // mfli->surfaceEvalDeformationGradientAt( vF, iSurf, gp, tStep );
-            // mfli->surfaceEvalNmatrixAt( N, iSurf, gp );
-            // mfli->surfaceEvalBmatrixAt( B, iSurf, gp );
             nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
             nle->computeBHmatrixAtBoundary( gp, B, iSurf );
             // compute deformation gradient
