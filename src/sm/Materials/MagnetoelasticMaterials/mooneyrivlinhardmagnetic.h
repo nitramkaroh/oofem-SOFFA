@@ -112,6 +112,14 @@ private:
       FloatMatrixF< 9, 9 > compute3dMaterialStiffnessMatrix_dPdF_ogdenpullback(MatResponseMode matResponseMode,
                                                            GaussPoint *gp, TimeStep *tStep ) const;
 
+      FloatArrayF< 9 > computeFirstPKStressVector_3d_universal(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
+      FloatMatrixF< 9, 9 > compute3dMaterialStiffnessMatrix_dPdF_universal(MatResponseMode matResponseMode,
+                                                           GaussPoint *gp, TimeStep *tStep ) const;
+
+      FloatArrayF< 9 > computeFirstPKStressVector_3d_universal_nobb(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
+      FloatMatrixF< 9, 9 > compute3dMaterialStiffnessMatrix_dPdF_universal_nobb(MatResponseMode matResponseMode,
+                                                           GaussPoint *gp, TimeStep *tStep ) const;
+
       //FloatArrayF< 9 > computeFirstPKStressVector_3d_multiphysics(const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const;
       //FloatMatrixF<9, 9> compute3dMaterialStiffnessMatrix_dPdF_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const;
       //FloatArrayF<3> computeMagneticInduction_3d_multiphysics( const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep ) const;

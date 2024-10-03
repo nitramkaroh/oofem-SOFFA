@@ -44,6 +44,7 @@
 #define _IFT_HardMagneticBoundaryCondition_Name "hardmagneticboundarycondition"
 #define _IFT_HardMagneticBoundaryCondition_mu_0 "mu_0"
 #define _IFT_HardMagneticBoundaryCondition_b_ext "b_ext"
+#define _IFT_HardMagneticBoundaryCondition_mjump "mjump"
 #define _IFT_HardMagneticBoundaryCondition_ltf "loadtimefunction" //load time function for applied field
 //@}
 
@@ -61,7 +62,7 @@ class HardMagneticBoundaryCondition : public ActiveBoundaryCondition {
 protected:
 
     double mu0; //vacuum permeability
-    Tensor1_3d b_ext; //external magnetic field in free space
+    Tensor1_3d b_ext, m_jump; //external magnetic field in free space, jump in magnetization
   //FloatArrayF<9> sigma_star; //precomputed free space stress
     Tensor2_3d maxwell_stress;
     int ltf_index; //index of load time function for applied load

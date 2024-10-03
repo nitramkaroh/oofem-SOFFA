@@ -51,9 +51,13 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
     {
         ActiveBoundaryCondition::initializeFrom( ir );
 
-	    FloatArray b;
+	    FloatArray b, m;
         IR_GIVE_FIELD( ir, b, _IFT_HardMagneticBoundaryCondition_b_ext );
-	    b_ext = Tensor1_3d( FloatArrayF< 3 >(b) );
+	    b_ext = Tensor1_3d( FloatArrayF< 3 >( b ) );
+        IR_GIVE_FIELD( ir, m, _IFT_HardMagneticBoundaryCondition_mjump );
+        m_jump = Tensor1_3d( FloatArrayF<3>( m ) );
+
+
         IR_GIVE_FIELD( ir, ltf_index, _IFT_HardMagneticBoundaryCondition_ltf );
 
         mu0 = BASE_VACUUM_PERMEABILITY_MU_0;
@@ -96,7 +100,16 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             double pert = 1.e-6;
             this->computeNumericalTangentFromElement( Ke_num, e, boundary, tStep, pert );
 
-            if ( pos == 3 ) {
+            //symmetry check
+            FloatMatrix KeT, Ke_numT, errorKe, errorKe_num;
+            KeT.beTranspositionOf( Ke );
+            Ke_numT.beTranspositionOf( Ke_num );
+            errorKe = KeT;
+            errorKe_num = Ke_numT;
+            errorKe.add( -1. * Ke );
+            errorKe_num.add( -1. * Ke_num );
+
+            if ( pos < 0 ) {
                 
                 OOFEM_LOG_INFO( "Debugging surface %i\n", boundary );
                 OOFEM_LOG_INFO( "-------Analytical stiffness-----------\n" );
@@ -312,7 +325,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
             for ( int j = 1; j <= 12; j++ ) {
 
-                answer.at( j, i ) = ( perturbedForceFront.at( j ) - perturbedForceBack.at( j ) ) / (2 * perturb);
+                answer.at( i, j ) = ( perturbedForceFront.at( j ) - perturbedForceBack.at( j ) ) / (2 * perturb);
             }
         }
     }
