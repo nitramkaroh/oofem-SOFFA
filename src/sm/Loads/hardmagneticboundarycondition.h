@@ -45,6 +45,7 @@
 #define _IFT_HardMagneticBoundaryCondition_mu_0 "mu_0"
 #define _IFT_HardMagneticBoundaryCondition_b_ext "b_ext"
 #define _IFT_HardMagneticBoundaryCondition_mjump "mjump"
+#define _IFT_HardMagneticBoundaryCondition_mode "mode" //1 = maxwell only, 2 = body load approach
 #define _IFT_HardMagneticBoundaryCondition_ltf "loadtimefunction" //load time function for applied field
 //@}
 
@@ -66,6 +67,7 @@ protected:
   //FloatArrayF<9> sigma_star; //precomputed free space stress
     Tensor2_3d maxwell_stress;
     int ltf_index; //index of load time function for applied load
+    int bcMode; //mode of boundary condition implemented
 
 public:
     /// <summary>
@@ -139,6 +141,14 @@ protected:
     void computeTangentFromElement(FloatMatrix &answer, Element *e, int side, TimeStep *tStep);
 
 private:
+
+    // Maxwell stress approach
+    void computeElementLoadVectorContribution_maxwell( FloatArray &answer, Element * e, int iSurf, TimeStep *tStep );
+    void computeElementTangentContribution_maxwell( FloatMatrix &answer, Element * e, int iSurf, TimeStep *tStep );
+
+    // Body load approach
+    void computeElementLoadVectorContribution_bla( FloatArray &answer, Element * e, int iSurf, TimeStep *tStep );
+    void computeElementTangentContribution_bla( FloatMatrix &answer, Element * e, int iSurf, TimeStep *tStep );
 
     void evaluateFreeSpaceStress();
 
