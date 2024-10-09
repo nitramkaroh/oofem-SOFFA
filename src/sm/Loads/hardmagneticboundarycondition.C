@@ -55,11 +55,11 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
 	    FloatArray b_temp, m_temp;
         IR_GIVE_FIELD( ir, b_temp, _IFT_HardMagneticBoundaryCondition_b_ext );
-	    b = Tensor1_3d( FloatArrayF< 3 >( b_temp ) );
+	    b_app = FloatArrayF< 3 >( b_temp );
 
         if ( bcMode == 2 ) {
             IR_GIVE_FIELD( ir, m_temp, _IFT_HardMagneticBoundaryCondition_mjump );
-            m_jump = Tensor1_3d( FloatArrayF<3>( m_temp ) );
+            m_jump = FloatArrayF<3>( m_temp );
         }
 
         IR_GIVE_FIELD( ir, ltf_index, _IFT_HardMagneticBoundaryCondition_ltf );
@@ -227,8 +227,9 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
     void HardMagneticBoundaryCondition::evaluateFreeSpaceStress()
     {
-      Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-      maxwell_stress( i_3, j_3 ) = 1 / mu0 * (b(i_3) * b(j_3) - 0.5 * b(p_3) * b(p_3) * delta(i_3,j_3));
+        auto b = Tensor1_3d( b_app );
+        Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+        maxwell_stress( i_3, j_3 ) = 1 / mu0 * ( b( i_3 ) * b( j_3 ) - 0.5 * b( p_3 ) * b( p_3 ) * delta( i_3, j_3 ) );
       
     }
 
@@ -258,9 +259,8 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             // compute normal vector
             auto [dA, n]                     = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
             // compute surface N and B matrix
-            FloatMatrix N, B;
+            FloatMatrix N;
             nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
-            nle->computeBHmatrixAtBoundary( gp, B, iSurf );
             // compute deformation gradient            
             nle->computeDeformationGradientVectorAtBoundary( vF, gp, iSurf, tStep );
 
@@ -288,11 +288,8 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
         answer.clear();
         int order     = 4;
         auto iRule    = nle->giveBoundarySurfaceIntegrationRule( order, iSurf );
-        auto bNodes   = e->giveBoundarySurfaceNodes( iSurf );
-        double nNodes = bNodes.giveSize();
-        FloatMatrix K;
-        FloatMatrix testAnswer( 12, 12 );
 
+        FloatMatrix N, B, Nt;
 
         if ( e->giveSpatialDimension() == 3 ) {
             Tensor3_3d maxwellStressFcrossN;
@@ -302,7 +299,6 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 // compute normal vector
                 auto [dA, n] = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
                 // compute surface N and B matrix
-                FloatMatrix N, B, Nt;
                 nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
                 nle->computeBHmatrixAtBoundary( gp, B, iSurf );
                 // compute deformation gradient
@@ -340,17 +336,27 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
         auto iRule = nle->giveBoundarySurfaceIntegrationRule( order, iSurf );
 
         Tensor1_3d contribution;
+        auto B_app = Tensor1_3d( load_level * b_app );
+        auto M = Tensor1_3d( m_jump );
+        FloatArray vF;
+        FloatMatrix N;
 
         for ( GaussPoint *gp : *iRule ) {
             // compute normal vector
-            auto [dA, n]                     = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
+            auto [dA, n] = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
             // compute surface N matrix
-            FloatMatrix N;
             nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
+            // compute deformation gradient
+            nle->computeDeformationGradientVectorAtBoundary( vF, gp, iSurf, tStep );
 
             // compute the force vector
-            auto Normal               = Tensor1_3d( FloatArrayF<3>( n ) );
-            contribution( i_3 ) = m_jump( p_3 ) * Normal( p_3 ) * b( i_3 );
+            auto F              = Tensor2_3d( FloatArrayF<9>( vF ) );
+            auto Normal         = Tensor1_3d( FloatArrayF<3>( n ) );
+            auto [J, cofF]      = F.compute_determinant_and_cofactor();
+
+            contribution( i_3 ) = M( m_3 ) * Normal( m_3 ) * B_app( i_3 )
+                + ( mu0 / 2. ) * Normal( k_3 ) * M( k_3 ) * Normal( l_3 ) * M( l_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
+                - ( mu0 / ( 2. * J * J ) ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 );
             //
             answer.plusProduct( N, contribution.to_voigt_form(), -gp->giveWeight() * dA );
         }
@@ -364,10 +370,45 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             OOFEM_ERROR( "Nonlinear elements required for magnetic BCs" );
         }
 
-        int ndof = interpolation->boundarySurfaceGiveNodes(iSurf).giveSize()*domain->giveDefaultNodeDofIDArry().giveSize();
-        answer.resize( ndof, ndof );
-        
-        //stiffness as zero, because neither M, nor N, nor B depend on nodal displacements
+        double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+
+        answer.clear();
+        int order     = 4;
+        auto iRule    = nle->giveBoundarySurfaceIntegrationRule( order, iSurf );
+
+        Tensor3_3d contribution;
+        auto B_app = Tensor1_3d( load_level * b_app );
+        auto M = Tensor1_3d( m_jump );
+        FloatArray vF;
+        FloatMatrix N, B, Nt;
+
+        if ( e->giveSpatialDimension() == 3 ) {
+
+            for ( GaussPoint *gp : *iRule ) {
+                // compute normal vector
+                auto [dA, n] = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
+                // compute surface N and B matrix
+                nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
+                nle->computeBHmatrixAtBoundary( gp, B, iSurf );
+                // compute deformation gradient
+                nle->computeDeformationGradientVectorAtBoundary( vF, gp, iSurf, tStep );
+                // compute the force vector
+                auto F         = Tensor2_3d( FloatArrayF<9>( vF ) );
+                auto Normal    = Tensor1_3d( FloatArrayF<3>( n ) );
+                auto [J, cofF] = F.compute_determinant_and_cofactor();
+                auto Fcross    = F.compute_tensor_cross_product();
+                //
+                contribution( i_3, k_3, l_3 ) = ( mu0 / 2. ) * Normal( p_3 ) * M( p_3 ) * Normal( q_3 ) * Normal( q_3 ) * Fcross( i_3, m_3, k_3, l_3 ) * Normal( m_3 )
+                    + ( mu0 / ( J * J * J ) ) * F( j_3, p_3 ) * M( p_3 ) * F( j_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * cofF( k_3, l_3 ) * Normal( m_3 )
+                    - ( mu0 / ( J * J ) ) * M( l_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
+                    - (mu0/(2.*J*J))*F(j_3, p_3)*M(p_3)*F(j_3,q_3)*M(q_3)*Fcross(i_3, m_3, k_3, l_3)*Normal(m_3);
+                //
+                Nt.beTranspositionOf( N );
+                answer += -gp->giveWeight() * dA * ( Nt * contribution.to_voigt_form_3x9() * B );
+            }
+        } else if ( e->giveSpatialDimension() == 2 ) {
+            OOFEM_ERROR( "Magnetic boundary condition not implemented for 2D domains." );
+        }
     }
     
 
