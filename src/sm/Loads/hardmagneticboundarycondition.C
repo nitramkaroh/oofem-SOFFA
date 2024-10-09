@@ -53,13 +53,13 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
         IR_GIVE_FIELD( ir, bcMode, _IFT_HardMagneticBoundaryCondition_mode );
 
-	    FloatArray b, m;
-        IR_GIVE_FIELD( ir, b, _IFT_HardMagneticBoundaryCondition_b_ext );
-	    b_ext = Tensor1_3d( FloatArrayF< 3 >( b ) );
+	    FloatArray b_temp, m_temp;
+        IR_GIVE_FIELD( ir, b_temp, _IFT_HardMagneticBoundaryCondition_b_ext );
+	    b = Tensor1_3d( FloatArrayF< 3 >( b_temp ) );
 
         if ( bcMode == 2 ) {
-            IR_GIVE_FIELD( ir, m, _IFT_HardMagneticBoundaryCondition_mjump );
-            m_jump = Tensor1_3d( FloatArrayF<3>( m ) );
+            IR_GIVE_FIELD( ir, m_temp, _IFT_HardMagneticBoundaryCondition_mjump );
+            m_jump = Tensor1_3d( FloatArrayF<3>( m_temp ) );
         }
 
         IR_GIVE_FIELD( ir, ltf_index, _IFT_HardMagneticBoundaryCondition_ltf );
@@ -228,7 +228,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
     void HardMagneticBoundaryCondition::evaluateFreeSpaceStress()
     {
       Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-      maxwell_stress( i_3, j_3 ) = 1 / mu0 * (b_ext(i_3) * b_ext(j_3) - 0.5 * b_ext(p_3) * b_ext(p_3) * delta(i_3,j_3));
+      maxwell_stress( i_3, j_3 ) = 1 / mu0 * (b(i_3) * b(j_3) - 0.5 * b(p_3) * b(p_3) * delta(i_3,j_3));
       
     }
 
@@ -326,11 +326,48 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
     void HardMagneticBoundaryCondition::computeElementLoadVectorContribution_bla( FloatArray &answer, Element *e, int iSurf, TimeStep *tStep )
     {
+        NLStructuralElement *nle         = dynamic_cast<NLStructuralElement *>( e );
+        FEInterpolation3d *interpolation = dynamic_cast<FEInterpolation3d *>( e->giveInterpolation() );
+        if ( nle == nullptr || interpolation == nullptr ) {
+            OOFEM_ERROR( "Nonlinear elements required for magnetic BCs" );
+        }
 
+        double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+
+        answer.clear();
+
+        int order  = 4;
+        auto iRule = nle->giveBoundarySurfaceIntegrationRule( order, iSurf );
+
+        Tensor1_3d contribution;
+
+        for ( GaussPoint *gp : *iRule ) {
+            // compute normal vector
+            auto [dA, n]                     = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
+            // compute surface N matrix
+            FloatMatrix N;
+            nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
+
+            // compute the force vector
+            auto Normal               = Tensor1_3d( FloatArrayF<3>( n ) );
+            contribution( i_3 ) = m_jump( p_3 ) * Normal( p_3 ) * b( i_3 );
+            //
+            answer.plusProduct( N, contribution.to_voigt_form(), -gp->giveWeight() * dA );
+        }
     }
 
     void HardMagneticBoundaryCondition::computeElementTangentContribution_bla( FloatMatrix &answer, Element *e, int iSurf, TimeStep *tStep )
     {
+        NLStructuralElement *nle         = dynamic_cast<NLStructuralElement *>( e );
+        FEInterpolation3d *interpolation = dynamic_cast<FEInterpolation3d *>( e->giveInterpolation() );
+        if ( nle == nullptr || interpolation == nullptr ) {
+            OOFEM_ERROR( "Nonlinear elements required for magnetic BCs" );
+        }
+
+        int ndof = interpolation->boundarySurfaceGiveNodes(iSurf).giveSize()*domain->giveDefaultNodeDofIDArry().giveSize();
+        answer.resize( ndof, ndof );
+        
+        //stiffness as zero, because neither M, nor N, nor B depend on nodal displacements
     }
     
 
