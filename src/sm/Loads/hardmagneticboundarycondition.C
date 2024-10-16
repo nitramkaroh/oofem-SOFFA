@@ -124,7 +124,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 Ke_num.printYourself();
             }
 
-            answer.assemble( r_loc, c_loc, Ke_num );
+            answer.assemble( r_loc, c_loc, Ke);
         }
     }    
     
@@ -197,6 +197,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             break;
         case 2:
             this->computeElementLoadVectorContribution_bla( answer, e, iSurf, tStep );
+            break;
         default:
             OOFEM_ERROR( "Unknown mode for HardMagneticBoundaryCondition (%i)", bcMode );
             break;
@@ -218,6 +219,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             break;
         case 2:
             this->computeElementTangentContribution_bla( answer, e, iSurf, tStep );
+            break;
         default:
             OOFEM_ERROR( "Unknown mode for HardMagneticBoundaryCondition (%i)", bcMode );
             break;
@@ -354,9 +356,9 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             auto Normal         = Tensor1_3d( FloatArrayF<3>( n ) );
             auto [J, cofF]      = F.compute_determinant_and_cofactor();
 
-            contribution( i_3 ) = M( m_3 ) * Normal( m_3 ) * B_app( i_3 )
-                + ( mu0 / 2. ) * Normal( k_3 ) * M( k_3 ) * Normal( l_3 ) * M( l_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
-                - ( mu0 / ( 2. * J * J ) ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 );
+            contribution( i_3 ) = M( m_3 ) * Normal( m_3 ) * B_app( i_3 );
+                /*+ ( mu0 / 2. ) * Normal( k_3 ) * M( k_3 ) * Normal( l_3 ) * M( l_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
+                - ( mu0 / ( 2. * J * J ) ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 );*/
             //
             answer.plusProduct( N, contribution.to_voigt_form(), -gp->giveWeight() * dA );
         }
@@ -398,10 +400,10 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 auto [J, cofF] = F.compute_determinant_and_cofactor();
                 auto Fcross    = F.compute_tensor_cross_product();
                 //
-                contribution( i_3, k_3, l_3 ) = ( mu0 / 2. ) * Normal( p_3 ) * M( p_3 ) * Normal( q_3 ) * Normal( q_3 ) * Fcross( i_3, m_3, k_3, l_3 ) * Normal( m_3 )
+                /*contribution( i_3, k_3, l_3 ) = ( mu0 / 2. ) * Normal( p_3 ) * M( p_3 ) * Normal( q_3 ) * Normal( q_3 ) * Fcross( i_3, m_3, k_3, l_3 ) * Normal( m_3 )
                     + ( mu0 / ( J * J * J ) ) * F( j_3, p_3 ) * M( p_3 ) * F( j_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * cofF( k_3, l_3 ) * Normal( m_3 )
                     - ( mu0 / ( J * J ) ) * M( l_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
-                    - (mu0/(2.*J*J))*F(j_3, p_3)*M(p_3)*F(j_3,q_3)*M(q_3)*Fcross(i_3, m_3, k_3, l_3)*Normal(m_3);
+                    - (mu0/(2.*J*J))*F(j_3, p_3)*M(p_3)*F(j_3,q_3)*M(q_3)*Fcross(i_3, m_3, k_3, l_3)*Normal(m_3);*/
                 //
                 Nt.beTranspositionOf( N );
                 answer += -gp->giveWeight() * dA * ( Nt * contribution.to_voigt_form_3x9() * B );
@@ -435,6 +437,25 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
     void HardMagneticBoundaryCondition::computePerturbedLoadVectorFromElement( FloatArray &answer, Element *e, int iSurf, TimeStep *tStep, double perturb, int index )
     {
+        if ( iSurf == -1 ) {
+            iSurf = 1;
+        }
+
+        switch ( bcMode ) {
+        case 1:
+            this->computePerturbedLoadVectorFromElement_maxwell( answer, e, iSurf, tStep, perturb, index );
+            break;
+        case 2:
+            this->computePerturbedLoadVectorFromElement_bla( answer, e, iSurf, tStep, perturb, index );
+            break;
+        default:
+            OOFEM_ERROR( "Unknown mode for HardMagneticBoundaryCondition (%i)", bcMode );
+            break;
+        }
+    }
+
+    void HardMagneticBoundaryCondition::computePerturbedLoadVectorFromElement_bla( FloatArray &answer, Element *e, int iSurf, TimeStep *tStep, double perturb, int index )
+    {
         // debugging, numerically perturbed load vector
         IntArray bNodes = e->giveInterpolation()->boundarySurfaceGiveNodes( iSurf );
 
@@ -449,8 +470,63 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
             OOFEM_ERROR( "Nonlinear elements required for magnetic BCs" );
         }
 
-        if ( iSurf == -1 ) {
-            iSurf = 1;
+        double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+
+
+        answer.clear();
+
+        int order  = 4;
+        auto iRule = nle->giveBoundarySurfaceIntegrationRule( order, iSurf );
+
+        Tensor1_3d contribution;
+        auto B_app = Tensor1_3d( load_level * b_app );
+        auto M = Tensor1_3d( m_jump );
+        Tensor2_3d F;
+        FloatArray vF, uPert;
+
+        for ( GaussPoint *gp : *iRule ) {
+            // compute normal vector
+            auto [dA, n] = interpolation->surfaceEvalUnitNormal( iSurf, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( e ) );
+            // compute surface N matirx
+            FloatMatrix N, B;
+            nle->computeSurfaceNMatrix( N, iSurf, gp->giveNaturalCoordinates() );
+            nle->computeBHmatrixAtBoundary( gp, B, iSurf );
+            // compute deformation gradient
+            // do it from perturbed displacements
+            nle->computeBoundaryVectorOf( bNodes, { D_u, D_v, D_w }, VM_Total, tStep, uPert );
+            uPert.at( index ) += perturb;
+            vF.beProductOf( B, uPert );
+            vF.at( 1 ) += 1.0;
+            vF.at( 2 ) += 1.0;
+            vF.at( 3 ) += 1.0;
+
+            // compute the force vector
+            auto F                    = Tensor2_3d( FloatArrayF<9>( vF ) );
+            auto Normal               = Tensor1_3d( FloatArrayF<3>( n ) );
+            auto [J, cofF]            = F.compute_determinant_and_cofactor();
+            contribution( i_3 ) = M( m_3 ) * Normal( m_3 ) * B_app( i_3 )
+                + ( mu0 / 2. ) * Normal( k_3 ) * M( k_3 ) * Normal( l_3 ) * M( l_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
+                - ( mu0 / ( 2. * J * J ) ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 );
+            //
+            answer.plusProduct( N, contribution.to_voigt_form(), -gp->giveWeight() * dA );
+        }
+
+    }
+
+     void HardMagneticBoundaryCondition::computePerturbedLoadVectorFromElement_maxwell( FloatArray &answer, Element *e, int iSurf, TimeStep *tStep, double perturb, int index )
+    {
+        // debugging, numerically perturbed load vector
+        IntArray bNodes = e->giveInterpolation()->boundarySurfaceGiveNodes( iSurf );
+
+        int ndof = 3 * bNodes.giveSize();
+        answer.resize( ndof );
+
+        //standard load vector computation... almost:
+        NLStructuralElement *nle           = dynamic_cast<NLStructuralElement *>( e );
+        FEInterpolation3d *interpolation = dynamic_cast<FEInterpolation3d *>( e->giveInterpolation() );
+
+        if ( nle == nullptr || interpolation == nullptr) {
+            OOFEM_ERROR( "Nonlinear elements required for magnetic BCs" );
         }
 
         double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
