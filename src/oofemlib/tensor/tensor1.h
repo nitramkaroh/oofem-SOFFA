@@ -57,13 +57,6 @@ namespace oofem {
   {
   public:
     using Tensor1<double, 3> :: Tensor1;
-
-    
-    Tensor1_3d() {
-        this->data [ 0 ] = 0;
-        this->data [ 1 ] = 0.;
-        this->data [ 2 ] = 0.;
-    }
     Tensor1_3d(const oofem::FloatArrayF<3> &array){
       this->data[0] = array.at(1);
       this->data[1] = array.at(2);
@@ -74,9 +67,9 @@ namespace oofem {
     {
       return {
 	this->operator()(0),
-	this->operator()(1),
-	this->operator()(2),
-      };
+	  this->operator()(1),
+	  this->operator()(2),
+	  };
     }
 
   };

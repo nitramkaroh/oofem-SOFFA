@@ -111,6 +111,24 @@ public:
         };
     }
 
+    const inline FloatMatrixF< 3,3 >to_matrix_form()
+    {
+      //@todo: row vs column ordering
+      return {
+	this->data [ 0 ] [ 0 ],
+	this->data [ 0 ] [ 1 ],
+	this->data [ 0 ] [ 2 ],
+	this->data [ 1 ] [ 0 ],
+	this->data [ 1 ] [ 1 ],
+	this->data [ 1 ] [ 2 ],
+	this->data [ 2 ] [ 0 ],
+	this->data [ 2 ] [ 1 ],
+	this->data [ 2 ] [ 2 ],
+      };
+    }
+
+
+
 
     /**
      * Computes power of a second order tensor
