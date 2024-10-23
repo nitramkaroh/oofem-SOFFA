@@ -160,5 +160,6 @@ private:
     void computePerturbedLoadVectorFromElement( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
     void computePerturbedLoadVectorFromElement_maxwell( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
     void computePerturbedLoadVectorFromElement_bla( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
+    void computePerturbedLoadVectorFromElement_maxwell2( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
 };
 } // end namespace oofem
