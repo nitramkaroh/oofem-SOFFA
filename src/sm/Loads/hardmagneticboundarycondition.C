@@ -128,7 +128,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 Ke_dif.printYourself();
             }
 
-            answer.assemble( r_loc, c_loc, Ke_num);
+            answer.assemble( r_loc, c_loc, Ke);
         }
     }    
     
@@ -534,7 +534,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                     + mu0 / 2. * M( k_3 ) * Normal( k_3 ) * M( l_3 ) * Normal( l_3 ) * Fcross( i_3, m_3, r_3, s_3 ) * Normal( m_3 );
                 //
                 Nt.beTranspositionOf( N );
-                answer += gp->giveWeight() * dA * ( Nt * contribution.to_voigt_form_3x9() * B );
+                answer -= gp->giveWeight() * dA * ( Nt * contribution.to_voigt_form_3x9() * B );
             }
         } else if ( e->giveSpatialDimension() == 2 ) {
             OOFEM_ERROR( "Magnetic boundary condition not implemented for 2D domains." );
