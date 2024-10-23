@@ -150,6 +150,10 @@ private:
     void computeElementLoadVectorContribution_bla( FloatArray &answer, Element * e, int iSurf, TimeStep *tStep );
     void computeElementTangentContribution_bla( FloatMatrix &answer, Element * e, int iSurf, TimeStep *tStep );
 
+    // Maxwell 2 approach
+    void computeElementLoadVectorContribution_maxwell2( FloatArray &answer, Element * e, int iSurf, TimeStep *tStep );
+    void computeElementTangentContribution_maxwell2( FloatMatrix &answer, Element * e, int iSurf, TimeStep *tStep );
+
     void evaluateFreeSpaceStress();
 
     void computeNumericalTangentFromElement( FloatMatrix &answer, Element *e, int side, TimeStep *tStep, double perturb ); //for debugging
