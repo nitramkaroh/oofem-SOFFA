@@ -53,11 +53,11 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
         IR_GIVE_FIELD( ir, bcMode, _IFT_HardMagneticBoundaryCondition_mode );
 
-	    FloatArray b_temp, m_temp;
+	FloatArray b_temp, m_temp;
         IR_GIVE_FIELD( ir, b_temp, _IFT_HardMagneticBoundaryCondition_b_ext );
-	    b_app = FloatArrayF< 3 >( b_temp );
+	b_app = FloatArrayF< 3 >( b_temp );
 
-        if ( bcMode == 2 ) {
+        if ( bcMode == 2 || bcMode == 3 ) {
             IR_GIVE_FIELD( ir, m_temp, _IFT_HardMagneticBoundaryCondition_mjump );
             m_jump = FloatArrayF<3>( m_temp );
         }
@@ -467,9 +467,18 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                 - ( 1. / J ) * Normal( k_3 ) * B_ref( k_3 ) * F( i_3, m_3 ) * M( m_3 )
                 - ( 1. / ( 2. * mu0 * J * J ) ) * F( k_3, p_3 ) * B_ref( p_3 ) * F( k_3, q_3 ) * B_ref( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
                 + ( 1. / J * J ) * F( k_3, p_3 ) * B_ref( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
-                - ( mu0 / ( 2. * J * J ) ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
+	      //- ( mu0 / ( 2. * J * J ) ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
                 + ( mu0 / 2. ) * M( k_3 ) * Normal( k_3 ) * M( l_3 ) * Normal( l_3 ) * cofF( i_3, m_3 ) * Normal( m_3 );
-            
+
+
+	    Tensor1_3d c1,c2,c3,c4,c5,c6;
+	    c1( i_3 ) = 1. / ( mu0 * J ) * Normal( k_3 ) * B_ref( k_3 ) * F( i_3, m_3 ) * B_ref( m_3 );
+	    c2( i_3 ) =	    - ( 1. / J ) * Normal( k_3 ) * B_ref( k_3 ) * F( i_3, m_3 ) * M( m_3 );
+	    c3( i_3 ) =                - ( 1. / ( 2. * mu0 * J * J ) ) * F( k_3, p_3 ) * B_ref( p_3 ) * F( k_3, q_3 ) * B_ref( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 );
+	    c4( i_3 ) =                + ( 1. / J * J ) * F( k_3, p_3 ) * B_ref( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 );
+	    c5( i_3 ) =                - ( mu0 / ( 2. * J * J ) ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 );
+	    c6( i_3 ) =                + ( mu0 / 2. ) * M( k_3 ) * Normal( k_3 ) * M( l_3 ) * Normal( l_3 ) * cofF( i_3, m_3 ) * Normal( m_3 );
+
             // add in Voigt form
             answer.plusProduct( N, contribution.to_voigt_form(), gp->giveWeight() * dA );
         }
@@ -528,9 +537,9 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
                     + 1. / ( J * J ) * B_ref( s_3 ) * F( r_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
                     + 1. / ( J * J ) * F( r_3, p_3 ) * B_ref( p_3 ) * M( s_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
                     + 1. / ( J * J ) * F( k_3, p_3 ) * B_ref( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * Fcross( i_3, m_3, r_3, s_3 ) * Normal( m_3 )
-                    + mu0 / ( J * J * J ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 ) * cofF( r_3, s_3 )
-                    - mu0 / ( J * J ) * M( s_3 ) * F( r_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
-                    - mu0 / ( 2. * J * J ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * Fcross( i_3, m_3, r_3, s_3 ) * Normal( m_3 )
+		  //+ mu0 / ( J * J * J ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 ) * cofF( r_3, s_3 )
+		  //- mu0 / ( J * J ) * M( s_3 ) * F( r_3, q_3 ) * M( q_3 ) * cofF( i_3, m_3 ) * Normal( m_3 )
+		  //- mu0 / ( 2. * J * J ) * F( k_3, p_3 ) * M( p_3 ) * F( k_3, q_3 ) * M( q_3 ) * Fcross( i_3, m_3, r_3, s_3 ) * Normal( m_3 )
                     + mu0 / 2. * M( k_3 ) * Normal( k_3 ) * M( l_3 ) * Normal( l_3 ) * Fcross( i_3, m_3, r_3, s_3 ) * Normal( m_3 );
                 //
                 Nt.beTranspositionOf( N );
