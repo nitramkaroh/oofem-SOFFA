@@ -136,6 +136,7 @@ set (sm_element
 	structural2dsurfaceelement.C
 	#surface elements
 	SurfaceElements/quadsurface.C
+	SurfaceElements/triangularsurface.C
 	SurfaceElements/linesurface.C
 	SurfaceElements/axilinesurface.C
     )
