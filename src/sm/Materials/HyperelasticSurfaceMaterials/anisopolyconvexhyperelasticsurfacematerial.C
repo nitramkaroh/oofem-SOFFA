@@ -46,8 +46,9 @@ namespace oofem {
 REGISTER_Material( AnisotropicPolyconvexHyperelasticSurfaceMaterial );
 
 AnisotropicPolyconvexHyperelasticSurfaceMaterial::AnisotropicPolyconvexHyperelasticSurfaceMaterial( int n, Domain *d ) :
-    IsotropicPolyconvexHyperelasticSurfaceMaterial( n, d )
-    //beta(0.0)
+    IsotropicPolyconvexHyperelasticSurfaceMaterial( n, d ),
+    P1( 3 ),
+    P2( 3 )
 {
 }
 
@@ -57,15 +58,17 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector
 {
     //// Isotropic stress
     double alpha_t, eta_t, zeta_t;
-    if ( this->gamma_ltf == 0 ) {
+    if ( this->aniso_ltf == 0 ) {
         //alpha_t = this->alpha1;
         eta_t = this->eta;
         zeta_t = this->zeta;
     } else {
         //alpha_t = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
-        eta_t   = this->eta * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
-        zeta_t = this->zeta * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        eta_t  = this->eta * domain->giveFunction( this->aniso_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        zeta_t = this->zeta * domain->giveFunction( this->aniso_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
+ 
+
 
     FloatArrayF<9> PisoMat = IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3d( vF, normal, gp, tStep );
     Tensor2_3d Piso( PisoMat ), F( vF ), P, S;
@@ -95,19 +98,22 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector
 
 
 
-    double b; 
-    if ( abs( matdirLoc.at( 3, 1 ) )  > 0 ) {
-        b = 1;
-    }
-    b= 3;
-    Paniso2( i_3, j_3 )  = abs(matdirLoc.at( 3, 1 )) * this->compute_surface_cofactor( F )( i_3, j_3 ); 
+    //double b; 
+    //if ( abs( matdirLoc.at( 3, 1 ) )  > 0 ) {
+    //    b = 1;
+    //}
+    //b= 3;
+    //Paniso2( i_3, j_3 )  = abs(matdirLoc.at( 3, 1 )) * this->compute_surface_cofactor( F )( i_3, j_3 ); 
 
     
 
 
     // Sum isotropic and anisotropic part
     //P( i_3, j_3 ) = Piso( i_3, j_3 ) + this->eta* Paniso( i_3, j_3 );
-    P( i_3, j_3 ) = Piso( i_3, j_3 ) + eta_t * Paniso1( i_3, j_3 ) + zeta_t * Paniso2( i_3, j_3 );
+
+    /*P( i_3, j_3 ) = Piso( i_3, j_3 ) + eta_t * Paniso1( i_3, j_3 ) + zeta_t * Paniso2( i_3, j_3 );*/
+
+    P( i_3, j_3 ) = Piso( i_3, j_3 ) + eta_t * Paniso1( i_3, j_3 );
 
     
     // Paniso( i_3, j_3 ) = alpha_t / normFa * F( i_3, k_3 ) * a( k_3 ) * a( j_3 );
@@ -199,14 +205,14 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffness
 
     //// Isotropic part
     double alpha_t, eta_t, zeta_t;
-    if ( this->gamma_ltf == 0 ) {
+    if ( this->aniso_ltf == 0 ) {
         // alpha_t = this->alpha1;
         eta_t  = this->eta;
         zeta_t = this->zeta;
     } else {
         // alpha_t = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
-        eta_t  = this->eta * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
-        zeta_t = this->zeta * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        eta_t  = this->eta * domain->giveFunction( this->aniso_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        zeta_t = this->zeta * domain->giveFunction( this->aniso_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
     
     // Isotropic stiffness matrix
@@ -238,11 +244,13 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffness
         Aaniso1( i_3, j_3, k_3, l_3 ) = ( 1 / normFa * Identity( i_3, k_3 ) * aoa( j_3, l_3 ) - 1 / normFa / normFa / normFa * F( i_3, m_3 ) * aoa( m_3, j_3 ) * F( k_3, n_3 ) * aoa( n_3, l_3 ) );       
     }
 
-    Tensor4_3d Aaniso2;
-    Aaniso2( i_3, j_3, k_3, l_3 ) = abs(matdirLoc.at( 3, 1 )) * this->compute_surface_dCof_dF( F )( i_3, j_3, k_3, l_3 );
+    //Tensor4_3d Aaniso2;
+    //Aaniso2( i_3, j_3, k_3, l_3 ) = abs(matdirLoc.at( 3, 1 )) * this->compute_surface_dCof_dF( F )( i_3, j_3, k_3, l_3 );
 
     //A( i_3, j_3, k_3, l_3 ) = Aiso( i_3, j_3, k_3, l_3 ) + this->eta*Aaniso( i_3, j_3, k_3, l_3 );
-    A( i_3, j_3, k_3, l_3 ) = Aiso( i_3, j_3, k_3, l_3 ) + eta_t * Aaniso1( i_3, j_3, k_3, l_3 ) + zeta_t * Aaniso2( i_3, j_3, k_3, l_3 );
+    //A( i_3, j_3, k_3, l_3 ) = Aiso( i_3, j_3, k_3, l_3 ) + eta_t * Aaniso1( i_3, j_3, k_3, l_3 ) + zeta_t * Aaniso2( i_3, j_3, k_3, l_3 );
+
+    A( i_3, j_3, k_3, l_3 ) = Aiso( i_3, j_3, k_3, l_3 ) + eta_t * Aaniso1( i_3, j_3, k_3, l_3 ) ;
 
 
     // Isotropic stress
@@ -320,22 +328,56 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::CreateStatus( GaussPoint *gp )
 void AnisotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord &ir )
 {
     IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( ir );
-    IR_GIVE_FIELD( ir, matdir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_MatDir );
+    //IR_GIVE_FIELD( ir, matdir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_MatDir );
+    IR_GIVE_FIELD( ir, P1, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1 );
+    IR_GIVE_FIELD( ir, P2, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2 );
+
+    if ( (P1 - P2).computeNorm() < 1e-6) {
+        OOFEM_ERROR( "The P1 and P2 points specifying surface anisotropy are the same" );
+    }
+
     IR_GIVE_OPTIONAL_FIELD( ir, beta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_beta );
     IR_GIVE_OPTIONAL_FIELD( ir, eta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_eta );
     IR_GIVE_OPTIONAL_FIELD( ir, zeta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_zeta );
 
-    matdir.normalize();
+    IR_GIVE_OPTIONAL_FIELD( ir, aniso_ltf, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_anisoLTF );
+
+    if ( this->aniso_ltf == 0 ) {
+        this->aniso_ltf = this->gamma_ltf;
+    }
+
+
+    //matdir.normalize();
 }
 
 FloatArray AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMaterialDirection( GaussPoint *gp ) const
 {
-    FloatArray matdirLoc( matdir );
+    //FloatArray matdirLoc( matdir );
+    //NLStructuralSurfaceElement *el = dynamic_cast<NLStructuralSurfaceElement *>( gp->giveElement() );
+    //FloatMatrix T; // transformation matrix
+    //int val = el->computeLoadGToLRotationMtrx( T );
+    //T.resizeWithData( 3, 3 );
+    //matdirLoc.rotatedWith( T, 'n' );
+
+    FloatArray matdirLoc( 3 ), Naniso(3);
     NLStructuralSurfaceElement *el = dynamic_cast<NLStructuralSurfaceElement *>( gp->giveElement() );
-    FloatMatrix T; // transformation matrix
-    int val = el->computeLoadGToLRotationMtrx( T );
-    T.resizeWithData( 3, 3 );
-    matdirLoc.rotatedWith( T, 'n' );
+    FloatArray normal              = el->giveNormal( gp );
+
+    // Current gauss point coordinates
+    FloatArray gpCor = gp->giveGlobalCoordinates();
+
+
+    Naniso.beVectorProductOf( gpCor - P1, gpCor - P2 );
+    matdirLoc.beVectorProductOf( Naniso, normal );
+    matdirLoc.normalize();
+    //matdirLoc.printYourself();
+
+    
+    // Transform to local system
+     FloatMatrix T; // transformation matrix
+     int val = el->computeLoadGToLRotationMtrx( T );
+     T.resizeWithData( 3, 3 );
+     matdirLoc.rotatedWith( T, 'n' );
 
     return matdirLoc;
 }

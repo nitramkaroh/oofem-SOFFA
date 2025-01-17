@@ -85,6 +85,8 @@ public:
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override;
     int computeLoadGToLRotationMtrx( FloatMatrix &answer ) override;
 
+    int computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords ) override;
+
 protected:
     int giveNumberOfIPForMassMtrxIntegration() override { return 3; }
 

@@ -32,27 +32,27 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef quadsurface_h
-#define quadsurface_h
+#ifndef quadsurfacequadratic_h
+#define quadsurfacequadratic_h
 
 #include "sm/Elements/structural3dsurfaceelement.h"
 #include "floatmatrixf.h"
-//#include "sm/ErrorEstimators/huertaerrorestimator.h"
-//#include "zznodalrecoverymodel.h"
-//#include "sprnodalrecoverymodel.h"
-//#include "nodalaveragingrecoverymodel.h"
-//#include "spatiallocalizer.h"
+// #include "sm/ErrorEstimators/huertaerrorestimator.h"
+// #include "zznodalrecoverymodel.h"
+// #include "sprnodalrecoverymodel.h"
+// #include "nodalaveragingrecoverymodel.h"
+// #include "spatiallocalizer.h"
 
-#define _IFT_QuadSurface_Name "quadsurface"
+#define _IFT_QuadSurfaceQuadratic_Name "quadsurfacequadratic"
 
 namespace oofem {
-//class FEI3dQuadLin;
-class FEI2dQuadLin;
+// class FEI3dQuadLin;
+class FEI2dQuadQuad;
 
-class QuadSurface : public Structural3DSurfaceElement
+class QuadSurfaceQuadratic : public Structural3DSurfaceElement
 {
 protected:
-    static FEI2dQuadLin interpolation;
+    static FEI2dQuadQuad interpolation;
 
     /// Local vertex coordinates
     std ::vector<FloatArray> lc;
@@ -64,8 +64,8 @@ protected:
 
 
 public:
-    QuadSurface( int n, Domain *d );
-    virtual ~QuadSurface()
+    QuadSurfaceQuadratic( int n, Domain *d );
+    virtual ~QuadSurfaceQuadratic()
     {
         delete this->GtoLRotationMatrix;
     };
@@ -73,19 +73,19 @@ public:
 
 
     // definition & identification
-    const char *giveInputRecordName() const override { return _IFT_QuadSurface_Name; }
-    const char *giveClassName() const override { return "QuadSurface"; }
+    const char *giveInputRecordName() const override { return _IFT_QuadSurfaceQuadratic_Name; }
+    const char *giveClassName() const override { return "QuadSurfaceQuadratic"; }
     void initializeFrom( InputRecord &ir ) override;
 
     FloatArray giveNormal( GaussPoint *gp ) const override;
-    //void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer) override;
-    //void computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int li, int ui ) override;
+    // void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer) override;
+    // void computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int li, int ui ) override;
 
     FEICellGeometry *giveCellGeometryWrapper() override;
     void computeLocalNodalCoordinates( std::vector<FloatArray> &lxy );
 
-    int computeNumberOfDofs() override { return 12; }
-    int computeNumberOfGlobalDofs() override { return 12; }
+    int computeNumberOfDofs() override { return 24; }
+    int computeNumberOfGlobalDofs() override { return 24; }
 
     const FloatMatrix *computeGtoLRotationMatrix();
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override;
@@ -93,14 +93,13 @@ public:
 
     int computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords ) override;
 
-    //void postInitialize() override;
+    // void postInitialize() override;
 
 
 protected:
-    int giveNumberOfIPForMassMtrxIntegration() override { return 4; }
-    
+    int giveNumberOfIPForMassMtrxIntegration() override { return 9; }
 
 
 }; // end namespace oofem
 } // namespace oofem
-#endif 
+#endif

@@ -43,10 +43,13 @@
 ///@name Input fields for SurfaceTensionMaterial
 //@{
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_Name "anisosurfacetensionmat"
-#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_MatDir "matdir"
+//#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_MatDir "matdir"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1 "p_1"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2 "p_2"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_beta "beta"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_eta "eta"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_zeta "zeta"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_anisoLTF "aniso_ltf"
 
 //@
 
@@ -58,8 +61,10 @@ class AnisotropicPolyconvexHyperelasticSurfaceMaterial : public IsotropicPolycon
 {
 protected:
     // Material parameters
-    FloatArray matdir;
+    //FloatArray matdir;
+    FloatArray P1, P2;
     double beta, eta, zeta;
+    int aniso_ltf = 0;
 
 
 public:

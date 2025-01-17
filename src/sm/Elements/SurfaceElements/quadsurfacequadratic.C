@@ -32,9 +32,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "sm/Elements/SurfaceElements/triangularsurface.h"
-#include "fei3dquadlin.h"
-#include "fei2dtrlin.h"
+#include "sm/Elements/SurfaceElements/quadsurfacequadratic.h"
+#include "fei2dquadquad.h"
 #include "node.h"
 #include "gausspoint.h"
 #include "gaussintegrationrule.h"
@@ -49,30 +48,31 @@
 #include "classfactory.h"
 
 namespace oofem {
-REGISTER_Element( TriangularSurface );
+REGISTER_Element( QuadSurfaceQuadratic );
 
-FEI2dTrLin TriangularSurface ::interpolation( 1, 2 );
+FEI2dQuadQuad QuadSurfaceQuadratic ::interpolation( 1, 2 );
+// FEI3dQuadLin QuadSurface ::interpolation;
 
-TriangularSurface ::TriangularSurface( int n, Domain *aDomain ) :
+QuadSurfaceQuadratic ::QuadSurfaceQuadratic( int n, Domain *aDomain ) :
     Structural3DSurfaceElement( n, aDomain )
 {
     this->GtoLRotationMatrix = NULL;
-    numberOfDofMans          = 3;
-    numberOfGaussPoints      = 3;
+    numberOfDofMans          = 8;
+    numberOfGaussPoints      = 9;
 }
 
 
-FEInterpolation *TriangularSurface ::giveInterpolation() const { return &interpolation; }
+FEInterpolation *QuadSurfaceQuadratic ::giveInterpolation() const { return &interpolation; }
 
 
-void TriangularSurface ::initializeFrom( InputRecord &ir )
+void QuadSurfaceQuadratic ::initializeFrom( InputRecord &ir )
 {
-    numberOfGaussPoints = 3;
+    numberOfGaussPoints = 16;
     Structural3DSurfaceElement ::initializeFrom( ir );
 }
 
 
-FloatArray TriangularSurface::giveNormal( GaussPoint *gp ) const
+FloatArray QuadSurfaceQuadratic::giveNormal( GaussPoint *gp ) const
 {
     FloatArray e1, e2, e3, help;
     e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
@@ -90,7 +90,7 @@ FloatArray TriangularSurface::giveNormal( GaussPoint *gp ) const
 
 
 FEICellGeometry *
-TriangularSurface::giveCellGeometryWrapper()
+QuadSurfaceQuadratic::giveCellGeometryWrapper()
 {
     if ( cellGeometryWrapper ) {
         return cellGeometryWrapper;
@@ -101,7 +101,7 @@ TriangularSurface::giveCellGeometryWrapper()
 }
 
 
-void TriangularSurface ::computeLocalNodalCoordinates( std::vector<FloatArray> &lxy )
+void QuadSurfaceQuadratic ::computeLocalNodalCoordinates( std::vector<FloatArray> &lxy )
 // Returns global coordinates given in global vector
 // transformed into local coordinate system of the
 // receiver
@@ -112,8 +112,8 @@ void TriangularSurface ::computeLocalNodalCoordinates( std::vector<FloatArray> &
     }
 
 
-    lxy.resize( 3 );
-    for ( int i = 0; i < 3; i++ ) {
+    lxy.resize( 8 );
+    for ( int i = 0; i < 8; i++ ) {
         const auto &nc = this->giveNode( i + 1 )->giveCoordinates();
         lxy[i].beProductOf( *GtoLRotationMatrix, nc );
     }
@@ -121,7 +121,7 @@ void TriangularSurface ::computeLocalNodalCoordinates( std::vector<FloatArray> &
 
 
 const FloatMatrix *
-TriangularSurface ::computeGtoLRotationMatrix()
+QuadSurfaceQuadratic ::computeGtoLRotationMatrix()
 // Returns the rotation matrix of the receiver of the size [3,3]
 // coords(local) = T * coords(global)
 //
@@ -164,7 +164,7 @@ TriangularSurface ::computeGtoLRotationMatrix()
 }
 
 
-bool TriangularSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
+bool QuadSurfaceQuadratic ::computeGtoLRotationMatrix( FloatMatrix &answer )
 // Returns the rotation matrix of the receiver of the size [8,12]
 // r(local) = T * r(global)
 // for one node (r written transposed): {u,v} = T * {u,v,w} NOT NOW
@@ -175,19 +175,31 @@ bool TriangularSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
         this->computeGtoLRotationMatrix();
     }
 
-    answer.resize( 9, 9 );
+    // answer.resize( 8, 12 );
+    // answer.zero();
+
+    // for ( int i = 1; i <= 3; i++ ) {
+    //     answer.at( 1, i ) = answer.at( 3, i + 3 ) = answer.at( 5, i + 6 ) = answer.at( 7, i + 9 ) = GtoLRotationMatrix->at( 1, i );
+    //     answer.at( 2, i ) = answer.at( 4, i + 3 ) = answer.at( 6, i + 6 ) = answer.at( 8, i + 9 ) = GtoLRotationMatrix->at( 2, i );
+    // }
+
+    answer.resize( 24, 24 );
     answer.zero();
 
     for ( int i = 1; i <= 3; i++ ) {
-        answer.at( 1, i ) = answer.at( 4, i + 3 ) = answer.at( 7, i + 6 )  = GtoLRotationMatrix->at( 1, i );
-        answer.at( 2, i ) = answer.at( 5, i + 3 ) = answer.at( 8, i + 6 )  = GtoLRotationMatrix->at( 2, i );
-        answer.at( 3, i ) = answer.at( 6, i + 3 ) = answer.at( 9, i + 6 )  = GtoLRotationMatrix->at( 3, i );
+        answer.at( 1, i ) = answer.at( 4, i + 3 ) = answer.at( 7, i + 6 ) = answer.at( 10, i + 9 ) = GtoLRotationMatrix->at( 1, i );
+        answer.at( 2, i ) = answer.at( 5, i + 3 ) = answer.at( 8, i + 6 ) = answer.at( 11, i + 9 ) = GtoLRotationMatrix->at( 2, i );
+        answer.at( 3, i ) = answer.at( 6, i + 3 ) = answer.at( 9, i + 6 ) = answer.at( 12, i + 9 ) = GtoLRotationMatrix->at( 3, i );
+
+        answer.at( 13, i + 12 ) = answer.at( 16, i + 15 ) = answer.at( 19, i + 18 ) = answer.at( 22, i + 21 ) = GtoLRotationMatrix->at( 1, i );
+        answer.at( 14, i + 12 ) = answer.at( 17, i + 15 ) = answer.at( 20, i + 18 ) = answer.at( 23, i + 21 ) = GtoLRotationMatrix->at( 2, i );
+        answer.at( 15, i + 12 ) = answer.at( 18, i + 15 ) = answer.at( 21, i + 18 ) = answer.at( 24, i + 21 ) = GtoLRotationMatrix->at( 3, i );
     }
 
 
     return 1;
 }
-int TriangularSurface ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
+int QuadSurfaceQuadratic ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
 // Returns the rotation matrix of the receiver of the size [6,6]
 // f(local) = T * f(global)
 {
@@ -208,35 +220,26 @@ int TriangularSurface ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
     return 1;
 }
 
-int TriangularSurface ::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
-{
-//    FEInterpolation *fei = this->giveInterpolation();
-//#ifdef DEBUG
-//    if ( !fei ) {
-//        answer.clear();
-//        return false;
-//    }
-//#endif
-    //fei->local2global3D( answer, lcoords, FEIElementGeometryWrapper( this ) );
-   
-    // Vertex coordinates
-    const auto &p1 = this->giveNode( 1 )->giveCoordinates();
-    const auto &p2 = this->giveNode( 2 )->giveCoordinates();
-    const auto &p3 = this->giveNode( 3 )->giveCoordinates();
 
-    // Local coordinates
-    double l1 = lcoords.at( 1 );
-    double l2 = lcoords.at( 2 );
-    double l3 = 1.0 - l1 - l2;
+int QuadSurfaceQuadratic ::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
+{
+    
+    auto cellgeo = FEIElementGeometryWrapper( this );
+    FloatArray n;
+
+    this->giveInterpolation()->evalN( n, lcoords, cellgeo );
 
     answer.resize( 3 );
     answer.zero();
-    answer.at( 1 ) = l1 * p1.at( 1 ) + l2 * p2.at( 1 ) + l3 * p3.at( 1 );
-    answer.at( 2 ) = l1 * p1.at( 2 ) + l2 * p2.at( 2 ) + l3 * p3.at( 2 );
-    answer.at( 3 ) = l1 * p1.at( 3 ) + l2 * p2.at( 3 ) + l3 * p3.at( 3 );
+    for ( int i = 1; i <= n.giveSize(); i++ ) {
+        answer.at( 1 ) += n.at( i ) * cellgeo.giveVertexCoordinates( i ).at( 1 );
+        answer.at( 2 ) += n.at( i ) * cellgeo.giveVertexCoordinates( i ).at( 2 );
+        answer.at( 3 ) += n.at( i ) * cellgeo.giveVertexCoordinates( i ).at( 3 );
+    }
 
     return true;
 }
+
 
 
 } // end namespace oofem

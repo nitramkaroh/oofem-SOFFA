@@ -75,6 +75,8 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3
         alpha_t2 = this->alpha2 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         delta_t  = this->delta * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
+    //alpha_t1 = this->alpha1; // Alpha not increased gradually
+    //gamma_t1 = this->gamma1; // Gamma not increased gradually
     // compute the first Piola-Kirchhoff
     Pgamma1( i_3, j_3 ) = gamma_t1 * this->compute_surface_cofactor( F )( i_3, j_3 ); 
     Pgamma2( i_3, j_3 ) = -gamma_t2 * Identity( i_3, j_3 ); 
@@ -141,6 +143,8 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMa
         alpha_t1 = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         delta_t  = this->delta * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
+    //alpha_t1 = this->alpha1; // Alpha not increased gradually
+    //gamma_t1 = this->gamma1; // Gamma not increased gradually
 
     A( i_3, j_3, k_3, l_3 ) = gamma_t1 * this->compute_surface_dCof_dF( F )( i_3, j_3, k_3, l_3 ) + 
                               alpha_t1 * this->compute_surface_d2_normF_dF2( F )( i_3, j_3, k_3, l_3 ) + 

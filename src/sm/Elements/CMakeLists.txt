@@ -21,6 +21,8 @@ set (sm_element
     3D/lwedge.C 
     3D/qwedge.C 
     3D/macrolspace.C
+	3D/lspacefb.C
+	3D/qspacefb.C 
     Bars/truss1d.C 
     Bars/truss2d.C 
     Bars/truss3d.C
@@ -136,6 +138,7 @@ set (sm_element
 	structural2dsurfaceelement.C
 	#surface elements
 	SurfaceElements/quadsurface.C
+	SurfaceElements/quadsurfacequadratic.C
 	SurfaceElements/triangularsurface.C
 	SurfaceElements/linesurface.C
 	SurfaceElements/axilinesurface.C
@@ -159,6 +162,7 @@ set (sm_interface_elements
     Interfaces/Deprecated/interfaceelem2dlin.C
     Interfaces/Deprecated/interfaceelem2dquad.C
     Interfaces/Deprecated/interfaceelem3dtrlin.C
+	Interfaces/fbarelementinterface.C
 )
 
 

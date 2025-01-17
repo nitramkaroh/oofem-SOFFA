@@ -519,6 +519,20 @@ public:
     }
 
 
+
+
+    /**
+     * Computes determinant and inverse
+     * @return determinant and inverse second-order tensor
+     */
+    inline std::pair<double, Tensor2_3d> compute_determinant_and_inverse() const
+    {
+        Tensor2_3d iF;
+        auto [J, cofF] = this->compute_determinant_and_cofactor();
+        iF( i_3, j_3 ) = 1. / J * cofF( j_3, i_3 );
+        return { J, iF };
+    }
+
     /**
      * Computes fourth-order tensor cross product
      * @return tensor cross product, eps_{ikm}eps_{jln}this_{mn}

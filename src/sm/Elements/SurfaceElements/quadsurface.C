@@ -52,6 +52,7 @@ namespace oofem {
 REGISTER_Element( QuadSurface );
 
 FEI2dQuadLin QuadSurface ::interpolation( 1, 2 );
+//FEI3dQuadLin QuadSurface ::interpolation;
 
 QuadSurface ::QuadSurface( int n, Domain *aDomain ) :
     Structural3DSurfaceElement( n, aDomain )
@@ -217,6 +218,45 @@ int QuadSurface ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
 
     return 1;
 }
+
+
+int QuadSurface ::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
+{
+    //    FEInterpolation *fei = this->giveInterpolation();
+    // #ifdef DEBUG
+    //    if ( !fei ) {
+    //        answer.clear();
+    //        return false;
+    //    }
+    // #endif
+    // fei->local2global3D( answer, lcoords, FEIElementGeometryWrapper( this ) );
+
+    // Vertex coordinates
+    const auto &p1 = this->giveNode( 1 )->giveCoordinates();
+    const auto &p2 = this->giveNode( 2 )->giveCoordinates();
+    const auto &p3 = this->giveNode( 3 )->giveCoordinates();
+    const auto &p4 = this->giveNode( 4 )->giveCoordinates();
+
+    // Local coordinates
+    double ksi = lcoords.at( 1 );
+    double eta = lcoords.at( 2 );
+
+    // Shape functions
+    double n1 = ( 1. + ksi ) * ( 1. + eta ) * 0.25;
+    double n2 = ( 1. - ksi ) * ( 1. + eta ) * 0.25;
+    double n3 = ( 1. - ksi ) * ( 1. - eta ) * 0.25;
+    double n4 = ( 1. + ksi ) * ( 1. - eta ) * 0.25;
+
+
+    answer = { n1 * p1.at( 1 ) + n2 * p2.at( 1 ) + n3 * p3.at( 1 ) + n4 * p4.at( 1 ),
+               n1 * p1.at( 2 ) + n2 * p2.at( 2 ) + n3 * p3.at( 2 ) + n4 * p4.at( 2 ),
+               n1 * p1.at( 3 ) + n2 * p2.at( 3 ) + n3 * p3.at( 3 ) + n4 * p4.at( 3 ) };
+
+    
+
+    return true;
+}
+
 
 
 
