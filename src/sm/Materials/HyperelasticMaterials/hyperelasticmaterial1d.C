@@ -117,8 +117,7 @@ HyperelasticMaterial1d::initializeFrom(InputRecord &ir)
     } else {
       throw ValueInputException(ir, _IFT_HyperelasticMaterial1d_type, "Unknown hyperelastic material type");
     }
-
-    
+   
     IR_GIVE_FIELD(ir, this->E, _IFT_HyperelasticMaterial1d_E);
     
 }

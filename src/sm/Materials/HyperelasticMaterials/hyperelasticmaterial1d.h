@@ -91,6 +91,7 @@ public:
 
     const char *giveInputRecordName() const override { return _IFT_HyperelasticMaterial1d_Name; }
     const char *giveClassName() const override { return "HyperelasticMaterial1d"; }
+  double giveE(){return this->E;}
 };
 } // end namespace oofem
 #endif

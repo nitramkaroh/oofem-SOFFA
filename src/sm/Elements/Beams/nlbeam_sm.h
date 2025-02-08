@@ -83,7 +83,7 @@
 //@}
 
 namespace oofem {
-
+  class NlBeamCrossSection;
 
 /**
  * This class implements a 2-dimensional large strain beam element
@@ -122,7 +122,9 @@ protected:
   bool sym = false;
   // storing internal forces for postrocessing purposes
   FloatArray vM, vQ, vN;
-    
+  // cross-section of the beam
+  NlBeamCrossSection *crossSection;
+ 
 public:
     NlBeam_SM(int n, Domain *aDomain);
     virtual ~NlBeam_SM(){;}
@@ -137,7 +139,7 @@ public:
   virtual void  printOutputAt(FILE *file, TimeStep *tStep) override{;}
 
     virtual  void initializeFrom(InputRecord &ir) override;
-
+  void postInitialize();
   // composite type - so we can do the postprocessing in the next function
   Element_Geometry_Type giveGeometryType() const override { return EGT_Composite; }
   // divide the beam into some small subelements
@@ -186,7 +188,7 @@ protected:
      Function related to constitutive behavior of the beam -- consider moving to another class
   **/
   double computeMomentFromCurvature(double kappa);
-  double computeDerMomentFromCurvature(double kappa);
+  double computeDerivativeOfMomentWrtCurvature(double kappa);
   double computeCurvatureFromMoment(double M);
   double computeCenterlineStrainFromInternalForces(double M, double N, double curvature);
   double computeDerStrainMoment(double M, double N, double curvature);

@@ -1,6 +1,6 @@
 #include "../sm/Elements/Beams/nlbeam_sm.h"
 #include "material.h"
-#include "crosssection.h"
+#include "../sm/CrossSections/nlbeamcs.h"
 #include "node.h"
 
 #include "floatarray.h"
@@ -13,6 +13,9 @@
 #include "classfactory.h"
 #include "function.h"
 #include "domain.h"
+
+
+#include "../sm/Materials/HyperelasticMaterials/hyperelasticmaterial1d.h"
 
 
 namespace oofem {
@@ -68,9 +71,13 @@ NlBeam_SM :: initializeFrom(InputRecord &ir)
     // 1. number of segments for numerical integration along the beam, default value 100
 
     IR_GIVE_OPTIONAL_FIELD(ir, NIP, _IFT_NlBeam_SM_NIP);
+    /*
     IR_GIVE_FIELD(ir, EA, "ea");
     IR_GIVE_FIELD(ir, EI, "ei");
-    IR_GIVE_FIELD(ir, GAs, "gas");
+    */
+ 
+   
+    //    IR_GIVE_FIELD(ir, GAs, "gas");
     //
     IR_GIVE_OPTIONAL_FIELD(ir, this->num, _IFT_NlBeam_SM_num);
     IR_GIVE_OPTIONAL_FIELD(ir, this->sym, _IFT_NlBeam_SM_sym);
@@ -133,6 +140,22 @@ NlBeam_SM :: initializeFrom(InputRecord &ir)
     
 }
 
+  void
+  NlBeam_SM :: postInitialize()
+  {
+    this->crossSection = dynamic_cast< NlBeamCrossSection* >( this->giveCrossSection() );
+    if(this->crossSection == nullptr) {
+      OOFEM_ERROR("NlBeam_SM::Incompatible corssection type");
+    }
+    auto m  = dynamic_cast< HyperelasticMaterial1d* >( this->giveMaterial() );
+    if(m == nullptr) {
+      OOFEM_ERROR("NlBeam_SM::Incompatible material type");
+    }
+    this->crossSection->setE(m->giveE());
+
+    EA  = this->crossSection->giveEA();
+    GAs = this->crossSection->giveGAs();
+  }
 
 double
 NlBeam_SM :: computeLength()
@@ -535,19 +558,23 @@ NlBeam_SM :: giveInternalForcesVector_from_u(FloatArray &answer, TimeStep *tStep
 double
 NlBeam_SM :: computeMomentFromCurvature(double kappa)
 {
-   return EI*kappa;
+
+  return this->crossSection->computeMomentFromCurvature(kappa);
+    //return EI*kappa;
 }
 
 double
-NlBeam_SM :: computeDerMomentFromCurvature(double kappa)
+NlBeam_SM :: computeDerivativeOfMomentWrtCurvature(double kappa)
 {
-  return EI;
+  return this->crossSection->computeDerivativeOfMomentWrtCurvature(kappa);
+  //return EI;
 }
 
 double
 NlBeam_SM :: computeCurvatureFromMoment(double M)
 {
-  return M/EI;
+  return this->crossSection->computeCurvatureFromMoment(M);
+  //return M/EI;
 }
 
 
@@ -758,7 +785,7 @@ NlBeam_Reissner :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa
      this->s.at(i) = this->s.at(i-1) + dxi;
      //
      double kappa = computeCurvatureFromMoment(M);
-     double dMdKappa = computeDerMomentFromCurvature(kappa);
+     double dMdKappa = computeDerivativeOfMomentWrtCurvature(kappa);
      auto dkappa = dM / dMdKappa;
      //
      double phi_mid = this->phi.at(i-1) + 0.5 * kappa * dxi;
@@ -812,7 +839,7 @@ NlBeam_Reissner :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa
      //
      //
      kappa = computeCurvatureFromMoment(M);
-     dMdKappa = computeDerMomentFromCurvature(kappa);
+     dMdKappa = computeDerivativeOfMomentWrtCurvature(kappa);
      dkappa = dM / dMdKappa;
      this->phi.at(i) = phi_mid + 0.5 * kappa * dxi;
      dphi = dphi_mid + 0.5 * dxi * dkappa;
@@ -879,7 +906,7 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
      this->s.at(i) = this->s.at(i-1) + dxi;
      //
      double kappa = computeCurvatureFromMoment(M);
-     double dMdKappa = computeDerMomentFromCurvature(kappa);
+     double dMdKappa = computeDerivativeOfMomentWrtCurvature(kappa);
      auto dkappa = dM / dMdKappa;
      //
      double phi_mid = phi.at(i-1) + 0.5 * kappa * dxi;
@@ -951,7 +978,7 @@ NlBeam_Ziegler :: integrateAlongBeam(const FloatArray &fa, const FloatArray &xa,
      //
      //
      kappa = computeCurvatureFromMoment(M);
-     dMdKappa = computeDerMomentFromCurvature(kappa);
+     dMdKappa = computeDerivativeOfMomentWrtCurvature(kappa);
      dkappa = dM / dMdKappa;
      this->phi.at(i) = phi_mid + 0.5 * kappa * dxi;
      dphi = dphi_mid + 0.5 * dxi * dkappa;

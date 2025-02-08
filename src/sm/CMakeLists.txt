@@ -16,6 +16,7 @@ set (sm_crosssection
     CrossSections/variablecrosssection.C
     CrossSections/warpingcrosssection.C
     CrossSections/latticecrosssection.C
+    CrossSections/nlbeamcs.C	
     )
 
 set (sm_emodel
