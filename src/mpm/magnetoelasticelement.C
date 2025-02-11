@@ -47,9 +47,15 @@
 #include "fei2dquadquad.h"
 #include "fei2dquadlin.h"
 #include "mathfem.h"
+#include "floatarrayf.h"
 
 
 namespace oofem {
+
+#define _IFT_MagnetoElasticElement_F1 "f1"
+#define _IFT_MagnetoElasticElement_F2 "f2"
+#define _IFT_MagnetoElasticElement_F3 "f3"
+#define _IFT_MagnetoElasticElement_F4 "f4"
 
 
 /**
@@ -64,9 +70,50 @@ class MagnetoElasticElement : public MPElement {
         virtual const Variable& getU() const = 0;
         virtual const Variable& getPhi() const = 0;
 
+        FloatArrayF<9> F0_1, F0_2, F0_3, F0_4; //prestrain for each GP
+
     public:
     MagnetoElasticElement(int n, Domain* d): 
         MPElement(n,d) { }
+
+    void initializeFrom(InputRecord& ir) override {
+
+        MPElement::initializeFrom( ir );
+
+        FloatArray F1_temp, F2_temp, F3_temp, F4_temp;
+
+        IR_GIVE_OPTIONAL_FIELD(ir, F1_temp, _IFT_MagnetoElasticElement_F1);
+        IR_GIVE_OPTIONAL_FIELD(ir, F2_temp, _IFT_MagnetoElasticElement_F2);
+        IR_GIVE_OPTIONAL_FIELD(ir, F3_temp, _IFT_MagnetoElasticElement_F3);
+        IR_GIVE_OPTIONAL_FIELD(ir, F4_temp, _IFT_MagnetoElasticElement_F4);
+
+        if ( F1_temp.giveSize() == 4 ) {
+            F0_1 = assemble<9>( FloatArrayF<4>( F1_temp ), { 0, 1, 5, 8 } );
+            F0_1.at( 3 ) = 1.0; // 1-based, unforunately
+        } else {
+            F0_1 = FloatArrayF<9>( F1_temp );
+        }
+        if ( F2_temp.giveSize() == 4 ) {
+            F0_2 = assemble<9>( FloatArrayF<4>( F2_temp ), { 0, 1, 5, 8 } );
+            F0_2.at( 3 ) = 1.0; // 1-based, unforunately
+        } else {
+            F0_2 = FloatArrayF<9>( F2_temp );
+        }
+        if ( F3_temp.giveSize() == 4 ) {
+            F0_3 = assemble<9>( FloatArrayF<4>( F3_temp ), { 0, 1, 5, 8 } );
+            F0_3.at( 3 ) = 1.0; // 1-based, unforunately
+        } else {
+            F0_3 = FloatArrayF<9>( F3_temp );
+        }
+        if ( F4_temp.giveSize() == 4 ) {
+            F0_4 = assemble<9>( FloatArrayF<4>( F4_temp ), { 0, 1, 5, 8 } );
+            F0_4.at( 3 ) = 1.0; // 1-based, unforunately
+        } else {
+            F0_4 = FloatArrayF<9>( F4_temp );
+        }
+        
+
+    }
 
     // Note: performance can be probably improved once it will be possible 
     // to directly assemble multiple term contributions to the system matrix.
@@ -96,6 +143,28 @@ class MagnetoElasticElement : public MPElement {
 	} else {
 	  OOFEM_ERROR("Unknown characteristic vector type");
 	}
+    }
+
+    int giveIPValue(FloatArray& answer , GaussPoint* gp , InternalStateType type , TimeStep* tStep) override {
+        if ( type == IST_PrestrainDeformationGradient ) {
+            answer.resize( 4 );
+            switch ( gp->giveNumber() ) {
+                case 1:
+                    answer = FloatArray( F0_1 );
+                    break;
+                case 2:
+                    answer = FloatArray( F0_2 );
+                    break;
+                case 3:
+                    answer = FloatArray( F0_3 );
+                    break;
+                case 4:
+                    answer = FloatArray( F0_4 );
+                    break;
+                default:
+                    OOFEM_ERROR( "Prestrain requested for wrong GP number %i", gp->giveNumber() );
+            }
+        }
     }
 
 };
