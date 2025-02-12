@@ -70,11 +70,19 @@ public:
     virtual ~NlBeamCrossSection(){;}
 
 
-  Material *giveMaterial(IntegrationPoint *ip) const override {;}
+  Material *giveMaterial(IntegrationPoint *ip) const override {return 0;}
 
 
-  FloatArray *imposeStressConstrainsOnGradient(GaussPoint *gp, FloatArray *gradientStressVector3d) override{;}
-  FloatArray *imposeStrainConstrainsOnGradient(GaussPoint *gp, FloatArray *gradientStressVector3d) override {;}
+  FloatArray *imposeStressConstrainsOnGradient(GaussPoint *gp, FloatArray *gradientStressVector3d) override{
+      OOFEM_ERROR("not implemented");
+      FloatArray *A;
+      return A;
+  }
+  FloatArray *imposeStrainConstrainsOnGradient(GaussPoint *gp, FloatArray *gradientStressVector3d) override {
+      OOFEM_ERROR("not implemented");
+      FloatArray *A;
+      return A;
+  }
 
     // identification and auxiliary functions
   //    void initializeFrom(InputRecord &ir) override;
@@ -86,176 +94,177 @@ public:
   /************************************************************************************************************/
     FloatArrayF< 6 >giveRealStress_3d(const FloatArrayF< 6 > &reducedStrain, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 6 >();
     }
 
     FloatArrayF< 4 >giveRealStress_PlaneStrain(const FloatArrayF< 4 > &reducedStrain, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 4 >();
     }
 
     FloatArrayF< 3 >giveRealStress_PlaneStress(const FloatArrayF< 3 > &reducedStrain, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 3 >();
     }
 
     FloatArrayF< 1 >giveRealStress_1d(const FloatArrayF< 1 > &reducedStrain, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 1 >();
     }
 
     FloatArrayF< 2 >giveRealStress_Warping(const FloatArrayF< 2 > &reducedStrain, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 2 >();
     }
 
 
 
     FloatMatrixF< 6, 6 >giveStiffnessMatrix_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 6 ,6 >();
     }
 
     FloatMatrixF< 3, 3 >giveStiffnessMatrix_PlaneStress(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 3 ,3 >();
+
     }
 
     FloatMatrixF< 4, 4 >giveStiffnessMatrix_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 4 ,4 >();
     }
 
     FloatMatrixF< 1, 1 >giveStiffnessMatrix_1d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 1 ,1 >();
     }
 
 
     FloatArrayF< 3 >giveGeneralizedStress_Beam2d(const FloatArrayF< 3 > &generalizedStrain, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 3 >();
     }
 
     FloatArrayF< 6 >giveGeneralizedStress_Beam3d(const FloatArrayF< 6 > &generalizedStrain, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 6 >();
     }
 
     FloatArrayF< 5 >giveGeneralizedStress_Plate(const FloatArrayF< 5 > &generalizedStrain, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 5 >();
     }
 
     FloatArrayF< 8 >giveGeneralizedStress_Shell(const FloatArrayF< 8 > &generalizedStrain, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 8 >();
     }
 
     FloatArrayF< 9 >giveGeneralizedStress_ShellRot(const FloatArrayF< 9 > &generalizedStrain, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 9 >();
     }
 
     FloatArrayF< 4 >giveGeneralizedStress_MembraneRot(const FloatArrayF< 4 > &generalizedStrain, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-	// return 0;
+	return zeros< 4 >();
     }
 
     FloatArrayF< 3 >giveGeneralizedStress_PlateSubSoil(const FloatArrayF< 3 > &generalizedStrain, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 3 >();
+
     }
 
 
     void giveCharMaterialStiffnessMatrix(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
     }
 
 
     FloatMatrixF< 3, 3 >give2dBeamStiffMtrx(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 3, 3 >();
     }
 
     FloatMatrixF< 6, 6 >give3dBeamStiffMtrx(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 6, 6 >();
     }
 
     FloatMatrixF< 5, 5 >give2dPlateStiffMtrx(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        ///return 0;
+	return FloatMatrixF< 5, 5 >();
     }
 
     FloatMatrixF< 8, 8 >give3dShellStiffMtrx(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 8, 8 >();
     }
 
     FloatMatrixF< 9, 9 >give3dShellRotStiffMtrx(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 9, 9 >();
     }
 
     FloatMatrixF< 4, 4 >giveMembraneRotStiffMtrx(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 4, 4 >();
     }
 
     FloatMatrixF< 3, 3 >give2dPlateSubSoilStiffMtrx(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 3, 3 >();
     }
 
 
     bool isCharacteristicMtrxSymmetric(MatResponseMode mode) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+        return false;
     }
 
     double give(int aProperty, GaussPoint *gp) const override
     {
         OOFEM_ERROR("not implemented yet");
-        //return 0.0;
+        return 0;
     }
 
     FloatArrayF< 9 >giveFirstPKStress_3d(const FloatArrayF< 9 > &reducedvF, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 9 >();
     }
 
     FloatArrayF< 5 >giveFirstPKStress_PlaneStrain(const FloatArrayF< 5 > &reducedvF, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 5 >();
     }
 
     FloatArrayF< 4 >giveFirstPKStress_PlaneStress(const FloatArrayF< 4 > &reducedvF, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 4 >();
     }
 
     FloatArrayF< 1 >giveFirstPKStress_1d(const FloatArrayF< 1 > &reducedvF, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return zeros< 1 >();
     }
 
 
@@ -269,24 +278,24 @@ public:
 
     FloatMatrixF< 9, 9 >giveStiffnessMatrix_dPdF_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 9, 9 >();
     }
 
     FloatMatrixF< 5, 5 >giveStiffnessMatrix_dPdF_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 5, 5 >();
     }
 
     FloatMatrixF< 4, 4 >giveStiffnessMatrix_dPdF_PlaneStress(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override
           {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 4, 4 >();
     }
 
     FloatMatrixF< 1, 1 >giveStiffnessMatrix_dPdF_1d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) const override    {
         OOFEM_ERROR("not implemented");
-        //return 0;
+	return FloatMatrixF< 1, 1 >();
     }
     void giveCauchyStresses(FloatArray &answer, GaussPoint *gp, const FloatArray &reducedFIncrement, TimeStep *tStep) override
     { OOFEM_ERROR("not implemented"); }
@@ -298,11 +307,11 @@ public:
   int estimatePackSize(DataStream &buff, GaussPoint *ip) override {return  0;}
   int unpackAndUpdateUnknowns(DataStream &buff, TimeStep *tStep, GaussPoint *ip) override {return 0;}
   void createMaterialStatus(GaussPoint &iGP) override{;}
-  int giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep) override{;}
+  int giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep) override{return 0;}
 
   void setE(double E){this->E = E;}
-  virtual double giveEA(){;}
-  virtual double giveGAs(){;}
+  virtual double giveEA(){ return 0;}
+  virtual double giveGAs(){return 0;}
 
 
   

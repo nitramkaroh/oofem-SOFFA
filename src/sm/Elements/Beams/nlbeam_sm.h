@@ -139,7 +139,7 @@ public:
   virtual void  printOutputAt(FILE *file, TimeStep *tStep) override{;}
 
     virtual  void initializeFrom(InputRecord &ir) override;
-  void postInitialize();
+  void postInitialize() override;
   // composite type - so we can do the postprocessing in the next function
   Element_Geometry_Type giveGeometryType() const override { return EGT_Composite; }
   // divide the beam into some small subelements
