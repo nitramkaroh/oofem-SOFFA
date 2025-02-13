@@ -65,7 +65,7 @@ HardMagneticMooneyRivlinCompressibleMaterial ::give_FirstPKStressVector_Magnetic
     MagnetoElasticMaterialStatus *status = static_cast<MagnetoElasticMaterialStatus *>( this->giveStatus( gp ) );
     Tensor1_3d H( vH ), Q, B;
     Tensor2_3d Fcurrent( vF ), F, P;
-    F( i_3, j_3 ) = F0( i_3, k_3 ) * Fcurrent( k_3, j_3 );
+    F( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
 
     // Q = (H+M)
     double m_level = this->giveDomain()->giveFunction( m_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
@@ -81,7 +81,7 @@ HardMagneticMooneyRivlinCompressibleMaterial ::give_FirstPKStressVector_Magnetic
     auto vP  = P.to_voigt_form();
     auto vB  = B.to_voigt_form();
     // update gp
-    status->letTempFVectorBe( vF );
+    status->letTempFVectorBe( F.to_voigt_form() );
     status->letTempPVectorBe( vP );
     status->letTempHVectorBe( vH );
     status->letTempBVectorBe( vB );

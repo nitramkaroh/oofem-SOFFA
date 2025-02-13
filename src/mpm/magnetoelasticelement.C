@@ -164,6 +164,8 @@ class MagnetoElasticElement : public MPElement {
                 default:
                     OOFEM_ERROR( "Prestrain requested for wrong GP number %i", gp->giveNumber() );
             }
+        } else {
+            MPElement::giveIPValue( answer, gp, type, tStep );
         }
     }
 
