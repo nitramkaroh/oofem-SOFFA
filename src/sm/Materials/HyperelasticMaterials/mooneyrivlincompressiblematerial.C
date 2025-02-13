@@ -78,6 +78,27 @@ MooneyRivlinCompressibleMaterial::give3dMaterialStiffnessMatrix_dPdF(MatResponse
 }
 
 
+int
+MooneyRivlinCompressibleMaterial::giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep)
+{
+    StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveStatus(gp) );
+
+    if ( type == IST_CauchyStressTensor ) {
+      FloatArrayF< 9 >vF(status->giveFVector() );
+      Tensor2_3d F(vF);
+      //
+      FloatArrayF< 9 >vP(status->givePVector() );
+      Tensor2_3d P(vP), sigma;
+      //      
+      auto [J, cofF] = F.compute_determinant_and_cofactor();
+      sigma(i_3,j_3) = P(i_3, k_3) * cofF.compute_inverse()(k_3,j_3);
+      answer = sigma.to_voigt_form();
+      return 1;
+    } else {
+        return StructuralMaterial::giveIPValue(answer, gp, type, tStep);
+
+    }
+}
 
 
 MaterialStatus *

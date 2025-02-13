@@ -34,6 +34,7 @@
 
 #include "feinterpol2d.h"
 #include "floatarray.h"
+#include "floatarrayf.h"
 #include "gaussintegrationrule.h"
 
 namespace oofem {
@@ -221,5 +222,40 @@ IntArray FEInterpolation2d::boundarySurfaceGiveNodes(int boundary) const
     return answer;
 }
 
-  
+
+FloatArrayF<2> FEInterpolation2d::surfaceEvalBaseVectorsAt(int isurf, const FloatArray & lcoords, const FEICellGeometry & cellgeo) const
+{
+    //Adapted from FEI3dQuadLin
+    // Note: These are not normalized. Returns the two tangent vectors to the surface.
+    FloatMatrix dNdxi;
+    this->surfaceEvaldNdxi(dNdxi, isurf, lcoords);
+
+    //Get nodes which correspond to the surface in question
+    auto nodeIndices = this->computeLocalEdgeMapping(isurf);
+    FloatArrayF<2> G1;
+    for (int i = 0; i < nodeIndices.giveSize(); ++i) {
+      G1 += dNdxi(i, 0) * FloatArrayF<2>(cellgeo.giveVertexCoordinates(nodeIndices(i)));
+    }
+    return G1;
+}
+
+
+std::tuple<double, FloatArrayF<2>>
+FEInterpolation2d :: surfaceEvalUnitNormal(int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const
+{
+    FloatArray n;
+    auto J = this->edgeEvalNormal(n, isurf, lcoords, cellgeo);
+    FloatArrayF<2> normal(n);
+    /*    auto G1 = this->surfaceEvalBaseVectorsAt(isurf, lcoords, cellgeo);
+    FloatArrayF<2> normal = {-G1.at(2), G1.at(1)};
+    double J = norm(normal);
+    */
+    //double J = norm(normal);
+    return std::make_tuple(J, normal);
+}
+
+
+
+
+
 } // end namespace oofem

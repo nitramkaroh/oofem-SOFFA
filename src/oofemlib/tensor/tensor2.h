@@ -93,6 +93,23 @@ public:
     }
 
     /**
+     * Creates a second-order order tensor in 3d from floatmatrixf<3,3>
+     */
+
+  Tensor2_3d(const oofem::FloatMatrixF< 3,3 > &array) {
+    this->data [ 0 ] [ 0 ] = array.at(1,1);
+    this->data [ 0 ] [ 1 ] = array.at(1,2);
+    this->data [ 0 ] [ 2 ] = array.at(1,3);
+    this->data [ 1 ] [ 0 ] = array.at(2,1);
+    this->data [ 1 ] [ 1 ] = array.at(2,2);
+    this->data [ 1 ] [ 2 ] = array.at(2,3);
+    this->data [ 2 ] [ 0 ] = array.at(3,1);
+    this->data [ 2 ] [ 1 ] = array.at(3,2);
+    this->data [ 2 ] [ 2 ] = array.at(3,3);
+    }
+
+  
+    /**
      * Transforms a second-order tensor into a floatarrayf<9>,  using the Voigt notation
      */
 

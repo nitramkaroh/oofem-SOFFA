@@ -44,9 +44,11 @@
 #define _IFT_HardMagneticBoundaryCondition_Name "hardmagneticboundarycondition"
 #define _IFT_HardMagneticBoundaryCondition_mu_0 "mu_0"
 #define _IFT_HardMagneticBoundaryCondition_b_ext "b_ext"
-#define _IFT_HardMagneticBoundaryCondition_mjump "mjump"
+#define _IFT_HardMagneticBoundaryCondition_m "m"
 #define _IFT_HardMagneticBoundaryCondition_mode "mode" //1 = maxwell only, 2 = body load approach
 #define _IFT_HardMagneticBoundaryCondition_ltf "loadtimefunction" //load time function for applied field
+#define _IFT_HardMagneticBoundaryCondition_mltf "mltf" //load time function for applied field
+#define _IFT_HardMagneticBoundaryCondition_pullBackType "pullbacktype" //load time function for applied fie
 //@}
 
 namespace oofem {
@@ -63,12 +65,13 @@ class HardMagneticBoundaryCondition : public ActiveBoundaryCondition {
 protected:
 
     double mu0; //vacuum permeability
-    FloatArrayF<3> b_app, m_jump; //external magnetic field in free space, jump in magnetization
+    FloatArrayF<3> b_app, m_app; //external magnetic field in free space, jump in magnetization
   //FloatArrayF<9> sigma_star; //precomputed free space stress
     Tensor2_3d maxwell_stress;
     int ltf_index; //index of load time function for applied load
+    int mltf_index; //index of load time function for magnetization
     int bcMode; //mode of boundary condition implemented
-
+    int pullBackType;
 public:
     /// <summary>
     ///  Base Constructor
@@ -161,5 +164,9 @@ private:
     void computePerturbedLoadVectorFromElement_maxwell( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
     void computePerturbedLoadVectorFromElement_bla( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
     void computePerturbedLoadVectorFromElement_maxwell2( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
+
+  Tensor1_3d giveActualMagnetization(const Tensor2_3d &F, const Tensor1_3d &M);
+  void giveGaussPointCoordinates(FloatArray &coords, GaussPoint *gp, int iSurf);
+
 };
 } // end namespace oofem

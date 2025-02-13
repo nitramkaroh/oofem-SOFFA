@@ -62,22 +62,7 @@ MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d( const FloatArrayF<9> &vF, 
         vP_me = computeFirstPKStressVector_3d_consistent( vF, gp, tStep );
         break;
     case 2:
-        vP_me = computeFirstPKStressVector_3d_mit( vF, gp, tStep );
-        break;
-    case 3:
-        vP_me = computeFirstPKStressVector_3d_consistentfix( vF, gp, tStep );
-        break;
-    case 4:
-        vP_me = computeFirstPKStressVector_3d_ogdenpullback( vF, gp, tStep );
-        break;
-    /*case 5:
-        vP_me = computeFirstPKStressVector_3d_multiphysics( vF, gp, tStep );
-        break;*/
-    case 6:
-        vP_me = computeFirstPKStressVector_3d_universal( vF, gp, tStep );
-        break;
-    case 7:
-        vP_me = computeFirstPKStressVector_3d_universal_nobb( vF, gp, tStep );
+      vP_me = computeFirstPKStressVector_3d_mit( vF, gp, tStep );
         break;
     default:
         OOFEM_ERROR( "Unknown hard magnetic material mode %i", materialMode );
@@ -109,22 +94,7 @@ MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF( MatResponseMode ma
         vD_me = compute3dMaterialStiffnessMatrix_dPdF_consistent( matResponseMode, gp, tStep );
         break;
     case 2:
-        vD_me = compute3dMaterialStiffnessMatrix_dPdF_mit( matResponseMode, gp, tStep );
-        break;
-    case 3:
-        vD_me = compute3dMaterialStiffnessMatrix_dPdF_consistentfix( matResponseMode, gp, tStep );
-        break;
-    case 4:
-        vD_me = compute3dMaterialStiffnessMatrix_dPdF_ogdenpullback( matResponseMode, gp, tStep );
-        break;
-   /* case 5:
-        vD_me = compute3dMaterialStiffnessMatrix_dPdF_multiphysics( matResponseMode, gp, tStep );
-        break;*/
-    case 6:
-        vD_me = compute3dMaterialStiffnessMatrix_dPdF_universal( matResponseMode, gp, tStep );
-        break;
-    case 7:
-        vD_me = compute3dMaterialStiffnessMatrix_dPdF_universal_nobb( matResponseMode, gp, tStep );
+      vD_me = compute3dMaterialStiffnessMatrix_dPdF_mit( matResponseMode, gp, tStep );
         break;
     default:
         OOFEM_ERROR( "Unknown hard magnetic material mode %i", materialMode );
@@ -137,486 +107,194 @@ MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF( MatResponseMode ma
     return vD;
 }
 
-//FloatArrayF<3> MooneyRivlinHardMagnetic::giveMagneticInduction_3d( const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep ) const
-//{
-//    if ( materialMode < 5 ) {
-//        OOFEM_ERROR( "Material not in multiphysics mode." );
-//    }
-//
-//    return computeMagneticInduction_3d_multiphysics( vH, gp, tStep );
-//}
-//
-//FloatMatrixF<3, 9> MooneyRivlinHardMagnetic::give3dMagnetoelasticCouplingTensor_dBdF( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-//{
-//    if ( materialMode < 5 ) {
-//        OOFEM_ERROR( "Material not in multiphysics mode." );
-//    }
-//
-//    return compute3dMagnetoelasticCouplingTensor_dBdF_multiphysics( matResponseMode, gp, tStep );
-//}
-//
-//FloatMatrixF<3, 3> MooneyRivlinHardMagnetic::give3dPermeabilityMatrix_dBdH( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-//{
-//    if ( materialMode < 5 ) {
-//        OOFEM_ERROR( "Material not in multiphysics mode." );
-//    }
-//
-//    return compute3dPermeabilityMatrix_dBdH_multiphysics( matResponseMode, gp, tStep );
-//}
 
 void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
 {   
     MooneyRivlinCompressibleMaterial::initializeFrom( ir );
 
-    FloatArray B_app_temp, B_res_temp, H_temp;
+    FloatArray tempb0, tempM0;
 
     //default values
     mu_0 = BASE_VACUUM_PERMEABILITY_MU_0;
     materialMode = 1;
 
-    IR_GIVE_FIELD( ir, B_app_temp, _IFT_MooneyRivlinHardMagnetic_B_app );
-    IR_GIVE_FIELD( ir, B_res_temp, _IFT_MooneyRivlinHardMagnetic_B_res );
+    IR_GIVE_FIELD( ir, tempb0, _IFT_MooneyRivlinHardMagnetic_b0 );
+    IR_GIVE_FIELD( ir, tempM0, _IFT_MooneyRivlinHardMagnetic_M0 );
     //IR_GIVE_FIELD( ir, H_temp, _IFT_MooneyRivlinHardMagnetic_H );
     IR_GIVE_OPTIONAL_FIELD( ir, mu_0, _IFT_MooneyRivlinHardMagnetic_mu_0 );
     IR_GIVE_FIELD( ir, ltf_index, _IFT_MooneyRivlinHardMagnetic_ltf );
+    IR_GIVE_FIELD( ir, mltf_index, _IFT_MooneyRivlinHardMagnetic_mltf );
     IR_GIVE_OPTIONAL_FIELD( ir, materialMode, _IFT_MooneyRivlinHardMagnetic_mode );
 
     referenceB = false;
     IR_GIVE_OPTIONAL_FIELD( ir, referenceB, _IFT_MooneyRivlinHardMagnetic_referenceB );
 
-    B_app = FloatArrayF<3>( B_app_temp );
-    B_res = FloatArrayF<3>( B_res_temp );
-    //H = FloatArrayF<3>( H_temp );
+    b0 = FloatArrayF<3>( tempb0 );
+    M0 = FloatArrayF<3>( tempM0 );
+
+
+
+
+    auto pullBackTypeRecord = 0; // default
+    IR_GIVE_OPTIONAL_FIELD(ir, pullBackTypeRecord, _IFT_MooneyRivlinHardMagnetic_PullBackType);
+
+    if ( pullBackTypeRecord == 0 ) {
+        this->pullBackType = PBT_F;
+	this->exp = 1.0;
+    } else if ( pullBackTypeRecord == 1 ) {
+        this->pullBackType = PBT_R;
+	this->exp = 0.5;
+    } else if ( pullBackTypeRecord == 2 ) {
+        this->pullBackType = PBT_iFt;
+	this->exp = 0.0;
+    } else {
+      throw ValueInputException(ir, _IFT_MooneyRivlinHardMagnetic_PullBackType, "Unknown pull back type");
+    }
+
+    
 }
 
 FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_consistent( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
 {
 
     double load_level            = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF ), P_me, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
-
-    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res ), Bappref;
+    double mload_level            = this->giveDomain()->giveFunction( mltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    /*    FloatArrayF<3> b = load_level  * b0;
+    FloatArrayF<3> m = mload_level * m0;
+    */
+    Tensor2_3d F( vF ), P_me, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. ), C;
+    Tensor1_3d b(load_level  * b0 ), M( mload_level * M0 ), B;
+    //b(i_3) += mu_0 * F(i_3, k_3) * M(k_3);
+    C(i_3, j_3) = F(k_3, i_3) * F(k_3, j_3);
     auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-    if ( !referenceB ) {
-        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
-    } else {
-        Bappref = Bapp;
-    }
-
-    P_me( k_3, l_3 ) = -(1/(2*J*J*mu_0))*(Bappref(i_3) - 2.0*Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)
-        + (1/(2*J*mu_0)) * ( Bappref( i_3 ) - 2.0 * Bres( i_3 ) ) * Bappref(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3));
-
+    B( j_3 ) = b( k_3 ) * cofF( k_3, j_3 );
+    //
+    Tensor4_3d dCm_dC;
+    dCm_dC = C.compute_dCm_dC(this->exp);
+    Tensor2_3d t;
+    t(p_3, j_3) = (M(k_3)* B(l_3)) * dCm_dC(k_3,l_3,p_3,j_3);
+    //
+    P_me( i_3, j_3 ) = 1. / J * F(i_3, p_3) * (1. / mu_0 * B(p_3)* B(j_3)  -(M(k_3)* B(l_3)) * dCm_dC(k_3,l_3,p_3,j_3)) ;
+    //- 1. / J / J * (0.5 / mu_0 * B(k_3) * F(m_3,k_3)*F(m_3,l_3) * B(l_3) - M(k_3) * C.computeTensorPower(this->exp)(k_3,l_3) * B(l_3) ) * cofF(i_3,j_3);
+    //
     auto vP_me = P_me.to_voigt_form();
-
+    //
     return vP_me;
 }
+
+
+
+  
 
 FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute3dMaterialStiffnessMatrix_dPdF_consistent( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
 {
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
     FloatArrayF<9> vF( status->giveTempFVector() );
-
-    
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
+    //
     Tensor2_3d F( vF );
     Tensor4_3d D_me;
-
-    Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-
-    Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res ), Bappref;
+    //
+    double load_level            = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    double mload_level            = this->giveDomain()->giveFunction( mltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    //
+    Tensor2_3d P_me, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+    Tensor1_3d b(load_level  * b0 ), M( mload_level * M0 ), B;
     auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-    if ( !referenceB ) {
-        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
-    } else {
-        Bappref = Bapp;
-    }
-
-    D_me( k_3, l_3, p_3, q_3 ) = (1/(J*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)*cofF(p_3, q_3)
-        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * Bappref(j_3) * (delta(i_3, q_3)*F(p_3,j_3) + delta(j_3, q_3)*F(p_3,i_3)) * cofF(k_3, l_3) 
-        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * F(m_3,i_3)*F(m_3,j_3) * Bappref(j_3) * F.compute_tensor_cross_product()(k_3, l_3, p_3, q_3)
-        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * Bappref(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3)) * cofF(p_3, q_3)
-        + (1/(2*J*mu_0)) * delta(k_3,p_3) * (( Bappref(l_3) - 2.0 * Bres(l_3))*Bappref(q_3) + ( Bappref(q_3) - 2.0 * Bres(q_3))*Bappref(l_3));
-    
-    auto vD_me = D_me.to_voigt_form();
-
-    return vD_me;
+    B( j_3 ) = b( k_3 ) * cofF( k_3, j_3 );
+    //
+    D_me(i_3,j_3,k_3,l_3) = 0.0 * (1. / J * delta(i_3, k_3) * (1. / mu_0 * B(l_3)* B(j_3) -  M(l_3)* B(j_3) -  B(l_3)* M(j_3) ) -  - 1. / J/J * F(i_3, p_3) * (1. / mu_0 * B(p_3)* B(j_3) -  M(p_3)* B(j_3) -  B(p_3)* M(j_3) ) * cofF(k_3,l_3));
+    //    
+    //    auto vD_me = ;
+    return D_me.to_voigt_form();
 }
-
+  
 FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_mit( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
 {
 
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF ), P_me;
-    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res );
-
-    P_me( k_3, l_3 ) = -1.0 / mu_0 * Bapp( k_3 ) * Bres( l_3 );
+    double load_level            = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    double mload_level            = this->giveDomain()->giveFunction( mltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    //
+    Tensor2_3d F( vF ), P_me, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+    Tensor1_3d b(load_level  * b0 ), M( mload_level * M0 ), B;
+    /*
+    Tensor2_3d C;
+    C(i_3,j_3) = F(k_3,i_3) * F(k_3,j_3);
+    
+    FloatMatrixF<3,3> mC;
+    mC = C.to_matrix_form();
+    //
+    FloatArray eVals;
+    FloatMatrix eVecs, mmC(mC);  
+    mmC.jaco_(eVals, eVecs, 15);
+    //
+    FloatMatrixF<3,3> mU;
+    for ( int i = 1; i <= 3; i++ ) {
+        for ( int j = 1; j <= 3; j++ ) {
+	  mU.at(i, j) = sqrt(eVals.at(1)) * eVecs.at(i, 1) * eVecs.at(j, 1) +  sqrt(eVals.at(2)) *eVecs.at(i, 2) * eVecs.at(j, 2) +  sqrt(eVals.at(3)) *eVecs.at(i, 3) * eVecs.at(j, 3);
+        }
+    }
+    
+    Tensor2_3d U(mU), Y, R;
+    Y(i_3,j_3) = U(k_3,l_3) * delta(k_3, l_3) * delta(i_3,j_3) - U(i_3,j_3);
+    Tensor4_3d RR;
+    auto dY = Y.compute_determinant();
+    auto invU = U.compute_inverse();
+    R(i_3,j_3) = F(i_3,k_3) * invU(k_3,j_3);
+    RR(k_3,l_3, m_3, n_3) = 1/dY * (R(k_3,p_3) * (Y(p_3,q_3) * R(m_3, q_3) * Y(n_3,l_3) - Y(p_3,n_3) * R(m_3, q_3) * Y(q_3,l_3)));
+       
+    P_me( k_3, l_3 ) = -1.0 * RR(i_3, q_3, k_3,l_3) *  M( q_3 ) * b( i_3 );
+    */
+    P_me( k_3, l_3 ) = -1.0 * b( k_3 ) * M( l_3 );
 
     auto vP_me = P_me.to_voigt_form();
 
     return vP_me;
 }
+
+
+
+
+
+  
 
 FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute3dMaterialStiffnessMatrix_dPdF_mit( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
 {
     return FloatMatrixF<9, 9>();
 }
 
-FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_consistentfix( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
+
+
+int
+MooneyRivlinHardMagnetic::giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep)
 {
+    StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveStatus(gp) );
 
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF ), P_me;
-    
-    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res );
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-
-    P_me( k_3, l_3 ) = (1/(2*mu_0))*Bapp( j_3 ) * Bapp(j_3) * cofF(k_3, l_3) - (1/mu_0)*Bapp(k_3)*Bres(l_3);
-
-    auto vP_me = P_me.to_voigt_form();
-
-    return vP_me;
-}
-
-FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute3dMaterialStiffnessMatrix_dPdF_consistentfix( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-{
-    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
-    FloatArrayF<9> vF( status->giveTempFVector() );
-
-    
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF );
-    Tensor4_3d D_me;
-
-    Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-
-    Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res );
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-    D_me( k_3, l_3, p_3, q_3 ) = (1/(2*mu_0))*Bapp( j_3 ) * Bapp(j_3) * F.compute_tensor_cross_product() (k_3, l_3, p_3, q_3);
-    
-    auto vD_me = D_me.to_voigt_form();
-
-    return vD_me;
-}
-
-FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_ogdenpullback( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
-{
-
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF ), P_me;
-    
-    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res );
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-    auto invF      = F.compute_inverse();
-
-    P_me( k_3, l_3 ) = (1/(2*mu_0))*Bapp( j_3 ) * Bapp(j_3) * cofF(k_3, l_3)
-                     + (J/mu_0)*Bres(i_3)*Bapp(j_3)*(invF(i_3,k_3)*invF(l_3, j_3) - invF(l_3,k_3)*invF(i_3, j_3));
-
-    auto vP_me = P_me.to_voigt_form();
-
-    return vP_me;
-}
-
-FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute3dMaterialStiffnessMatrix_dPdF_ogdenpullback( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-{
-    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
-    FloatArrayF<9> vF( status->giveTempFVector() );
-
-    
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF );
-    Tensor4_3d D_me;
-
-    Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-
-    Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res );
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-    auto invF      = F.compute_inverse();
-
-    D_me( k_3, l_3, p_3, q_3 ) = (1/(2*mu_0))*Bapp( j_3 ) * Bapp(j_3) * F.compute_tensor_cross_product() (k_3, l_3, p_3, q_3)
-                               + (1/mu_0)*Bres(i_3)*Bapp(j_3)*(invF(i_3,k_3)*invF(l_3, j_3) - invF(l_3,k_3)*invF(i_3, j_3))*cofF(p_3, q_3)
-                               - (J/mu_0)*Bres(i_3)*Bapp(j_3)*invF(i_3, p_3)*invF(q_3, k_3)*invF(l_3, j_3)
-                               - (J/mu_0)*Bres(i_3)*Bapp(j_3)*invF(i_3, k_3)*invF(l_3, p_3)*invF(q_3, j_3)
-                               + (J/mu_0)*Bres(i_3)*Bapp(j_3)*invF(l_3, p_3)*invF(i_3, j_3)*invF(q_3, k_3)
-                               + (J/mu_0)*Bres(i_3)*Bapp(j_3)*invF(l_3, k_3)*invF(i_3, p_3)*invF(q_3, j_3);
-    
-    auto vD_me = D_me.to_voigt_form();
-
-    return vD_me;
-}
-
-//--------------------------------------------------------------------------- Universal -------------------------------------------------------------
-
-FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_universal( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
-{
-
-    double load_level            = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF ), P_me, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. ), Finv;
-    Finv = F.compute_inverse();
-
-    Tensor1_3d Bapp( B_app_at_time ), M( (1./mu_0) * B_res ), Bappref;
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-    if ( !referenceB ) {
-        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
-    } else {
-        Bappref = Bapp;
+    if ( type == IST_CauchyStressTensor || type == IST_StrainTensorTemp || type == IST_StressTensorTemp) {
+      FloatArrayF< 9 >vF(status->giveFVector() );
+      Tensor2_3d F(vF);
+      //
+      FloatArrayF< 9 >vP(status->givePVector() );
+      Tensor2_3d P(vP), sigma, sigma_mech, sigma_mag;
+      //      
+      auto [J, cofF] = F.compute_determinant_and_cofactor();
+      sigma(i_3,j_3) = P(i_3, k_3) * cofF.compute_inverse()(k_3,j_3);
+      FloatArrayF<9> vPmech = MooneyRivlinCompressibleMaterial::giveFirstPKStressVector_3d( vF, gp, tStep );
+      Tensor2_3d Pmech(vPmech);
+      sigma_mech(i_3,j_3) = Pmech(i_3, k_3) * cofF.compute_inverse()(k_3,j_3);
+      if ( type == IST_CauchyStressTensor) {
+	answer = sigma.to_voigt_form();
+      } else if ( type == IST_StrainTensorTemp ) {
+	answer = sigma_mech.to_voigt_form();	
+      } else if ( type == IST_StressTensorTemp ) {
+	sigma_mag(i_3,j_3) = sigma(i_3,j_3) - sigma_mech(i_3,j_3);
+	answer = sigma_mag.to_voigt_form();	
+      }
+      return 1;
+    }  else {
+      return StructuralMaterial::giveIPValue(answer, gp, type, tStep);
     }
-
-    P_me( i_3, j_3 ) =
-        + ( 1. / J ) * F( m_3, n_3 ) * M( n_3 ) * F( m_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, i_3 )
-        - ( 1. / J ) * F( i_3, m_3 ) * Bappref( m_3 ) * M( j_3 )
-        - ( 1. / J ) * F( i_3, m_3 ) * M( m_3 ) * Bappref( j_3 )
-        - ( 1. / ( 2. * mu_0 * J ) ) * F( m_3, n_3 ) * Bappref( n_3 ) * F( m_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, i_3 )
-        + ( 1. / (mu_0 * J) ) * F( i_3, m_3 ) * Bappref( m_3 ) * Bappref( j_3 );
-
-    auto vP_me = P_me.to_voigt_form();
-
-    return vP_me;
 }
 
-FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute3dMaterialStiffnessMatrix_dPdF_universal( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-{
-    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
-    FloatArrayF<9> vF( status->giveTempFVector() );
-
-    
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF );
-    Tensor2_3d Finv = F.compute_inverse();
-    Tensor4_3d D_me;
-
-    Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-
-    Tensor1_3d Bapp ( B_app_at_time ), M( (1./mu_0)*B_res ), Bappref;
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-    if ( !referenceB ) {
-        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
-    } else {
-        Bappref = Bapp;
-    }
-
-    D_me( i_3, j_3, k_3, l_3 ) = -( 1. / ( J * J ) ) * F( m_3, n_3 ) * M( n_3 ) * F( m_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, i_3 ) * cofF( k_3, l_3 )
-        + ( 1. / J ) * M( l_3 ) * F( k_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, i_3 )
-        + ( 1. / J ) * F( k_3, n_3 ) * M( n_3 ) * Bappref( l_3 ) * Finv( j_3, i_3 )
-        - ( 1. / J ) * F( m_3, n_3 ) * M( n_3 ) * F( m_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, k_3 ) * Finv( l_3, i_3 )
-        + ( 1. / ( J * J ) ) * F( i_3, m_3 ) * Bappref( m_3 ) * M( j_3 ) * cofF( k_3, l_3 )
-        - ( 1. / J ) * delta( i_3, k_3 ) * ( Bappref( l_3 ) * M( j_3 ) )
-        + ( 1. / ( J * J ) ) * F( i_3, m_3 ) * M( m_3 ) * Bappref( j_3 ) * cofF( k_3, l_3 )
-        - ( 1. / J ) * delta( i_3, k_3 ) * ( M( l_3 ) * Bappref( j_3 ) )
-        + ( 1. / ( 2. * mu_0 * J * J ) ) * F( m_3, n_3 ) * Bappref( n_3 ) * F( m_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, i_3 ) * cofF( k_3, l_3 )
-        - ( 1. / ( 2. * mu_0 * J ) ) * Bappref( l_3 ) * F( k_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, i_3 )
-        - ( 1. / ( 2. * mu_0 * J ) ) * F( k_3, n_3 ) * Bappref( n_3 ) * Bappref( l_3 ) * Finv( j_3, i_3 )
-        + ( 1. / ( 2. * mu_0 * J ) ) * F( m_3, n_3 ) * Bappref( n_3 ) * F( m_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, k_3 ) * Finv( l_3, i_3 )
-        - ( 1. / ( mu_0 * J * J ) ) * F( i_3, m_3 ) * Bappref( m_3 ) * Bappref( j_3 ) * cofF( k_3, l_3 )
-        + ( 1. / ( mu_0 * J ) ) * delta( i_3, k_3 ) * ( Bappref( l_3 ) * Bappref( j_3 ) );
-
-    
-    auto vD_me = D_me.to_voigt_form();
-
-    return vD_me;
-}
-
-//--------------------------------------------------------------------------- Universal- No BB -------------------------------------------------------------
-
-FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_universal_nobb( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
-{
-
-    double load_level            = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF ), P_me, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. ), Finv;
-    Finv = F.compute_inverse();
-
-    Tensor1_3d Bapp( B_app_at_time ), M( (1./mu_0) * B_res ), Bappref;
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-    if ( !referenceB ) {
-        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
-    } else {
-        Bappref = Bapp;
-    }
-
-    P_me( i_3, j_3 ) = +( 1. / J ) * F( m_3, n_3 ) * M( n_3 ) * F( m_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, i_3 )
-        - ( 1. / J ) * F( i_3, m_3 ) * Bappref( m_3 ) * M( j_3 )
-        - ( 1. / J ) * F( i_3, m_3 ) * M( m_3 ) * Bappref( j_3 );
-
-    auto vP_me = P_me.to_voigt_form();
-
-    return vP_me;
-}
-
-FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute3dMaterialStiffnessMatrix_dPdF_universal_nobb( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-{
-    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
-    FloatArrayF<9> vF( status->giveTempFVector() );
-
-    
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF );
-    Tensor2_3d Finv = F.compute_inverse();
-    Tensor4_3d D_me;
-
-    Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-
-    Tensor1_3d Bapp ( B_app_at_time ), M( (1./mu_0)*B_res ), Bappref;
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-    if ( !referenceB ) {
-        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
-    } else {
-        Bappref = Bapp;
-    }
-
-    D_me( i_3, j_3, k_3, l_3 ) = -( 1. / ( J * J ) ) * F( m_3, n_3 ) * M( n_3 ) * F( m_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, i_3 ) * cofF( k_3, l_3 )
-        + ( 1. / J ) * M( l_3 ) * F( k_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, i_3 )
-        + ( 1. / J ) * F( k_3, n_3 ) * M( n_3 ) * Bappref( l_3 ) * Finv( j_3, i_3 )
-        - ( 1. / J ) * F( m_3, n_3 ) * M( n_3 ) * F( m_3, p_3 ) * Bappref( p_3 ) * Finv( j_3, k_3 ) * Finv( l_3, i_3 )
-        + ( 1. / ( J * J ) ) * F( i_3, m_3 ) * Bappref( m_3 ) * M( j_3 ) * cofF( k_3, l_3 )
-        - ( 1. / J ) * delta( i_3, k_3 ) * ( Bappref( l_3 ) * M( j_3 ) )
-        + ( 1. / ( J * J ) ) * F( i_3, m_3 ) * M( m_3 ) * Bappref( j_3 ) * cofF( k_3, l_3 )
-        - ( 1. / J ) * delta( i_3, k_3 ) * ( M( l_3 ) * Bappref( j_3 ) );
-
-    
-    auto vD_me = D_me.to_voigt_form();
-
-    return vD_me;
-}
-
-//--------------------------------------------------------------------------- Multiphysics ----------------------------------------------------------
-
-//FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_multiphysics( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
-//{
-//    MagnetoelasticMaterialStatus *status = static_cast<MagnetoelasticMaterialStatus *>( this->giveStatus( gp ) );
-//    FloatArrayF<3> vH( status->giveTempHVector() );
-//
-//    FloatArrayF<3> vQ = vH + B_res*(1/mu_0); //Q = (H+M)
-//
-//    Tensor1_3d Q( vQ );
-//    Tensor2_3d F( vF ), P_me;
-//    auto [J, cofF] = F.compute_determinant_and_cofactor();
-//    auto Fcross    = F.compute_tensor_cross_product();
-//
-//    P_me( i_3, j_3 ) = -( mu_0 / J ) * Fcross( i_3, j_3, m_3, n_3 ) * cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 )
-//                       + (mu_0 / (2*J*J)) * cofF(m_3, n_3) * Q(n_3) * cofF(m_3, k_3) * Q(k_3) * cofF(i_3, j_3);
-//
-//    return P_me.to_voigt_form();
-//}
-//
-//FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute3dMaterialStiffnessMatrix_dPdF_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-//{
-//    MagnetoelasticMaterialStatus *status = static_cast<MagnetoelasticMaterialStatus *>( this->giveStatus( gp ) );
-//    FloatArrayF<3> vH( status->giveTempHVector() );
-//    FloatArrayF<9> vF( status->giveTempFVector() );
-//
-//    FloatArrayF<3> vQ = vH + B_res*(1/mu_0); //Q = (H+M)
-//
-//    Tensor1_3d Q( vQ );
-//    Tensor2_3d F( vF ), P_me, GQQ;
-//    auto [J, cofF] = F.compute_determinant_and_cofactor();
-//    auto Fcross    = F.compute_tensor_cross_product();
-//    GQQ( i_3, j_3 ) = cofF( i_3, k_3 ) * Q( k_3 ) * Q( j_3 );
-//    auto GQQcross   = GQQ.compute_tensor_cross_product();
-//
-//    Tensor4_3d D_me;
-//    
-//    D_me( i_3, j_3, k_3, l_3 ) = (-mu_0/J)*(GQQcross(i_3, j_3, k_3, l_3) + ( Fcross( i_3, j_3, m_3, n_3 ) * Q(n_3) ) * ( Fcross( m_3, q_3, k_3, l_3 ) * Q( q_3 ) ))
-//                               + ( mu_0 / ( 2 * J * J ) ) * ( cofF( m_3, n_3 ) * Q( n_3 ) * cofF( m_3, k_3 ) * Q( k_3 ) * Fcross( i_3, j_3, k_3, l_3 ) )
-//                               - ( mu_0 / ( J * J * J ) ) * (cofF(m_3, n_3) * Q(n_3) * cofF(m_3, k_3) * Q(k_3) * cofF(i_3, j_3) * cofF(k_3, l_3)
-//                               + ( mu_0 / (  J * J ) ) * cofF(i_3, j_3) * (Fcross(k_3, l_3, m_3, n_3) * cofF(m_3,q_3) * Q(q_3) * Q(n_3)));
-//
-//    return D_me.to_voigt_form();
-//
-//}
-//
-//FloatArrayF<3> MooneyRivlinHardMagnetic::computeMagneticInduction_3d_multiphysics( const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep ) const
-//{
-//    MagnetoelasticMaterialStatus *status = static_cast<MagnetoelasticMaterialStatus *>( this->giveStatus( gp ) );
-//    FloatArrayF<9> vF( status->giveTempFVector() );
-//
-//    FloatArrayF<3> vQ = vH + B_res*(1/mu_0); //Q = (H+M)
-//
-//    Tensor1_3d Q( vQ ), B_me;
-//    Tensor2_3d F( vF );
-//    auto [J, cofF] = F.compute_determinant_and_cofactor();
-//    
-//    B_me( i_3 ) = mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 ) * Q( k_3 );
-//
-//    return B_me.to_voigt_form();
-//}
-//
-//FloatMatrixF<3, 9> MooneyRivlinHardMagnetic::compute3dMagnetoelasticCouplingTensor_dBdF_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-//{
-//    MagnetoelasticMaterialStatus *status = static_cast<MagnetoelasticMaterialStatus *>( this->giveStatus( gp ) );
-//    FloatArrayF<3> vH( status->giveTempHVector() );
-//    FloatArrayF<9> vF( status->giveTempFVector() );
-//
-//    FloatArrayF<3> vQ = vH + B_res*(1/mu_0); //Q = (H+M)
-//
-//    Tensor1_3d Q( vQ );
-//    Tensor2_3d F( vF ), P_me, delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-//    Tensor3_3d A_me;
-//    auto [J, cofF] = F.compute_determinant_and_cofactor();
-//    auto Fcross    = F.compute_tensor_cross_product();
-//    
-//    A_me( i_3, k_3, l_3 ) = mu_0 / J * ( delta( i_3, n_3 ) * cofF( m_3, q_3 ) * Q( q_3 ) + G( m_3, i_3 ) * Q( n_3 ) ) * Fcross( m_3, n_3, k_3, l_3 )
-//                          - mu_0 / ( J * J ) * ( cofF( p_3, i_3 ) * cofF( p_3, q_3 ) * Q( q_3 ) * G( k_3, l_3 ) );
-//
-//    return A_me.to_voigt_form_3x9();
-//}
-//
-//FloatMatrixF<3, 3> MooneyRivlinHardMagnetic::compute3dPermeabilityMatrix_dBdH_multiphysics( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-//{
-//    MagnetoelasticMaterialStatus *status = static_cast<MagnetoelasticMaterialStatus *>( this->giveStatus( gp ) );
-//    FloatArrayF<9> vF( status->giveTempFVector() );
-//    //independent of H, actually
-//
-//    Tensor2_3d F( vF ), C_me;
-//    auto [J, cofF] = F.compute_determinant_and_cofactor();
-//
-//    C_me( i_3, k_3 ) = mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 );
-//
-//    return C_me.to_voigt_form();
-//}
-//
-//// TODO remove, temporary debug
-//int
-//MooneyRivlinHardMagnetic :: giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep)
-//{
-//    if ( type == IST_CrackVector ) {
-//        answer = B_app;
-//        return 1;
-//    } else if ( type == IST_2ndCrackVector ) {
-//        answer = H;
-//        return 1;
-//    }
-//    {
-//        return MooneyRivlinCompressibleMaterial::giveIPValue( answer, gp, type, tStep );
-//  }
-//}
+  
 
 } // end namespace oofem

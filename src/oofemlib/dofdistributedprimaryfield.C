@@ -272,12 +272,14 @@ DofDistributedPrimaryField :: applyBoundaryCondition(TimeStep *tStep)
             if ( dbc && dbc->isImposed(tStep) ) {
                 this->applyBoundaryCondition(*dbc, tStep);
             } else if ( abc ) {
+	      if ( abc->giveInternalDofManager(1)) {
                 if ( abc->giveInternalDofManager(1)->isNull() ) continue;
                 for ( auto &dof : *abc->giveInternalDofManager(1) ) {
                     if ( dof->isPrimaryDof() && abc->hasBc(dof, tStep) ) {
                         dof->updateUnknownsDictionary( tStep, VM_Total, abc->giveBcValue(dof, VM_Total, tStep) );
                     }
                 }
+	      }
             }
         }
     }

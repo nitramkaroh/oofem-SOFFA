@@ -153,6 +153,10 @@ public:
     virtual double edgeGiveTransformationJacobian(int iedge, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const ;
     //@}
 
+
+
+    FloatArrayF<2> surfaceEvalBaseVectorsAt(int isurf, const FloatArray & lcoords, const FEICellGeometry & cellgeo) const;
+    std::tuple<double, FloatArrayF<2>> surfaceEvalUnitNormal(int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const;    
 };
 } // end namespace oofem
 #endif // feinterpol2d_h

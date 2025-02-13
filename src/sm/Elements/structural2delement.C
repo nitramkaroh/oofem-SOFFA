@@ -402,6 +402,29 @@ PlaneStrainElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
 }
 
 
+void PlaneStrainElement::computeBHmatrixAtBoundary( GaussPoint *gp, FloatMatrix &answer, int iBoundary )
+// Does the same as computeBHmatrixAt, with the exception of having to calculate the missing coordinate of the boundary GP and experiencing other nodes
+{
+    FEInterpolation *interp = this->giveInterpolation();
+    FloatMatrix dNdx;
+    //FloatArray nCoords;
+    //interp->boundaryLocal2fullLocal( nCoords, iBoundary, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
+    
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 void
 PlaneStrainElement::computeStressVector(FloatArray &answer, const FloatArray &e, GaussPoint *gp, TimeStep *tStep)
 {

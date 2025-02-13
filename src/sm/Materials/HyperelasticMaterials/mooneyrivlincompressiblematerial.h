@@ -94,6 +94,7 @@ public:
 
     const char *giveInputRecordName() const override { return _IFT_MooneyRivlinCompressibleMaterial_Name; }
     const char *giveClassName() const override { return "MooneyRivlinCompressibleMaterial"; }
+    int giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep) override;
 };
 } // end namespace oofem
 #endif
