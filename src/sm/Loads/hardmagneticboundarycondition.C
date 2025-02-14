@@ -501,10 +501,14 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
       R(i_3,j_3) = F(i_3,k_3) * invU(k_3,j_3);
       //
       m(i_3) = 1./J * R(i_3, k_3) * M(k_3);
-    } else if(pullBackType == 2) {
+    } else if(pullBackType == 2) { //theoretically wrong -MA
       Tensor2_3d iF;
       iF = F.compute_inverse();
       m(i_3) = 1./J * iF(k_3, i_3) * M(k_3);
+    } else if(pullBackType == 3) {
+      Tensor2_3d iF;
+      iF = F.compute_inverse();
+      m(i_3) =  iF(k_3, i_3) * M(k_3);
     }
     
     return m;

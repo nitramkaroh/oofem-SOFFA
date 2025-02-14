@@ -146,7 +146,10 @@ void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
 	this->exp = 0.5;
     } else if ( pullBackTypeRecord == 2 ) {
         this->pullBackType = PBT_iFt;
-	this->exp = 0.0;
+	    this->exp = 0.0;
+    } else if ( pullBackTypeRecord == 3 ) {
+        this->pullBackType = PBT_iFtnoJ;
+	    this->exp = 0.0;
     } else {
       throw ValueInputException(ir, _IFT_MooneyRivlinHardMagnetic_PullBackType, "Unknown pull back type");
     }

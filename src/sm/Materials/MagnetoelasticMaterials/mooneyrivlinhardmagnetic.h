@@ -81,6 +81,7 @@ protected:
         PBT_F=0,
         PBT_R=1,
         PBT_iFt=2,
+        PBT_iFtnoJ=3,
         PBT_Unknown = 100
     };
   PullBackType pullBackType;
