@@ -253,6 +253,24 @@ public:
         return answer;
     }
 
+    const inline FloatMatrixF<2, 5> to_voigt_form_2x5()
+    {
+        FloatMatrixF<2, 5> answer;
+        answer.at( 1, 1 ) = this->operator()( 0, 0, 0 );
+        answer.at( 1, 2 ) = this->operator()( 0, 1, 1 );
+        answer.at( 1, 3 ) = this->operator()( 0, 2, 2 );
+        answer.at( 1, 4 ) = this->operator()( 0, 0, 1 );
+        answer.at( 1, 5 ) = this->operator()( 0, 1, 0 );
+
+        answer.at( 2, 1 ) = this->operator()( 1, 0, 0 );
+        answer.at( 2, 2 ) = this->operator()( 1, 1, 1 );
+        answer.at( 2, 3 ) = this->operator()( 1, 2, 2 );
+        answer.at( 2, 4 ) = this->operator()( 1, 0, 1 );
+        answer.at( 2, 5 ) = this->operator()( 1, 1, 0 );
+
+        return answer;
+    }
+
   void be_Levi_Civita()
   {
     for(int  i = 0; i < 3; i++) {
