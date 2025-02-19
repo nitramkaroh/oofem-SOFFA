@@ -67,6 +67,17 @@ namespace oofem {
  */
 class MooneyRivlinHardMagnetic : public MooneyRivlinCompressibleMaterial//, public MagnetoelasticMaterial
 {
+public:
+    /** Type characterizing the pull back of the magnetiztion vector
+     **/
+    enum PullBackType {
+        PBT_F       = 0,
+        PBT_R       = 1,
+        PBT_iFt     = 2,
+        PBT_iFtnoJ  = 3,
+        PBT_Unknown = 100
+    };
+
 protected:
     // Material parameters
     FloatArrayF<3> b0;
@@ -75,17 +86,9 @@ protected:
     double mu_0;
     int ltf_index, mltf_index, materialMode;
     bool referenceB;
-  /** Type characterizing the pull back of the magnetiztion vector
-     **/
-    enum PullBackType {
-        PBT_F=0,
-        PBT_R=1,
-        PBT_iFt=2,
-        PBT_iFtnoJ=3,
-        PBT_Unknown = 100
-    };
-  PullBackType pullBackType;
-  double exp;
+protected:
+    PullBackType pullBackType;
+    double exp;
 
 public:
     MooneyRivlinHardMagnetic( int n, Domain *d ) :
