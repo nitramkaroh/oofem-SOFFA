@@ -213,7 +213,7 @@ FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_mit( cons
     Tensor1_3d b( load_level * b0 ), M( mload_level * M0 ), B;
     Tensor4_3d RR;
 
-    int J, dY;
+    double J, dY;
 
     switch ( this->pullBackType ) {
 
@@ -234,7 +234,7 @@ FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_mit( cons
         OOFEM_ERROR( "Pullback type not implemented." )
         break;
     case PBT_iFtnoJ:
-        J = F.compute_determinant_and_cofactor().first;
+        J = F.compute_determinant();
         Finv = F.compute_inverse();
 
         P_me( i_3, j_3 ) = - J * Finv( j_3, i_3 ) * Finv( q_3, p_3 ) * M( q_3 ) * b( p_3 )
@@ -263,7 +263,7 @@ FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute3dMaterialStiffnessMatrix_dP
     Tensor1_3d M( mload_level * M0 ), b( load_level * b0 );
     Tensor2_3d F( vF ), Finv;
     Tensor4_3d D;
-    int J;
+    double J;
 
     switch ( this->pullBackType ) {
 
@@ -282,10 +282,10 @@ FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute3dMaterialStiffnessMatrix_dP
 
         D( i_3, j_3, k_3, l_3 ) = - J * M( q_3 ) * b( p_3 ) * Finv( q_3, p_3 ) * Finv( l_3, k_3 ) * Finv( j_3, i_3 )
             + J * M( q_3 ) * b( p_3 ) * Finv( q_3, p_3 ) * Finv( j_3, k_3 ) * Finv( l_3, i_3 )
-            - J * M( q_3 ) * b( p_3 ) * Finv( j_3, i_3 ) * Finv( q_3, k_3 ) * Finv( l_3, p_3 )
+            + J * M( q_3 ) * b( p_3 ) * Finv( j_3, i_3 ) * Finv( q_3, k_3 ) * Finv( l_3, p_3 )
             + J * M( q_3 ) * b( p_3 ) * Finv( l_3, k_3 ) * Finv( q_3, i_3 ) * Finv( j_3, p_3 )
             - J * M( q_3 ) * b( p_3 ) * Finv( q_3, k_3 ) * Finv( l_3, i_3 ) * Finv( j_3, p_3 )
-            + J * M( q_3 ) * b( p_3 ) * Finv( q_3, i_3 ) * Finv( j_3, k_3 ) * Finv( l_3, p_3 );
+            - J * M( q_3 ) * b( p_3 ) * Finv( q_3, i_3 ) * Finv( j_3, k_3 ) * Finv( l_3, p_3 );
 
         vD_me = D.to_voigt_form();
         break;
