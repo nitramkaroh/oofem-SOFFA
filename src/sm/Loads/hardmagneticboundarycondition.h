@@ -39,6 +39,7 @@
 #include "inputrecord.h"
 #include "tensor/tensor1.h"
 #include "tensor/tensor2.h"
+#include "MagnetoelasticMaterials/mooneyrivlinhardmagnetic.h"
 ///@name Input fields for HardMagneticBoundaryCondition
 //@{
 #define _IFT_HardMagneticBoundaryCondition_Name "hardmagneticboundarycondition"
@@ -71,7 +72,7 @@ protected:
     int ltf_index; //index of load time function for applied load
     int mltf_index; //index of load time function for magnetization
     int bcMode; //mode of boundary condition implemented
-    int pullBackType;
+    MooneyRivlinHardMagnetic::PullBackType pullBackType;
 public:
     /// <summary>
     ///  Base Constructor

@@ -46,7 +46,7 @@
 #include "feinterpol3d.h"
 #include "feinterpol2d.h"
 namespace oofem {
-REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
+    REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
     void HardMagneticBoundaryCondition::initializeFrom( InputRecord &ir )
     {
@@ -54,9 +54,9 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
 
         IR_GIVE_FIELD( ir, bcMode, _IFT_HardMagneticBoundaryCondition_mode );
 
-	FloatArray b_temp, m_temp;
+        FloatArray b_temp, m_temp;
         IR_GIVE_FIELD( ir, b_temp, _IFT_HardMagneticBoundaryCondition_b_ext );
-	b_app = FloatArrayF< 3 >( b_temp );
+        b_app = FloatArrayF<3>( b_temp );
 
         if ( bcMode == 2 || bcMode == 3 ) {
             IR_GIVE_FIELD( ir, m_temp, _IFT_HardMagneticBoundaryCondition_m );
@@ -64,7 +64,7 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
         }
 
         IR_GIVE_FIELD( ir, ltf_index, _IFT_HardMagneticBoundaryCondition_ltf );
-	IR_GIVE_FIELD( ir, mltf_index, _IFT_HardMagneticBoundaryCondition_mltf );
+        IR_GIVE_FIELD( ir, mltf_index, _IFT_HardMagneticBoundaryCondition_mltf );
 
         mu0 = BASE_VACUUM_PERMEABILITY_MU_0;
         IR_GIVE_OPTIONAL_FIELD( ir, mu0, _IFT_HardMagneticBoundaryCondition_mu_0 );
@@ -72,7 +72,10 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
         if ( bcMode == 1 ) {
             this->evaluateFreeSpaceStress();
         }
-	IR_GIVE_FIELD( ir, pullBackType, _IFT_HardMagneticBoundaryCondition_pullBackType );	
+        int pullBackType_temp;
+        IR_GIVE_FIELD( ir, pullBackType_temp, _IFT_HardMagneticBoundaryCondition_pullBackType );
+
+        this->pullBackType = (MooneyRivlinHardMagnetic::PullBackType) pullBackType_temp;
     }
 
     void HardMagneticBoundaryCondition::assemble( SparseMtrx &answer, TimeStep *tStep,
@@ -488,27 +491,33 @@ REGISTER_BoundaryCondition( HardMagneticBoundaryCondition );
   Tensor1_3d HardMagneticBoundaryCondition :: giveActualMagnetization(const Tensor2_3d &F, const Tensor1_3d &M)
   {
     Tensor1_3d m;  
+    Tensor2_3d iF;
+    Tensor2_3d C, U, invU, R;
     auto J = F.compute_determinant();
-    if(pullBackType == 0) {
-      m(i_3) = 1./J * F(i_3, k_3) * M(k_3);
-    } else if(pullBackType == 1) {
-      Tensor2_3d C, U;
-      C(i_3,j_3) = F(k_3,i_3) * F(k_3,j_3);
-      //
-      U(k_3, l_3) = C.computeTensorPower(0.5)(k_3,l_3);
-      Tensor2_3d R;
-      auto invU = U.compute_inverse();
-      R(i_3,j_3) = F(i_3,k_3) * invU(k_3,j_3);
-      //
-      m(i_3) = 1./J * R(i_3, k_3) * M(k_3);
-    } else if(pullBackType == 2) { //theoretically wrong -MA
-      Tensor2_3d iF;
-      iF = F.compute_inverse();
-      m(i_3) = 1./J * iF(k_3, i_3) * M(k_3);
-    } else if(pullBackType == 3) {
-      Tensor2_3d iF;
-      iF = F.compute_inverse();
-      m(i_3) =  iF(k_3, i_3) * M(k_3);
+    switch ( this->pullBackType ) {
+    case MooneyRivlinHardMagnetic::PullBackType::PBT_F:
+        m( i_3 ) = 1. / J * F( i_3, k_3 ) * M( k_3 );
+        break;
+    case MooneyRivlinHardMagnetic::PullBackType::PBT_R:
+        C( i_3, j_3 ) = F( k_3, i_3 ) * F( k_3, j_3 );
+        //
+        U( k_3, l_3 ) = C.computeTensorPower( 0.5 )( k_3, l_3 );
+        invU     = U.compute_inverse();
+        R( i_3, j_3 ) = F( i_3, k_3 ) * invU( k_3, j_3 );
+        //
+        m( i_3 ) = 1. / J * R( i_3, k_3 ) * M( k_3 );
+        break;
+    case MooneyRivlinHardMagnetic::PullBackType::PBT_iFt: // theoretically wrong -MA
+        iF       = F.compute_inverse();
+        m( i_3 ) = 1. / J * iF( k_3, i_3 ) * M( k_3 );
+        break;
+    case MooneyRivlinHardMagnetic::PullBackType::PBT_iFtnoJ:
+        iF       = F.compute_inverse();
+        m( i_3 ) = iF( k_3, i_3 ) * M( k_3 );
+        break;
+    default:
+        OOFEM_ERROR( "Unknown pullback type." );
+        break;
     }
     
     return m;
