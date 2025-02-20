@@ -121,6 +121,7 @@ private:
 
   int giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep) override;
   Tensor2_3d computeU( const Tensor2_3d &F) const;
+  FloatMatrixF<9,9> compute_numerical_stiffness_mitR( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep) const;
 
 };
 } // end namespace oofem
