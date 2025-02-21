@@ -52,10 +52,15 @@
 
 namespace oofem {
 
-#define _IFT_MagnetoElasticElement_F1 "f1"
-#define _IFT_MagnetoElasticElement_F2 "f2"
-#define _IFT_MagnetoElasticElement_F3 "f3"
-#define _IFT_MagnetoElasticElement_F4 "f4"
+#define _IFT_MagnetoElasticElement_F1 "f01"
+#define _IFT_MagnetoElasticElement_F2 "f02"
+#define _IFT_MagnetoElasticElement_F3 "f03"
+#define _IFT_MagnetoElasticElement_F4 "f04"
+
+#define _IFT_MagnetoElasticElement_H1 "h01"
+#define _IFT_MagnetoElasticElement_H2 "h02"
+#define _IFT_MagnetoElasticElement_H3 "h03"
+#define _IFT_MagnetoElasticElement_H4 "h04"
 
 
 /**
@@ -71,6 +76,7 @@ class MagnetoElasticElement : public MPElement {
         virtual const Variable& getPhi() const = 0;
 
         FloatArrayF<9> F0_1, F0_2, F0_3, F0_4; //prestrain for each GP
+        FloatArrayF<3> H0_1, H0_2, H0_3, H0_4; //premagfield for each GP
 
     public:
     MagnetoElasticElement(int n, Domain* d): 
@@ -111,6 +117,34 @@ class MagnetoElasticElement : public MPElement {
         } else {
             F0_4 = FloatArrayF<9>( F4_temp );
         }
+
+        FloatArray H1_temp, H2_temp, H3_temp, H4_temp;
+
+        IR_GIVE_OPTIONAL_FIELD( ir, H1_temp, _IFT_MagnetoElasticElement_H1 );
+        IR_GIVE_OPTIONAL_FIELD( ir, H2_temp, _IFT_MagnetoElasticElement_H2 );
+        IR_GIVE_OPTIONAL_FIELD( ir, H3_temp, _IFT_MagnetoElasticElement_H3 );
+        IR_GIVE_OPTIONAL_FIELD( ir, H4_temp, _IFT_MagnetoElasticElement_H4 );
+
+        if ( H1_temp.giveSize() == 2 ) {
+          H0_1 = assemble<3>( FloatArrayF<2>( H1_temp ), { 0, 1} );
+        } else {
+          H0_1 = FloatArrayF<3>( H1_temp );
+        }
+        if ( H2_temp.giveSize() == 2 ) {
+          H0_2 = assemble<3>( FloatArrayF<2>( H2_temp ), { 0, 1 } );
+        } else {
+          H0_2 = FloatArrayF<3>( H2_temp );
+        }
+        if ( H3_temp.giveSize() == 2 ) {
+          H0_3 = assemble<3>( FloatArrayF<2>( H3_temp ), { 0, 1 } );
+        } else {
+          H0_3 = FloatArrayF<3>( H3_temp );
+        }
+        if ( H4_temp.giveSize() == 2 ) {
+          H0_4 = assemble<3>( FloatArrayF<2>( H4_temp ), { 0, 1 } );
+        } else {
+          H0_4 = FloatArrayF<3>( H4_temp );
+        }
         
 
     }
@@ -147,7 +181,6 @@ class MagnetoElasticElement : public MPElement {
 
     int giveIPValue(FloatArray& answer , GaussPoint* gp , InternalStateType type , TimeStep* tStep) override {
         if ( type == IST_PrestrainDeformationGradient ) {
-            answer.resize( 4 );
             switch ( gp->giveNumber() ) {
                 case 1:
                     answer = FloatArray( F0_1 );
@@ -165,7 +198,7 @@ class MagnetoElasticElement : public MPElement {
                     OOFEM_ERROR( "Prestrain requested for wrong GP number %i", gp->giveNumber() );
             }
         } else {
-            MPElement::giveIPValue( answer, gp, type, tStep );
+            return MPElement::giveIPValue( answer, gp, type, tStep );
         }
     }
 

@@ -116,6 +116,7 @@ HardMagneticMooneyRivlinCompressibleMaterial ::giveConstitutiveMatrices_dPdF_dBd
   FloatArrayF<9> vF0( vF0_temp );
   Tensor2_3d F0( vF0 );
   F( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
+  //F = Fcurrent;
   //
   auto [J, G] = F.compute_determinant_and_cofactor();
   auto Fcross = F.compute_tensor_cross_product();
