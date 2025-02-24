@@ -62,28 +62,31 @@ HardMagneticMooneyRivlinCompressibleMaterial ::give_FirstPKStressVector_Magnetic
   Tensor2_3d F0( vF0 );
 
   MagnetoElasticMaterialStatus *status = static_cast<MagnetoElasticMaterialStatus *>( this->giveStatus( gp ) );
-  Tensor1_3d H( vH ), Q, B;
-  Tensor2_3d Fcurrent( vF ), F, P;
+  Tensor1_3d H( vH ), Q, B, B_interm;
+  Tensor2_3d Fcurrent( vF ), F, P, P_full;
   F( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
 
   // Q = (H+M)
   double m_level = this->giveDomain()->giveFunction( m_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
-  Q( i_3 ) = H( i_3 ) + m_level * M( i_3 );
+  Q( i_3 ) = H( i_3 ) + m_level * F0.compute_inverse()(j_3, i_3) * M( j_3 );
   // compute the first Piola-Kirchhoff
   auto [J, cofF] = F.compute_determinant_and_cofactor();
+  auto [Jc, cofFc] = Fcurrent.compute_determinant_and_cofactor();
   //
-  P( i_3, j_3 ) = C1 * this->compute_dI1_Cdev_dF( F )( i_3, j_3 ) + C2 * this->compute_dI2_Cdev_dF( F )( i_3, j_3 ) + this->compute_dVolumetricEnergy_dF( F )( i_3, j_3 )
+  P_full( i_3, j_3 ) = C1 * this->compute_dI1_Cdev_dF( F )( i_3, j_3 ) + C2 * this->compute_dI2_Cdev_dF( F )( i_3, j_3 ) + this->compute_dVolumetricEnergy_dF( F )( i_3, j_3 )
       - ( mu_0 / J ) * F.compute_tensor_cross_product()( i_3, j_3, m_3, n_3 ) * ( cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ) )
       + ( mu_0 / ( 2 * J * J ) ) * cofF( m_3, n_3 ) * Q( n_3 ) * cofF( m_3, k_3 ) * Q( k_3 ) * cofF( i_3, j_3 );
   //
-  B( i_3 ) = mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 ) * Q( k_3 );
+  B_interm( i_3 ) = mu_0 / Jc * cofFc( j_3, i_3 ) * cofFc( j_3, k_3 ) * Q( k_3 );
   // prestrain correction
-  P( i_3, j_3 ) = P( i_3, k_3 ) * F0( j_3, k_3 );
+  double J0 = F0.compute_determinant();
+  P( i_3, j_3 ) = 1./J0 * P( i_3, k_3 ) * F0( j_3, k_3 );
+  B( i_3 ) = B_interm( i_3 );
   //
   auto vP = P.to_voigt_form();
   auto vB = B.to_voigt_form();
   // update gp
-  status->letTempFVectorBe( vF );
+  status->letTempFVectorBe( F.to_voigt_form() );
   status->letTempPVectorBe( vP );
   status->letTempHVectorBe( vH );
   status->letTempBVectorBe( vB );
@@ -115,10 +118,11 @@ HardMagneticMooneyRivlinCompressibleMaterial ::giveConstitutiveMatrices_dPdF_dBd
   gp->giveElement()->giveIPValue( vF0_temp, gp, IST_PrestrainDeformationGradient, tStep );
   FloatArrayF<9> vF0( vF0_temp );
   Tensor2_3d F0( vF0 );
-  F( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
-  //F = Fcurrent;
+  //F( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
+  F = Fcurrent;
   //
   auto [J, G] = F.compute_determinant_and_cofactor();
+  auto [Jc, cofFc] = Fcurrent.compute_determinant_and_cofactor();
   auto Fcross = F.compute_tensor_cross_product();
   //
   // Q = (H+M)
@@ -127,11 +131,11 @@ HardMagneticMooneyRivlinCompressibleMaterial ::giveConstitutiveMatrices_dPdF_dBd
   GQQ( i_3, j_3 ) = G( i_3, k_3 ) * Q( k_3 ) * Q( j_3 );
   auto GQQcross = GQQ.compute_tensor_cross_product();
   //
-  Tensor4_3d dPdF;
-  Tensor3_3d dPdH;
-  Tensor3_3d dBdF;
-  Tensor2_3d dBdH;
-  dPdF( i_3, j_3, k_3, l_3 ) = C1 * this->compute_d2I1_Cdev_dF2( F )( i_3, j_3, k_3, l_3 )
+  Tensor4_3d dPdF, dPdF_full;
+  Tensor3_3d dPdH, dPdH_full;
+  Tensor3_3d dBdF, dBdF_full;
+  Tensor2_3d dBdH, dBdH_interm;
+  dPdF_full( i_3, j_3, k_3, l_3 ) = C1 * this->compute_d2I1_Cdev_dF2( F )( i_3, j_3, k_3, l_3 )
       + C2 * this->compute_d2I2_Cdev_dF2( F )( i_3, j_3, k_3, l_3 )
       + this->compute_d2VolumetricEnergy_dF2( F )( i_3, j_3, k_3, l_3 )
       - mu_0 / J * ( GQQcross( i_3, j_3, k_3, l_3 ) + ( Fcross( i_3, j_3, m_3, n_3 ) * Q( n_3 ) ) * ( Fcross( m_3, q_3, k_3, l_3 ) * Q( q_3 ) ) )
@@ -140,17 +144,19 @@ HardMagneticMooneyRivlinCompressibleMaterial ::giveConstitutiveMatrices_dPdF_dBd
       - ( mu_0 / ( J * J * J ) ) * ( G( m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) * Q( k_3 ) * G( i_3, j_3 ) * G( k_3, l_3 ) )
       + ( mu_0 / ( J * J ) ) * G( i_3, j_3 ) * ( Fcross( k_3, l_3, m_3, n_3 ) * G( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ) );
   //
-  dBdH( i_3, k_3 ) = -mu_0 / J * G( j_3, i_3 ) * G( j_3, k_3 );
+  dBdH_interm( i_3, k_3 ) = -mu_0 / Jc * cofFc( j_3, i_3 ) * cofFc( j_3, k_3 );
   //
   //dBdF( i_3, k_3, l_3 ) = mu_0 / J * ( G( j_3, m_3 ) * Q( m_3 ) * Fcross( j_3, i_3, k_3, l_3 ) ) + G( j_3, i_3 ) * ( Q( m_3 ) * Fcross( j_3, m_3, k_3, l_3 ) ) - mu_0 / ( J * J ) * ( G( j_3, i_3 ) * G( j_3, m_3 ) * Q( m_3 ) * G( k_3, l_3 ) );
   //
-  dPdH( i_3, j_3, k_3 ) = mu_0 / J * ( Fcross( i_3, j_3, m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) + Fcross( i_3, j_3, m_3, k_3 ) * G( m_3, q_3 ) * Q( q_3 ) ) - mu_0 / J / J * ( G( m_3, k_3 ) * G( m_3, o_3 ) * Q( o_3 ) ) * G( i_3, j_3 );
+  dPdH_full( i_3, j_3, k_3 ) = mu_0 / J * ( Fcross( i_3, j_3, m_3, n_3 ) * Q( n_3 ) * G( m_3, k_3 ) + Fcross( i_3, j_3, m_3, k_3 ) * G( m_3, q_3 ) * Q( q_3 ) ) - mu_0 / J / J * ( G( m_3, k_3 ) * G( m_3, o_3 ) * Q( o_3 ) ) * G( i_3, j_3 );
   //
-  dBdF( l_3, i_3, k_3 ) = dPdH( i_3, k_3, l_3 );
+  dBdF_full( l_3, i_3, k_3 ) = dPdH_full( i_3, k_3, l_3 );
   // prestrain corrections
-  dPdF( i_3, j_3, k_3, l_3 ) = F0( j_3, p_3 ) * dPdF( i_3, p_3, k_3, q_3 ) * F0(l_3, q_3);
-  dBdF( i_3, k_3, l_3 ) = dBdF( i_3, k_3, p_3 ) * F0( l_3, p_3 );
-  dPdH( i_3, j_3, k_3 ) = F0( j_3, p_3 ) * dPdH( i_3, p_3, k_3 );
+  double J0 = F0.compute_determinant();
+  dPdF( i_3, j_3, k_3, l_3 ) = (1./J0) * F0( j_3, p_3 ) * dPdF_full( i_3, p_3, k_3, q_3 ) * F0(l_3, q_3);
+  dBdF( i_3, j_3, k_3 ) = ( 1. / J0 ) * dBdF_full( i_3, m_3, p_3 ) * F0(j_3, m_3) * F0 (k_3, p_3);
+  dPdH( i_3, k_3, l_3 ) = dBdF( l_3, i_3, k_3 );
+  dBdH( i_3, k_3 ) = dBdH_interm( i_3, k_3 );
   //
   return std::make_tuple( dPdF.to_voigt_form(), dPdH.to_voigt_form_9x3(), dBdF.to_voigt_form_3x9(), dBdH.to_matrix_form() );
 
