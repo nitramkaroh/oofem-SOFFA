@@ -38,6 +38,10 @@
 #include "sm/Materials/HyperelasticMaterials/mooneyrivlincompressiblematerial.h"
 #include "sm/Materials/HyperelasticMaterials/basehyperelasticmaterial.h"
 #include "magnetoelasticmaterial.h"
+#include "tensor/tensor1.h"
+#include "tensor/tensor2.h"
+#include "tensor/tensor3.h"
+#include "tensor/tensor4.h"
 
 
 ///@name Input fields for MooneyRivlinMaterial
@@ -81,8 +85,12 @@ public:
 
   std::tuple<FloatMatrixF< 9, 9 >, FloatMatrixF< 9, 3 >, FloatMatrixF< 3, 9 >, FloatMatrixF< 3, 3 > >  giveConstitutiveMatrices_dPdF_dBdH_dPdH_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override;
   std::tuple<FloatMatrixF< 5, 5 >, FloatMatrixF< 5, 2 >, FloatMatrixF< 2, 5 >,FloatMatrixF< 2, 2 >> giveConstitutiveMatrices_dPdF_dBdH_dPdH_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override;
+  
+  std::tuple<Tensor2_3d, Tensor1_3d> computeFirstPKStressMagneticInductionTensors_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M ) const;
+  std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> computeStiffnessTensors_dPdF_dBdH_dPdH_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M ) const;
   //
   std::tuple<FloatMatrixF< 9, 9 >, FloatMatrixF< 9, 3 >, FloatMatrixF< 3, 9 >, FloatMatrixF< 3, 3 >> compute_stiff_num(const FloatArray &vF, const FloatArray &vH, GaussPoint *gp, TimeStep *tStep);
+
   //
     MaterialStatus *CreateStatus(GaussPoint *gp) const override;
 
