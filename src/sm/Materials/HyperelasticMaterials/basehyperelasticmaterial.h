@@ -357,5 +357,45 @@ public:
      * @return the second derivative of the volumetric energy (fourth-order tensor)
      **/
     Tensor4_3d compute_d2VolumetricEnergy_dF2(const Tensor2_3d &F) const;
+
+    /**
+     * Compute the stretch tensor U from the deformation gradient F
+     * @param Deformation gradient (second-order tensor in 3d)
+     * @return Stretch tensor (second-order tensor in 3d)
+     **/
+    inline Tensor2_3d compute_U_from_F( const Tensor2_3d &F ) const
+    {
+        Tensor2_3d C;
+        C( i_3, j_3 ) = F( k_3, i_3 ) * F( k_3, j_3 );
+
+        FloatMatrixF<3, 3> mC;
+        mC = C.to_matrix_form();
+        //
+        FloatArray eVals;
+        FloatMatrix eVecs, mmC( mC );
+        mmC.jaco_( eVals, eVecs, 15 );
+        //
+        FloatMatrixF<3, 3> mU;
+        for ( int i = 1; i <= 3; i++ ) {
+            for ( int j = 1; j <= 3; j++ ) {
+                mU.at( i, j ) = sqrt( eVals.at( 1 ) ) * eVecs.at( i, 1 ) * eVecs.at( j, 1 ) + sqrt( eVals.at( 2 ) ) * eVecs.at( i, 2 ) * eVecs.at( j, 2 ) + sqrt( eVals.at( 3 ) ) * eVecs.at( i, 3 ) * eVecs.at( j, 3 );
+            }
+        }
+        Tensor2_3d U( mU );
+        return U;
+    }
+
+    /**
+     * Compute the rotation tensor R from the deformation gradient F
+     * @param Deformation gradient (second-order tensor in 3d)
+     * @return Rotation tensor (second-order tensor in 3d)
+     **/
+    inline Tensor2_3d compute_R_from_F( const Tensor2_3d &F ) const
+    {
+        Tensor2_3d U, R;
+        U = this->compute_U_from_F(F);
+        R( i_3, j_3 ) = F( i_3, k_3 ) * U.compute_inverse()( k_3, j_3 );
+        return R;
+    }
 };
 } // end namespace oofem

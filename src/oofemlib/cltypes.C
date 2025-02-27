@@ -122,6 +122,8 @@ InternalStateValueType giveInternalStateValueType(InternalStateType type)
     case IST_FirstPKStressTensor:
     case IST_MacroSlipGradient:
     case IST_ReinfMembraneStress:
+    case IST_RotationTensor:
+    case IST_StretchTensor:
     //case IST_MaterialOrientation:
         return ISVT_TENSOR_G;
 

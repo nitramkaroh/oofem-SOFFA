@@ -221,7 +221,7 @@ FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_mit( cons
     P_me( k_3, l_3 ) = -1.0 * b( k_3 ) * M( l_3 );
     break;
   case PBT_R:
-    U = this->computeU( F );
+    U = this->compute_U_from_F( F );
     Y( i_3, j_3 ) = U( k_3, l_3 ) * delta( k_3, l_3 ) * delta( i_3, j_3 ) - U( i_3, j_3 );
 
     dY = Y.compute_determinant();
@@ -333,27 +333,27 @@ int MooneyRivlinHardMagnetic::giveIPValue( FloatArray &answer, GaussPoint *gp, I
   }
 }
 
-Tensor2_3d MooneyRivlinHardMagnetic::computeU( const Tensor2_3d &F ) const
-{
-  Tensor2_3d C;
-  C( i_3, j_3 ) = F( k_3, i_3 ) * F( k_3, j_3 );
-
-  FloatMatrixF<3, 3> mC;
-  mC = C.to_matrix_form();
-  //
-  FloatArray eVals;
-  FloatMatrix eVecs, mmC( mC );
-  mmC.jaco_( eVals, eVecs, 15 );
-  //
-  FloatMatrixF<3, 3> mU;
-  for ( int i = 1; i <= 3; i++ ) {
-    for ( int j = 1; j <= 3; j++ ) {
-      mU.at( i, j ) = sqrt( eVals.at( 1 ) ) * eVecs.at( i, 1 ) * eVecs.at( j, 1 ) + sqrt( eVals.at( 2 ) ) * eVecs.at( i, 2 ) * eVecs.at( j, 2 ) + sqrt( eVals.at( 3 ) ) * eVecs.at( i, 3 ) * eVecs.at( j, 3 );
-    }
-  }
-  Tensor2_3d U( mU );
-  return U;
-}
+//Tensor2_3d MooneyRivlinHardMagnetic::computeU( const Tensor2_3d &F ) const
+//{
+//  Tensor2_3d C;
+//  C( i_3, j_3 ) = F( k_3, i_3 ) * F( k_3, j_3 );
+//
+//  FloatMatrixF<3, 3> mC;
+//  mC = C.to_matrix_form();
+//  //
+//  FloatArray eVals;
+//  FloatMatrix eVecs, mmC( mC );
+//  mmC.jaco_( eVals, eVecs, 15 );
+//  //
+//  FloatMatrixF<3, 3> mU;
+//  for ( int i = 1; i <= 3; i++ ) {
+//    for ( int j = 1; j <= 3; j++ ) {
+//      mU.at( i, j ) = sqrt( eVals.at( 1 ) ) * eVecs.at( i, 1 ) * eVecs.at( j, 1 ) + sqrt( eVals.at( 2 ) ) * eVecs.at( i, 2 ) * eVecs.at( j, 2 ) + sqrt( eVals.at( 3 ) ) * eVecs.at( i, 3 ) * eVecs.at( j, 3 );
+//    }
+//  }
+//  Tensor2_3d U( mU );
+//  return U;
+//}
 
 FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::compute_numerical_stiffness_mitR( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
 {

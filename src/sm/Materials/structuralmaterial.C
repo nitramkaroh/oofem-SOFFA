@@ -47,6 +47,7 @@
 #include "engngm.h"
 #include "fieldmanager.h"
 #include "dynamicinputrecord.h"
+#include "sm/Materials/HyperelasticMaterials/basehyperelasticmaterial.h"
 
 namespace oofem {
 std::array< std::array< int, 3 >, 3 >StructuralMaterial::vIindex = {
@@ -2126,6 +2127,20 @@ StructuralMaterial::giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStat
         return 1;
     } else if ( type == IST_DeformationGradientTensor ) {
         answer = status->giveFVector();
+        return 1;
+    } else if ( type == IST_RotationTensor ) {
+        BaseHyperElasticMaterial *bhmat = dynamic_cast < BaseHyperElasticMaterial *> (this);
+        if (bhmat == nullptr){
+          OOFEM_ERROR("Cannot export rotation tensor.");
+        }
+        answer = bhmat->compute_R_from_F( Tensor2_3d( FloatArrayF<9>( status->giveFVector() ) ) ).to_voigt_form();
+        return 1;
+    } else if ( type == IST_StretchTensor ) {
+        BaseHyperElasticMaterial *bhmat = dynamic_cast<BaseHyperElasticMaterial *>( this );
+        if ( bhmat == nullptr ) {
+            OOFEM_ERROR( "Cannot export stretch tensor." );
+        }
+        answer = bhmat->compute_U_from_F( Tensor2_3d( FloatArrayF<9>( status->giveFVector() ) ) ).to_voigt_form();
         return 1;
     } else if ( type == IST_FirstPKStressTensor ) {
         answer = status->givePVector();
