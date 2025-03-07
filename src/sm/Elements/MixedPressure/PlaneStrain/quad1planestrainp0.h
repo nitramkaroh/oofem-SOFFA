@@ -32,30 +32,33 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef quad1planestrainp1_h
-#define quad1planestrainp1_h
+#ifndef quad1planestrainp0_h
+#define quad1planestrainp0_h
 
 #include "../sm/Elements/PlaneStrain/quad1planestrain.h"
 #include "../sm/Elements/MixedPressure/basemixedpressureelement.h"
 
 
-#define _IFT_Quad1PlaneStrainP1_Name "quad1planestrainp1"
+#define _IFT_Quad1PlaneStrainP0_Name "quad1planestrainp0"
 
 namespace oofem {
-class Quad1PlaneStrainP1 : public Quad1PlaneStrain, public BaseMixedPressureElement
+class ElementDofManager;
+class Quad1PlaneStrainP0 : public Quad1PlaneStrain, public BaseMixedPressureElement
 {
 protected:
+    /// The extra dofs from the bubble
+    std :: unique_ptr< ElementDofManager > internalDof;
 
 public:
-    Quad1PlaneStrainP1(int n, Domain *d);
-    virtual ~Quad1PlaneStrainP1() { }
+    Quad1PlaneStrainP0(int n, Domain *d);
+    virtual ~Quad1PlaneStrainP0() { }
 
 protected:
     void computePressureNMatrixAt(GaussPoint *gp, FloatArray &Np) override;
     NLStructuralElement *giveElement() override { return this; }
 
 public:
-    const char *giveInputRecordName() const override { return _IFT_Quad1PlaneStrainP1_Name; }
+    const char *giveInputRecordName() const override { return _IFT_Quad1PlaneStrainP0_Name; }
     const char *giveClassName() const override { return "Quad1PlaneStrainP0"; }
 
     void giveDofManDofIDMask(int inode, IntArray &answer) const override;
@@ -65,10 +68,15 @@ public:
     void computeStiffnessMatrix(FloatMatrix &answer, MatResponseMode mode, TimeStep *tStep) override { BaseMixedPressureElement :: computeStiffnessMatrix(answer, mode, tStep); }
     void giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord) override { BaseMixedPressureElement :: giveInternalForcesVector(answer, tStep, useUpdatedGpRecord); }
 
-
-    int giveNumberOfPressureDofs() override { return 4; }
+    ///////////
+    void giveInternalDofManDofIDMask(int inode, IntArray &answer) const override;
+    int giveNumberOfInternalDofManagers() const override { return 1; }
+    DofManager *giveInternalDofManager(int i) const override;
+    //////
+  
+    int giveNumberOfPressureDofs() override { return 1; }
     int giveNumberOfDisplacementDofs() override { return 8; }
-    int giveNumberOfDofs() override { return 12; }
+    int giveNumberOfDofs() override { return 9; }
     void postInitialize() override;
 };
 } // end namespace oofem

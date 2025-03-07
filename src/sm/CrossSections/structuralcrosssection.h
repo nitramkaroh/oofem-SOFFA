@@ -354,7 +354,7 @@ public:
 
     ///@todo This shouldn't  be optional
     Material *giveMaterial(IntegrationPoint *ip) const override { OOFEM_ERROR("Missing implementation"); return nullptr; }
-    virtual Interface *giveMaterialInterface(InterfaceType t, IntegrationPoint *ip) { return nullptr; }
+    virtual Interface *giveMaterialInterface(InterfaceType t, IntegrationPoint *ip) const { return nullptr; }
 
     virtual void createMaterialStatus(GaussPoint &iGP) = 0;
 

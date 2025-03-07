@@ -61,8 +61,6 @@ protected:
 
     /// Pure virtual functions
     virtual NLStructuralElement *giveElement() = 0;
-    virtual void computeVolumetricBmatrixAt(GaussPoint *gp, FloatArray &Bvol, NLStructuralElement *element) = 0;
-
     virtual void computePressureNMatrixAt(GaussPoint *, FloatArray &) = 0;
 
     virtual int giveNumberOfPressureDofs() = 0;
@@ -74,29 +72,31 @@ protected:
     /// End of pure virtual functions
 
 
+  //
+  void computeStiffnessMatrix(FloatMatrix &answer, MatResponseMode rMode, TimeStep *tStep);
+  void computeSmallStrainMaterialStiffnessMatrix(FloatMatrix &Kuu, FloatArray &Kup, double &K, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep);
+  void computeLargeStrainMaterialStiffnessMatrix(FloatMatrix &Kuu, FloatArray &Kup, double &K, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep);
 
-    virtual void computeStiffnessMatrix(FloatMatrix &, MatResponseMode, TimeStep *);
-    void computeStiffnessMatrix_uu(FloatMatrix &, MatResponseMode, TimeStep *);
-    void computeStiffnessMatrix_up(FloatMatrix &, MatResponseMode, TimeStep *);
-    void computeStiffnessMatrix_pp(FloatMatrix &, MatResponseMode, TimeStep *);
-
-
-
-
-    void computeStressVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep);
+  
+    virtual void computeStressVector(FloatArray &answer, double &volumeChange, GaussPoint *gp, TimeStep *tStep);
+    //
     void computeStrainVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep);
     void computePressure(double &answer,  GaussPoint *gp, TimeStep *tStep);
+  //
+  void computeSmallStrainStressVector(FloatArray &answer, double &volChange, const FloatArray &strain, double p, GaussPoint *gp, TimeStep *tStep);
+  
+  void computeLargeStrainStressVector(FloatArray &answer, double &volChange, const FloatArray &F, double p, GaussPoint *gp, TimeStep *tStep);
 
 
-    void giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord);
-    void giveInternalForcesVector_u(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord);
-    void giveInternalForcesVector_p(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord);
 
+  
+  void giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord);
+  // 
     void computeForceLoadVector(FloatArray &answer, TimeStep *tStep, ValueModeType mode);
     void computeLocForceLoadVector(FloatArray &answer, TimeStep *tStep, ValueModeType mode);
-
+  //
     virtual IntArray &giveDisplacementDofsOrdering() { return displacementDofsOrdering; }
-    virtual IntArray &giveMicromorphicDofsOrdering() { return pressureDofsOrdering; }
+    virtual IntArray &givePressureDofsOrdering() { return pressureDofsOrdering; }
     // void giveLocationArrayOfDofIDs( IntArray &answer, const UnknownNumberingScheme &s, const IntArray &dofIdArray );
     void giveLocationArrayOfDofIDs(IntArray &locationArray_u, IntArray &locationArray_p, const UnknownNumberingScheme &s, const IntArray &dofIdArray_u, const IntArray &dofIdArray_p);
     virtual void postInitialize();

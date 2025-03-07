@@ -38,7 +38,8 @@
 #include "../sm/Materials/MixedPressure/mixedpressurematerialextensioninterface.h"
 
 
-#include "../sm/CrossSections/structuralcrosssection.h"
+#include "../sm/CrossSections/simplemixedupcrosssection.h"
+
 #include "../sm/Materials/structuralms.h"
 
 #include "material.h"
@@ -77,51 +78,70 @@ BaseMixedPressureElement :: giveLocationArrayOfDofIDs(IntArray &locationArray_u,
             if ( dMan->hasDofID( ( DofIDItem ) dofIdArray_u.at(j) ) ) {
                 //  Dof *d = dMan->giveDofWithID( dofIdArray_u.at( j ) );
                 locationArray_u.followedBy(k + itt);
+		itt++;
             }
-            itt++;
+
         }
         for ( int j = 1; j <= dofIdArray_p.giveSize(); j++ ) {
             if ( dMan->hasDofID( ( DofIDItem ) dofIdArray_p.at(j) ) ) {
                 //Dof *d = dMan->giveDofWithID( dofIdArray_m.at( j ) );
                 locationArray_p.followedBy(k + itt);
+		itt++;
             }
-            itt++;
+
         }
         k += dMan->giveNumberOfDofs();
     }
+
+    for ( int i = 1; i <= el->giveNumberOfInternalDofManagers(); i++ ) {
+        DofManager *dMan = el->giveInternalDofManager(i);
+        int itt = 1;
+        for ( int j = 1; j <= dofIdArray_u.giveSize(); j++ ) {
+            if ( dMan->hasDofID( ( DofIDItem ) dofIdArray_u.at(j) ) ) {
+                //  Dof *d = dMan->giveDofWithID( dofIdArray_u.at( j ) );
+                locationArray_u.followedBy(k + itt);
+		itt++;
+            }
+
+        }
+        for ( int j = 1; j <= dofIdArray_p.giveSize(); j++ ) {
+            if ( dMan->hasDofID( ( DofIDItem ) dofIdArray_p.at(j) ) ) {
+                //Dof *d = dMan->giveDofWithID( dofIdArray_m.at( j ) );
+                locationArray_p.followedBy(k + itt);
+		itt++;
+            }
+
+        }
+        k += dMan->giveNumberOfDofs();
+    }
+    
 }
 
 
 void
-BaseMixedPressureElement :: computeStressVector(FloatArray &stress, GaussPoint *gp, TimeStep *tStep)
+BaseMixedPressureElement :: computeStressVector(FloatArray &stress, double &volumeChange , GaussPoint *gp, TimeStep *tStep)
 {
     NLStructuralElement *elem = this->giveElement();
-    StructuralCrossSection *cs = elem->giveStructuralCrossSection();
-
-    MixedPressureMaterialExtensionInterface *mixedPressureMat = static_cast< MixedPressureMaterialExtensionInterface * >( cs->giveMaterialInterface(MixedPressureMaterialExtensionInterfaceType, gp) );
-    if ( !mixedPressureMat ) {
-        OOFEM_ERROR("Material doesn't implement the required Micromorphic interface!");
-    }
-
     double pressure;
 
     if ( elem->giveGeometryMode() == 0 ) {
         FloatArray strain;
         this->computeStrainVector(strain, gp, tStep);
         this->computePressure(pressure, gp, tStep);
-        mixedPressureMat->giveRealStressVector(stress, gp, strain, pressure, tStep);
+        this->computeSmallStrainStressVector(stress, volumeChange, strain, pressure, gp, tStep);
     } else {
-        /*      FloatArray devF;
-         * elem->computeDeviatoricDeformationGradientVector(devF, gp, tStep);
-         * this->giveDofManDofIDMask_p( IdMask_p );
-         * this->computePressure(pressure,IdMask_p, gp, tStep);
-         * mixedPressureMat->giveFiniteStrainStressVectors(stress, gp, devF, pressure, tStep);
-         */
-        OOFEM_ERROR("Large-strain formulaton is not available yet")
+         FloatArray F;
+	 elem->computeDeformationGradientVector(F, gp, tStep);
+	 this->computePressure(pressure, gp, tStep);
+	 this->computeLargeStrainStressVector(stress, volumeChange,F, pressure, gp, tStep);
     }
 }
 
 
+
+
+
+  
 void
 BaseMixedPressureElement :: computeStrainVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep)
 {
@@ -149,85 +169,106 @@ BaseMixedPressureElement :: computePressure(double &answer, GaussPoint *gp, Time
 }
 
 
-
 void
-BaseMixedPressureElement :: giveInternalForcesVector_u(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord)
+BaseMixedPressureElement :: computeSmallStrainStressVector(FloatArray &answer, double &volChange, const FloatArray &strain, double p, GaussPoint *gp, TimeStep *tStep)
 {
-    NLStructuralElement *elem = this->giveElement();
-    StructuralCrossSection *cs = elem->giveStructuralCrossSection();
-    FloatArray BS, vStress, s, M;
-    FloatMatrix B;
-    for ( GaussPoint *gp : *elem->giveIntegrationRule(0) ) {
-        if ( useUpdatedGpRecord == 1 ) {
-            if ( this->giveElement()->giveGeometryMode() == 0 ) {
-                vStress = static_cast< StructuralMaterialStatus * >( gp->giveMaterialStatus() )->giveTempStressVector();
-            } else {
-                vStress = static_cast< StructuralMaterialStatus * >( gp->giveMaterialStatus() )->giveTempPVector();
-            }
-        } else {
-            this->computeStressVector(vStress, gp, tStep);
-        }
+  
+  SimpleMixedUPCrossSection *cs = static_cast<  SimpleMixedUPCrossSection * >( this->giveElement()->giveCrossSection());
+  if ( !cs ) {
+    OOFEM_ERROR("Wrong Corss-section!");
+  }
 
-        MixedPressureMaterialExtensionInterface *mixedPressureMat = dynamic_cast< MixedPressureMaterialExtensionInterface * >( cs->giveMaterialInterface(MixedPressureMaterialExtensionInterfaceType, gp) );
-        if ( !mixedPressureMat ) {
-            OOFEM_ERROR("Material doesn't implement the required Micromorphic interface!");
-        }
-        // Compute nodal internal forces at nodes as f = B^T*Stress dV
-        double dV  = elem->computeVolumeAround(gp);
-        elem->computeBmatrixAt(gp, B);
-        BS.beTProductOf(B, vStress);
-        answer.add(dV, BS);
-    }
+  std::tie(answer, volChange) = cs->giveRealStresses(strain, p, gp, tStep);
 }
 
 
 void
-BaseMixedPressureElement :: giveInternalForcesVector_p(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord)
+BaseMixedPressureElement :: computeLargeStrainStressVector(FloatArray &answer, double &volChange, const FloatArray &F, double p, GaussPoint *gp, TimeStep *tStep)
 {
-    double pressure, kappa, factor;
-    IntArray IdMask_u;
-    FloatArray N_p, Bvol, d_u;
-    NLStructuralElement *elem = this->giveElement();
-    StructuralCrossSection *cs = elem->giveStructuralCrossSection();
+  SimpleMixedUPCrossSection *cs = static_cast<  SimpleMixedUPCrossSection * >( this->giveElement()->giveCrossSection());
+  if ( !cs ) {
+    OOFEM_ERROR("Wrong Corss-section!");
+  }
 
-
-    for ( GaussPoint *gp : *elem->giveIntegrationRule(0) ) {
-        MixedPressureMaterialExtensionInterface *mixedPressureMat = dynamic_cast< MixedPressureMaterialExtensionInterface * >( cs->giveMaterialInterface(MixedPressureMaterialExtensionInterfaceType, gp) );
-        if ( !mixedPressureMat ) {
-            OOFEM_ERROR("Material doesn't implement the required Mixed pressure interface!");
-        }
-        // Compute nodal internal forces at nodes as f = B^T*Stress dV
-        double dV  = elem->computeVolumeAround(gp);
-        this->computePressure(pressure, gp, tStep);
-        //      this->computePressureNMatrixAt(gp, N_p);
-        this->computeVolumetricBmatrixAt(gp, Bvol, elem);
-        this->giveDofManDofIDMask_u(IdMask_u);
-        elem->computeVectorOf(IdMask_u, VM_Total, tStep, d_u);
-
-        double eps_V = Bvol.dotProduct(d_u);
-        mixedPressureMat->giveInverseOfBulkModulus(kappa, TangentStiffness, gp, tStep);
-        factor = eps_V + pressure * kappa;
-        answer.times(dV * factor);
-    }
+  std::tie(answer, volChange) = cs->giveFirstPKStresses(F, p, gp, tStep);
+  
 }
+
+
+
+
+void
+BaseMixedPressureElement :: computeSmallStrainMaterialStiffnessMatrix(FloatMatrix &Kuu, FloatArray &Kup, double &K, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep)
+{
+  
+  SimpleMixedUPCrossSection *cs = static_cast<  SimpleMixedUPCrossSection * >( this->giveElement()->giveCrossSection());
+  if ( !cs ) {
+    OOFEM_ERROR("Wrong Corss-section!");
+  }
+
+  cs->giveSmallStrainStiffnessMatrix(Kuu, Kup, K, rMode, gp, tStep);
+}
+
+
+void
+BaseMixedPressureElement :: computeLargeStrainMaterialStiffnessMatrix(FloatMatrix &Kuu, FloatArray &Kup, double &K, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep)
+{
+  SimpleMixedUPCrossSection *cs = static_cast<  SimpleMixedUPCrossSection * >( this->giveElement()->giveCrossSection());
+  if ( !cs ) {
+    OOFEM_ERROR("Wrong Corss-section!");
+  }
+  double pressure;
+  this->computePressure(pressure, gp, tStep);
+  cs->giveLargeStrainStiffnessMatrix(Kuu, Kup, K, pressure, rMode, gp, tStep);
+    
+}
+
+
+  
+
+  
 
 void
 BaseMixedPressureElement :: giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord)
 {
+    NLStructuralElement *elem = this->giveElement();
+    SimpleMixedUPCrossSection *cs = static_cast<  SimpleMixedUPCrossSection * >( elem->giveCrossSection());
+  if ( !cs ) {
+    OOFEM_ERROR("Wrong Corss-section!");
+  }
+    double volumeChange;
+    FloatArray BS, vStress, Np;
+    FloatMatrix B, Nv, mNp;
+    //
     answer.resize( this->giveNumberOfDofs() );
     answer.zero();
-
+    //
     FloatArray answer_u( this->giveNumberOfDisplacementDofs() );
     answer_u.zero();
     FloatArray answer_p( this->giveNumberOfPressureDofs() );
     answer_p.zero();
-
-
-    this->giveInternalForcesVector_u(answer_u, tStep, 0);
-    this->giveInternalForcesVector_p(answer_p, tStep, 0);
+    //
+    for ( GaussPoint *gp : *elem->giveIntegrationRule(0) ) {
+      this->computeStressVector(vStress, volumeChange, gp, tStep);
+      // Compute nodal internal forces at nodes as f = B^T*Stress dV
+      double dV  = elem->computeVolumeAround(gp);
+      //
+      if ( elem->giveGeometryMode() == 0 ) {
+ 	elem->computeBmatrixAt(gp, B);
+      } else {
+	elem->computeBHmatrixAt(gp, B);
+      }
+      BS.beTProductOf(B, vStress);
+      answer_u.add(dV, BS);
+      //
+      this->computePressureNMatrixAt(gp, Np);
+      answer_p.add(dV*volumeChange, Np);
+      
+    }
     answer.assemble(answer_u, locationArray_u);
-    answer.assemble(answer_p, locationArray_p);
+    answer.assemble(answer_p, locationArray_p);  
 }
+
 
 void
 BaseMixedPressureElement :: computeForceLoadVector(FloatArray &answer, TimeStep *tStep, ValueModeType mode)
@@ -266,6 +307,7 @@ BaseMixedPressureElement :: computeLocForceLoadVector(FloatArray &answer, TimeSt
 }
 
 
+  
 void
 BaseMixedPressureElement :: computeStiffnessMatrix(FloatMatrix &answer, MatResponseMode rMode, TimeStep *tStep)
 {
@@ -274,96 +316,42 @@ BaseMixedPressureElement :: computeStiffnessMatrix(FloatMatrix &answer, MatRespo
     answer.zero();
 
     FloatMatrix Kuu, Kup, Kpu, Kpp;
-    this->computeStiffnessMatrix_uu(Kuu, rMode, tStep);
-    this->computeStiffnessMatrix_up(Kup, rMode, tStep);
-    Kpu.beTranspositionOf(Kup);
-    this->computeStiffnessMatrix_pp(Kpp, rMode, tStep);
-
-    answer.assemble(Kuu, locationArray_u);
-    answer.assemble(Kup, locationArray_u, locationArray_p);
-    answer.assemble(Kpu, locationArray_p, locationArray_u);
-    answer.assemble(Kpp, locationArray_p);
-}
-
-
-void
-BaseMixedPressureElement :: computeStiffnessMatrix_uu(FloatMatrix &answer, MatResponseMode rMode, TimeStep *tStep)
-{
+    //
     NLStructuralElement *elem = this->giveElement();
-    StructuralCrossSection *cs = elem->giveStructuralCrossSection();
-    FloatMatrix B, D, DB;
-    bool matStiffSymmFlag = elem->giveCrossSection()->isCharacteristicMtrxSymmetric(rMode);
-    answer.clear();
+    double minusK;
+    FloatArray Np, Dup;
+    FloatMatrix Bu, DuuBu, DupNp, Duu;
+    FloatMatrix answer_uu, answer_up, answer_pu, answer_pp;
+    answer_uu.clear();
+    answer_up.clear();
+    answer_pu.clear();
+    answer_pp.clear();
     for ( GaussPoint *gp : *elem->giveIntegrationRule(0) ) {
-        MixedPressureMaterialExtensionInterface *mixedPressureMat = dynamic_cast< MixedPressureMaterialExtensionInterface * >(
-            cs->giveMaterialInterface(MixedPressureMaterialExtensionInterfaceType, gp) );
-        if ( !mixedPressureMat ) {
-            OOFEM_ERROR("Material doesn't implement the required Mixed Pressure Material interface!");
-        }
-
-
-        mixedPressureMat->giveDeviatoricConstitutiveMatrix(D, rMode, gp, tStep);
-        elem->computeBmatrixAt(gp, B);
-        double dV = elem->computeVolumeAround(gp);
-        DB.beProductOf(D, B);
-
-        if ( matStiffSymmFlag ) {
-            answer.plusProductSymmUpper(B, DB, dV);
-        } else {
-            answer.plusProductUnsym(B, DB, dV);
-        }
-    }
-
-    if ( matStiffSymmFlag ) {
-        answer.symmetrized();
-    }
+      if ( elem->giveGeometryMode() == 0 ) {
+	this->computeSmallStrainMaterialStiffnessMatrix(Duu, Dup, minusK, rMode, gp, tStep);
+	elem->computeBmatrixAt(gp, Bu);
+      } else {
+	this->computeLargeStrainMaterialStiffnessMatrix(Duu, Dup, minusK, rMode, gp, tStep);
+	elem->computeBHmatrixAt(gp, Bu);
+      }
+      double dV = elem->computeVolumeAround(gp);
+      DuuBu.beProductOf(Duu, Bu);
+      answer_uu.plusProductUnsym(Bu, DuuBu, dV);
+      //
+      this->computePressureNMatrixAt(gp, Np);
+      FloatMatrix mNp(Np, true);
+      DupNp.beProductOf(Dup, mNp);
+      answer_up.plusProductUnsym(Bu, DupNp, dV);
+      //
+      answer_pp.plusProductUnsym(mNp, mNp, dV / minusK);
+    }   
+    answer_pu.beTranspositionOf(answer_up);
+    //
+    answer.assemble(answer_uu, locationArray_u);
+    answer.assemble(answer_up, locationArray_u, locationArray_p);
+    answer.assemble(answer_pu, locationArray_p, locationArray_u);
+    answer.assemble(answer_pp, locationArray_p);
 }
-
-
-
-void
-BaseMixedPressureElement :: computeStiffnessMatrix_up(FloatMatrix &answer, MatResponseMode rMode, TimeStep *tStep)
-{
-    double dV;
-    FloatArray N_p, Bvol;
-    NLStructuralElement *elem = this->giveElement();
-
-    answer.clear();
-
-    for ( GaussPoint *gp : *elem->giveIntegrationRule(0) ) {
-        this->computeVolumetricBmatrixAt(gp, Bvol, elem);
-        this->computePressureNMatrixAt(gp, N_p);
-        FloatMatrix mNp(N_p, true);
-        FloatMatrix mBvol(Bvol, true);
-
-        dV = elem->computeVolumeAround(gp);
-        answer.plusProductUnsym(mBvol, mNp, -dV);
-    }
-}
-
-void
-BaseMixedPressureElement :: computeStiffnessMatrix_pp(FloatMatrix &answer, MatResponseMode rMode, TimeStep *tStep)
-{
-    NLStructuralElement *elem = this->giveElement();
-    double dV, kappa;
-    FloatArray N_p;
-    StructuralCrossSection *cs = elem->giveStructuralCrossSection();
-    answer.clear();
-
-    for ( GaussPoint *gp : *elem->giveIntegrationRule(0) ) {
-        MixedPressureMaterialExtensionInterface *mixedPressureMat = dynamic_cast< MixedPressureMaterialExtensionInterface * >( cs->giveMaterialInterface(MixedPressureMaterialExtensionInterfaceType, gp) );
-        if ( !mixedPressureMat ) {
-            OOFEM_ERROR("Material doesn't implement the required Mixed Pressure Material interface!");
-        }
-
-        mixedPressureMat->giveInverseOfBulkModulus(kappa, rMode, gp, tStep);
-        this->computePressureNMatrixAt(gp, N_p);
-        FloatMatrix mN_p(N_p, true);
-        dV = elem->computeVolumeAround(gp);
-        answer.plusProductUnsym(mN_p, mN_p, -dV * kappa);
-    }
-}
-
 
 
 void

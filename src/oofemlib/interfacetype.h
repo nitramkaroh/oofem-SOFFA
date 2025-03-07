@@ -83,7 +83,8 @@ enum InterfaceType {
 
     QCMaterialExtensionInterfaceType,
 
-    MixedPressureMaterialExtensionInterfaceType
+    SmallStrainMixedPressureMaterialExtensionInterfaceType,
+    LargeStrainMixedPressureMaterialExtensionInterfaceType
 };
 } // end namespace oofem
 #endif // interfacetype_h

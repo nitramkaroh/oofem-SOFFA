@@ -46,12 +46,12 @@ namespace oofem {
 REGISTER_Material(IsotropicLinearElasticMaterial);
 
 IsotropicLinearElasticMaterial :: IsotropicLinearElasticMaterial(int n, Domain *d) :
-    LinearElasticMaterial(n, d), MixedPressureMaterialExtensionInterface(d)
+  LinearElasticMaterial(n, d)//, SmallStrainMixedPressureMaterialExtensionInterface(d)
 { }
 
 IsotropicLinearElasticMaterial :: IsotropicLinearElasticMaterial(int n, Domain *d,
                                                                  double _E, double _nu) :
-    LinearElasticMaterial(n, d), MixedPressureMaterialExtensionInterface(d),
+  LinearElasticMaterial(n, d), //SmallStrainMixedPressureMaterialExtensionInterface(d),
     E(_E),
     nu(_nu),
     G( E / ( 2.0 * ( 1. + nu ) ) ),
@@ -205,57 +205,55 @@ IsotropicLinearElasticMaterial :: give1dStressStiffMtrx(MatResponseMode mode,
 
 
 
+/*
 
 
-
-
-void
-IsotropicLinearElasticMaterial :: giveDeviatoric3dMaterialStiffnessMatrix(FloatMatrix &answer,
-                                                                          MatResponseMode mode,
-                                                                          GaussPoint *gp,
-                                                                          TimeStep *tStep)
-//
-// forceElasticResponse ignored - always elastic
-//
+std::tuple<FloatMatrixF<6,6>, FloatArrayF<6>, double>
+IsotropicLinearElasticMaterial ::giveSmallStrainMixedPressureConstitutiveMatrices_3d(MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep)
 {
-    double mu = this->E / 2 / ( 1. + this->nu );
 
+  FloatMatrixF<6,6> Ddev;
+    double mu = this->E / 2. / ( 1. + this->nu );
+    double  K = this->E / 3. / ( 1. - 2. * this->nu );
+    Ddev.at(1, 1) = Ddev.at(2, 2) = Ddev.at(3, 3) = 4. / 3.;
+    Ddev.at(1, 2) = Ddev.at(1, 3) = -2. / 3.;
+    Ddev.at(2, 1) = Ddev.at(2, 3) = -2. / 3.;
+    Ddev.at(3, 1) = Ddev.at(3, 2) = -2. / 3.;
+    //
+    Ddev.at(4, 4) = Ddev.at(5, 5) = Ddev.at(6, 6) = 1.0;
+    //
+    Ddev *= mu;
+    //
+    FloatArrayF<6> delta;
+    delta.at(1) = delta.at(2) = delta.at(3) = 1.;
+    return std::make_tuple(Ddev, delta, K);
 
-    answer.resize(6, 6);
-    answer.zero();
+    
 
-    answer.at(1, 1) = answer.at(2, 2) = answer.at(3, 3) = 4. / 3.;
-    answer.at(1, 2) = answer.at(1, 3) = -2. / 3.;
-    answer.at(2, 1) = answer.at(2, 3) = -2. / 3.;
-    answer.at(3, 1) = answer.at(3, 2) = -2. / 3.;
-
-    answer.at(4, 4) = answer.at(5, 5) = answer.at(6, 6) = 1.0;
-
-    answer.times(mu);
 }
 
-
-void
-IsotropicLinearElasticMaterial :: giveDeviatoricPlaneStrainStiffMtrx(FloatMatrix &answer,
-                                                                     MatResponseMode mode,
-                                                                     GaussPoint *gp,
-                                                                     TimeStep *tStep)
+  
+std::tuple<FloatMatrixF<4,4>, FloatArrayF<4>, double>
+IsotropicLinearElasticMaterial ::giveSmallStrainMixedPressureConstitutiveMatrices_3d(MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep)
 {
-    answer.resize(4, 4);
 
-    double mu = this->E / 2 / ( 1. + this->nu );
 
-    answer.zero();
-    answer.at(1, 1) = answer.at(2, 2) = answer.at(3, 3) =  4. / 3.;
-    answer.at(1, 2) = answer.at(1, 3) = -2. / 3.;
-    answer.at(2, 1) = answer.at(2, 3) = -2. / 3.;
-    answer.at(3, 1) = answer.at(3, 2) = -2. / 3.;
-
-    answer.at(4, 4) = 1.0;
-
-    answer.times(mu);
+    FloatMatrixF<4,4> Ddev;
+    double mu = this->E / 2. / ( 1. + this->nu );
+    double  K = this->E / 3. / ( 1. - 2. * this->nu );
+    Ddev.at(1, 1) = answer.at(2, 2) = answer.at(3, 3) = 4. / 3.;
+    Ddev.at(1, 2) = answer.at(1, 3) = -2. / 3.;
+    Ddev.at(2, 1) = answer.at(2, 3) = -2. / 3.;
+    Ddev.at(3, 1) = answer.at(3, 2) = -2. / 3.;
+    //
+    Ddev.at(4, 4)  = 1.0;
+    //
+    Ddev *= mu;
+    //
+    FloatArrayF<4> delta;
+    delta.at(1) = delta.at(2) = delta.at(3) = 1.;
+    return std::make_tuple(Ddev, delta, K);
 }
-
 
 
 void
@@ -267,6 +265,7 @@ IsotropicLinearElasticMaterial :: giveRealStressVector_3d(FloatArray &answer, Ga
 
     this->giveStressDependentPartOfStrainVector(strainVector, gp, reducedStrain, tStep, VM_Total);
 
+    
     this->giveDeviatoric3dMaterialStiffnessMatrix(d, TangentStiffness, gp, tStep);
     answer.beProductOf(d, strainVector);
     answer.at(1) -= pressure;
@@ -280,24 +279,98 @@ IsotropicLinearElasticMaterial :: giveRealStressVector_3d(FloatArray &answer, Ga
 
 
 
-void
-IsotropicLinearElasticMaterial :: giveRealStressVector_PlaneStrain(FloatArray &answer, GaussPoint *gp, const FloatArray &reducedStrain, double pressure, TimeStep *tStep)
-{
+std::tuple<FloatArrayF<6>, double>
+IsotropicLinearElasticMaterial :: giveRealStressVector_3d(const FloatArrayF<6> &reducedStrain, double pressure, GaussPoint *gp, TimeStep *tStep)
+  {
+
+    FloatArrayF<6> sigma;
+    double epsV;
     FloatArray strainVector;
     FloatMatrix d;
     StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveStatus(gp) );
-
+  
+    
     this->giveStressDependentPartOfStrainVector(strainVector, gp, reducedStrain, tStep, VM_Total);
 
-    this->giveDeviatoricPlaneStrainStiffMtrx(d, TangentStiffness, gp, tStep);
-    answer.beProductOf(d, strainVector);
-    answer.at(1) -= pressure;
-    answer.at(2) -= pressure;
-    answer.at(3) -= pressure;
+    this->giveDeviatoric3dMaterialStiffnessMatrix(d, TangentStiffness, gp, tStep);
 
+    auto [Ddev, delta, K] = this->:giveSmallStrainMixedPressureConstitutiveMatrices_3d(TangentStiffness, gp, tStep);
 
+    epsV = strainVector.dotProduct(delta) + p/K;
+    
+    sigma.beProductOf(Ddev, strainVector);
+    sigma.at(1) -= pressure;
+    sigma.at(2) -= pressure;
+    sigma.at(3) -= pressure;
+
+    
     // update gp
     status->letTempStrainVectorBe(reducedStrain);
     status->letTempStressVectorBe(answer);
+    return std::make_tuple(sigma, epsV);
+    
+  }
+
+
+
+std::tuple<FloatArrayF<4>, double>
+IsotropicLinearElasticMaterial :: giveRealStressVector_3d(const FloatArrayF<4> &reducedStrain, double pressure, GaussPoint *gp, TimeStep *tStep)
+  {
+
+    FloatArrayF<6> sigma;
+    double epsV;
+    FloatArray strainVector;
+    FloatMatrix d;
+    StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveStatus(gp) );
+  
+    
+    this->giveStressDependentPartOfStrainVector(strainVector, gp, reducedStrain, tStep, VM_Total);
+    //
+    auto [Ddev, delta, K] = this->:giveSmallStrainMixedPressureConstitutiveMatrices_3d(TangentStiffness, gp, tStep);
+    //
+    sigma.beProductOf(Ddev, strainVector);
+    sigma.at(1) -= pressure;
+    sigma.at(2) -= pressure;
+    sigma.at(3) -= pressure;
+    //
+    epsV = strainVector.dotProduct(delta) + p/K;   
+    // update gp
+    status->letTempStrainVectorBe(reducedStrain);
+    status->letTempStressVectorBe(sigma);
+    //
+    return std::make_tuple(sigma, epsV);
+    
+  }
+
+
+void
+IsotropicLinearElasticMaterial :: giveRealStressVector_PlaneStrain(FloatArray &answer, GaussPoint *gp, const FloatArray &reducedStrain, double pressure, TimeStep *tStep)
+{
+  
+    FloatArrayF<4> sigma;
+    double epsV;
+    FloatArray strainVector;
+    FloatMatrix d;
+    StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveStatus(gp) );
+  
+    
+    this->giveStressDependentPartOfStrainVector(strainVector, gp, reducedStrain, tStep, VM_Total);
+    //
+    auto [Ddev, delta, K] = this->:giveSmallStrainMixedPressureConstitutiveMatrices_PlaneStrain(TangentStiffness, gp, tStep);
+    //
+    sigma.beProductOf(Ddev, strainVector);
+    sigma.at(1) -= pressure;
+    sigma.at(2) -= pressure;
+    sigma.at(3) -= pressure;
+    //
+    epsV = strainVector.dotProduct(delta) + p/K;   
+    // update gp
+    status->letTempStrainVectorBe(reducedStrain);
+    status->letTempStressVectorBe(sigma);
+    //
+    return std::make_tuple(sigma, epsV);
+    
 }
+*/
+
 } // end namespace oofem

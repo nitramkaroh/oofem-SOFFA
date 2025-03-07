@@ -175,7 +175,7 @@ protected:
     FloatMatrixF< 3, 3 >computeFAt(const FloatArrayF< 3 > &lCoords, FloatArray &genEps, TimeStep *tStep);
     FloatMatrixF< 3, 3 >computeStressMatrix(FloatArray &genEps, GaussPoint *gp, Material *mat, TimeStep *tStep);
 
-    virtual void computeCauchyStressVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep);
+    virtual void computeCauchyStressVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep) override;
 
     // Mass matrices
     void computeLumpedMassMatrix(FloatMatrix &answer, TimeStep *tStep) override;

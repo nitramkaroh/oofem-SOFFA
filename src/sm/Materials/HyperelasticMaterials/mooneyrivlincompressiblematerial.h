@@ -38,7 +38,7 @@
 #include "sm/Materials/structuralmaterial.h"
 #include "sm/Materials/structuralms.h"
 #include "basehyperelasticmaterial.h"
-
+#include "sm/Materials/MixedPressure/mixedpressurematerialextensioninterface.h"
 
 ///@name Input fields for MooneyRivlinMaterial
 //@{
@@ -68,7 +68,7 @@ namespace oofem {
  *
  * Compressible Neo-Hookean model is obtained by setting @f$C_2 = 0@f$
  */
-class MooneyRivlinCompressibleMaterial : public StructuralMaterial, public BaseHyperElasticMaterial
+  class MooneyRivlinCompressibleMaterial : public StructuralMaterial, public BaseHyperElasticMaterial, public LargeStrainMixedPressureMaterialExtensionInterface
 {
 protected:
     // Material parameters
@@ -94,6 +94,21 @@ public:
 
     const char *giveInputRecordName() const override { return _IFT_MooneyRivlinCompressibleMaterial_Name; }
     const char *giveClassName() const override { return "MooneyRivlinCompressibleMaterial"; }
+  ////////////////////////////////// Functions for Mixed Pressure formulation
+ 
+  std::tuple<FloatArrayF<9>, double> giveFirstPKStressVector_3d(const FloatArrayF<9> &F, double pressure, GaussPoint *gp, TimeStep *tStep) override;
+  std::tuple<FloatArrayF<5>, double> giveFirstPKStressVector_PlaneStrain(const FloatArrayF<5> &F, double pressure, GaussPoint *gp,TimeStep *tStep) override;
+  ///////////////////////////////////////////////////////////////////////
+  std::tuple<FloatMatrixF<9,9>, FloatArrayF<9>, double> giveLargeStrainMixedPressureConstitutiveMatrices_3d(double pressure, MatResponseMode, GaussPoint *gp, TimeStep *tStep) override;
+  std::tuple<FloatMatrixF<5,5>, FloatArrayF<5>, double> giveLargeStrainMixedPressureConstitutiveMatrices_PlaneStrain(double pressure, MatResponseMode, GaussPoint *gp, TimeStep *tStep) override; 
+
+  Interface *giveInterface(InterfaceType t) override {
+        if  ( t == LargeStrainMixedPressureMaterialExtensionInterfaceType ) {
+	  return static_cast< LargeStrainMixedPressureMaterialExtensionInterface * >( this );
+        } else {
+	  return nullptr;
+        }
+  }
 };
 } // end namespace oofem
 #endif

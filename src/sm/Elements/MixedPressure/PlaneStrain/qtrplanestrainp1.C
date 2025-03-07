@@ -62,18 +62,6 @@ QTrPlaneStrainP1 :: QTrPlaneStrainP1(int n, Domain *aDomain) : QTrPlaneStrain(n,
 
 
 void
-QTrPlaneStrainP1 :: computeVolumetricBmatrixAt(GaussPoint *gp, FloatArray &answer, NLStructuralElement *elem)
-{
-    answer.resize(12);
-    FloatMatrix dN;
-    elem->giveInterpolation()->evaldNdx( dN, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
-    for ( int j = 0, k = 0; j < 6; j++, k += 2 ) {
-        answer(k)     = dN(j, 0);
-        answer(k + 1) = dN(j, 1);
-    }
-}
-
-void
 QTrPlaneStrainP1 :: computePressureNMatrixAt(GaussPoint *gp, FloatArray &answer)
 {
     this->interpolation_lin.evalN( answer, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );

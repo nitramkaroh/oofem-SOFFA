@@ -32,7 +32,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "Elements/MixedPressure/PlaneStrain/quad1planestrainp1.h"
+#include "Elements/MixedPressure/3d/lspacep0.h"
 #include "node.h"
 #include "gausspoint.h"
 #include "gaussintegrationrule.h"
@@ -41,60 +41,81 @@
 #include "intarray.h"
 #include "crosssection.h"
 #include "classfactory.h"
+#include "elementinternaldofman.h"
+#include "masterdof.h"
 
 
 namespace oofem {
-REGISTER_Element(Quad1PlaneStrainP1);
+REGISTER_Element(LSpaceP0);
 
 
-Quad1PlaneStrainP1 :: Quad1PlaneStrainP1(int n, Domain *aDomain) : Quad1PlaneStrain(n, aDomain), BaseMixedPressureElement()
+
+  
+  
+LSpaceP0 :: LSpaceP0(int n, Domain *aDomain) : LSpace(n, aDomain), BaseMixedPressureElement()
 {
     displacementDofsOrdering = {
-        1, 2, 4, 5, 7, 8, 10, 11
+      1, 2, 3, 4, 5, 7, 8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
     };
     pressureDofsOrdering = {
-        3, 6, 9, 12
+      25
     };
+    ///
+    this->internalDof = std::make_unique<ElementDofManager>(1, aDomain, this);
+    this->internalDof->appendDof( new MasterDof(this->internalDof.get(), P_f) );
 }
 
 void
-Quad1PlaneStrainP1 :: computePressureNMatrixAt(GaussPoint *gp, FloatArray &answer)
+LSpaceP0 :: computePressureNMatrixAt(GaussPoint *gp, FloatArray &answer)
 {
-    NLStructuralElement *elem = this->giveElement();
-    elem->giveInterpolation()->evalN( answer, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
+  answer.resize(1);
+  answer.at(1) = 1.0;
 }
 
 
 void
-Quad1PlaneStrainP1 :: giveDofManDofIDMask(int inode, IntArray &answer) const
-{
-    answer = {
-        D_u, D_v, P_f
-    };
-}
-
-
-void
-Quad1PlaneStrainP1 :: giveDofManDofIDMask_u(IntArray &answer)
+LSpaceP0 :: giveDofManDofIDMask(int inode, IntArray &answer) const
 {
     answer = {
-        D_u, D_v
+        D_u, D_v, D_w
     };
 }
 
 
 void
-Quad1PlaneStrainP1 :: giveDofManDofIDMask_p(IntArray &answer)
+LSpaceP0 :: giveDofManDofIDMask_u(IntArray &answer)
+{
+    answer = {
+      D_u, D_v, D_w
+    };
+}
+
+
+void
+LSpaceP0 :: giveDofManDofIDMask_p(IntArray &answer)
 {
     answer = {
         P_f
     };
 }
 
+
+DofManager *LSpaceP0 :: giveInternalDofManager(int i) const
+{
+    return this->internalDof.get();
+}
+
+void LSpaceP0 :: giveInternalDofManDofIDMask(int i, IntArray &answer) const
+{
+    answer = {P_f};
+}
+
+  
+  
 void
-Quad1PlaneStrainP1 ::  postInitialize()
+LSpaceP0 ::  postInitialize()
 {
     BaseMixedPressureElement :: postInitialize();
-    Quad1PlaneStrain :: postInitialize();
+    LSpace :: postInitialize();
 }
 } // end namespace oofem

@@ -32,31 +32,36 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef quad1planestrainp1_h
-#define quad1planestrainp1_h
+#ifndef lspacep0_h
+#define lspacep0_h
 
-#include "../sm/Elements/PlaneStrain/quad1planestrain.h"
+#include "../sm/Elements/3D/lspace.h"
 #include "../sm/Elements/MixedPressure/basemixedpressureelement.h"
 
 
-#define _IFT_Quad1PlaneStrainP1_Name "quad1planestrainp1"
+#define _IFT_LSpaceP0_Name "lspacep0"
 
 namespace oofem {
-class Quad1PlaneStrainP1 : public Quad1PlaneStrain, public BaseMixedPressureElement
+class ElementDofManager;
+
+  
+class LSpaceP0 : public LSpace, public BaseMixedPressureElement
 {
 protected:
+    /// The extra dofs from the bubble
+    std :: unique_ptr< ElementDofManager > internalDof;
 
 public:
-    Quad1PlaneStrainP1(int n, Domain *d);
-    virtual ~Quad1PlaneStrainP1() { }
+    LSpaceP0(int n, Domain *d);
+    virtual ~LSpaceP0() { }
 
 protected:
     void computePressureNMatrixAt(GaussPoint *gp, FloatArray &Np) override;
     NLStructuralElement *giveElement() override { return this; }
 
 public:
-    const char *giveInputRecordName() const override { return _IFT_Quad1PlaneStrainP1_Name; }
-    const char *giveClassName() const override { return "Quad1PlaneStrainP0"; }
+    const char *giveInputRecordName() const override { return _IFT_LSpaceP0_Name; }
+    const char *giveClassName() const override { return "LSpaceP0"; }
 
     void giveDofManDofIDMask(int inode, IntArray &answer) const override;
     void giveDofManDofIDMask_u(IntArray &answer) override;
@@ -64,12 +69,15 @@ public:
 
     void computeStiffnessMatrix(FloatMatrix &answer, MatResponseMode mode, TimeStep *tStep) override { BaseMixedPressureElement :: computeStiffnessMatrix(answer, mode, tStep); }
     void giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord) override { BaseMixedPressureElement :: giveInternalForcesVector(answer, tStep, useUpdatedGpRecord); }
-
-
-    int giveNumberOfPressureDofs() override { return 4; }
-    int giveNumberOfDisplacementDofs() override { return 8; }
-    int giveNumberOfDofs() override { return 12; }
-    void postInitialize() override;
+  ///////////
+  void giveInternalDofManDofIDMask(int inode, IntArray &answer) const override;
+  int giveNumberOfInternalDofManagers() const override { return 1; }
+  DofManager *giveInternalDofManager(int i) const override;
+  //////
+  int giveNumberOfPressureDofs() override { return 1; }
+  int giveNumberOfDisplacementDofs() override { return 24; }
+  int giveNumberOfDofs() override { return 25; }
+  void postInitialize() override;
 };
 } // end namespace oofem
 #endif // quad1planestrainp1_h

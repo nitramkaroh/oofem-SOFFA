@@ -32,7 +32,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "Elements/MixedPressure/PlaneStrain/quad1planestrainp1.h"
+#include "Elements/MixedPressure/3d/qspaec.h"
 #include "node.h"
 #include "gausspoint.h"
 #include "gaussintegrationrule.h"
@@ -44,10 +44,10 @@
 
 
 namespace oofem {
-REGISTER_Element(Quad1PlaneStrainP1);
+REGISTER_Element(QSpaceP1);
 
 
-Quad1PlaneStrainP1 :: Quad1PlaneStrainP1(int n, Domain *aDomain) : Quad1PlaneStrain(n, aDomain), BaseMixedPressureElement()
+QSpaceP1 :: QSpaceP1(int n, Domain *aDomain) : QSpace(n, aDomain), BaseMixedPressureElement()
 {
     displacementDofsOrdering = {
         1, 2, 4, 5, 7, 8, 10, 11
@@ -58,7 +58,7 @@ Quad1PlaneStrainP1 :: Quad1PlaneStrainP1(int n, Domain *aDomain) : Quad1PlaneStr
 }
 
 void
-Quad1PlaneStrainP1 :: computePressureNMatrixAt(GaussPoint *gp, FloatArray &answer)
+QSpaceP1 :: computePressureNMatrixAt(GaussPoint *gp, FloatArray &answer)
 {
     NLStructuralElement *elem = this->giveElement();
     elem->giveInterpolation()->evalN( answer, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
@@ -66,7 +66,7 @@ Quad1PlaneStrainP1 :: computePressureNMatrixAt(GaussPoint *gp, FloatArray &answe
 
 
 void
-Quad1PlaneStrainP1 :: giveDofManDofIDMask(int inode, IntArray &answer) const
+QSpaceP1 :: giveDofManDofIDMask(int inode, IntArray &answer) const
 {
     answer = {
         D_u, D_v, P_f
@@ -75,7 +75,7 @@ Quad1PlaneStrainP1 :: giveDofManDofIDMask(int inode, IntArray &answer) const
 
 
 void
-Quad1PlaneStrainP1 :: giveDofManDofIDMask_u(IntArray &answer)
+QSpaceP1 :: giveDofManDofIDMask_u(IntArray &answer)
 {
     answer = {
         D_u, D_v
@@ -84,7 +84,7 @@ Quad1PlaneStrainP1 :: giveDofManDofIDMask_u(IntArray &answer)
 
 
 void
-Quad1PlaneStrainP1 :: giveDofManDofIDMask_p(IntArray &answer)
+QSpaceP1 :: giveDofManDofIDMask_p(IntArray &answer)
 {
     answer = {
         P_f
@@ -92,7 +92,7 @@ Quad1PlaneStrainP1 :: giveDofManDofIDMask_p(IntArray &answer)
 }
 
 void
-Quad1PlaneStrainP1 ::  postInitialize()
+QSpaceP1 ::  postInitialize()
 {
     BaseMixedPressureElement :: postInitialize();
     Quad1PlaneStrain :: postInitialize();

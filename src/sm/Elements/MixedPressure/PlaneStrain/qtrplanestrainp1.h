@@ -55,7 +55,6 @@ public:
 
 protected:
     void computePressureNMatrixAt(GaussPoint *, FloatArray &) override;
-    void computeVolumetricBmatrixAt(GaussPoint *gp, FloatArray &Bvol, NLStructuralElement *element) override;
     NLStructuralElement *giveElement() override { return this; }
 public:
     const char *giveClassName() const override { return "QTrPlaneStrainP1"; }
@@ -66,10 +65,10 @@ public:
     void giveDofManDofIDMask_u(IntArray &answer) override;
     void giveDofManDofIDMask_p(IntArray &answer) override;
 
-
+  
     void computeStiffnessMatrix(FloatMatrix &answer, MatResponseMode mode, TimeStep *tStep) override { BaseMixedPressureElement :: computeStiffnessMatrix(answer, mode, tStep); }
     void giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord) override { BaseMixedPressureElement :: giveInternalForcesVector(answer, tStep, useUpdatedGpRecord); }
-
+  
 
     int giveNumberOfPressureDofs() override { return 3; }
     int giveNumberOfDisplacementDofs() override { return 12; }

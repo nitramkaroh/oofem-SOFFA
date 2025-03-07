@@ -718,7 +718,7 @@ SimpleCrossSection::checkConsistency()
 
 
 Interface
-*SimpleCrossSection::giveMaterialInterface(InterfaceType t, IntegrationPoint *ip)
+*SimpleCrossSection::giveMaterialInterface(InterfaceType t, IntegrationPoint *ip) const
 {
     return this->giveMaterial(ip)->giveInterface(t);
 }

@@ -52,47 +52,50 @@ MixedPressureMaterialExtensionInterface :: MixedPressureMaterialExtensionInterfa
 }
 
 
-
-
-void
-MixedPressureMaterialExtensionInterface :: giveRealStressVector(FloatArray &answer, GaussPoint *gp, const FloatArray &reducedStrain, double pressure, TimeStep *tStep)
+SmallStrainMixedPressureMaterialExtensionInterface :: SmallStrainMixedPressureMaterialExtensionInterface(Domain *d)  : MixedPressureMaterialExtensionInterface(d)
 {
-    ///@todo Move this to StructuralCrossSection ?
-    MaterialMode mode = gp->giveMaterialMode();
-    if ( mode == _3dMat ) {
-        this->giveRealStressVector_3d(answer, gp, reducedStrain, pressure, tStep);
-    } else if ( mode == _PlaneStrain ) {
-        this->giveRealStressVector_PlaneStrain(answer, gp, reducedStrain, pressure, tStep);
-    } else {
-        OOFEM_ERROR("Unknown material mode for the mixed u-p formulation");
-    }
+} 
+
+  
+std::tuple<FloatMatrixF<4,4>, FloatArrayF<4>, double>
+SmallStrainMixedPressureMaterialExtensionInterface :: giveSmallStrainMixedPressureConstitutiveMatrices_PlaneStrain(MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep)
+{
+  OOFEM_ERROR("Not implemented");
+}
+
+std::tuple<FloatArrayF<4>, double>
+SmallStrainMixedPressureMaterialExtensionInterface :: giveRealStressVector_PlaneStrain(const FloatArrayF<4> &reducedStrain, double pressure, GaussPoint *gp, TimeStep *tStep)
+{
+  OOFEM_ERROR("Not implemented");
+
+}
+
+LargeStrainMixedPressureMaterialExtensionInterface :: LargeStrainMixedPressureMaterialExtensionInterface(Domain *d)  : MixedPressureMaterialExtensionInterface(d)
+{
+} 
+
+  
+
+std::tuple<FloatArrayF<5>, double>
+LargeStrainMixedPressureMaterialExtensionInterface :: giveFirstPKStressVector_PlaneStrain(const FloatArrayF<5> &F, double pressure, GaussPoint *gp, TimeStep *tStep)
+{
+  OOFEM_ERROR("Not implemented");
+}
+
+
+std::tuple<FloatMatrixF<5,5>, FloatArrayF<5>, double>
+LargeStrainMixedPressureMaterialExtensionInterface :: giveLargeStrainMixedPressureConstitutiveMatrices_PlaneStrain(double pressure, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep)
+{
+  OOFEM_ERROR("Not implemented");
 }
 
 
 
-void
-MixedPressureMaterialExtensionInterface ::  giveDeviatoricConstitutiveMatrix(FloatMatrix &answer, MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep)
-{
-    ///@todo Move this to StructuralCrossSection ?
-    MaterialMode mode = gp->giveMaterialMode();
-    if ( mode == _3dMat ) {
-        this->giveDeviatoric3dMaterialStiffnessMatrix(answer, rmode, gp, tStep);
-    } else if ( mode == _PlaneStrain ) {
-        this->giveDeviatoricPlaneStrainStiffMtrx(answer, rmode, gp, tStep);
-    } else {
-        OOFEM_ERROR("Unknown material mode for the mixed u-p formulation");
-    }
-}
+  
+  
 
+  
 
-
-
-void
-MixedPressureMaterialExtensionInterface :: giveRealStressVector_PlaneStrain(FloatArray &answer, GaussPoint *gp, const FloatArray &reducedStrain, double pressure, TimeStep *tStep)
-{
-    FloatArray vE, vS;
-    StructuralMaterial :: giveFullSymVectorForm(vE, reducedStrain, _PlaneStrain);
-    this->giveRealStressVector_3d(vS, gp, vE, pressure, tStep);
-    StructuralMaterial :: giveReducedSymVectorForm(answer, vS, _PlaneStrain);
-}
+  
+  
 }

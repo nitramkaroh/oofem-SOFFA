@@ -71,7 +71,8 @@ class GaussPoint;
  * - Returning a material property (method 'give'). Only for non-standard elements.
  * - Returning real stress state vector(tensor) at gauss point for 3d - case.
  */
-class IsotropicLinearElasticMaterial : public LinearElasticMaterial, public QCMaterialExtensionInterface, public MixedPressureMaterialExtensionInterface
+class IsotropicLinearElasticMaterial : public LinearElasticMaterial, public QCMaterialExtensionInterface
+				       //				       , public SmallStrainMixedPressureMaterialExtensionInterface
 {
 protected:
     /// Young's modulus.
@@ -169,8 +170,8 @@ public:
     Interface *giveInterface(InterfaceType t) override {
         if ( t == QCMaterialExtensionInterfaceType ) {
             return static_cast< QCMaterialExtensionInterface * >(this);
-        } else if ( t == MixedPressureMaterialExtensionInterfaceType ) {
-            return static_cast< MixedPressureMaterialExtensionInterface * >( this );
+	    /*        } else if ( t == SmallStrainMixedPressureMaterialExtensionInterfaceType ) {
+		      return static_cast< SmallStrainMixedPressureMaterialExtensionInterface * >( this );*/
         } else {
             return nullptr;
         }
@@ -181,7 +182,7 @@ public:
     ** support for mixed u-p formulation
     **
     */
-
+  /*
     void giveDeviatoric3dMaterialStiffnessMatrix(FloatMatrix & answer,
                                                  MatResponseMode,
                                                  GaussPoint * gp,
@@ -197,7 +198,7 @@ public:
 
     void giveRealStressVector_3d(FloatArray &answer, GaussPoint *gp, const FloatArray &reducedStrain, double pressure, TimeStep *tStep) override;
     void giveRealStressVector_PlaneStrain(FloatArray &answer, GaussPoint *gp, const FloatArray &reducedStrain, double pressure, TimeStep *tStep) override;
-
+  */
 };
 } // end namespace oofem
 #endif // isolinearelasticmaterial_h

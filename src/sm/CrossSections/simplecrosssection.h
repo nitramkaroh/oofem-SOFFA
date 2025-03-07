@@ -174,7 +174,7 @@ public:
     int giveMaterialNumber() const { return this->materialNumber; }
     void setMaterialNumber(int matNum) { this->materialNumber = matNum; }
     int checkConsistency() override;
-    Interface *giveMaterialInterface(InterfaceType t, IntegrationPoint *ip) override;
+    Interface *giveMaterialInterface(InterfaceType t, IntegrationPoint *ip) const override;
 
 
     void giveCauchyStresses(FloatArray &answer, GaussPoint *gp, const FloatArray &reducedFIncrement, TimeStep *tStep) override;
