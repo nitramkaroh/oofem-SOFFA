@@ -130,6 +130,8 @@ set (sm_element
     MixedPressure/PlaneStrain/quad1planestrainp1.C
     MixedPressure/PlaneStrain/quad1planestrainp0.C	
     MixedPressure/3d/lspacep0.C
+    MixedPressure/3d/ltrspacep0.C
+
 
     structural2delement.C
     structural3delement.C

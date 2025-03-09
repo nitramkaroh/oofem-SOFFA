@@ -232,8 +232,6 @@ public:
     // definition
     const char *giveClassName() const override { return "NLStructuralElement"; }
 
-protected:
-    int checkConsistency() override;
     /**
      * Computes a matrix which, multiplied by the column matrix of nodal displacements,
      * gives the displacement gradient stored by columns.
@@ -246,8 +244,12 @@ protected:
         OOFEM_ERROR("method not implemented for this element");
         return;
     }
-    friend class GradientDamageElement;
-    friend class PhaseFieldElement;
+
+  
+protected:
+    int checkConsistency() override;
+  friend class GradientDamageElement;
+  friend class PhaseFieldElement;
     friend class XfemStructuralElementInterface;
 };
 } // end namespace oofem
