@@ -72,7 +72,36 @@ protected:
     int computeGradientFields_from_u(std::vector<FloatArray>& vGrad, std::vector<FloatMatrix>& vB, MPElement& cell, const FloatArray& lcoords, MaterialMode mmode, TimeStep* tstep, const FloatArray &u, const FloatArray &phi) const;
 };
 
- 
+
+
+ /**
+ * @brief A Linear momentum balance equation term ($B^T\P(F, H)$)
+ * 
+ */
+  class MagnetoElasticity_GradGrad_SecondGradientTerm : public Term {
+    protected:
+    const Variable& magneticPotentialField;
+    public:
+    MagnetoElasticity_GradGrad_SecondGradientTerm (const Variable &testField, const Variable& displacementField, const Variable& magneticPotentialField) ;
+    /**
+     * @brief Evaluates Internal forces vector, i.e. $B^TP(F, H)$
+     * 
+     * @param cell 
+     * @param coords 
+     */
+    void evaluate (FloatArray&, MPElement& cell, GaussPoint* gp, TimeStep* tstep) const override;
+    void evaluate_lin (FloatMatrix& answer, MPElement& e, GaussPoint* gp, TimeStep* tstep) const override;
+
+    void getDimensions(Element& cell) const override{;}
+    void initializeCell(Element& cell) const override{;}
+    int computeGradientField (FloatArray &grad, FloatMatrix &B, MPElement& cell, const FloatArray& lcoords, MaterialMode mmode, TimeStep* tstep) const;
+
+protected:
+  void computeGmatrixAt(FloatMatrix& answer, const Variable &v, const FEInterpolation& interpol, const Element& cell, const FloatArray& coords, const MaterialMode mmode) const;
+};
+
+
+  
 
 
 } // end namespace oofem

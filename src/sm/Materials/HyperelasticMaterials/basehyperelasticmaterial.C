@@ -46,6 +46,9 @@ BaseHyperElasticMaterial::compute_dVolumetricEnergy_dF(const Tensor2_3d &F) cons
         auto J = F.compute_determinant();
         auto lnJ = log(J);
         dVolumetricEnergy_dF(i_3, j_3) =  K * lnJ / J * this->compute_dJ_dF(F)(i_3, j_3);
+    } else if( VET_Type == VET_Quadratic ) {
+        auto J = F.compute_determinant();
+	 dVolumetricEnergy_dF(i_3, j_3) =  K * (J-1) * this->compute_dJ_dF(F)(i_3, j_3);
     }
     return dVolumetricEnergy_dF;
 }
@@ -61,6 +64,9 @@ BaseHyperElasticMaterial::compute_d2VolumetricEnergy_dF2(const Tensor2_3d &F) co
         auto [ J, cofF ] = F.compute_determinant_and_cofactor();
         auto lnJ = log(J);
         d2VolumetricEnergy_dF2(i_3, j_3, k_3, l_3) =  K * ( 1. - lnJ ) / J / J * cofF(i_3, j_3) * cofF(k_3, l_3) + K * lnJ / J * F.compute_tensor_cross_product()(i_3, j_3, k_3, l_3);
+    } else if( VET_Type == VET_Quadratic ) {
+      auto [ J, cofF ] = F.compute_determinant_and_cofactor();
+      d2VolumetricEnergy_dF2(i_3, j_3, k_3, l_3) =  K * cofF(i_3, j_3) * cofF(k_3, l_3) + K * (J-1.) * F.compute_tensor_cross_product()(i_3, j_3, k_3, l_3);
     }
     return d2VolumetricEnergy_dF2;
 }
@@ -73,6 +79,18 @@ BaseHyperElasticMaterial::initializeFrom(InputRecord &ir)
 {
     // volumetric energy constant, usually bulk modulus
     IR_GIVE_FIELD(ir, K, _IFT_BaseHyperElasticMaterial_k);
-    //IR_GIVE_OPTIONAL_FIELD(ir, type, _IFT_BaseHyperElasticMaterial_type)
+    int type = 0;
+    IR_GIVE_OPTIONAL_FIELD(ir, type, _IFT_BaseHyperElasticMaterial_type);
+    if(type == 0 ) {
+      this->VET_Type = VET_Logarithmic;
+    } else if(type ==1) {
+      this->VET_Type = VET_Quadratic;
+    } else {
+      OOFEM_ERROR("Wrong type of volumetric energy");
+    }
+      
+
+
+      
 }
 } // end namespace oofem

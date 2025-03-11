@@ -291,6 +291,95 @@ MagnetoElasticity_GradGrad_Term :: computeBHmatrixAt(FloatMatrix& answer, const 
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+MagnetoElasticity_GradGrad_SecondGradientTerm :: MagnetoElasticity_GradGrad_SecondGradientTerm (const Variable &testField, const Variable& unknownField, const Variable& magneticPotentialField) : Term(testField, unknownField), magneticPotentialField(magneticPotentialField) {}
+
+
+
+
+int
+MagnetoElasticity_GradGrad_SecondGradientTerm :: computeGradientField(FloatArray& vGrad, FloatMatrix& G, MPElement& cell, const FloatArray& lcoords, MaterialMode mmode, TimeStep* tstep) const
+{
+    FloatArray u;
+    //
+    cell.getUnknownVector(u, this->field, VM_TotalIntrinsic, tstep);
+    this->computeGmatrixAt(G, this->field, this->field.interpolation, cell, lcoords, mmode);
+    vGrad.beProductOf(G, u);
+    /////////////////////////
+    return u.giveSize();
+}
+
+
+
+
+
+  
+void
+MagnetoElasticity_GradGrad_SecondGradientTerm :: evaluate(FloatArray& answer, MPElement& cell, GaussPoint* gp, TimeStep* tstep) const
+{
+  //
+  FloatArray vGrad;
+  FloatMatrix B;
+  // Grad contains deformation gradient and magnetic field
+  auto size = this->computeGradientField(vGrad, B, cell, gp->giveNaturalCoordinates(), gp->giveMaterialMode(), tstep);
+  //
+  auto cs = cell.giveCrossSection();
+  auto mcs = dynamic_cast<MagnetoElasticCrossSection *> (cs);
+  auto vFlux = mcs->give_SecondGradient_FluxVector(vGrad, gp, tstep);
+  //  for(auto& [B,Flux] : std::zip (vB, vFlux)) {
+  FloatArray BF;
+  answer.beTProductOf(B, vFlux);
+  
+}
+
+
+void
+MagnetoElasticity_GradGrad_SecondGradientTerm :: evaluate_lin (FloatMatrix& answer, MPElement& cell, GaussPoint* gp, TimeStep* tstep) const
+{
+  FloatArray vGrad;
+  FloatMatrix B, dFdG;
+  // Grad contains deformation gradient and magnetic field
+  auto size = this->computeGradientField(vGrad, B, cell, gp->giveNaturalCoordinates(), gp->giveMaterialMode(), tstep);
+  //
+  auto cs = cell.giveCrossSection();
+  auto mcs = dynamic_cast<MagnetoElasticCrossSection *> (cs);
+  mcs->give_SecondGradient_dFlux_dGrad(dFdG, TangentStiffness,gp, tstep);
+  FloatMatrix BD;
+  //
+  answer.beTProductOf(B, B);
+  answer.times(dFdG.at(1,1));
+}
+
+
+
+void
+MagnetoElasticity_GradGrad_SecondGradientTerm :: computeGmatrixAt(FloatMatrix& answer, const Variable &v, const FEInterpolation& interpol, const Element& cell, const FloatArray& coords, const MaterialMode mmode) const
+{
+
+    FloatMatrix d2Ndx2; 
+    interpol.evald2Ndx2( d2Ndx2, coords, FEIElementGeometryWrapper(&cell) );
+    //
+    if (mmode == _PlaneStrain) {
+      answer.resize(8,   d2Ndx2.giveNumberOfRows() * 2);
+      answer.zero();
+      for ( int i = 1; i <= d2Ndx2.giveNumberOfRows(); i++ ) {
+        answer.at(1, i * 2 - 1) = d2Ndx2.at(i, 1);
+        answer.at(2, i * 2 - 1) = d2Ndx2.at(i, 3);
+	
+     	answer.at(3, i * 2 - 0) = d2Ndx2.at(i, 3);
+        answer.at(4, i * 2 - 0) = d2Ndx2.at(i, 2);
+
+        answer.at(5, i * 2 - 1) = d2Ndx2.at(i, 3);
+        answer.at(6, i * 2 - 1) = d2Ndx2.at(i, 2);
+
+        answer.at(7, i * 2 - 0) = d2Ndx2.at(i, 1);
+        answer.at(8, i * 2 - 0) = d2Ndx2.at(i, 3);
+      }     
+    } else {
+      OOFEM_ERROR("Unsupported material mode");
+    }  
+}
+
 
 
   

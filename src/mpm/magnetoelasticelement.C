@@ -76,13 +76,18 @@ class MagnetoElasticElement : public MPElement {
 
         if (type == MagnetoElasticity_GradGrad_dFluxdGrad) {
             int udofs = this->giveNumberOfUDofs();
-	        int phidofs = this->giveNumberOfPhiDofs(); 
+	    int phidofs = this->giveNumberOfPhiDofs(); 
             answer.resize(udofs+phidofs,udofs+phidofs);
             answer.zero();
             this->integrateTerm_dw (answer, MagnetoElasticity_GradGrad_Term(getU(),getU(), getPhi()), ir, tStep) ;
-        } else {
-	        OOFEM_ERROR("Unknown characteristic matrix type");
-	    }
+        } else if (type == MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad) {
+	    int udofs = this->giveNumberOfUDofs();
+            answer.resize(udofs,udofs);
+            answer.zero();
+            this->integrateTerm_dw (answer, MagnetoElasticity_GradGrad_SecondGradientTerm(getU(),getU(), getPhi()), ir, tStep) ;
+	} else {
+	  OOFEM_ERROR("Unknown characteristic matrix type");
+	}
     }
 
     void giveCharacteristicVector(FloatArray &answer, CharType type, ValueModeType mode, TimeStep *tStep) override {
@@ -91,7 +96,13 @@ class MagnetoElasticElement : public MPElement {
             answer.resize(this->giveNumberOfUDofs() + this->giveNumberOfPhiDofs());
             answer.zero();
             this->integrateTerm_c (answer, MagnetoElasticity_GradGrad_Term(getU(),getU(),getPhi()), ir, tStep);
-        } else if(type == ExternalForcesVector) {
+        }
+	else if (type == MagnetoElasticity_GradGrad_SecondGradient_Flux) {
+            answer.resize(this->giveNumberOfUDofs());
+            answer.zero();
+            this->integrateTerm_c (answer, MagnetoElasticity_GradGrad_SecondGradientTerm(getU(),getU(),getPhi()), ir, tStep);
+        }
+	else if(type == ExternalForcesVector) {
 	  ;
 	} else {
 	  OOFEM_ERROR("Unknown characteristic vector type");

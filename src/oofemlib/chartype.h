@@ -135,7 +135,10 @@ namespace oofem {
     ENUM_ITEM_WITH_VALUE(EnergyBalance_InternalSourceVector, 310)  \
      /* MagnetoElasticity */\
     ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_Flux, 311)	\
-    ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_dFluxdGrad, 312) 
+    ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_dFluxdGrad, 312) \
+    ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_SecondGradient_Flux, 313)	     \
+    ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad, 314) 
+
     
 
 

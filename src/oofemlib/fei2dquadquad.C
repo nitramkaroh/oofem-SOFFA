@@ -178,6 +178,47 @@ void FEI2dQuadQuad :: evaldNdxi(FloatMatrix &answer, const FloatArray &lcoords, 
 }
 
 
+
+void
+FEI2dQuadQuad ::  evald2Ndxi2(FloatMatrix &dn, const FloatArray &lc) const
+{
+    double ksi, eta;
+    ksi = lc.at(1);
+    eta = lc.at(2);
+    dn.resize(8, 3);
+
+    // dn/dxi
+    dn.at(1, 1) =  0.5 * ( 1. + eta );
+    dn.at(2, 1) =  0.5 * ( 1. + eta ); 
+    dn.at(3, 1) =  0.5 * ( 1. - eta );
+    dn.at(4, 1) =  0.5 * ( 1. - eta );
+    dn.at(5, 1) = - ( 1. + eta );
+    dn.at(6, 1) =  0.0;
+    dn.at(7, 1) = -( 1. - eta );
+    dn.at(8, 1) =  0.0;
+
+    dn.at(1, 2) =  0.5 * ( 1. + ksi );
+    dn.at(2, 2) =  0.5 * ( 1. - ksi );
+    dn.at(3, 2) =  0.5 * ( 1. - ksi );
+    dn.at(4, 2) =  0.5 * ( 1. + ksi );
+    dn.at(5, 2) =  0.0;
+    dn.at(6, 2) = -( 1. - ksi );
+    dn.at(7, 2) =  0.0;
+    dn.at(8, 2) = -( 1. + ksi );
+
+    dn.at(1, 3) =  0.25 * ( 1. + ksi )  + 0.25 * ( 2.0 * eta + ksi );
+    dn.at(2, 3) = -0.25 * ( 1. - ksi )  - 0.25 * ( 2.0 * eta - ksi ); 
+    dn.at(3, 3) = +0.25 * ( 1. - ksi )  + 0.25 * ( -2.0 * eta - ksi );
+    dn.at(4, 3) = -0.25 * ( 1. + ksi )  - 0.25 * ( -2.0 * eta + ksi );
+    dn.at(5, 3) = -ksi;
+    dn.at(6, 3) =  eta;
+    dn.at(7, 3) =  ksi;
+    dn.at(8, 3) = -eta;    
+}
+
+  
+
+
 std::pair<double, FloatMatrixF<2,8>> 
 FEI2dQuadQuad :: evaldNdx(const FloatArrayF<2> &lcoords, const FEICellGeometry &cellgeo) const
 {
@@ -197,7 +238,6 @@ FEI2dQuadQuad :: evaldNdx(const FloatArrayF<2> &lcoords, const FEICellGeometry &
 
     return {det(jacT), dot(inv(jacT), dn)};
 }
-
 
 double
 FEI2dQuadQuad :: evaldNdx(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const
@@ -226,6 +266,81 @@ FEI2dQuadQuad :: evaldNdx(FloatMatrix &answer, const FloatArray &lcoords, const 
 #endif
 }
 
+  
+void
+FEI2dQuadQuad :: evald2Ndx2(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const
+{
+  FloatMatrix jacobianMatrix(2, 2), inv, dn;
+  FloatMatrix jacobianMatrix2(3, 3), inv2, d2n;
+  FloatMatrix d2X_dxi2(3,2);
+  double dXdxi = 0., dXdeta = 0., dYdxi = 0., dYdeta = 0.; //crude should be in matrix probably
+
+    this->evaldNdxi(dn, lcoords, cellgeo);
+    this->evald2Ndxi2(d2n, lcoords);
+    for ( int i = 1; i <= dn.giveNumberOfRows(); i++ ) {
+        double x = cellgeo.giveVertexCoordinates(i).at(xind);
+        double y = cellgeo.giveVertexCoordinates(i).at(yind);
+
+        jacobianMatrix.at(1, 1) += dn.at(i, 1) * x;
+        jacobianMatrix.at(1, 2) += dn.at(i, 1) * y;
+        jacobianMatrix.at(2, 1) += dn.at(i, 2) * x;
+        jacobianMatrix.at(2, 2) += dn.at(i, 2) * y;
+
+	//d_xi
+        jacobianMatrix2.at(1, 1) += dn.at(i, 1) * dn.at(i, 1) * x * x;
+        jacobianMatrix2.at(1, 2) += dn.at(i, 1) * dn.at(i, 1) * y * y;
+	jacobianMatrix2.at(1, 3) += 2. * dn.at(i, 1) * x * dn.at(i, 1) * y;
+	//d_eta
+        jacobianMatrix2.at(2, 1) += dn.at(i, 2) * dn.at(i, 2) * x * x;
+        jacobianMatrix2.at(2, 2) += dn.at(i, 2) * dn.at(i, 2) * y * y;
+	jacobianMatrix2.at(2, 3) += 2. * dn.at(i, 2) * x * dn.at(i, 2) * y;
+	// d_xi * d_eta
+        jacobianMatrix2.at(3, 1) += dn.at(i, 1) * dn.at(i, 2) * x * x;
+        jacobianMatrix2.at(3, 2) += dn.at(i, 1) * dn.at(i, 2) * y * y;
+	jacobianMatrix2.at(3, 3) += ( dn.at(i, 1) * x * dn.at(i, 2) * y +  dn.at(i, 2) * x * dn.at(i, 1) * y);
+	// d2X_dxi2
+	d2X_dxi2.at(1, 1) += d2n.at(i, 1) * x;
+	d2X_dxi2.at(1, 2) += d2n.at(i, 1) * y;
+	d2X_dxi2.at(2, 1) += d2n.at(i, 2) * x;
+	d2X_dxi2.at(2, 2) += d2n.at(i, 2) * y;
+	d2X_dxi2.at(3, 1) += d2n.at(i, 3) * x;
+	d2X_dxi2.at(3, 2) += d2n.at(i, 3) * y;
+
+
+	//dXdKsi
+        dXdxi  += dn.at(i, 1) * x;
+        dXdeta += dn.at(i, 2) * x;
+        dYdxi  += dn.at(i, 1) * y;
+        dYdeta += dn.at(i, 2) * y;
+
+	
+    }
+
+    jacobianMatrix2.at(1, 1) = dXdxi * dXdxi;
+    jacobianMatrix2.at(1, 2) = dYdxi * dYdxi;
+    jacobianMatrix2.at(1, 3) = 2 * dXdxi*dYdxi;
+    jacobianMatrix2.at(2, 1) = dXdeta * dXdeta;
+    jacobianMatrix2.at(2, 2) = dYdeta * dYdeta;
+    jacobianMatrix2.at(2, 3) = 2 * dXdeta*dYdeta;
+    jacobianMatrix2.at(3, 1) = dXdxi * dXdeta;
+    jacobianMatrix2.at(3, 2) = dYdxi * dYdeta;
+    jacobianMatrix2.at(3, 3) = dXdxi*dYdeta + dYdxi*dXdeta;
+
+    inv.beInverseOf(jacobianMatrix);
+    inv2.beInverseOf(jacobianMatrix2);
+    //dNdX
+    FloatMatrix dNdx, d2X_dNx;
+    dNdx.beProductTOf(dn, inv);
+    d2X_dNx.beProductTOf(dNdx,d2X_dxi2);
+    //
+    FloatMatrix dN(d2n);
+    dN.subtract(d2X_dNx);
+    answer.beProductTOf(dN,inv2);
+
+}
+
+
+  
 void
 FEI2dQuadQuad :: local2global(FloatArray &answer, const FloatArray &lcoords,  const FEICellGeometry &cellgeo) const
 {

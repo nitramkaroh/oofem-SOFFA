@@ -168,6 +168,75 @@ MagnetoElasticCrossSection :: giveMaterial(IntegrationPoint *ip) const
     }
 }
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+FloatArray
+MagnetoElasticCrossSection::give_SecondGradient_FluxVector(const FloatArray &vGrad, GaussPoint *gp, TimeStep *tStep) const
+{
+    MaterialMode mode = gp->giveMaterialMode();
+
+    if ( mode == _3dMat ) {
+      return this->give_SecondGradient_FluxVector_3d(vGrad, gp, tStep);
+    } else if ( mode == _PlaneStrain ) {
+      return this->give_SecondGradient_FluxVector_PlaneStrain(vGrad, gp, tStep);
+    } else {
+        OOFEM_ERROR("unsupported mode");
+    }
+}
+
+
+FloatArrayF< 27 >
+MagnetoElasticCrossSection :: give_SecondGradient_FluxVector_3d(const FloatArrayF< 27 > &vG, GaussPoint *gp, TimeStep *tStep) const
+{
+  auto mat = dynamic_cast< MagnetoElasticMaterial * >( this->giveMaterial(gp) );
+  return mat->give_SecondGradient_FirstPKStressVector_3d(vG, gp, tStep);
+}
+
+  
+FloatArrayF< 8 >
+MagnetoElasticCrossSection :: give_SecondGradient_FluxVector_PlaneStrain(const FloatArrayF< 8 > &vG, GaussPoint *gp, TimeStep *tStep) const
+{
+  auto mat = dynamic_cast< MagnetoElasticMaterial * >( this->giveMaterial(gp) );
+  return mat->give_SecondGradient_FirstPKStressVector_PlaneStrain(vG, gp, tStep);
+}
+ 
+  
+void
+MagnetoElasticCrossSection :: give_SecondGradient_dFlux_dGrad(FloatMatrix &answer, MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep)
+{
+  MaterialMode mode = gp->giveMaterialMode();
+  if ( mode == _3dMat ) {
+    answer = this->give_SecondGradient_ConstitutiveMatrix_3d(rmode, gp, tStep);
+  } else if ( mode == _PlaneStrain ) {
+    answer = this->give_SecondGradient_ConstitutiveMatrix_PlaneStrain(rmode, gp, tStep);
+  } else {
+    OOFEM_ERROR("unsupported mode");
+  }
+}
+
+
+FloatMatrixF< 1, 1 >
+MagnetoElasticCrossSection :: give_SecondGradient_ConstitutiveMatrix_3d(MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) const
+{
+    auto mat = dynamic_cast< MagnetoElasticMaterial * >( this->giveMaterial(gp) );
+    return mat->give_SecondGradient_ConstitutiveMatrix_3d(rMode, gp, tStep);
+}
+
+
+FloatMatrixF< 1, 1 >
+MagnetoElasticCrossSection :: give_SecondGradient_ConstitutiveMatrix_PlaneStrain(MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) const
+{
+    auto mat = dynamic_cast< MagnetoElasticMaterial * >( this->giveMaterial(gp) );
+    return mat->give_SecondGradient_ConstitutiveMatrix_PlaneStrain(rMode, gp, tStep);
+}
+
+
+
+
+
+
+
+
+
 
   
 

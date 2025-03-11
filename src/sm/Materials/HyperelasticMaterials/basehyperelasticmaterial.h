@@ -45,7 +45,7 @@
 ///@name Input fields for VolumetricEnergyInterface
 //@{
 #define _IFT_BaseHyperElasticMaterial_k "k"
-#define _IFT_BaseHyperElasticMaterial "type"
+#define _IFT_BaseHyperElasticMaterial_type "type"
 //@}
 
 
@@ -71,12 +71,16 @@ protected:
      * @author Martin Horak
      **/
     enum VolumetricEnergyType {
-        VET_Logarithmic = 0
+      VET_Logarithmic = 0,
+      VET_Quadratic = 0
+	
     };
     /// Bulk modulus
     double K = 0;
     /// volumetric energy type
+    int type = 0;
     VolumetricEnergyType VET_Type = VET_Logarithmic;
+
 
 
 public:

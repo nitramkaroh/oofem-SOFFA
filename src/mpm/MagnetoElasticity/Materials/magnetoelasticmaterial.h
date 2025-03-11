@@ -78,6 +78,13 @@ public:
      virtual std::tuple<FloatMatrixF< 9, 9 >,  FloatMatrixF< 9, 3 >,  FloatMatrixF< 3, 9 >, FloatMatrixF< 3, 3 >>  giveConstitutiveMatrices_dPdF_dBdH_dPdH_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) = 0;
      virtual std::tuple<FloatMatrixF< 5, 5 >, FloatMatrixF< 5, 2 >, FloatMatrixF< 2, 5 >, FloatMatrixF< 2, 2 >> giveConstitutiveMatrices_dPdF_dBdH_dPdH_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) = 0;
 
+  ////////////////////////////////////////////////////
+     virtual FloatArrayF< 8 > give_SecondGradient_FirstPKStressVector_PlaneStrain(const FloatArrayF<8> &vG, GaussPoint *gp, TimeStep *tStep) {    return zeros< 8 >(); }
+     virtual FloatArrayF< 27 > give_SecondGradient_FirstPKStressVector_3d(const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep)  {    return zeros< 27 >(); }
+     virtual FloatMatrixF<1,1> give_SecondGradient_ConstitutiveMatrix_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) {    return FloatMatrixF< 1, 1 >();}
+     virtual FloatMatrixF<1,1> give_SecondGradient_ConstitutiveMatrix_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) {    return FloatMatrixF< 1, 1 >();}
+
+     
 };
 } // end namespace oofem
 #endif // structuralmaterial_h

@@ -167,7 +167,13 @@ NRSolver :: initializeFrom(InputRecord &ir)
     IR_GIVE_OPTIONAL_FIELD(ir, lsFlag, _IFT_NRSolver_linesearch);
 
     if ( this->lsFlag ) {
+      	////////
+	int valLS = 1;
+	IR_GIVE_OPTIONAL_FIELD( ir, valLS, _IFT_NRSolver_linesearchtype );
+	this->LsType = (LineSearchType)valLS;
+	//
         this->giveLineSearchSolver()->initializeFrom(ir);
+
     }
 
     int calcStiffBeforeResFlag = 1;
@@ -313,7 +319,7 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
             // line search
             LineSearchNM :: LS_status LSstatus;
             double eta;
-            this->giveLineSearchSolver()->solve(X, ddX, F, R, R0, prescribedEqs, 1.0, eta, LSstatus, tStep);
+            this->giveLineSearchSolver()->solve(X, ddX, F, R, R0, prescribedEqs, 1.0, eta, LSstatus, tStep, k);
         } else if ( this->constrainedNRFlag && ( nite > this->constrainedNRminiter ) ) {
             ///@todo This doesn't check units, it is nonsense and must be corrected / Mikael
             if ( this->forceErrVec.computeSquaredNorm() > this->forceErrVecOld.computeSquaredNorm() ) {
@@ -323,6 +329,15 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
             //this->giveConstrainedNRSolver()->solve(X, & ddX, this->forceErrVec, this->forceErrVecOld, status, tStep);
         }
 
+	// Check for maximum LS step
+	/*        double alphaMax = this->giveMaximumLineSearchStep( ddX, tStep );
+        std::cout << alphaMax << std::endl;
+	
+        if ( alphaMax < 1. && alphaMax > 0. ) {
+	  ddX.times( 0.9 * alphaMax );
+        }
+	*/
+	
 
         /////////////////////////////////////////
 
@@ -421,11 +436,21 @@ LineSearchNM *
 NRSolver :: giveLineSearchSolver()
 {
     if ( !linesearchSolver ) {
-        linesearchSolver = std :: make_unique< LineSearchNM >(domain, engngModel);
+        switch ( this->LsType ) {
+        case LST_Default:
+            linesearchSolver = std ::make_unique<LineSearchNM>( domain, engngModel );
+            break;
+        case LST_Exact:
+        case LST_Exact_Adaptive: 
+            linesearchSolver = std ::make_unique<ExactLineSearchNM>( domain, engngModel );
+            break;
+        }
     }
 
+    //if ( this->LsType == LST_Exact_Adaptive ) this->lsFlag = 0;
     return linesearchSolver.get();
 }
+
 
 void
 NRSolver :: initPrescribedEqs()
@@ -879,4 +904,44 @@ NRSolver :: checkConvergence(FloatArray &RT, FloatArray &F, FloatArray &rhs,  Fl
 
     return answer;
 }
+
+  /*
+double NRSolver::giveMaximumLineSearchStep( const FloatArray &ddX, TimeStep *tStep )
+{
+    EModelDefaultEquationNumbering dn;
+    double alphaMaxEl = 1.e9, alphaMaxElNew = alphaMaxEl;
+    
+    for ( auto &elem : domain->giveElements() ) {
+        // extract ddX from current element
+        FloatArray Element_ddX;
+        for ( int idofman = 1; idofman <= elem->giveNumberOfDofManagers(); idofman++ ) {
+            DofManager *dofman = elem->giveDofManager( idofman );
+            for ( Dof *dof : *dofman ) {           
+                int eq = dof->giveEquationNumber( dn );
+                if ( !eq ) {
+                    Element_ddX.append(0. );
+                } else {
+                    Element_ddX.append( ddX.at( eq ) );
+                }
+                
+            } 
+        }
+        //auto nlStEl = dynamic_cast<NLStructuralElement *>( elem.get() );
+        auto nlStEl = dynamic_cast<Structural3DElement *>( elem.get() );
+
+        if ( nlStEl ) {
+            alphaMaxElNew = nlStEl->giveElementMaximumLineSearchStep( Element_ddX, tStep );
+            if ( alphaMaxElNew < alphaMaxEl ) { // Find the smallest from all
+                alphaMaxEl = alphaMaxElNew;
+            }
+        }
+
+    }
+
+    return alphaMaxEl;
+}
+  */
+
+
+  
 } // end namespace oofem

@@ -731,36 +731,46 @@ MELhsAssembler :: MELhsAssembler(double alpha, double deltaT) :
 
 void MELhsAssembler :: matrixFromElement(FloatMatrix &answer, Element &el, TimeStep *tStep) const
 {
-    FloatMatrix contrib;
-    IntArray loc, locphi;
+  FloatMatrix contrib, gradContrib;
+    IntArray loc, locu, locphi;
     MPElement *e = dynamic_cast<MPElement*>(&el);
     int ndofs = e->giveNumberOfDofs();
     answer.resize(ndofs, ndofs);
     answer.zero();
     
-    e->getLocalCodeNumbers (loc, Variable::VariableQuantity::Displacement);
+    e->getLocalCodeNumbers (locu, Variable::VariableQuantity::Displacement);
+    loc = locu;
     e->getLocalCodeNumbers (locphi, Variable::VariableQuantity::MagneticPotential);
     loc.followedBy(locphi);
-    
+    //
     e->giveCharacteristicMatrix(contrib, MagnetoElasticity_GradGrad_dFluxdGrad, tStep);
     answer.assemble(contrib, loc, loc);
+    //
+    e->giveCharacteristicMatrix(gradContrib, MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad, tStep);
+    answer.assemble(gradContrib, locu, locu);
+    
 }
   
 
 void MEResidualAssembler :: vectorFromElement(FloatArray &vec, Element &element, TimeStep *tStep, ValueModeType mode) const
 {
-    FloatArray contrib;
-    IntArray loc, locphi;
-    MPElement *e = dynamic_cast<MPElement*>(&element);
-    int ndofs = e->giveNumberOfDofs();
-    vec.resize(ndofs);
-    vec.zero();
-    //
-    e->getLocalCodeNumbers (loc, Variable::VariableQuantity::Displacement);
-    e->getLocalCodeNumbers (locphi, Variable::VariableQuantity::MagneticPotential);
-    loc.followedBy(locphi);
-    e->giveCharacteristicVector(contrib, MagnetoElasticity_GradGrad_Flux, mode, tStep);
-    vec.assemble(contrib, loc);   
+  FloatArray contrib, gradContrib;
+  IntArray loc, locu, locphi;
+  MPElement *e = dynamic_cast<MPElement*>(&element);
+  int ndofs = e->giveNumberOfDofs();
+  vec.resize(ndofs);
+  vec.zero();
+  //
+  e->getLocalCodeNumbers (loc, Variable::VariableQuantity::Displacement);
+  locu = loc;
+  e->getLocalCodeNumbers (locphi, Variable::VariableQuantity::MagneticPotential);
+  loc.followedBy(locphi);
+  //
+  e->giveCharacteristicVector(contrib, MagnetoElasticity_GradGrad_Flux, mode, tStep);
+  e->giveCharacteristicVector(gradContrib, MagnetoElasticity_GradGrad_SecondGradient_Flux, mode, tStep);
+  //
+  vec.assemble(contrib, loc);
+  vec.assemble(gradContrib, locu);   
 }
 
 

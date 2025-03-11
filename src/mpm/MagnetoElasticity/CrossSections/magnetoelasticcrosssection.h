@@ -148,7 +148,14 @@ public:
     void setMaterialNumber(int matNum) { this->materialNumber = matNum; }
 
 
+    FloatArray give_SecondGradient_FluxVector(const FloatArray &vGrad, GaussPoint *gp, TimeStep *tStep) const;
+    FloatArrayF< 27 > give_SecondGradient_FluxVector_3d(const FloatArrayF< 27 > &vG, GaussPoint *gp, TimeStep *tStep) const;
+    FloatArrayF< 8 > give_SecondGradient_FluxVector_PlaneStrain(const FloatArrayF< 8 > &vG, GaussPoint *gp, TimeStep *tStep) const;
+    void give_SecondGradient_dFlux_dGrad(FloatMatrix &answer, MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep);
+    FloatMatrixF< 1, 1 > give_SecondGradient_ConstitutiveMatrix_3d(MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) const;
+   FloatMatrixF< 1, 1 > give_SecondGradient_ConstitutiveMatrix_PlaneStrain(MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) const;
     
+
     //@}
 };
   

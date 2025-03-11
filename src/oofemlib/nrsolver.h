@@ -71,6 +71,7 @@
 #define _IFT_NRSolver_forceScale "forcescale"
 #define _IFT_NRSolver_forceScaleDofs "forcescaledofs"
 #define _IFT_NRSolver_solutionDependentExternalForces "soldepextforces"
+#define _IFT_NRSolver_linesearchtype "linesearchtype"
 //@}
 
 namespace oofem {
@@ -104,7 +105,7 @@ protected:
     nrsolver_ModeType NR_Mode, NR_OldMode;
     int NR_ModeTick;
     int MANRMSteps;
-
+    LineSearchType LsType = LST_Default;
     /// linear system solver
     std :: unique_ptr< SparseLinearSystemNM >linSolver;
     /// linear system solver ID

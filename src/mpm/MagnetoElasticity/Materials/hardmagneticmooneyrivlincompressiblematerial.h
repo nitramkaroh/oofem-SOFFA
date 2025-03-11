@@ -47,6 +47,7 @@
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_m_ltf "m_ltf"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c1 "c1"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c2 "c2"
+#define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappa "kappa"
 
 //@}
 
@@ -67,7 +68,8 @@ protected:
     double C2;
     double mu_0 = 1.25663706143e-6;
     int m_ltf = 0;
-
+  //second gradient material parameter
+  double kappa = 0;
 
 
 public:
@@ -90,6 +92,12 @@ public:
     const char *giveClassName() const override { return "HardMagneticMooneyRivlinCompressibleMaterial"; }
 
   int giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep);
+  ////////////////////////////////////////////////////
+  FloatArrayF< 8 > give_SecondGradient_FirstPKStressVector_PlaneStrain(const FloatArrayF<8> &vG, GaussPoint *gp, TimeStep *tStep) override;
+
+  FloatArrayF< 27 > give_SecondGradient_FirstPKStressVector_3d(const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep) override;
+  FloatMatrixF<1,1> give_SecondGradient_ConstitutiveMatrix_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override;
+  FloatMatrixF<1,1> give_SecondGradient_ConstitutiveMatrix_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override;
 
   
 };
