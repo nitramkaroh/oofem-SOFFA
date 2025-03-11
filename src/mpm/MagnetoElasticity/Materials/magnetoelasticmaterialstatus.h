@@ -37,6 +37,7 @@
 
 #include "matstatus.h"
 #include "floatarray.h"
+#include "tensor/tensor1.h"
 
 namespace oofem {
 class GaussPoint;
@@ -82,6 +83,9 @@ protected:
     /// Temporary deformation gradient in reduced form (to find balanced state)
     FloatArray tempBVector;
 
+    //Magnetization-induced H tensor
+    Tensor1_3d HmagTensor;
+
 
     
 public:
@@ -103,9 +107,6 @@ public:
     const FloatArray &giveHVector() const { return HVector; }
     /// Returns the const pointer to receiver's deformation gradient vector.
     const FloatArray &giveBVector() const { return BVector; }
-
-
-
     
     const FloatArray &giveTempPVector() const { return tempPVector; }
     /// Returns the const pointer to receiver's temporary deformation gradient vector.
@@ -122,6 +123,11 @@ public:
     void letTempHVectorBe(const FloatArray &v) { tempHVector = v; }
     /// Assigns tempFVector to given vector v
     void letTempBVectorBe(const FloatArray &v) { tempBVector = v; }
+
+    /// Assigns Htensor to given tensor t
+    void letHmagTensorBe( const Tensor1_3d &t ) { HmagTensor = t; }
+    /// Returns the const pointer to receiver's Hmag tensor
+    const Tensor1_3d giveHmagTensor() const { return HmagTensor; }
 
     
     const char *giveClassName() const override { return "MagnetoElasticMaterialStatus"; }
