@@ -73,33 +73,31 @@ protected:
     int m_ltf = 0;
 
 
-
 public:
-    HardMagneticMooneyRivlinCompressibleMaterial(int n, Domain *d);
+  HardMagneticMooneyRivlinCompressibleMaterial( int n, Domain *d );
 
-  void initializeFrom(InputRecord &ir) override;
+  void initializeFrom( InputRecord &ir ) override;
 
 
-  std::tuple<FloatArrayF< 9 >,FloatArrayF< 3 >> give_FirstPKStressVector_MagneticInduction_3d(const FloatArrayF<9> &vF, const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep) const override;
-   std::tuple<FloatArrayF< 5 >,FloatArrayF< 2 >> give_FirstPKStressVector_MagneticInduction_PlaneStrain(const FloatArrayF<5> &vF, const FloatArrayF<2> &vH, GaussPoint *gp, TimeStep *tStep) const override;
+  std::tuple<FloatArrayF<9>, FloatArrayF<3> > give_FirstPKStressVector_MagneticInduction_3d( const FloatArrayF<9> &vF, const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep ) const override;
+  std::tuple<FloatArrayF<5>, FloatArrayF<2> > give_FirstPKStressVector_MagneticInduction_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<2> &vH, GaussPoint *gp, TimeStep *tStep ) const override;
 
   std::tuple<FloatMatrixF< 9, 9 >, FloatMatrixF< 9, 3 >, FloatMatrixF< 3, 9 >, FloatMatrixF< 3, 3 > >  giveConstitutiveMatrices_dPdF_dBdH_dPdH_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override;
   std::tuple<FloatMatrixF< 5, 5 >, FloatMatrixF< 5, 2 >, FloatMatrixF< 2, 5 >,FloatMatrixF< 2, 2 >> giveConstitutiveMatrices_dPdF_dBdH_dPdH_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override;
-  
-  std::tuple<Tensor2_3d, Tensor1_3d> computeFirstPKStressMagneticInductionTensors_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M ) const;
-  std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> computeStiffnessTensors_dPdF_dBdH_dPdH_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M ) const;
   //
   std::tuple<FloatMatrixF< 9, 9 >, FloatMatrixF< 9, 3 >, FloatMatrixF< 3, 9 >, FloatMatrixF< 3, 3 >> compute_stiff_num(const FloatArray &vF, const FloatArray &vH, GaussPoint *gp, TimeStep *tStep);
 
   //
     MaterialStatus *CreateStatus(GaussPoint *gp) const override;
 
-    const char *giveInputRecordName() const override { return _IFT_HardMagneticMooneyRivlinCompressibleMaterial_Name; }
-    const char *giveClassName() const override { return "HardMagneticMooneyRivlinCompressibleMaterial"; }
+  const char *giveInputRecordName() const override { return _IFT_HardMagneticMooneyRivlinCompressibleMaterial_Name; }
+  const char *giveClassName() const override { return "HardMagneticMooneyRivlinCompressibleMaterial"; }
 
   int giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep);
 
-  
+protected:
+  std::tuple<Tensor2_3d, Tensor1_3d> computeFirstPKStressMagneticInductionTensors_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M ) const;
+  std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> computeStiffnessTensors_dPdF_dBdH_dPdH_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M ) const;
 };
 } // end namespace oofem
 #endif

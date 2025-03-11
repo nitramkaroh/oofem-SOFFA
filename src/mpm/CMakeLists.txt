@@ -13,6 +13,7 @@ set (magnetoelasticity
     magnetoelasticelement.C
     MagnetoElasticity/Materials/hardmagneticmooneyrivlincompressiblematerial.C
     MagnetoElasticity/Materials/magnetoelasticmaterialstatus.C
+    MagnetoElasticity/Materials/hardmagneticmooneyrivlincompressiblematerialprestrain.C
     MagnetoElasticity/CrossSections/magnetoelasticcrosssection.C
     )
 

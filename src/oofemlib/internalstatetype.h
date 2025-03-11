@@ -202,7 +202,8 @@ namespace oofem {
     ENUM_ITEM_WITH_VALUE(IST_LagrangianMagneticInductionVector, 152) \
     ENUM_ITEM_WITH_VALUE(IST_EulerianMagneticFieldVector, 153)	   \
     ENUM_ITEM_WITH_VALUE(IST_EulerianMagneticInductionVector, 154)  \
-    ENUM_ITEM_WITH_VALUE(IST_PrestrainDeformationGradient, 155) 
+    ENUM_ITEM_WITH_VALUE(IST_PrestrainDeformationGradient, 155)  \
+    ENUM_ITEM_WITH_VALUE(IST_MagnetizationLagrangianMagneticFieldVector, 156) 
 
     
 
