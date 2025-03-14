@@ -273,7 +273,7 @@ int HardMagneticMooneyRivlinCompressibleMaterial ::giveIPValue( FloatArray &answ
     Tensor1_3d H( vH ), h;
     Tensor2_3d F( vF );
     auto [J, G] = F.compute_determinant_and_cofactor();
-    h( i_3 ) = J * G( i_3, j_3 ) * H( j_3 );
+    h( i_3 ) = (1./J) * G( i_3, j_3 ) * H( j_3 );
     answer = h.to_voigt_form();
     return 1;
   } else {
