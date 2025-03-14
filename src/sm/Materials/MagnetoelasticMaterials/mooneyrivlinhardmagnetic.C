@@ -172,7 +172,9 @@ FloatArrayF<9> MooneyRivlinHardMagnetic::computeFirstPKStressVector_3d_consisten
   Tensor2_3d t;
   t( p_3, j_3 ) = ( M( k_3 ) * B( l_3 ) ) * dCm_dC( k_3, l_3, p_3, j_3 );
   //
-  P_me( i_3, j_3 ) = 1. / J * F( i_3, p_3 ) * ( 1. / mu_0 * B( p_3 ) * B( j_3 ) - ( M( k_3 ) * B( l_3 ) ) * dCm_dC( k_3, l_3, p_3, j_3 ) );
+  //P_me( i_3, j_3 ) = 1. / J * F( i_3, p_3 ) * ( 1. / mu_0 * B( p_3 ) * B( j_3 ) - ( M( k_3 ) * B( l_3 ) ) * dCm_dC( k_3, l_3, p_3, j_3 ) );
+  //P_me( i_3, j_3 ) = 1. / J * F( i_3, p_3 ) * ( 1. / mu_0 * B( p_3 ) * B( j_3 ) - ( M( p_3 ) * B( j_3 ) + M( j_3 ) * B( p_3 ))) ;
+  P_me( i_3, j_3 ) =  F( i_3, p_3 ) * ( - ( M( p_3 ) * B( j_3 ) + M( j_3 ) * B( p_3 ))) ;
   //- 1. / J / J * (0.5 / mu_0 * B(k_3) * F(m_3,k_3)*F(m_3,l_3) * B(l_3) - M(k_3) * C.computeTensorPower(this->exp)(k_3,l_3) * B(l_3) ) * cofF(i_3,j_3);
   //
   auto vP_me = P_me.to_voigt_form();
