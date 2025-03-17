@@ -38,6 +38,9 @@
 #include <vector>
 
 #include "exportmodule.h"
+#include "unknowntype.h"
+#include "dofmanager.h"
+#include "nodalrecoverymodel.h"
 
 ///@name Input fields for MatlabExportModule
 //@{
@@ -48,6 +51,7 @@
 #define _IFT_MatlabExportModule_area "area"
 #define _IFT_MatlabExportModule_specials "specials"
 #define _IFT_MatlabExportModule_homogenizeInternalVars "homogenizeivars"
+#define _IFT_MatlabExportModule_nodalVars "nodalvariables"
 #define _IFT_MatlabExportModule_noScaledHomogenization "noscaling"
 // Reaction forces
 #define _IFT_MatlabExportModule_ReactionForces "reactionforces"
@@ -58,6 +62,9 @@
 #define _IFT_MatlabExportModule_internalVarsToExport "internalvars"
 #define _IFT_MatlabExportModule_ElementList "elementlist"
 #define _IFT_MatlabExportModule_IPFieldsElSet "ipelset"
+// Primary variables
+#define _IFT_MatlabExportModule_primaryVarsToExport "primvars"
+#define _IFT_MatlabExportModule_primaryVarsNodeSet "primvarsnodeset"
 //@}
 
 namespace oofem {
@@ -95,15 +102,18 @@ protected:
     bool exportReactionForces;
     bool exportIntegrationPointFields;
     bool exportHomogenizeIST;
+    bool exportPrimaryVars;
 
     int reactionForcesNodeSet;
     int dataNodeSet;
     int IPFieldsElSet;
+    int primVarsNodeSet;
 
     bool noscaling;
 
 private:
     void computeArea(TimeStep *tStep);
+    void getNodalVariableFromPrimaryField( FloatArray &answer, DofManager *dman, TimeStep *tStep, UnknownType type, Set &region, NodalRecoveryModel &smoother );
 
     // Export reaction forces
     IntArray reactionForcesDofManList; // Holds which dof managers reaction forces should be exported from.
@@ -124,6 +134,7 @@ public:
     void doOutputReactionForces(TimeStep *tStep, FILE *FID);
     void doOutputIntegrationPointFields(TimeStep *tStep, FILE *FID);
     void doOutputHomogenizeDofIDs(TimeStep *tStep, FILE *FID);
+    void doOutputPrimaryVariables(TimeStep *tStep, FILE *FID);
 
     const char *giveClassName() const override { return "MatlabExportModule"; }
     const char *giveInputRecordName() const { return _IFT_MatlabExportModule_Name; }
