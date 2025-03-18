@@ -37,7 +37,6 @@
 #include "hardmagneticmooneyrivlincompressiblematerial.h"
 
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterialPrestrain_Name "hardmagneticmooneyrivlincompressiblematprestrain"
-#define _IFT_HardMagneticMooneyRivlinCompressibleMaterialPrestrain_magEndTime "magendtime"
 
 namespace oofem {
 /**
@@ -48,17 +47,9 @@ namespace oofem {
  */
 class HardMagneticMooneyRivlinCompressibleMaterialPrestrain : public HardMagneticMooneyRivlinCompressibleMaterial
 {
-  protected:
-    double magEndTime;
 
   public:
     HardMagneticMooneyRivlinCompressibleMaterialPrestrain( int n, Domain *d );
-
-    void initializeFrom( InputRecord &ir ) override{
-      HardMagneticMooneyRivlinCompressibleMaterial::initializeFrom( ir );
-      magEndTime = 0.;
-      IR_GIVE_OPTIONAL_FIELD( ir, magEndTime, _IFT_HardMagneticMooneyRivlinCompressibleMaterialPrestrain_magEndTime );
-    }
 
     std::tuple<FloatArrayF<9>, FloatArrayF<3> > give_FirstPKStressVector_MagneticInduction_3d( const FloatArrayF<9> &vF, const FloatArrayF<3> &vH, GaussPoint *gp, TimeStep *tStep ) const override;
     std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 3>, FloatMatrixF<3, 9>, FloatMatrixF<3, 3> > giveConstitutiveMatrices_dPdF_dBdH_dPdH_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) override;

@@ -359,10 +359,6 @@ REGISTER_Element( MagnetoElasticQuad_ql )
  * @brief 2D Magneto elatic element with linear interpolation of displacements and magnetic potential
  *
  */
-#define _IFT_MagnetoElasticQuad_ll_H1 "h01"
-#define _IFT_MagnetoElasticQuad_ll_H2 "h02"
-#define _IFT_MagnetoElasticQuad_ll_H3 "h03"
-#define _IFT_MagnetoElasticQuad_ll_H4 "h04"
 
 class MagnetoElasticQuad_ll : public MagnetoElasticElement
 {
@@ -373,8 +369,6 @@ class MagnetoElasticQuad_ll : public MagnetoElasticElement
   const static Variable &phi;
   const static Variable &u;
 
-  FloatArrayF<3> H0_1, H0_2, H0_3, H0_4; // premagfield for each node
-
   public:
   MagnetoElasticQuad_ll( int n, Domain *d ) :
       MagnetoElasticElement( n, d )
@@ -382,40 +376,6 @@ class MagnetoElasticQuad_ll : public MagnetoElasticElement
     numberOfDofMans = 4;
     numberOfGaussPoints = 4;
     this->computeGaussPoints();
-  }
-
-  void initializeFrom( InputRecord &ir ) override
-  {
-
-    MagnetoElasticElement::initializeFrom( ir );
-
-    FloatArray H1_temp, H2_temp, H3_temp, H4_temp;
-
-    IR_GIVE_OPTIONAL_FIELD( ir, H1_temp, _IFT_MagnetoElasticQuad_ll_H1 );
-    IR_GIVE_OPTIONAL_FIELD( ir, H2_temp, _IFT_MagnetoElasticQuad_ll_H2 );
-    IR_GIVE_OPTIONAL_FIELD( ir, H3_temp, _IFT_MagnetoElasticQuad_ll_H3 );
-    IR_GIVE_OPTIONAL_FIELD( ir, H4_temp, _IFT_MagnetoElasticQuad_ll_H4 );
-
-    if ( H1_temp.giveSize() == 2 ) {
-      H0_1 = assemble<3>( FloatArrayF<2>( H1_temp ), { 0, 1 } );
-    } else {
-      H0_1 = FloatArrayF<3>( H1_temp );
-    }
-    if ( H2_temp.giveSize() == 2 ) {
-      H0_2 = assemble<3>( FloatArrayF<2>( H2_temp ), { 0, 1 } );
-    } else {
-      H0_2 = FloatArrayF<3>( H2_temp );
-    }
-    if ( H3_temp.giveSize() == 2 ) {
-      H0_3 = assemble<3>( FloatArrayF<2>( H3_temp ), { 0, 1 } );
-    } else {
-      H0_3 = FloatArrayF<3>( H3_temp );
-    }
-    if ( H4_temp.giveSize() == 2 ) {
-      H0_4 = assemble<3>( FloatArrayF<2>( H4_temp ), { 0, 1 } );
-    } else {
-      H0_4 = FloatArrayF<3>( H4_temp );
-    }
   }
 
   int getNumberOfSurfaceDOFs() const override { return 0; }
@@ -454,24 +414,6 @@ class MagnetoElasticQuad_ll : public MagnetoElasticElement
     return EGT_quad_1;
   }
   void getEdgeLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q ) const override {}
-
-  virtual int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override
-  {
-    if ( type == IST_MagnetizationLagrangianMagneticFieldVector ) {
-      FloatArray lcoords = gp->giveNaturalCoordinates();
-      FloatArray N;
-      this->giveInterpolation()->evalN( N, lcoords, FEIElementGeometryWrapper( this ) );
-
-      answer.zero();
-      answer.add( FloatArray( H0_1 * N.at( 1 ) ) );
-      answer.add( FloatArray( H0_2 * N.at( 2 ) ) );
-      answer.add( FloatArray( H0_3 * N.at( 3 ) ) );
-      answer.add( FloatArray( H0_4 * N.at( 4 ) ) );
-
-    } else {
-      return MagnetoElasticElement::giveIPValue( answer, gp, type, tStep );
-    }
-  }
 
   private:
   virtual int giveNumberOfUDofs() const override { return 8; }
