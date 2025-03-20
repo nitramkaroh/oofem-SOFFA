@@ -47,6 +47,8 @@
 
 
 namespace oofem {
+
+  
 REGISTER_Material( HardMagneticMooneyRivlinCompressibleMaterial );
 
 HardMagneticMooneyRivlinCompressibleMaterial::HardMagneticMooneyRivlinCompressibleMaterial( int n, Domain *d ) :
@@ -104,6 +106,8 @@ HardMagneticMooneyRivlinCompressibleMaterial ::giveConstitutiveMatrices_dPdF_dBd
   M_full( i_3 ) = m_level * M( i_3 );
 
   auto [dPdF, dPdH, dBdF, dBdH] = this->computeStiffnessTensors_dPdF_dBdH_dPdH_3d( F, H, M_full);
+
+  //auto [A, B, C, D] = this->compute_stiff_num( vF, vH, gp, tStep );
   //
   return std::make_tuple( dPdF.to_voigt_form(), dPdH.to_voigt_form_9x3(), dBdF.to_voigt_form_3x9(), dBdH.to_matrix_form() );
 }
@@ -114,7 +118,7 @@ HardMagneticMooneyRivlinCompressibleMaterial ::compute_stiff_num( const FloatArr
 {
   auto [P, B] = give_FirstPKStressVector_MagneticInduction_3d( vF, vH, gp, tStep );
   FloatMatrix Kuu( 9, 9 ), Kuh( 9, 3 ), Khu( 3, 9 ), Khh( 3, 3 );
-  auto pert = 1.e-5;
+  auto pert = 1.e-9;
   for ( int i = 1; i <= 9; i++ ) {
     auto vFp = vF;
     vFp.at( i ) += pert;
@@ -151,7 +155,7 @@ HardMagneticMooneyRivlinCompressibleMaterial ::giveConstitutiveMatrices_dPdF_dBd
   return std::make_tuple( dPdFred, dPdHred, dBdFred, dBdHred );
 }
 
-std::tuple<Tensor2_3d, Tensor1_3d> HardMagneticMooneyRivlinCompressibleMaterial::computeFirstPKStressMagneticInductionTensors_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M) const
+std::tuple<Tensor2_3d, Tensor1_3d> HardMagneticMooneyRivlinCompressibleMaterial::computeFirstPKStressMagneticInductionTensors_3d( const Tensor2_3d &F, const Tensor1_3d &H, const Tensor1_3d &M) const
 {
   Tensor2_3d P;
   Tensor1_3d B, Q;
@@ -165,15 +169,14 @@ std::tuple<Tensor2_3d, Tensor1_3d> HardMagneticMooneyRivlinCompressibleMaterial:
       + ( mu_0 / ( 2 * J * J ) ) * cofF( m_3, n_3 ) * Q( n_3 ) * cofF( m_3, k_3 ) * Q( k_3 ) * cofF( i_3, j_3 );
     B( i_3 ) = mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 ) * Q( k_3 );
   } else if(pb == 2) {
-    Q( i_3 ) = H( i_3 );
     P( i_3, j_3 ) = C1 * this->compute_dI1_Cdev_dF( F )( i_3, j_3 ) + C2 * this->compute_dI2_Cdev_dF( F )( i_3, j_3 ) + this->compute_dVolumetricEnergy_dF( F )( i_3, j_3 )
       - ( mu_0 / J ) * F.compute_tensor_cross_product()( i_3, j_3, m_3, n_3 ) * ( cofF( m_3, q_3 ) * H( q_3 ) * H( n_3 ) )
       + ( mu_0 / ( 2 * J * J ) ) * cofF( m_3, n_3 ) * H( n_3 ) * cofF( m_3, k_3 ) * H( k_3 ) * cofF( i_3, j_3 )
       // M*C*M term
-      - ( mu_0 / J ) * F( i_3, k_3) * M( k_3 ) * M( j_3 )  +
+      - ( mu_0 / J ) * F( i_3, k_3) * M( k_3 ) * M( j_3 )  
       + ( mu_0 / ( 2. * J * J ) ) * F( m_3, n_3 ) * M( n_3 ) * F( m_3, k_3 ) * M( k_3 ) * cofF( i_3, j_3 );
       //
-    B( i_3 ) = mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 ) * Q( k_3 ) - mu_0 * M(i_3);
+    B( i_3 ) = mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 ) * H( k_3 ) + mu_0 * M(i_3);
   } else {
     OOFEM_ERROR("Wrong pull back type");
 
@@ -182,13 +185,13 @@ std::tuple<Tensor2_3d, Tensor1_3d> HardMagneticMooneyRivlinCompressibleMaterial:
   return std::make_tuple( P, B );
 }
 
-std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> HardMagneticMooneyRivlinCompressibleMaterial::computeStiffnessTensors_dPdF_dBdH_dPdH_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M ) const
+std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> HardMagneticMooneyRivlinCompressibleMaterial::computeStiffnessTensors_dPdF_dBdH_dPdH_3d( const Tensor2_3d &F, const Tensor1_3d &H, const Tensor1_3d &M ) const
 {
   Tensor4_3d dPdF;
   Tensor3_3d dPdH, dBdF, dPdH_in_H;
   Tensor2_3d dBdH, GQQ;
   Tensor1_3d Q;
-
+  //  
   auto [J, cofF] = F.compute_determinant_and_cofactor();
   auto Fcross = F.compute_tensor_cross_product();
   Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
@@ -234,11 +237,11 @@ std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> HardMagneticMooneyRiv
       // MCM term
       - mu_0 / J * delta(i_3, k_3) * (M(j_3) * M(l_3))
       + mu_0 / J / J * F(i_3, p_3) * M(p_3) * M(j_3) * cofF(k_3, l_3)
-      +  mu_0 / ( 2 * J * J )  * ( F( m_3, n_3 ) * M( n_3 ) * F( m_3, o_3 ) * M( o_3 )) * Fcross( i_3, j_3, k_3, l_3 ) 
+      +  mu_0 / ( 2. * J * J )  * ( F( m_3, n_3 ) * M( n_3 ) * F( m_3, o_3 ) * M( o_3 )) * Fcross( i_3, j_3, k_3, l_3 ) 
       - mu_0 / J / J / J * F( m_3, n_3 ) * M( n_3 ) * F( m_3, o_3 ) * M( o_3 ) * cofF( i_3, j_3 )* cofF( k_3, l_3 )
       + mu_0 / J / J * cofF(i_3, j_3) * F(k_3, p_3) * (M(p_3) * M(l_3));
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    dBdH( i_3, k_3 ) = -mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 ) - mu_0 * delta(i_3, k_3);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+    dBdH( i_3, k_3 ) = -mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 );
     //
     // dBdF( i_3, k_3, l_3 ) = mu_0 / J * ( G( j_3, m_3 ) * Q( m_3 ) * Fcross( j_3, i_3, k_3, l_3 ) ) + G( j_3, i_3 ) * ( Q( m_3 ) * Fcross( j_3, m_3, k_3, l_3 ) ) - mu_0 / ( J * J ) * ( G( j_3, i_3 ) * G( j_3, m_3 ) * Q( m_3 ) * G( k_3, l_3 ) );
     //
@@ -246,10 +249,18 @@ std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> HardMagneticMooneyRiv
     //
   }
     dBdF( i_3, k_3, l_3 ) = dPdH( k_3, l_3, i_3 );
-  
+    //
+  //
+    
 
+    
   return std::make_tuple( dPdF, dPdH, dBdF, dBdH);
 }
+
+
+
+
+
 
 
 MaterialStatus *

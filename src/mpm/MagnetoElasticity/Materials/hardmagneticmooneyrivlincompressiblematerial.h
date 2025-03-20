@@ -106,8 +106,16 @@ public:
   FloatMatrixF<1,1> give_SecondGradient_ConstitutiveMatrix_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override;
 
 protected:
-  std::tuple<Tensor2_3d, Tensor1_3d> computeFirstPKStressMagneticInductionTensors_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M ) const;
-  std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> computeStiffnessTensors_dPdF_dBdH_dPdH_3d( const Tensor2_3d F, const Tensor1_3d H, const Tensor1_3d M ) const;
+  std::tuple<Tensor2_3d, Tensor1_3d> computeFirstPKStressMagneticInductionTensors_3d( const Tensor2_3d &F, const Tensor1_3d &H, const Tensor1_3d &M ) const;
+  std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> computeStiffnessTensors_dPdF_dBdH_dPdH_3d( const Tensor2_3d &F, const Tensor1_3d &H, const Tensor1_3d &M ) const;
+
+  
 };
+
+
+
+
+
+  
 } // end namespace oofem
 #endif
