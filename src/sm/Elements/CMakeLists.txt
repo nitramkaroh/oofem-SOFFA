@@ -37,6 +37,7 @@ set (sm_element
     Beams/beam2d.C 
     Beams/beam3d.C
     Beams/nlbeam_sm.C
+    Beams/nlbeam_internalcontact.C	
     Beams/libeam3dboundary.C
     Beams/libeam3dboundarytruss.C
     Beams/libeam3dboundarymembrane.C

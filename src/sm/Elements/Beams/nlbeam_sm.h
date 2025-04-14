@@ -134,11 +134,10 @@ public:
  
    void computeStiffnessMatrix(FloatMatrix &answer, MatResponseMode rMode, TimeStep *tStep) override;
    void giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int useUpdatedGpRecord = 0) override;
-  virtual int computeNumberOfDofs() override { return 6; }
+   int computeNumberOfDofs() override { return 6; }
+   void  printOutputAt(FILE *file, TimeStep *tStep) override{;}
 
-  virtual void  printOutputAt(FILE *file, TimeStep *tStep) override{;}
-
-    virtual  void initializeFrom(InputRecord &ir) override;
+  void initializeFrom(InputRecord &ir) override;
   void postInitialize() override;
   // composite type - so we can do the postprocessing in the next function
   Element_Geometry_Type giveGeometryType() const override { return EGT_Composite; }

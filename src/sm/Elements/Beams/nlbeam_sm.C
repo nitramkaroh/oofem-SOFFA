@@ -322,7 +322,7 @@ std::tuple<bool,FloatArrayF<3>, double>
    
    if (iter >= beam_maxit || error != error) {
      // what to do ???
-     return {false, FloatArrayF<3>(fb_init), 0};
+     return {false, FloatArrayF<3>( this->internalForces), 0};
    }
    return {true, FloatArrayF<3>(fa), Mpr};
    
@@ -345,11 +345,12 @@ NlBeam_SM :: giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int u
    auto [converged, fa, Mp] = this->findLeftEndForces(y, tStep);
    
    if (!converged) { // multi-level substepping (note that fa remained unchanged if the local iteration failed)
-     auto finit = this->internalForces;
-     auto [xb_shoot, G, Gr, Mp, dMp] = this->integrateAlongBeam(fa, X, tStep);
+     //auto finit = this->internalForces;
+     auto [xb_shoot, G, Gr, Mp, dMp] = this->integrateAlongBeam(this->internalForces, X, tStep);
      //
      int refinement_factor = 4;
-     FloatArray ub_inter(3);
+     FloatArray ub_inter(xb_shoot);
+     ub_inter -= {X.at(4), X.at(5), X.at(6)};
      auto ub_substep = (FloatArray({u.at(4),u.at(5),u.at(6)}) - ub_inter)/refinement_factor;
      int isubstep = 0, maxnsubsteps = 2048;
      int nsubsteps = 4; //this->nsubsteps_init;
@@ -370,7 +371,7 @@ NlBeam_SM :: giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int u
      }
      
      if (converged == false){
-       this->internalForces = finit;
+       //this->internalForces = finit;
        //OOFEM_Exception      
      }
    } else {
