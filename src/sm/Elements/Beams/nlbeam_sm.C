@@ -349,14 +349,17 @@ NlBeam_SM :: giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int u
      auto [xb_shoot, G, Gr, Mp, dMp] = this->integrateAlongBeam(this->internalForces, X, tStep);
      //
      int refinement_factor = 4;
-     FloatArray ub_inter(xb_shoot);
+     FloatArray ub_inter(xb_shoot), ua_inter;
      ub_inter -= {X.at(4), X.at(5), X.at(6)};
-     auto ub_substep = (FloatArray({u.at(4),u.at(5),u.at(6)}) - ub_inter)/refinement_factor;
+     ua_inter  = {0., 0., 0.};
+     auto ub_substep =  (FloatArray({u.at(4),u.at(5),u.at(6)}) - ub_inter)/refinement_factor;
+     auto ua_substep =  (FloatArray({u.at(1),u.at(2),u.at(3)}))/refinement_factor;
      int isubstep = 0, maxnsubsteps = 2048;
      int nsubsteps = 4; //this->nsubsteps_init;
      while (isubstep < nsubsteps && nsubsteps <= maxnsubsteps){
        ub_inter += ub_substep;
-       auto y = X + FloatArray({u.at(1), u.at(2), u.at(3), ub_inter.at(1), ub_inter.at(2), ub_inter.at(3)});
+       ua_inter += ua_substep;
+       auto y = X + FloatArray({ua_inter.at(1), ua_inter.at(2), ua_inter.at(3), ub_inter.at(1), ub_inter.at(2), ub_inter.at(3)});
        auto [con, fa, Mp] = this->findLeftEndForces(y, tStep);
        if (con){
  	isubstep++;
