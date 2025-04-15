@@ -259,7 +259,38 @@ NlBeam_SM :: computeLoadAt(FloatArray &Px, FloatArray &Pz, double &tBax, double 
 }
 
   
-  
+double
+NlBeam_SM ::performLineSearch(const FloatArray &fa, const FloatArray &dforces, const FloatArray &xa, const  FloatArray &xb_target, TimeStep *tStep)
+{
+  FloatArray F, direction = dforces;
+  auto norm_dF = direction.normalize();
+  auto deta = 1e-6;
+  double Eta     = min( deta, norm_dF ); // start guess
+  auto ddF  = Eta * direction;
+  F = fa + ddF;
+  size_t max_iter = 20;
+  auto ls_tolerance = 1.e-10;
+  ///////////////
+  for ( size_t niteLS = 0; niteLS < max_iter; niteLS++ ) { // inner Newton loop to find local minimum in the direction
+       auto [xb_shoot, G, Gr, Mp, dMp] = this->integrateAlongBeam(F, xa, tStep);
+       //
+       auto rhs = xb_target-xb_shoot;
+       double RHS     = rhs.dotProduct( direction );
+        // Check convergence
+       if ( fabs( RHS ) < ls_tolerance ) {
+            return Eta;
+        }
+       std::tie(xb_shoot, G, Gr, Mp, dMp) =this->integrateAlongBeam(F, xa, tStep);
+	auto dGd = direction.dotProduct(G * direction);
+        deta = RHS / dGd;
+        Eta -= deta;
+        ddF = deta * direction;
+        F   = F + ddF;
+    }
+    return norm_dF;
+}
+
+
 
 
  /*
@@ -312,7 +343,9 @@ std::tuple<bool,FloatArrayF<3>, double>
    while ((iter==0) || (error>tolerance && iter < beam_maxit && error ==error) ){
      iter++;
      jacobi.solveForRhs(res, dforces);
-     fa += dforces;
+     //auto alpha = performLineSearch(fa, dforces, xa, xb_target, tStep);
+     auto alpha = 1.;
+     fa += alpha * dforces;
      auto [xb_shoot, G, Gr, Mp, dMp] = this->integrateAlongBeam(fa, xa, tStep);
      Mpr = Mp;
      jacobi = G;
@@ -367,14 +400,16 @@ NlBeam_SM :: giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int u
 	converged = true;
        } else { // further refinement needed
  	ub_inter -= ub_substep;
+	ua_inter -= ua_substep;  
  	ub_substep /= refinement_factor;
+	ua_substep /= refinement_factor;
  	nsubsteps = isubstep + 4*(nsubsteps-isubstep);
 	converged = false;
        }
      }
      
      if (converged == false){
-       //this->internalForces = finit;
+       this->internalForces = fb_init;
        //OOFEM_Exception      
      }
    } else {
@@ -489,7 +524,6 @@ NlBeam_SM :: giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, int u
      //   FloatMatrix K(6,6);
      //
      this->computeStiffnessMatrix_num(K, rMode, tStep);
-     int test = 1;
    }
    if(sym) {
      FloatMatrix at;

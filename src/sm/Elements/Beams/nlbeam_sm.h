@@ -182,6 +182,10 @@ protected:
    **/
   std::tuple<bool, FloatArrayF<3>, double> findLeftEndForces(const FloatArrayF<6> &x_target, TimeStep *tStep);
 
+  /**
+     Line search function
+   **/
+  double performLineSearch(const FloatArray &fa, const FloatArray &dforces, const FloatArray &xa, const  FloatArray &xb_target, TimeStep *tStep);
   
   /**
      Function related to constitutive behavior of the beam -- consider moving to another class
