@@ -51,6 +51,14 @@
 #define _IFT_NlBeamInternalContact_dx "dx"
 #define _IFT_NlBeamInternalContact_matNum "matnum"
 
+#define _IFT_NlBeam_InternalContact_NIP "nip"
+#define _IFT_NlBeam_InternalContact_EA "ea"
+#define _IFT_NlBeam_InternalContact_EI "ei"
+#define _IFT_NlBeam_InternalContact_Beam_Tolerance "btol"
+#define _IFT_NlBeam_InternalContact_Beam_MaxIteration "bmaxit"
+#define _IFT_NlBeam_InternalContact_Beam_NumberMaxSubsteps "nsubsteps"
+
+
 //@}
 
 namespace oofem {
@@ -89,7 +97,15 @@ protected:
   double rightActiveSegmentLength = 0.001;//15.;
   double trialLeftActiveSegmentLength, trialRightActiveSegmentLength;
   FloatArray internalForces, tempInternalForces;
- 
+  //
+  int NIP = 100;
+  double pitch = 10, beamLength = 0;
+  FloatArray x, u, w, phi;
+  FloatMatrix jacobi;
+  double beam_tol = 1.e-6, beam_maxit = 100;
+  double EI, EA;
+  FloatArray vM, vV, vN;
+  //
   FloatMatrix Jacobi;
   FloatMatrix Jacobi44;
   FloatMatrix Kblock;
@@ -140,11 +156,15 @@ public:
     
 protected:
 
-    
+  void  postInitialize()  override{;}  
   double L2norm(double x, double y, double z);
   double computeCurvatureFromMoment(double M);
   double computeDerMomentFromCurvature(double kappa);
 
+  virtual double computeLength();
+  double givePitch();
+
+  
   std::tuple<FloatArrayF<3>,FloatMatrixF<3,3>, FloatArrayF<3>, double, FloatArrayF<4>>
   integrateAlongBeam(const FloatArray &fab, const FloatArray &ua, TimeStep *tStep) override {return std::make_tuple(zeros< 3 >(), FloatMatrixF< 3,3 >(), zeros< 3 >(),0.0, zeros< 4 >());}
   

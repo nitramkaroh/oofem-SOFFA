@@ -25,7 +25,41 @@ void
 NlBeamInternalContact :: initializeFrom(InputRecord &ir)
 {
     // first call parent
-    NlBeam_SM :: initializeFrom(ir);
+  //    NlBeam_SM :: initializeFrom(ir);
+    //
+        // first call parent
+    StructuralElement :: initializeFrom(ir);
+
+    // Numerical parameters
+    // 1. number of segments for numerical integration along the beam, default value 100
+    IR_GIVE_OPTIONAL_FIELD(ir, NIP, _IFT_NlBeam_InternalContact_NIP);
+    IR_GIVE_FIELD(ir, EA, _IFT_NlBeam_InternalContact_EA);
+    IR_GIVE_FIELD(ir, EI, _IFT_NlBeam_InternalContact_EI);
+    /*    // relative tolerance for iterations at the section level
+    IR_GIVE_OPTIONAL_FIELD(ir, section_tol, _IFT_FbarElementExtensionInterface_fbarflag);
+    // maximum number of iterations at the section level
+    IR_GIVE_OPTIONAL_FIELD(ir, section_maxit, _IFT_FbarElementExtensionInterface_fbarflag);
+    */
+    
+    // relative tolerance for iterations at the beam level
+    IR_GIVE_OPTIONAL_FIELD(ir, beam_tol, _IFT_NlBeam_InternalContact_Beam_Tolerance);
+    // maximum number of iterations at the beam level
+    IR_GIVE_OPTIONAL_FIELD(ir, beam_maxit, _IFT_NlBeam_InternalContact_Beam_MaxIteration);
+    IR_GIVE_OPTIONAL_FIELD(ir, nsubsteps_init, _IFT_NlBeam_InternalContact_Beam_NumberMaxSubsteps);
+    
+    this->givePitch();
+    this->computeLength();
+
+    this->x.resize(NIP+1);
+    
+    this->u.resize(NIP+1);
+    this->w.resize(NIP+1);
+    this->phi.resize(NIP+1);
+
+    this->vN.resize(NIP+1);
+    this->vV.resize(NIP+1);
+    this->vM.resize(NIP+1);
+
     //
     IR_GIVE_FIELD(ir, leftSegmentLength, _IFT_NlBeamInternalContact_LeftSegmentLength );
     IR_GIVE_FIELD(ir, rightSegmentLength, _IFT_NlBeamInternalContact_RightSegmentLength );
@@ -1483,8 +1517,8 @@ NlBeamInternalContact :: giveCompositeExportData(std::vector< VTKPiece > &vtkPie
   
 
     int n = primaryVarsToExport.giveSize();
-    vtkPieces [ 0 ].setNumberOfPrimaryVarsToExport(n, nNodesLeft);
-    vtkPieces [ 1 ].setNumberOfPrimaryVarsToExport(n, nNodesRight);
+    vtkPieces [ 0 ].setNumberOfPrimaryVarsToExport(primaryVarsToExport, nNodesLeft);
+    vtkPieces [ 1 ].setNumberOfPrimaryVarsToExport(primaryVarsToExport, nNodesRight);
     for ( int i = 1; i <= n; i++ ) {
         UnknownType utype = ( UnknownType ) primaryVarsToExport.at(i);
         if ( utype == DisplacementVector ) {
@@ -1702,6 +1736,47 @@ NlBeamInternalContact ::computeSegmentDisplacements(FloatMatrix &uMatrix, FloatA
   } // end of loop over spatial steps
   
 }
+
+
+double
+NlBeamInternalContact :: computeLength()
+// Returns the length of the receiver.
+{
+    double dx, dy;
+    Node *nodeA, *nodeB;
+
+    if ( beamLength == 0. ) {
+        nodeA   = this->giveNode(1);
+        nodeB   = this->giveNode(2);
+        dx      = nodeB->giveCoordinate(1) - nodeA->giveCoordinate(1);
+        dy      = nodeB->giveCoordinate(3) - nodeA->giveCoordinate(3);
+        beamLength  = sqrt(dx * dx + dy * dy);
+    }
+
+    return beamLength;
+}
+  
+
+ double
+NlBeamInternalContact :: givePitch()
+// Returns the pitch of the receiver.
+{
+    double xA, xB, yA, yB;
+    Node *nodeA, *nodeB;
+
+    if ( pitch == 10. ) {             // 10. : dummy initialization value
+        nodeA  = this->giveNode(1);
+        nodeB  = this->giveNode(2);
+        xA     = nodeA->giveCoordinate(1);
+        xB     = nodeB->giveCoordinate(1);
+        yA     = nodeA->giveCoordinate(3);
+        yB     = nodeB->giveCoordinate(3);
+        pitch  = atan2(yB - yA, xB - xA);
+    }
+
+    return pitch;
+}
+
 
   
 }
