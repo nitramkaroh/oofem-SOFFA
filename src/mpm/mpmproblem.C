@@ -281,7 +281,19 @@ MPMProblem :: initializeFrom(InputRecord &ir)
 
 double MPMProblem :: giveUnknownComponent(ValueModeType mode, TimeStep *tStep, Domain *d, Dof *dof)
 {
-    return this->field->giveUnknownValue(dof, mode, tStep);
+
+     if (mode == VM_Residual) {
+        // evaluate the residual of momentum balance for specific unknown
+        int eq = dof->__giveEquationNumber();
+        if (eq && internalForces.isNotEmpty()) {
+            double ans = -internalForces.at(eq);
+            return ans;
+        } else {
+	  return 0.;
+        }
+    } else {
+        return this->field->giveUnknownValue(dof, mode, tStep);
+    }
 }
 
 
