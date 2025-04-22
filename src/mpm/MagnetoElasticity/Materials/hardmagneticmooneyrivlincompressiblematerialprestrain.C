@@ -86,9 +86,9 @@ HardMagneticMooneyRivlinCompressibleMaterialPrestrain ::give_FirstPKStressVector
   auto vB = B.to_voigt_form();
   // update gp
   status->letTempFVectorBe( F_full.to_voigt_form() );
-  status->letTempPVectorBe( vP );
+  status->letTempPVectorBe( P_full.to_voigt_form() );
   status->letTempHVectorBe( H_full.to_voigt_form() );
-  status->letTempBVectorBe( vB );
+  status->letTempBVectorBe( B_full.to_voigt_form() );
   status->letHmagTensorBe( H_mag );
   //
   return std::make_tuple( vP, vB );

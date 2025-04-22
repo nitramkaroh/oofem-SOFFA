@@ -392,7 +392,7 @@ MatlabExportModule :: doOutputData(TimeStep *tStep, FILE *FID)
     for ( size_t i = 0; i < valuesList.size(); i++ ) {
         fprintf(FID, "\tdata.a{%lu}=[", static_cast< long unsigned int >(i) + 1);
         for ( double val: valuesList[i] ) {
-            fprintf( FID, "%f,", val );
+            fprintf( FID, "%.16e,", val );
         }
 
         fprintf(FID, "];\n");
@@ -464,7 +464,7 @@ MatlabExportModule :: doOutputSpecials(TimeStep *tStep,    FILE *FID)
                 fprintf(FID, "\tspecials.weakperiodic{%u}.coefficients=[", wpbccount);
                 for ( Dof *dof: *wpbc->giveInternalDofManager(j) ) {
                     double X = dof->giveUnknown(VM_Total, tStep);
-                    fprintf(FID, "%e\t", X);
+                    fprintf(FID, "%.16e\t", X);
                 }
 
                 fprintf(FID, "];\n");
@@ -486,7 +486,7 @@ MatlabExportModule :: doOutputSpecials(TimeStep *tStep,    FILE *FID)
             fprintf(FID, "\tspecials.prescribedmean{%u}.value=[", mcount);
             for ( Dof *dof: *m->giveInternalDofManager(1)) {
                 double X = dof->giveUnknown(VM_Total, tStep);
-                fprintf(FID, "%e\t", X);
+                fprintf(FID, "%.16e\t", X);
             }
             fprintf(FID, "];\n");
             mcount++;
@@ -504,12 +504,12 @@ MatlabExportModule :: doOutputSpecials(TimeStep *tStep,    FILE *FID)
             fprintf(FID, "];\n");
             fprintf(FID, "\tspecials.prescribeddispslipbcdirichletrc{%u}.transferstress=[", pdsdcount);
             for ( auto i : bStress ) {
-                fprintf(FID, "%e\t", i);
+                fprintf(FID, "%.16e\t", i);
             }
             fprintf(FID, "];\n");
             fprintf(FID, "\tspecials.prescribeddispslipbcdirichletrc{%u}.reinfstress=[", pdsdcount);
             for ( auto i : rStress ) {
-                fprintf(FID, "%e\t", i);
+                fprintf(FID, "%.16e\t", i);
             }
             fprintf(FID, "];\n");
             pdsdcount++;
@@ -522,17 +522,17 @@ MatlabExportModule :: doOutputSpecials(TimeStep *tStep,    FILE *FID)
             pdsn->computeReinfStress(rStress, tStep);
             fprintf(FID, "\tspecials.prescribeddispslipbcneumannrc{%u}.stress=[", pdsncount);
             for ( auto i : stress ) {
-                fprintf(FID, "%e\t", i);
+                fprintf(FID, "%.16e\t", i);
             }
             fprintf(FID, "];\n");
             fprintf(FID, "\tspecials.prescribeddispslipbcneumannrc{%u}.transferstress=[", pdsncount);
             for ( auto i : bStress ) {
-                fprintf(FID, "%e\t", i);
+                fprintf(FID, "%.16e\t", i);
             }
             fprintf(FID, "];\n");
             fprintf(FID, "\tspecials.prescribeddispslipbcneumannrc{%u}.reinfstress=[", pdsncount);
             for ( auto i : rStress ) {
-                fprintf(FID, "%e\t", i);
+                fprintf(FID, "%.16e\t", i);
             }
             fprintf(FID, "];\n");
             pdsncount++;
@@ -545,17 +545,17 @@ MatlabExportModule :: doOutputSpecials(TimeStep *tStep,    FILE *FID)
             pdsm->computeReinfStress(rStress, tStep);
             fprintf(FID, "\tspecials.prescribeddispslipmultiple{%u}.stress=[", pdsncount);
             for ( auto i : stress ) {
-                fprintf(FID, "%e\t", i);
+                fprintf(FID, "%.16e\t", i);
             }
             fprintf(FID, "];\n");
             fprintf(FID, "\tspecials.prescribeddispslipmultiple{%u}.transferstress=[", pdsncount);
             for ( auto i : bStress ) {
-                fprintf(FID, "%e\t", i);
+                fprintf(FID, "%.16e\t", i);
             }
             fprintf(FID, "];\n");
             fprintf(FID, "\tspecials.prescribeddispslipmultiple{%u}.reinfstress=[", pdsncount);
             for ( auto i : rStress ) {
-                fprintf(FID, "%e\t", i);
+                fprintf(FID, "%.16e\t", i);
             }
             fprintf(FID, "];\n");
             pdsmcount++;
@@ -566,7 +566,7 @@ MatlabExportModule :: doOutputSpecials(TimeStep *tStep,    FILE *FID)
             trc->computeField(lambda, tStep);
             fprintf(FID, "\tspecials.transversereinfconstraint{%u}.stress=[", trccount);
             for ( auto i : lambda ) {
-                fprintf(FID, "%e\t", i);
+                fprintf(FID, "%.16e\t", i);
             }
             fprintf(FID, "];\n");
             trccount++;
@@ -646,9 +646,9 @@ MatlabExportModule :: doOutputReactionForces(TimeStep *tStep,    FILE *FID)
                 int pos = eqnMap.findFirstIndexOf( num );
                 dofIDs.followedBy(dof->giveDofID());
                 if ( pos > 0 ) {
-                    fprintf(FID, "%e ", reactions.at(pos));
+                    fprintf(FID, "%.16e ", reactions.at(pos));
                 } else {
-                    fprintf( FID, "%e ", 0.0 ); // if not prescibed output zero
+                    fprintf( FID, "%.16e ", 0.0 ); // if not prescibed output zero
                 }
             }
         }
@@ -725,7 +725,7 @@ MatlabExportModule :: doOutputIntegrationPointFields(TimeStep *tStep,    FILE *F
 
                 double weight = ip->giveWeight();
 
-                fprintf( FID, "\tIntegrationPointFields.Elements{%i}.integrationRule{%i}.ip{%i}.ipWeight = %e; \n ",
+                fprintf( FID, "\tIntegrationPointFields.Elements{%i}.integrationRule{%i}.ip{%i}.ipWeight = %.16e; \n ",
                          ielem, i, ip->giveNumber(), weight);
 
 
@@ -736,12 +736,12 @@ MatlabExportModule :: doOutputIntegrationPointFields(TimeStep *tStep,    FILE *F
                 FloatArray coords;
                 el->computeGlobalCoordinates( coords, ip->giveNaturalCoordinates() );
                 for ( int ic = 1; ic <= coords.giveSize(); ic++ ) {
-                    fprintf( FID, "%e ", coords.at(ic) );
+                    fprintf( FID, "%.16e ", coords.at(ic) );
                 }
                 fprintf( FID, "]; \n" );
 
                 //export volume around Gauss point
-                fprintf( FID, "\tIntegrationPointFields.Elements{%i}.integrationRule{%i}.ip{%i}.volume = %e; \n ",
+                fprintf( FID, "\tIntegrationPointFields.Elements{%i}.integrationRule{%i}.ip{%i}.volume = %.16e; \n ",
                          ielem, i, ip->giveNumber(), el->computeVolumeAround(ip));
 
                 // export internal variables
@@ -755,7 +755,7 @@ MatlabExportModule :: doOutputIntegrationPointFields(TimeStep *tStep,    FILE *F
                     el->giveIPValue(valueArray, ip, vartype, tStep);
                     int nv = valueArray.giveSize();
                     for ( int ic = 1; ic <= nv; ic++ ) {
-                        fprintf( FID, "%.6e ", valueArray.at(ic) );
+                        fprintf( FID, "%.16e ", valueArray.at(ic) );
                     }
                     fprintf( FID, "]; \n" );
                 }
@@ -877,7 +877,7 @@ MatlabExportModule :: doOutputHomogenizeDofIDs(TimeStep *tStep, FILE *FID)
         fprintf(FID, "\tspecials.%s = [", __InternalStateTypeToString ( (InternalStateType) internalVarsToExport[i] ) );
 
         for (int j = 0; j<thisIS.giveSize(); j++) {
-            fprintf(FID, "%e", thisIS.at(j+1));
+            fprintf(FID, "%.16e", thisIS.at(j+1));
             if (j!=(thisIS.giveSize()-1) ) {
                 fprintf(FID, ", ");
             }
