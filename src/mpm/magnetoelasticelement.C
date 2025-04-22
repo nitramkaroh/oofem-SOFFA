@@ -117,7 +117,7 @@ class MagnetoElasticElement : public MPElement
   // Note: performance can be probably improved once it will be possible
   // to directly assemble multiple term contributions to the system matrix.
   // template metaprogramming?
-  void giveCharacteristicMatrix( FloatMatrix &answer, CharType type, TimeStep *tStep ) override
+  virtual void giveCharacteristicMatrix( FloatMatrix &answer, CharType type, TimeStep *tStep ) override
   {
     IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
 
@@ -128,16 +128,13 @@ class MagnetoElasticElement : public MPElement
       answer.zero();
       this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_Term( getU(), getU(), getPhi() ), ir, tStep );
     } else if ( type == MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad ) {
-      int udofs = this->giveNumberOfUDofs();
-      answer.resize( udofs, udofs );
-      answer.zero();
-      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU(), getPhi() ), ir, tStep );
+      answer.resize(this->giveNumberOfUDofs(),this->giveNumberOfUDofs());
     } else {
       OOFEM_ERROR( "Unknown characteristic matrix type" );
     }
   }
 
-  void giveCharacteristicVector( FloatArray &answer, CharType type, ValueModeType mode, TimeStep *tStep ) override
+  virtual void giveCharacteristicVector( FloatArray &answer, CharType type, ValueModeType mode, TimeStep *tStep ) override
   {
     IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
     if ( type == MagnetoElasticity_GradGrad_Flux ) {
@@ -146,8 +143,6 @@ class MagnetoElasticElement : public MPElement
       this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_Term( getU(), getU(), getPhi() ), ir, tStep );
     } else if ( type == MagnetoElasticity_GradGrad_SecondGradient_Flux ) {
       answer.resize( this->giveNumberOfUDofs() );
-      answer.zero();
-      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU(), getPhi() ), ir, tStep );
     } else if ( type == ExternalForcesVector ) {
       ;
     } else {
@@ -229,6 +224,32 @@ class MagnetoElasticQuad_qq : public MagnetoElasticElement
   int giveNumberOfDofs() override { return 24; }
   const char *giveInputRecordName() const override { return "MagnetoElasticQuad_qq"; }
   const char *giveClassName() const override { return "MagnetoElasticQuad_qq"; }
+
+  void giveCharacteristicMatrix( FloatMatrix &answer, CharType type, TimeStep *tStep ) override
+  {
+    IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
+
+    if ( type == MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad ) {
+      int udofs = this->giveNumberOfUDofs();
+      answer.resize( udofs, udofs );
+      answer.zero();
+      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU(), getPhi() ), ir, tStep );
+    } else {
+      MagnetoElasticElement::giveCharacteristicMatrix(answer, type, tStep);
+    }
+  }
+
+  void giveCharacteristicVector( FloatArray &answer, CharType type, ValueModeType mode, TimeStep *tStep ) override
+  {
+    IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
+    if ( type == MagnetoElasticity_GradGrad_SecondGradient_Flux ) {
+      answer.resize( this->giveNumberOfUDofs() );
+      answer.zero();
+      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU(), getPhi() ), ir, tStep );
+    } else {
+      MagnetoElasticElement::giveCharacteristicVector(answer,type,mode,tStep);
+    }
+  }
 
 
   const FEInterpolation &getGeometryInterpolation() const override { return this->uInterpol; }
