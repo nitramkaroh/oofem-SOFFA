@@ -23,6 +23,7 @@ set (sm_element
     3D/macrolspace.C
 	3D/lspacefb.C
 	3D/qspacefb.C 
+	3D/qtrspacefb.C 
     Bars/truss1d.C 
     Bars/truss2d.C 
     Bars/truss3d.C
@@ -131,6 +132,8 @@ set (sm_element
     MixedPressure/PlaneStrain/quad1planestrainp0.C	
     MixedPressure/3d/lspacep0.C
     MixedPressure/3d/ltrspacep0.C
+	MixedPressure/3d/qtrspacep1.C
+	MixedPressure/AxiSymmetric/l4axisymmp0.C	
 
 
     structural2delement.C
@@ -144,8 +147,10 @@ set (sm_element
 	SurfaceElements/quadsurface.C
 	SurfaceElements/quadsurfacequadratic.C
 	SurfaceElements/triangularsurface.C
+	SurfaceElements/triangularsurfacequadratic.C
 	SurfaceElements/linesurface.C
 	SurfaceElements/axilinesurface.C
+	SurfaceElements/lineplanestrainsurface.C
     )
 
 set (sm_interface_elements
