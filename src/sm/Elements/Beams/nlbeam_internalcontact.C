@@ -1,8 +1,9 @@
 #include "../sm/Elements/Beams/nlbeam_internalcontact.h"
+#include "../sm/Materials/HyperelasticMaterials/hyperelasticmaterial1d.h"
 #include "material.h"
 #include "crosssection.h"
 #include "node.h"
-
+#include "../sm/CrossSections/nlbeamcs.h"
 #include "floatmatrix.h"
 #include "intarray.h"
 #include "floatarray.h"
@@ -33,12 +34,12 @@ NlBeamInternalContact :: initializeFrom(InputRecord &ir)
     // Numerical parameters
     // 1. number of segments for numerical integration along the beam, default value 100
     IR_GIVE_OPTIONAL_FIELD(ir, NIP, _IFT_NlBeam_InternalContact_NIP);
-    IR_GIVE_FIELD(ir, EA, _IFT_NlBeam_InternalContact_EA);
+    /*    IR_GIVE_FIELD(ir, EA, _IFT_NlBeam_InternalContact_EA);
     IR_GIVE_FIELD(ir, EI, _IFT_NlBeam_InternalContact_EI);
-    /*    // relative tolerance for iterations at the section level
-    IR_GIVE_OPTIONAL_FIELD(ir, section_tol, _IFT_FbarElementExtensionInterface_fbarflag);
+    // relative tolerance for iterations at the section level
+    IR_GIVE_OPTIONAL_FIELD(ir, section_tol, _IFT_FbarElementExtensionInterface_secTol);
     // maximum number of iterations at the section level
-    IR_GIVE_OPTIONAL_FIELD(ir, section_maxit, _IFT_FbarElementExtensionInterface_fbarflag);
+    IR_GIVE_OPTIONAL_FIELD(ir, section_maxit, _IFT_FbarElementExtensionInterface_secMaxIt);
     */
     
     // relative tolerance for iterations at the beam level
@@ -89,6 +90,24 @@ NlBeamInternalContact :: initializeFrom(InputRecord &ir)
 }
 
 
+void
+NlBeamInternalContact :: postInitialize()
+{
+  this->crossSection = dynamic_cast< NlBeamCrossSection* >( this->giveCrossSection() );
+  if(this->crossSection == nullptr) {
+    OOFEM_ERROR("NlBeam_SM::Incompatible corssection type");
+  }
+  auto m  = dynamic_cast< HyperelasticMaterial1d* >( this->giveMaterial() );
+  if(m == nullptr) {
+      OOFEM_ERROR("NlBeam_SM::Incompatible material type");
+  }
+  this->crossSection->setE(m->giveE());
+  EA  = this->crossSection->giveEA();
+ 
+}
+
+
+  
 
 double
 NlBeamInternalContact :: L2norm(double x, double y, double z)
@@ -100,7 +119,20 @@ NlBeamInternalContact :: L2norm(double x, double y, double z)
 // ============================================================================================
 // FUNCTIONS RELATED TO THE MOMENT-CURVATURE RELATION (THE SIMPLEST LINEAR ONE IS ASSUMED HERE)
 // ============================================================================================
+double
+NlBeamInternalContact :: computeDerMomentFromCurvature(double kappa)
+{
+  return this->crossSection->computeDerivativeOfMomentWrtCurvature(kappa);
+  //return EI;
+}
 
+double
+NlBeamInternalContact :: computeCurvatureFromMoment(double M)
+{
+  return this->crossSection->computeCurvatureFromMoment(M);
+  //return M/EI;
+}
+  /*  
 double
 NlBeamInternalContact :: computeCurvatureFromMoment(double M)
 {
@@ -112,7 +144,7 @@ NlBeamInternalContact :: computeDerMomentFromCurvature(double kappa)
 {
   return EI;
 }
-
+  */
 // ============================================================================================
 // FUNCTIONS RELATED TO THE CONTACT MODEL WITH DRY COULOMB FRICTION
 // ============================================================================================
@@ -930,10 +962,11 @@ NlBeamInternalContact :: predictContactMode(FloatArray ub, FloatArray ub_prev)
   // (the 'time' is a dimensionless parameter running from 0 at the beginning to 1 at the end of the step)
   double xa, xb = 0;
   FloatArray du(3);
+  double tol = 0;
   du = ub;
   du.subtract(ub_prev);
   double tb = findTipContactTime(ub_prev, du, rightSegmentLength);
-  if (tb>=0. && tb<=1.) {
+  if (tb>=0.-tol && tb<=1.+tol) {
     // find location of the hit event
     xb = beamLength + ub_prev.at(1) + tb*du.at(1) - rightSegmentLength*cos(ub_prev.at(3)+tb*du.at(3));
   }
@@ -1576,8 +1609,8 @@ NlBeamInternalContact :: giveCompositeExportData(std::vector< VTKPiece > &vtkPie
 
 
     int nC = cellVarsToExport.giveSize();
-    vtkPieces [ 0 ].setNumberOfCellVarsToExport(n, nNodesLeft);
-    vtkPieces [ 1 ].setNumberOfCellVarsToExport(n, nNodesRight);
+    vtkPieces [ 0 ].setNumberOfCellVarsToExport(cellVarsToExport, nNodesLeft);
+    vtkPieces [ 1 ].setNumberOfCellVarsToExport(cellVarsToExport, nNodesRight);
     for ( int i = 1; i <= nC; i++ ) {
       InternalStateType type = ( InternalStateType ) cellVarsToExport.at(i);
         if ( type == IST_MaterialNumber ) {

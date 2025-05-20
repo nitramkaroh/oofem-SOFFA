@@ -114,7 +114,7 @@ NlBeamSimpleElastoPlasticCrossSection :: computeMomentFromCurvature(double kappa
   if(fabs(kappa) <= kappa_elastic) {
     M = E * Iy * kappa;
   } else if(fabs(kappa) <= kappa_nl) {
-    M = signum(kappa) * (M_elastic + E * Iy * delta_kappa * atan(fabs(kappa - kappa_elastic)/delta_kappa));
+    M = signum(kappa) * (M_elastic + E * Iy * delta_kappa * atan((fabs(kappa) - kappa_elastic)/delta_kappa));
   } else {
     M = signum(kappa) * (M_nl + delta * E * Iy * (fabs(kappa) - kappa_nl));
   }
@@ -158,7 +158,7 @@ NlBeamSimpleElastoPlasticCrossSection :: computeCurvatureFromMoment(double M)
   } else if(fabs(M) <= M_nl) {
     kappa = signum(M) * (kappa_elastic + delta_kappa * tan((fabs(M) - M_elastic) / (E*Iy*delta_kappa)));
   } else {
-    kappa = signum(M) * (kappa_nl + (fabs(M) - M_elastic) / (E*Iy*delta));
+    kappa = signum(M) * (kappa_nl + (fabs(M) - M_nl) / (E*Iy*delta));
   }
   return kappa;
 

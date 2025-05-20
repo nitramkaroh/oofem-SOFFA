@@ -693,8 +693,8 @@ NlBeam_SM :: giveCompositeExportData(std::vector< VTKPiece > &vtkPieces, IntArra
     }
 
     /////////////////
-    /*    int nC = cellVarsToExport.giveSize();
-    vtkPieces [ 0 ].setNumberOfCellVarsToExport(nC, numCells);
+    int nC = cellVarsToExport.giveSize();
+    vtkPieces [ 0 ].setNumberOfCellVarsToExport(cellVarsToExport, numCells);
     for ( int i = 1; i <= nC; i++ ) {
       InternalStateType istype = ( InternalStateType ) cellVarsToExport.at(i);
       if ( istype == IST_BeamForceMomentTensor ) {
@@ -705,9 +705,13 @@ NlBeam_SM :: giveCompositeExportData(std::vector< VTKPiece > &vtkPieces, IntArra
 	  bfmt.at(3) = vM.at(iC);
 	  vtkPieces.at(0).setCellVar(istype, iC, bfmt);
 	}
-      }   
+      } else if ( istype == IST_MaterialNumber ) {
+	for (int iC = 1; iC <= numCells; iC++) {
+	  vtkPieces.at(0).setCellVar(istype, iC, {1});
+	}
+      }    
     }
-    */
+    
   
 }
 

@@ -64,6 +64,7 @@
 namespace oofem {
  enum ContactModeType {CMT_N, CMT_AA, CMT_AB, CMT_AC, CMT_BA, CMT_BB, CMT_BC, CMT_CA, CMT_CB};
  enum ProcessType {PT_Unknown, PT_Roll, PT_Stick, PT_Slide};
+  class NlBeamCrossSection;
 
 /**
  * This class implements a 2-dimensional large strain beam element with internal contact
@@ -117,6 +118,9 @@ protected:
   bool stiffEvalMode = true;
   //
   double cosAlpha, sinAlpha;
+  // cross-section of the beam
+  NlBeamCrossSection *crossSection;
+
        
 public:
     NlBeamInternalContact(int n, Domain *aDomain);
@@ -156,7 +160,7 @@ public:
     
 protected:
 
-  void  postInitialize()  override{;}  
+  void  postInitialize()  override;  
   double L2norm(double x, double y, double z);
   double computeCurvatureFromMoment(double M);
   double computeDerMomentFromCurvature(double kappa);

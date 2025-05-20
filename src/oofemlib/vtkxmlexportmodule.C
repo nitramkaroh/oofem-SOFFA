@@ -187,7 +187,8 @@ VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
         // Fills a data struct (VTKPiece) with all the necessary data.
         Set* region = this->giveRegionSet(pieceNum);
         this->setupVTKPiece(this->defaultVTKPiece, tStep, *region);
-        this->writeVTKPieceProlog(this->defaultVTKPiece, tStep); 
+        this->writeVTKPieceProlog(this->defaultVTKPiece, tStep);
+	if ( !this->defaultVTKPiece.giveNumberOfCells() ) break;
         // Export primary, internal and XFEM variables as nodal quantities
         this->exportPrimaryVars(this->defaultVTKPiece, *region, primaryVarsToExport, *primVarSmoother, tStep);
         this->exportIntVars(this->defaultVTKPiece, *region, internalVarsToExport, *smoother, tStep);
