@@ -312,6 +312,7 @@ public:
   void setE(double E){this->E = E;}
   virtual double giveEA(){ return 0;}
   virtual double giveGAs(){return 0;}
+  virtual double giveEI(){ return 0;}
 
 
   
@@ -342,6 +343,7 @@ public:
     double computeCurvatureFromMoment(double M)  override;
     void postInitialize();
     double giveEA() override {return E*A;}
+    double giveEI() override {return E*Iy;}
     double giveGAs() override {return gamma * E*A;}
 
 

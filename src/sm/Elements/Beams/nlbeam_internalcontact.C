@@ -103,6 +103,7 @@ NlBeamInternalContact :: postInitialize()
   }
   this->crossSection->setE(m->giveE());
   EA  = this->crossSection->giveEA();
+  EI  = this->crossSection->giveEI();
  
 }
 
