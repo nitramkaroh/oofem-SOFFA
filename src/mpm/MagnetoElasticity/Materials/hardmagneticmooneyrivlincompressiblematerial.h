@@ -48,7 +48,9 @@
 //@{
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_Name "hardmagneticmooneyrivlincompressiblemat"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_magnetization "magnetization"
+#define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_happ "happ"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_m_ltf "m_ltf"
+#define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_hload_ltf "hload_ltf"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c1 "c1"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c2 "c2"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_pb "pb"
@@ -67,12 +69,12 @@ class HardMagneticMooneyRivlinCompressibleMaterial : public MagnetoElasticMateri
 {
 protected:
     // Material parameters
-    Tensor1_3d M;
+    Tensor1_3d M, H_app;
   // Material parameters
     double C1;
     double C2;
     double mu_0 = 1.25663706143e-6;
-    int m_ltf = 0;
+    int m_ltf = 0, hload_ltf = 0;
     int pb = 1;
   //second gradient material parameter
   double kappa = 0;
