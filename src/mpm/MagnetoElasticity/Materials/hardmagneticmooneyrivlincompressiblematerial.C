@@ -309,6 +309,12 @@ int HardMagneticMooneyRivlinCompressibleMaterial ::giveIPValue( FloatArray &answ
   } else if ( type == IST_LagrangianMagneticFieldVector ) {
     answer = status->giveHVector();
     return 1;
+  } else if ( type == IST_LagrangianMagnetizationVector ) {
+    double m_level = this->giveDomain()->giveFunction( m_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    Tensor1_3d M_time;
+    M_time( i_3 ) = m_level * M( i_3 );
+    answer = M_time.to_voigt_form();
+    return 1;
   } else if ( type == IST_CauchyStressTensor ) {
     FloatArrayF<9> vF( status->giveFVector() );
     FloatArrayF<9> vP( status->givePVector() );
@@ -334,6 +340,18 @@ int HardMagneticMooneyRivlinCompressibleMaterial ::giveIPValue( FloatArray &answ
     auto [J, G] = F.compute_determinant_and_cofactor();
     h( i_3 ) = (1./J) * G( i_3, j_3 ) * H( j_3 );
     answer = h.to_voigt_form();
+    return 1;
+  } else if ( type == IST_EulerianMagnetizationVector ) {
+    FloatArrayF<3> vH( status->giveHVector() );
+    FloatArrayF<3> vB( status->giveBVector() );
+    FloatArrayF<9> vF( status->giveFVector() );
+    Tensor1_3d H( vH ), h, B(vB), b, m;
+    Tensor2_3d F( vF );
+    auto [J, G] = F.compute_determinant_and_cofactor();
+    h( i_3 ) = ( 1. / J ) * G( i_3, j_3 ) * H( j_3 );
+    b( i_3 ) = 1. / J * F( i_3, j_3 ) * B( j_3 );
+    m( i_3 ) = 1. / mu_0 * b( i_3 ) - h( i_3 ); 
+    answer = m.to_voigt_form();
     return 1;
   } else {
     return Material::giveIPValue( answer, gp, type, tStep );
