@@ -436,7 +436,7 @@ public:
                             dCm_dC(k - 1, l - 1, m - 1, n - 1) += 0.5 * d.at(i) * N.at(k, i) * N.at(l, i) * M.at(vIindex [ i - 1 ] [ i - 1 ], vIindex [ m - 1 ] [ n - 1 ]);
                             for ( int j  = 1; j <= 3; j++ ) {
                                 if ( j != i ) {
-                                    dCm_dC(k - 1, l - 1, m - 1, n - 1) += 0.5 * theta.at(i, j) * N.at(k, i) * N.at(l, j) * M.at(vIindex [ i - 1 ] [ j - 1 ], vIindex [ m - 1 ] [ n - 1 ]);
+                                    dCm_dC(k - 1, l - 1, m - 1, n - 1) += theta.at(i, j) * N.at(k, i) * N.at(l, j) * M.at(vIindex [ i - 1 ] [ j - 1 ], vIindex [ m - 1 ] [ n - 1 ]);
                                 }
                             }
                         }

@@ -390,7 +390,7 @@ PlaneStrainElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
     FloatMatrix dNdx;
     this->giveInterpolation()->evaldNdx(dNdx, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
 
-    answer.resize(4, dNdx.giveNumberOfRows() * 2);
+    answer.resize(5, dNdx.giveNumberOfRows() * 2);
     answer.zero();
 
     for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
@@ -402,14 +402,21 @@ PlaneStrainElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
 }
 
 
+
 void PlaneStrainElement::computeBHmatrixAtBoundary( GaussPoint *gp, FloatMatrix &answer, int iBoundary )
 // Does the same as computeBHmatrixAt, with the exception of having to calculate the missing coordinate of the boundary GP and experiencing other nodes
 {
-    FEInterpolation *interp = this->giveInterpolation();
-    FloatMatrix dNdx;
-    //FloatArray nCoords;
-    //interp->boundaryLocal2fullLocal( nCoords, iBoundary, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
-    
+    IntArray edgeDofs;
+    FloatMatrix Bh;
+    this->computeBHmatrixAt(gp, Bh);
+    this->giveEdgeDofMapping(edgeDofs, iBoundary); 
+    //
+    answer.resize(Bh.giveNumberOfRows(), edgeDofs.giveSize());
+    for(int i = 1; i<= edgeDofs.giveSize(); i++) {
+      FloatArray b;
+      b.beColumnOf(Bh, edgeDofs.at(i));
+      answer.setColumn(b, i);
+    }
 
 }
 
