@@ -278,13 +278,20 @@ void HardMagneticMooneyRivlinCompressibleMaterial::initializeFrom( InputRecord &
   BaseHyperElasticMaterial::initializeFrom( ir );
   IR_GIVE_FIELD( ir, C1, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c1 );
   IR_GIVE_FIELD( ir, C2, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c2 );
-  FloatArray m;
+  FloatArray m, h_app;
   IR_GIVE_FIELD( ir, m, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_magnetization );
+  IR_GIVE_FIELD( ir, h_app, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_happ );
   IR_GIVE_FIELD( ir, m_ltf, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_m_ltf );
+  IR_GIVE_FIELD( ir, hload_ltf, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_hload_ltf );
   if ( m.giveSize() != 3 ) {
     OOFEM_ERROR( "Magnetization has to be vector of size 3" );
   } else {
     M = Tensor1_3d( FloatArrayF<3>( m ) );
+  }
+  if ( h_app.giveSize() != 3 ) {
+    OOFEM_ERROR( "H applied has to be vector of size 3" );
+  } else {
+    H_app = Tensor1_3d( FloatArrayF<3>( h_app ) );
   }
 
   IR_GIVE_OPTIONAL_FIELD(ir, this->pb, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_pb);
@@ -308,6 +315,12 @@ int HardMagneticMooneyRivlinCompressibleMaterial ::giveIPValue( FloatArray &answ
     return 1;
   } else if ( type == IST_LagrangianMagneticFieldVector ) {
     answer = status->giveHVector();
+    return 1;
+  } else if ( type == IST_LagrangianMagnetizationVector ) {
+    double m_level = this->giveDomain()->giveFunction( m_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    Tensor1_3d M_time;
+    M_time( i_3 ) = m_level * M( i_3 );
+    answer = M_time.to_voigt_form();
     return 1;
   } else if ( type == IST_CauchyStressTensor ) {
     FloatArrayF<9> vF( status->giveFVector() );
@@ -334,6 +347,29 @@ int HardMagneticMooneyRivlinCompressibleMaterial ::giveIPValue( FloatArray &answ
     auto [J, G] = F.compute_determinant_and_cofactor();
     h( i_3 ) = (1./J) * G( i_3, j_3 ) * H( j_3 );
     answer = h.to_voigt_form();
+    return 1;
+  } else if ( type == IST_EulerianMagnetizationVector ) {
+    FloatArrayF<3> vH( status->giveHVector() );
+    FloatArrayF<3> vB( status->giveBVector() );
+    FloatArrayF<9> vF( status->giveFVector() );
+    Tensor1_3d H( vH ), h, B(vB), b, m;
+    Tensor2_3d F( vF );
+    auto [J, G] = F.compute_determinant_and_cofactor();
+    h( i_3 ) = ( 1. / J ) * G( i_3, j_3 ) * H( j_3 );
+    b( i_3 ) = 1. / J * F( i_3, j_3 ) * B( j_3 );
+    m( i_3 ) = 1. / mu_0 * b( i_3 ) - h( i_3 ); 
+    answer = m.to_voigt_form();
+    return 1;
+  } else if ( type == IST_EulerianHFromMVector ) {
+    double h_load_level = this->giveDomain()->giveFunction( hload_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    FloatArrayF<3> vH( status->giveHVector() );
+    FloatArrayF<9> vF( status->giveFVector() );
+    Tensor1_3d H( vH ), h, H_from_M, h_from_M;
+    Tensor2_3d F( vF );
+    auto [J, G] = F.compute_determinant_and_cofactor();
+    H_from_M( i_3 ) = H( i_3 ) - h_load_level * H_app( i_3 );
+    h_from_M( i_3 ) = ( 1. / J ) * G( i_3, j_3 ) * H_from_M( j_3 );
+    answer = h_from_M.to_voigt_form();
     return 1;
   } else {
     return Material::giveIPValue( answer, gp, type, tStep );

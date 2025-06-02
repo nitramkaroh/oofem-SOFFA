@@ -166,6 +166,9 @@ InternalStateValueType giveInternalStateValueType(InternalStateType type)
     case IST_LagrangianMagneticInductionVector:
     case IST_EulerianMagneticFieldVector:
     case IST_EulerianMagneticInductionVector:
+    case IST_EulerianMagnetizationVector:
+    case IST_LagrangianMagnetizationVector:
+    case IST_EulerianHFromMVector:
         return ISVT_VECTOR;
 
     case IST_MaxEquivalentStrainLevel:
