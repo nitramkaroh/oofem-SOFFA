@@ -288,7 +288,10 @@ public:
      * NonlocalMaterialExtension. If no nonlocal extension exists, NULL pointer is returned.
      */
     //virtual NonlocalMaterialExtension* giveNonlocalMaterialExtensionPtr () {return NULL;}
-
+    
+    /// Performs post initialization steps.
+    virtual void postInitialize(){;}
+    
     /**
      * Pack all necessary data of integration point (according to element parallel_mode)
      * into given communication buffer. The nature of packed data is material model dependent.

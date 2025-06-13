@@ -219,6 +219,7 @@ public:
      * @param tStep Time step.
      */
     virtual void computeDeformationGradientVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep);
+  virtual void computeSurfaceDeformationGradientVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep, int iSurf){;}
 
     /**
      * Computes the current volume of element
@@ -232,6 +233,11 @@ public:
     // definition
     const char *giveClassName() const override { return "NLStructuralElement"; }
 
+  virtual void computeSurfaceBHmatrixAt(GaussPoint *gp, FloatMatrix &answer, int iSurface) {
+        OOFEM_ERROR("method not implemented for this element");
+        return;
+    }
+  
 protected:
     int checkConsistency() override;
     /**
@@ -246,6 +252,10 @@ protected:
         OOFEM_ERROR("method not implemented for this element");
         return;
     }
+
+
+
+  
     friend class GradientDamageElement;
     friend class PhaseFieldElement;
     friend class XfemStructuralElementInterface;

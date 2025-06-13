@@ -79,6 +79,8 @@ set (sm_material
     HyperelasticMaterials/simopistermaterial.C
     HyperelasticMaterials/ogdencompressiblematerial.C
     HyperelasticMaterials/hyperelasticmaterial1d.C
+    HyperelasticMaterials/ReducedMagnetoElasticMaterials/reducedhardmagneticmooneyrivlincompressiblematerial_consistent.C
+
     #Lattice models
     LatticeMaterials/latticematstatus.C
     LatticeMaterials/latticestructuralmaterial.C	

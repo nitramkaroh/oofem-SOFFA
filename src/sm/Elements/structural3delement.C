@@ -107,6 +107,75 @@ Structural3DElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
 }
 
 
+
+void
+Structural3DElement::computeSurfaceBHmatrixAt(GaussPoint *gp, FloatMatrix &answer, int iSurface)
+// Returns the [ 9 x (nno * 3) ] displacement gradient matrix {BH} of the receiver,
+// evaluated at gp.
+// BH matrix  -  9 rows : du/dx, dv/dy, dw/dz, dv/dz, du/dz, du/dy, dw/dy, dw/dx, dv/dx
+{
+    FEInterpolation3d* interp = static_cast<FEInterpolation3d*>(this->giveInterpolation());
+    FloatMatrix dNdx;
+    interp->boundarySurfaceEvaldNdx(dNdx, iSurface, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
+
+    answer.resize(9, dNdx.giveNumberOfRows() * 3);
+    answer.zero();
+
+    for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
+        answer.at(1, 3 * i - 2) = dNdx.at(i, 1);     // du/dx
+        answer.at(2, 3 * i - 1) = dNdx.at(i, 2);     // dv/dy
+        answer.at(3, 3 * i - 0) = dNdx.at(i, 3);     // dw/dz
+        answer.at(4, 3 * i - 1) = dNdx.at(i, 3);     // dv/dz
+        answer.at(7, 3 * i - 0) = dNdx.at(i, 2);     // dw/dy
+        answer.at(5, 3 * i - 2) = dNdx.at(i, 3);     // du/dz
+        answer.at(8, 3 * i - 0) = dNdx.at(i, 1);     // dw/dx
+        answer.at(6, 3 * i - 2) = dNdx.at(i, 2);     // du/dy
+        answer.at(9, 3 * i - 1) = dNdx.at(i, 1);     // dv/dx
+    }
+}
+
+
+void
+Structural3DElement::computeSurfaceDeformationGradientVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep, int iSurface)
+{
+    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
+    // the receiver at time step tStep.
+    // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
+
+    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    FloatArray u;
+    this->computeVectorOf({ D_u, D_v, D_w }, VM_Total, tStep, u); // solution vector
+    if ( initialDisplacements ) {
+        u.subtract(* initialDisplacements);
+    }
+    auto surfaceNodes =  giveBoundarySurfaceNodes(iSurface);
+    FloatArray uSurf;
+    uSurf.beSubArrayOf(u, surfaceNodes);
+    
+    
+    // Displacement gradient H = du/dX
+    FloatMatrix B;
+    this->computeSurfaceBHmatrixAt(gp, B, iSurface);
+    answer.beProductOf(B, uSurf);
+    // Deformation gradient F = H + I
+    MaterialMode matMode = gp->giveMaterialMode();
+    if ( matMode == _3dMat || matMode == _PlaneStrain ) {
+        answer.at(1) += 1.0;
+        answer.at(2) += 1.0;
+        answer.at(3) += 1.0;
+    } else if ( matMode == _PlaneStress ) {
+        answer.at(1) += 1.0;
+        answer.at(2) += 1.0;
+    } else if ( matMode == _1dMat ) {
+        answer.at(1) += 1.0;
+    } else {
+        OOFEM_ERROR("MaterialMode is not supported yet (%s)", __MaterialModeToString(matMode) );
+    }
+}
+
+
+  
+
 void
 Structural3DElement::computeInitialStressMatrix(FloatMatrix &answer, TimeStep *tStep)
 {

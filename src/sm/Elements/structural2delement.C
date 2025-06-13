@@ -403,6 +403,76 @@ PlaneStrainElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
 
 
 void
+PlaneStrainElement::computeSurfaceBHmatrixAt(GaussPoint *gp, FloatMatrix &answer, int iSurface)
+// Returns the [ 9 x (nno * 3) ] displacement gradient matrix {BH} of the receiver,
+// evaluated at gp.
+// BH matrix  -  9 rows : du/dx, dv/dy, dw/dz, dv/dz, du/dz, du/dy, dw/dy, dw/dx, dv/dx
+{
+    FEInterpolation2d* interp = static_cast<FEInterpolation2d*>(this->giveInterpolation());
+    FloatMatrix dNdx;
+    interp->boundarySurfaceEvaldNdx(dNdx, iSurface, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
+    //
+    answer.resize(5, dNdx.giveNumberOfRows() * 2);
+    answer.zero();
+    //
+    for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
+        answer.at(1, 2 * i - 1) = dNdx.at(i, 1);     // du/dx -1
+        answer.at(2, 2 * i - 0) = dNdx.at(i, 2);     // dv/dy -2
+        answer.at(4, 2 * i - 1) = dNdx.at(i, 2);     // du/dy -6
+        answer.at(5, 2 * i - 0) = dNdx.at(i, 1);     // dv/dx -9
+    }
+}
+
+
+
+void
+PlaneStrainElement::computeSurfaceDeformationGradientVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep, int iSurface)
+{
+    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
+    // the receiver at time step tStep.
+    // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
+
+    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    FloatArray u;
+    this->computeVectorOf({ D_u, D_v, D_w }, VM_Total, tStep, u); // solution vector
+    if ( initialDisplacements ) {
+        u.subtract(* initialDisplacements);
+    }
+    auto edgeNodes =  this->giveBoundaryEdgeNodes(iSurface);
+    FloatArray uEdge;
+
+    IntArray localEdgeDofIndices;    
+    int localDofIndex = 1;
+
+    for (int iNode = 1; iNode <= this->giveNumberOfDofManagers(); iNode++) {
+      auto nNodeDofs = this->giveDofManager(iNode)->giveNumberOfDofs();
+      if (edgeNodes.contains(iNode)) {
+	for (int i = 0; i < nNodeDofs; ++i) {
+	  localEdgeDofIndices.followedBy(localDofIndex + i);
+        }
+      }
+      localDofIndex += nNodeDofs;
+    }
+    uEdge.beSubArrayOf(u, localEdgeDofIndices);    
+    // Displacement gradient H = du/dX
+    FloatMatrix B;
+    this->computeSurfaceBHmatrixAt(gp, B, iSurface);
+    answer.beProductOf(B, uEdge);
+    // Plane Strain
+    answer.at(1) += 1.0;
+    answer.at(2) += 1.0;
+    answer.at(3) += 1.0;
+}
+
+
+
+
+
+
+
+
+
+void
 PlaneStrainElement::computeStressVector(FloatArray &answer, const FloatArray &e, GaussPoint *gp, TimeStep *tStep)
 {
     if ( this->matRotation ) {

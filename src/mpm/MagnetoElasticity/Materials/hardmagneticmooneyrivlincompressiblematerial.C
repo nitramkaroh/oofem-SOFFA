@@ -165,7 +165,7 @@ std::tuple<Tensor2_3d, Tensor1_3d> HardMagneticMooneyRivlinCompressibleMaterial:
   if(pb == 1) {
     Q( i_3 ) = H( i_3 ) +  M( i_3 );
     P( i_3, j_3 ) = C1 * this->compute_dI1_Cdev_dF( F )( i_3, j_3 ) + C2 * this->compute_dI2_Cdev_dF( F )( i_3, j_3 ) + this->compute_dVolumetricEnergy_dF( F )( i_3, j_3 )
-      - ( mu_0 / J ) * F.compute_tensor_cross_product()( i_3, j_3, m_3, n_3 ) * ( cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ) )
+    - ( mu_0 / J ) * F.compute_tensor_cross_product()( i_3, j_3, m_3, n_3 ) * ( cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ) )
       + ( mu_0 / ( 2 * J * J ) ) * cofF( m_3, n_3 ) * Q( n_3 ) * cofF( m_3, k_3 ) * Q( k_3 ) * cofF( i_3, j_3 );
     B( i_3 ) = mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 ) * Q( k_3 );
 
@@ -208,12 +208,12 @@ std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> HardMagneticMooneyRiv
     dPdF( i_3, j_3, k_3, l_3 ) = C1 * this->compute_d2I1_Cdev_dF2( F )( i_3, j_3, k_3, l_3 )
       + C2 * this->compute_d2I2_Cdev_dF2( F )( i_3, j_3, k_3, l_3 )
       + this->compute_d2VolumetricEnergy_dF2( F )( i_3, j_3, k_3, l_3 )
-      - mu_0 / J * ( GQQcross( i_3, j_3, k_3, l_3 ) + ( Fcross( i_3, j_3, m_3, n_3 ) * Q( n_3 ) ) * ( Fcross( m_3, q_3, k_3, l_3 ) * Q( q_3 ) ) )
+        - mu_0 / J * ( GQQcross( i_3, j_3, k_3, l_3 ) + ( Fcross( i_3, j_3, m_3, n_3 ) * Q( n_3 ) ) * ( Fcross( m_3, q_3, k_3, l_3 ) * Q( q_3 ) ) )
       + mu_0 / J / J * Fcross( i_3, j_3, m_3, n_3 ) * GQQ( m_3, n_3 ) * cofF( k_3, l_3 )
       + ( mu_0 / ( 2 * J * J ) ) * ( cofF( m_3, n_3 ) * Q( n_3 ) * cofF( m_3, k_3 ) * Q( k_3 ) * Fcross( i_3, j_3, k_3, l_3 ) )
       - ( mu_0 / ( J * J * J ) ) * ( cofF( m_3, n_3 ) * Q( n_3 ) * cofF( m_3, k_3 ) * Q( k_3 ) * cofF( i_3, j_3 ) * cofF( k_3, l_3 ) )
       + ( mu_0 / ( J * J ) ) * cofF( i_3, j_3 ) * ( Fcross( k_3, l_3, m_3, n_3 ) * cofF( m_3, q_3 ) * Q( q_3 ) * Q( n_3 ) );
-
+    
     dBdH( i_3, k_3 ) = -mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 );
     //
     // dBdF( i_3, k_3, l_3 ) = mu_0 / J * ( G( j_3, m_3 ) * Q( m_3 ) * Fcross( j_3, i_3, k_3, l_3 ) ) + G( j_3, i_3 ) * ( Q( m_3 ) * Fcross( j_3, m_3, k_3, l_3 ) ) - mu_0 / ( J * J ) * ( G( j_3, i_3 ) * G( j_3, m_3 ) * Q( m_3 ) * G( k_3, l_3 ) );
@@ -229,9 +229,9 @@ std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> HardMagneticMooneyRiv
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     dPdF( i_3, j_3, k_3, l_3 ) = C1 * this->compute_d2I1_Cdev_dF2( F )( i_3, j_3, k_3, l_3 )
       + C2 * this->compute_d2I2_Cdev_dF2( F )( i_3, j_3, k_3, l_3 )
-      + this->compute_d2VolumetricEnergy_dF2( F )( i_3, j_3, k_3, l_3 )
+      + this->compute_d2VolumetricEnergy_dF2( F )( i_3, j_3, k_3, l_3 );
       //
-      - mu_0 / J * ( GQQcross( i_3, j_3, k_3, l_3 ) + ( Fcross( i_3, j_3, m_3, n_3 ) * Q( n_3 ) ) * ( Fcross( m_3, q_3, k_3, l_3 ) * Q( q_3 ) ) )
+    /*        - mu_0 / J * ( GQQcross( i_3, j_3, k_3, l_3 ) + ( Fcross( i_3, j_3, m_3, n_3 ) * Q( n_3 ) ) * ( Fcross( m_3, q_3, k_3, l_3 ) * Q( q_3 ) ) )
       + mu_0 / J / J * Fcross( i_3, j_3, m_3, n_3 ) * GQQ( m_3, n_3 ) * cofF( k_3, l_3 )
       + ( mu_0 / ( 2 * J * J ) ) * ( cofF( m_3, n_3 ) * Q( n_3 ) * cofF( m_3, k_3 ) * Q( k_3 ) * Fcross( i_3, j_3, k_3, l_3 ) )
       - ( mu_0 / ( J * J * J ) ) * ( cofF( m_3, n_3 ) * Q( n_3 ) * cofF( m_3, k_3 ) * Q( k_3 ) * cofF( i_3, j_3 ) * cofF( k_3, l_3 ) )
@@ -242,6 +242,7 @@ std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> HardMagneticMooneyRiv
       +  mu_0 / ( 2. * J * J )  * ( F( m_3, n_3 ) * M( n_3 ) * F( m_3, o_3 ) * M( o_3 )) * Fcross( i_3, j_3, k_3, l_3 ) 
       - mu_0 / J / J / J * F( m_3, n_3 ) * M( n_3 ) * F( m_3, o_3 ) * M( o_3 ) * cofF( i_3, j_3 )* cofF( k_3, l_3 )
       + mu_0 / J / J * cofF(i_3, j_3) * F(k_3, p_3) * (M(p_3) * M(l_3));
+    */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
     dBdH( i_3, k_3 ) = -mu_0 / J * cofF( j_3, i_3 ) * cofF( j_3, k_3 );
     //
@@ -257,6 +258,16 @@ std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> HardMagneticMooneyRiv
 
     
   return std::make_tuple( dPdF, dPdH, dBdF, dBdH);
+}
+
+Tensor1_3d
+HardMagneticMooneyRivlinCompressibleMaterial:: giveLagrangianMagnetization(TimeStep *tStep)
+{
+
+    double m_level = this->giveDomain()->giveFunction( m_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    Tensor1_3d M_time;
+    M_time( i_3 ) = m_level * M( i_3 );
+    return M_time;
 }
 
 
@@ -278,11 +289,10 @@ void HardMagneticMooneyRivlinCompressibleMaterial::initializeFrom( InputRecord &
   BaseHyperElasticMaterial::initializeFrom( ir );
   IR_GIVE_FIELD( ir, C1, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c1 );
   IR_GIVE_FIELD( ir, C2, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c2 );
-  FloatArray m, h_app_temp;
+  FloatArray m, h_app(3);
   IR_GIVE_FIELD( ir, m, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_magnetization );
-  IR_GIVE_FIELD( ir, h_app_temp, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_happ );
+  IR_GIVE_OPTIONAL_FIELD( ir, h_app, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_happ );
   IR_GIVE_FIELD( ir, m_ltf, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_m_ltf );
-  IR_GIVE_FIELD( ir, hload_ltf, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_hload_ltf );
   if ( m.giveSize() != 3 ) {
     OOFEM_ERROR( "Magnetization has to be vector of size 3" );
   } else {
@@ -291,11 +301,29 @@ void HardMagneticMooneyRivlinCompressibleMaterial::initializeFrom( InputRecord &
   if ( h_app_temp.giveSize() != 3 ) {
     OOFEM_ERROR( "H applied has to be vector of size 3" );
   } else {
-    h_app = Tensor1_3d( FloatArrayF<3>( h_app_temp ) );
+    H_app = Tensor1_3d( FloatArrayF<3>( h_app ) );
+    if(h_app.computeNorm() != 0) {
+      IR_GIVE_FIELD( ir, hload_ltf, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_hload_ltf );
+    }
   }
 
-  IR_GIVE_OPTIONAL_FIELD(ir, this->pb, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_pb);
   IR_GIVE_OPTIONAL_FIELD(ir, this->kappa, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappa);
+
+
+  std::string pullBackTypeString; // default
+  IR_GIVE_OPTIONAL_FIELD( ir, pullBackTypeString, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_PullBackType );
+
+  if ( pullBackTypeString == "F" ) {
+    this->pullBackType = PBT_F;
+  } else if ( pullBackTypeString == "R" ) {
+    this->pullBackType = PBT_R;
+  } else if ( pullBackTypeString == "iFt" ) {
+    this->pullBackType = PBT_iFt;
+  } else {
+    throw ValueInputException( ir, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_PullBackType, "Unknown pull back type" );
+  }
+
+  
   
 }
 

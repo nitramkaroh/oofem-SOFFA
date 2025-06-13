@@ -172,6 +172,7 @@ class MagnetoElasticElement : public MPElement
     } else {
       return MPElement::giveIPValue( answer, gp, type, tStep );
     }
+    return 1;
   }
 };
 

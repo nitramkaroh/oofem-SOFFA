@@ -43,127 +43,56 @@
 
 
 namespace oofem {
-REGISTER_Material(MooneyRivlinHardMagnetic);
+REGISTER_Material(ReducedHardMagneticMooneyRivlinCompressibleMaterial_Consistent);
+
+  ReducedHardMagneticMooneyRivlinCompressibleMaterial_Consistent::ReducedHardMagneticMooneyRivlinCompressibleMaterial_Consistent( int n, Domain *d ) : : public MooneyRivlinCompressibleMaterial(n, d)
+{
+  hmMat  = new HardMagneticMooneyRivlinCompressibleMaterial( n, d );
+}
 
 
-void MooneyRivlinHardMagnetic::initializeFrom( InputRecord &ir )
+  
+void
+ReducedHardMagneticMooneyRivlinCompressibleMaterial_Consistent::initializeFrom( InputRecord &ir )
 {   
-    MooneyRivlinCompressibleMaterial::initializeFrom( ir );
+     hmMat->initializeFrom( ir );
+}
 
-    FloatArray B_app_temp, B_res_temp;
-
-    //default values
-    mu_0 = BASE_VACUUM_PERMEABILITY_MU_0;
-    materialMode = 1;
+FloatArrayF<9>
+ReducedHardMagneticMooneyRivlinCompressibleMaterial_Consistent::giveFirstPKStressVector_3d_consistent( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
+{
+    auto [P, B] = hmMat = give_FirstPKStressVector_MagneticInduction_3d( vF, vH, gp, tStep );
     //
-    IR_GIVE_FIELD( ir, M, _IFT_MooneyRivlinHardMagnetic_M );
-    IR_GIVE_OPTIONAL_FIELD( ir, mu_0, _IFT_MooneyRivlinHardMagnetic_mu_0 );
+    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
+    //
+    status->letTempFVectorBe( vF );
+    status->letTempPVectorBe( vP );
+    //
+    return P.to_voigt_form();
 }
 
-FloatArrayF<9> MooneyRivlinHardMagnetic::giveFirstPKStressVector_3d_consistent( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
+FloatMatrixF<9, 9>
+ReducedHardMagneticMooneyRivlinCompressibleMaterial_Consistent::give3dMaterialStiffnessMatrix_dPdF_consistent( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
 {
 
-    double load_level            = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
-    Tensor2_3d F( vF ), P_me, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
-
-    Tensor1_3d Bapp( B_app_at_time ), Bres( B_res ), Bappref;
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-    if ( !referenceB ) {
-        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
-    } else {
-        Bappref = Bapp;
-    }
-
-    P_me( k_3, l_3 ) = -(1/(2*J*J*mu_0))*(Bappref(i_3) - 2.0*Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)
-        + (1/(2*J*mu_0)) * ( Bappref( i_3 ) - 2.0 * Bres( i_3 ) ) * Bappref(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3));
-
-    auto vP_me = P_me.to_voigt_form();
-
-    return vP_me;
-}
-
-FloatMatrixF<9, 9> MooneyRivlinHardMagnetic::give3dMaterialStiffnessMatrix_dPdF_consistent( MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep ) const
-{
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
     FloatArrayF<9> vF( status->giveTempFVector() );
-
-    
-    double load_level = this->giveDomain()->giveFunction( ltf_index )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    FloatArrayF<3> B_app_at_time = load_level * B_app;
-
+    //
+    FloatArrayF<3> vH( status->giveTempHVector() );
+    Tensor1_3d H( vH );
     Tensor2_3d F( vF );
-    Tensor4_3d D_me;
-
-    Tensor2_3d delta(1., 0., 0., 0., 1., 0., 0., 0., 1. );
-
-    Tensor1_3d Bapp ( B_app_at_time ), Bres( B_res ), Bappref;
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-
-    if ( !referenceB ) {
-        Bappref( j_3 ) = Bapp( k_3 ) * cofF( k_3, j_3 );
-    } else {
-        Bappref = Bapp;
-    }
-
-    D_me( k_3, l_3, p_3, q_3 ) = (1/(J*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3))*F(m_3,i_3)*F(m_3,j_3)*Bappref(j_3)*cofF(k_3, l_3)*cofF(p_3, q_3)
-        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * Bappref(j_3) * (delta(i_3, q_3)*F(p_3,j_3) + delta(j_3, q_3)*F(p_3,i_3)) * cofF(k_3, l_3) 
-        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * F(m_3,i_3)*F(m_3,j_3) * Bappref(j_3) * F.compute_tensor_cross_product()(k_3, l_3, p_3, q_3)
-        - (1/(2*J*J*mu_0)) * ( Bappref(i_3) - 2.0 * Bres(i_3)) * Bappref(j_3) * (delta(i_3, l_3)*F(k_3,j_3) + delta(j_3, l_3)*F(k_3,i_3)) * cofF(p_3, q_3)
-        + (1/(2*J*mu_0)) * delta(k_3,p_3) * (( Bappref(l_3) - 2.0 * Bres(l_3))*Bappref(q_3) + ( Bappref(q_3) - 2.0 * Bres(q_3))*Bappref(l_3));
-    
-    auto vD_me = D_me.to_voigt_form();
-
-    return vD_me;
+    //
+    auto [dPdF, dPdH, dBdF, dBdH] = hmMat->giveConstitutiveMatrices_dPdF_dBdH_dPdH_3d(mode, gp, tStep );
+    //
+    return dPdF.to_voigt_form();
 }
-
-
-
-  //////////////////////////////////////////////////////////////////////////////////////
-FloatArrayF< 3 >  MooneyRivlinHardMagnetic :: giveMagneticInductionVector_3d(const FloatArrayF<3> &bH, const FloatArrayF< 9 > &vF, GaussPoint *gp, TimeStep *tStep) const
-{
-  Tensor1_3d H(vH);
-  Tensor2_3d F(vF), B;
-  auto [J, cofF] = F.compute_determinant_and_cofactor();
-  B(i_3) = mu0 * (1/J * cofF(k_3, i_3) * cofF(k_3, l_3) * H(l_3) + M(i_3));
-  //  
-  return B.to_voigt_form();
-}
-FloatMatrixF< 3, 3 > give3dMaterialPermeabilityMatrix_dDdH(MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep) const
-{
-  Tensor2_3d PM
-  FloatArrayF<9> vF( status->giveTempFVector() );
-  auto [J, cofF] = F.compute_determinant_and_cofactor();
-  PM(i_3, j_3) = mu0 * (1/J * cofF(k_3, i_3) * cofF(k_3, j_3));
-  //  
-  return PM.to_voigt_form(); 
-}
-
   
-  FloatMatrixF< 9, 3 > give3dElastoMechanicalCouplingMatrix_dPdH(MatResponseMode matResponseMode, GaussPoint *gp, TimeStep *tStep) const;
-
-
-
-
-
-
-
-  
-
 
 int
-MooneyRivlinHardMagnetic :: giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep)
+ReducedHardMagneticMooneyRivlinCompressibleMaterial_Consistent :: giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep)
 {
-  
-  if ( type == IST_CrackVector ) {
-    answer = B_app;
-    return 1;
-  }  else {
-    return MooneyRivlinCompressibleMaterial:: giveIPValue(answer, gp, type, tStep);
-  }
-  
+  return hmMat->giveIPValue(answer, gp, type, tStep);
+ 
 }
 
   
