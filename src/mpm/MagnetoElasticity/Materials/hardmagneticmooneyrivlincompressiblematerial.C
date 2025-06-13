@@ -298,10 +298,10 @@ void HardMagneticMooneyRivlinCompressibleMaterial::initializeFrom( InputRecord &
   } else {
     M = Tensor1_3d( FloatArrayF<3>( m ) );
   }
-  if ( h_app_temp.giveSize() != 3 ) {
+  if ( h_app.giveSize() != 3 ) {
     OOFEM_ERROR( "H applied has to be vector of size 3" );
   } else {
-    H_app = Tensor1_3d( FloatArrayF<3>( h_app ) );
+    this->h_app = Tensor1_3d( FloatArrayF<3>( h_app ) );
     if(h_app.computeNorm() != 0) {
       IR_GIVE_FIELD( ir, hload_ltf, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_hload_ltf );
     }
