@@ -69,7 +69,7 @@ class HardMagneticMooneyRivlinCompressibleMaterial : public MagnetoElasticMateri
 {
 protected:
     // Material parameters
-    Tensor1_3d M, H_app;
+    Tensor1_3d M, h_app;
   // Material parameters
     double C1;
     double C2;
