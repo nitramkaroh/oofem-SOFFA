@@ -115,6 +115,7 @@ NLStructuralElement::computeDeformationGradientVector(FloatArray &answer, GaussP
     }
 }
 
+    
 
 void
 NLStructuralElement::computeFirstPKStressVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep)

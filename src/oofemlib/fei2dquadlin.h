@@ -82,6 +82,7 @@ public:
 
     std::unique_ptr<IntegrationRule> giveIntegrationRule(int order, const Element_Geometry_Type) const override;
 
+    void boundarySurfaceEvaldNdx(FloatMatrix &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
 protected:
     double edgeComputeLength(const IntArray &edgeNodes, const FEICellGeometry &cellgeo) const;
 };

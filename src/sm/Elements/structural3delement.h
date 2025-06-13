@@ -82,10 +82,11 @@ public:
     void computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override;
 
     void computeInitialStressMatrix(FloatMatrix &answer, TimeStep *tStep) override;
-
 protected:
     void computeBmatrixAt(GaussPoint *gp, FloatMatrix &answer, int lowerIndx = 1, int upperIndx = ALL_STRAINS) override;
     void computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer) override;
+    void computeSurfaceBHmatrixAt(GaussPoint *gp, FloatMatrix &answer, int iSurface) override;
+    void computeSurfaceDeformationGradientVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep, int iSurface) override;
     void computeGaussPoints() override;
 
     // Edge support

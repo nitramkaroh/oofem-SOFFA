@@ -988,6 +988,10 @@ Domain :: postInitialize()
         el->postInitialize();
     }
 
+    for ( auto &mat: materialList ) {
+      mat->postInitialize();
+    }
+
     for ( auto &bc: bcList ) {
         bc->postInitialize();
     }

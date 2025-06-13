@@ -53,7 +53,7 @@
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_hload_ltf "hload_ltf"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c1 "c1"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c2 "c2"
-#define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_pb "pb"
+#define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_PullBackType "pullbacktype"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappa "kappa"
 
 //@}
@@ -65,6 +65,12 @@ namespace oofem {
  * @author Martin Horák, nitramkaroh@seznam.cz
  *
  */
+  enum PullBackType {
+        PBT_F       = 0,
+        PBT_R       = 1,
+        PBT_iFt     = 2,
+    };
+  
 class HardMagneticMooneyRivlinCompressibleMaterial : public MagnetoElasticMaterial, public BaseHyperElasticMaterial
 {
 protected:
@@ -78,6 +84,12 @@ protected:
     int pb = 1;
   //second gradient material parameter
   double kappa = 0;
+
+
+
+    PullBackType pullBackType;
+
+  
 
 public:
   HardMagneticMooneyRivlinCompressibleMaterial( int n, Domain *d );
@@ -99,7 +111,7 @@ public:
   const char *giveInputRecordName() const override { return _IFT_HardMagneticMooneyRivlinCompressibleMaterial_Name; }
   const char *giveClassName() const override { return "HardMagneticMooneyRivlinCompressibleMaterial"; }
 
-  int giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep);
+  int giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep) override;
   ////////////////////////////////////////////////////
   FloatArrayF< 8 > give_SecondGradient_FirstPKStressVector_PlaneStrain(const FloatArrayF<8> &vG, GaussPoint *gp, TimeStep *tStep) override;
 
@@ -107,6 +119,16 @@ public:
   FloatMatrixF<1,1> give_SecondGradient_ConstitutiveMatrix_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override;
   FloatMatrixF<1,1> give_SecondGradient_ConstitutiveMatrix_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) override;
 
+
+  /************** interface to reduced hard magnetic material ****************************/
+  Tensor1_3d giveLagrangianMagnetization(TimeStep *tStep);
+  std::tuple<Tensor1_3d,Tensor1_3d> give_EulerianMagnetization_MagneticInduction_FromF(const Tensor2_3d &F, TimeStep *tStep);
+  
+  PullBackType givePullBackType() const {return pullBackType;}
+  /*****************************************************************************************/
+
+
+  
 protected:
   std::tuple<Tensor2_3d, Tensor1_3d> computeFirstPKStressMagneticInductionTensors_3d( const Tensor2_3d &F, const Tensor1_3d &H, const Tensor1_3d &M ) const;
   std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> computeStiffnessTensors_dPdF_dBdH_dPdH_3d( const Tensor2_3d &F, const Tensor1_3d &H, const Tensor1_3d &M ) const;

@@ -392,6 +392,38 @@ FEI2dQuadLin :: giveIntegrationRule(int order, Element_Geometry_Type egt) const
 }
 
 
+
+void
+FEI2dQuadLin :: boundarySurfaceEvaldNdx(FloatMatrix &answer, int iSurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const
+{
+    // Note, this must be in correct order, not just the correct nodes, therefore we must use snodes;
+    const auto &snodes = this->computeLocalEdgeMapping(iSurf);
+
+    FloatArray lcoords_quad;
+
+    ///@noteHave to convert surface->volume coords manually:
+    if ( iSurf == 1 ) {
+      lcoords_quad = {lcoords.at(1), -1};
+    } else if ( iSurf == 2 ) {
+      lcoords_quad = {1, lcoords.at(1)};
+    } else if ( iSurf == 3 ) {
+      lcoords_quad = {lcoords.at(1), 1};
+    } else if ( iSurf == 4 ) {
+      lcoords_quad = {-1, lcoords.at(1)};
+    } else {
+        OOFEM_ERROR("wrong surface number (%d)", iSurf);
+    }
+    FloatMatrix fullB;
+    this->evaldNdx(fullB, lcoords_quad, cellgeo);
+    answer.resize(snodes.giveSize(), 2);
+    for ( int i = 1; i <= snodes.giveSize(); ++i ) {
+        for ( int j = 1; j <= 2; ++j ) {
+            answer.at(i, j) = fullB.at(snodes.at(i), j);
+        }
+    }
+}
+
+  
 /*
  * FEI2dQuadlinAxi element
  */

@@ -39,14 +39,14 @@
 #include "inputrecord.h"
 #include "tensor/tensor1.h"
 #include "tensor/tensor2.h"
+#include "Materials/HyperelasticMaterials/ReducedMagnetoElasticMaterials/reducedhardmagneticmooneyrivlincompressiblematerial_consistent.h"
+
 ///@name Input fields for HardMagneticBoundaryCondition
 //@{
+#define _IFT_HardMagneticBoundaryCondition_reducedHardMagneticMaterialNumber "hmmatnumber"
 #define _IFT_HardMagneticBoundaryCondition_Name "hardmagneticboundarycondition"
-#define _IFT_HardMagneticBoundaryCondition_mu_0 "mu_0"
-#define _IFT_HardMagneticBoundaryCondition_b_ext "b_ext"
-#define _IFT_HardMagneticBoundaryCondition_mjump "mjump"
-#define _IFT_HardMagneticBoundaryCondition_mode "mode" //1 = maxwell only, 2 = body load approach
-#define _IFT_HardMagneticBoundaryCondition_ltf "loadtimefunction" //load time function for applied field
+#define _IFT_HardMagneticEdgeBoundaryCondition_Name "hardmagneticedgeboundarycondition"
+#define _IFT_HardMagneticSurfaceBoundaryCondition_Name "hardmagneticsurfaceboundarycondition"
 //@}
 
 namespace oofem {
@@ -61,14 +61,8 @@ namespace oofem {
 class HardMagneticBoundaryCondition : public ActiveBoundaryCondition {
 
 protected:
-
-    double mu0; //vacuum permeability
-    FloatArrayF<3> b_app, m_jump; //external magnetic field in free space, jump in magnetization
-  //FloatArrayF<9> sigma_star; //precomputed free space stress
-    Tensor2_3d maxwell_stress;
-    int ltf_index; //index of load time function for applied load
-    int bcMode; //mode of boundary condition implemented
-
+    ReducedHardMagneticMooneyRivlinCompressibleMaterial_Consistent* hmMat = nullptr;
+    double mu_0 = 1.25663706143e-6;
 public:
     /// <summary>
     ///  Base Constructor
@@ -81,7 +75,7 @@ public:
     virtual ~HardMagneticBoundaryCondition() {}
 
 
-    virtual void initializeFrom(InputRecord &ir) override;
+    void initializeFrom(InputRecord &ir) override;
 
         /**
      * Assembles B.C. contributions to specified matrix.
@@ -94,7 +88,7 @@ public:
      * @param scale Scaling factor.
      * @param omp_lock optional OMP lock to ensure correct update of answer
      */
-    virtual void assemble( SparseMtrx &answer, TimeStep *tStep,
+    void assemble( SparseMtrx &answer, TimeStep *tStep,
         CharType type, const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s, double scale = 1.0, void *lock = nullptr ) override;
 
     /**
@@ -108,7 +102,7 @@ public:
      * @param omp_lock optional OMP lock to ensure correct update of answer
      * @return Equivalent of the sum of the element norm (squared) of assembled vector.
      */
-    virtual void assembleVector(FloatArray &answer, TimeStep *tStep,
+    void assembleVector(FloatArray &answer, TimeStep *tStep,
                                 CharType type, ValueModeType mode,
                                 const UnknownNumberingScheme &s, FloatArray *eNorms=nullptr, void*lock=nullptr) override;
 
@@ -124,7 +118,7 @@ public:
      * @param r_s Row numbering scheme.
      * @param c_s Column numbering scheme.
      */
-    virtual void giveLocationArrays( std ::vector<IntArray> &rows, std ::vector<IntArray> &cols, CharType type,
+    void giveLocationArrays( std ::vector<IntArray> &rows, std ::vector<IntArray> &cols, CharType type,
         const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s ) override;
 
     const char *giveInputRecordName() const override { return _IFT_HardMagneticBoundaryCondition_Name; }
@@ -134,32 +128,76 @@ protected:
     /**
      * Helper function for computing the contributions to the load vector.
      */
-    void computeLoadVectorFromElement(FloatArray &answer, Element *e, int side, TimeStep *tStep, ValueModeType mode);
+  virtual void computeLoadVectorFromElement(FloatArray &answer, Element *e, int side, TimeStep *tStep, ValueModeType mode) = 0;
     /**
      * Helper function for computing the tangent (@f$ K = \frac{\mathrm{d}F}{\mathrm{d}u} @f$)
      */
-    void computeTangentFromElement(FloatMatrix &answer, Element *e, int side, TimeStep *tStep);
+    virtual void computeTangentFromElement(FloatMatrix &answer, Element *e, int side, TimeStep *tStep) = 0;
 
 private:
 
-    // Maxwell stress approach
-    void computeElementLoadVectorContribution_maxwell( FloatArray &answer, Element * e, int iSurf, TimeStep *tStep );
-    void computeElementTangentContribution_maxwell( FloatMatrix &answer, Element * e, int iSurf, TimeStep *tStep );
-
-    // Body load approach
-    void computeElementLoadVectorContribution_bla( FloatArray &answer, Element * e, int iSurf, TimeStep *tStep );
-    void computeElementTangentContribution_bla( FloatMatrix &answer, Element * e, int iSurf, TimeStep *tStep );
-
-    // Maxwell 2 approach
-    void computeElementLoadVectorContribution_maxwell2( FloatArray &answer, Element * e, int iSurf, TimeStep *tStep );
-    void computeElementTangentContribution_maxwell2( FloatMatrix &answer, Element * e, int iSurf, TimeStep *tStep );
-
-    void evaluateFreeSpaceStress();
-
-    void computeNumericalTangentFromElement( FloatMatrix &answer, Element *e, int side, TimeStep *tStep, double perturb ); //for debugging
-    void computePerturbedLoadVectorFromElement( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
-    void computePerturbedLoadVectorFromElement_maxwell( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
-    void computePerturbedLoadVectorFromElement_bla( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
-    void computePerturbedLoadVectorFromElement_maxwell2( FloatArray &answer, Element *e, int side, TimeStep *tStep, double perturb, int index);
+  
 };
+
+
+
+
+class HardMagneticEdgeBoundaryCondition : public HardMagneticBoundaryCondition {
+
+public:
+    /// <summary>
+    ///  Base Constructor
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="d"></param>
+    HardMagneticEdgeBoundaryCondition( int n, Domain *d )  :
+      HardMagneticBoundaryCondition( n, d ) {}
+    /// Destructor.
+    virtual ~    HardMagneticEdgeBoundaryCondition() {}
+
+
+protected:
+    /**
+     * Helper function for computing the contributions to the load vector.
+     */
+    void computeLoadVectorFromElement(FloatArray &answer, Element *e, int side, TimeStep *tStep, ValueModeType mode) override;
+    /**
+     * Helper function for computing the tangent (@f$ K = \frac{\mathrm{d}F}{\mathrm{d}u} @f$)
+     */
+    void computeTangentFromElement(FloatMatrix &answer, Element *e, int side, TimeStep *tStep) override;
+
+  void giveGaussPointCoordinates( FloatArray &coords, GaussPoint *gp, int iSurf );
+ 
+};
+
+
+
+class HardMagneticSurfaceBoundaryCondition : public HardMagneticBoundaryCondition {
+
+public:
+    /// <summary>
+    ///  Base Constructor
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="d"></param>
+    HardMagneticSurfaceBoundaryCondition( int n, Domain *d )  :
+      HardMagneticBoundaryCondition( n, d ) {}
+    /// Destructor.
+    virtual ~    HardMagneticSurfaceBoundaryCondition() {}
+
+
+protected:
+    /**
+     * Helper function for computing the contributions to the load vector.
+     */
+  void computeLoadVectorFromElement(FloatArray &answer, Element *e, int side, TimeStep *tStep, ValueModeType mode) override {;}
+    /**
+     * Helper function for computing the tangent (@f$ K = \frac{\mathrm{d}F}{\mathrm{d}u} @f$)
+     */
+  void computeTangentFromElement(FloatMatrix &answer, Element *e, int side, TimeStep *tStep) override{;}
+
+ 
+};
+
+  
 } // end namespace oofem
