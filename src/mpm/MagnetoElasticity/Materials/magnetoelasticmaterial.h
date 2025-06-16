@@ -84,6 +84,11 @@ public:
      virtual FloatMatrixF<1,1> give_SecondGradient_ConstitutiveMatrix_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) {    return FloatMatrixF< 1, 1 >();}
      virtual FloatMatrixF<1,1> give_SecondGradient_ConstitutiveMatrix_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep) {    return FloatMatrixF< 1, 1 >();}
 
+     virtual std::tuple<FloatArrayF<5>, FloatArrayF<8> > give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep ) { return std::make_tuple( zeros<5>(), zeros<8>() ); }
+     virtual std::tuple<FloatArrayF<9>, FloatArrayF<27> > give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep ) { return std::make_tuple( zeros<9>(), zeros<27>() ); }
+     virtual std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 27>, FloatMatrixF<27, 9>, FloatMatrixF<27, 27> > give_JacobianGradient_ConstitutiveMatrices_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) { return std::make_tuple( FloatMatrixF<9, 9>(), FloatMatrixF<9, 27>(), FloatMatrixF<27, 9>(), FloatMatrixF<27, 27>() ); }
+     virtual std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> > give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) { return std::make_tuple( FloatMatrixF<5, 5>(), FloatMatrixF<5, 8>(), FloatMatrixF<8, 5>(), FloatMatrixF<8, 8>() ); }
+
      
 };
 } // end namespace oofem

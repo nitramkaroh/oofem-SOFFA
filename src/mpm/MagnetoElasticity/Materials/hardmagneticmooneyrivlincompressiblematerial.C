@@ -432,6 +432,32 @@ HardMagneticMooneyRivlinCompressibleMaterial :: give_SecondGradient_Constitutive
 {
   return kappa;
 }
+
+std::tuple<FloatArrayF<5>, FloatArrayF<8> >
+HardMagneticMooneyRivlinCompressibleMaterial ::give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep )
+{
+  OOFEM_ERROR("Not implemented yet");
+}
+
+
+std::tuple<FloatArrayF<9>, FloatArrayF<27> >
+HardMagneticMooneyRivlinCompressibleMaterial ::give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep )
+{
+  OOFEM_ERROR( "Not implemented yet" );
+}
+
+
+std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 27>, FloatMatrixF<27, 9>, FloatMatrixF<27, 27> >
+HardMagneticMooneyRivlinCompressibleMaterial ::give_JacobianGradient_ConstitutiveMatrices_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  OOFEM_ERROR( "Not implemented yet" );
+}
+
+std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> >
+HardMagneticMooneyRivlinCompressibleMaterial ::give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  OOFEM_ERROR( "Not implemented yet" );
+}
   
   
 
