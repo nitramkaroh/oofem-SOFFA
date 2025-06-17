@@ -307,8 +307,8 @@ void HardMagneticMooneyRivlinCompressibleMaterial::initializeFrom( InputRecord &
     }
   }
 
-  IR_GIVE_OPTIONAL_FIELD(ir, this->kappa, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappa);
-
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradFGradF, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaGradFGradF );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradJGradJ, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaGradJGradJ );
 
   std::string pullBackTypeString; // default
   IR_GIVE_OPTIONAL_FIELD( ir, pullBackTypeString, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_PullBackType );
@@ -408,7 +408,7 @@ int HardMagneticMooneyRivlinCompressibleMaterial ::giveIPValue( FloatArray &answ
 FloatArrayF< 8 >
 HardMagneticMooneyRivlinCompressibleMaterial :: give_SecondGradient_FirstPKStressVector_PlaneStrain(const FloatArrayF<8> &vG, GaussPoint *gp, TimeStep *tStep)
   {
-    auto vT = kappa * vG;
+    auto vT = kappaGradFGradF * vG;
     return vT;
   }
 
@@ -416,7 +416,7 @@ HardMagneticMooneyRivlinCompressibleMaterial :: give_SecondGradient_FirstPKStres
 FloatArrayF< 27 >
 HardMagneticMooneyRivlinCompressibleMaterial :: give_SecondGradient_FirstPKStressVector_3d(const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep)
   {
-    auto vT = kappa * vG;
+    auto vT = kappaGradFGradF * vG;
     return vT;
   }
 
@@ -424,13 +424,13 @@ HardMagneticMooneyRivlinCompressibleMaterial :: give_SecondGradient_FirstPKStres
 FloatMatrixF<1,1>
 HardMagneticMooneyRivlinCompressibleMaterial :: give_SecondGradient_ConstitutiveMatrix_3d(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep)
 {
-  return kappa;
+  return kappaGradFGradF;
 }
 
 FloatMatrixF<1,1>
 HardMagneticMooneyRivlinCompressibleMaterial :: give_SecondGradient_ConstitutiveMatrix_PlaneStrain(MatResponseMode mode, GaussPoint *gp, TimeStep *tStep)
 {
-  return kappa;
+  return kappaGradFGradF;
 }
 
 std::tuple<FloatArrayF<5>, FloatArrayF<8> >
