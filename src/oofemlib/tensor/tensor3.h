@@ -170,6 +170,44 @@ public:
         this->operator()( 2, 2, 2 ) = matrix.at( 3, 3 );
     }
 
+     /**
+     * Creates a second-order order tensor in 3d from floatarrayf<27>
+     */
+
+    Tensor3_3d( const FloatArrayF<27> &array )
+    {
+
+      this->operator()( 0, 0, 0 ) = array.at( 1 );
+      this->operator()( 0, 1, 0 ) = array.at( 6 );
+      this->operator()( 0, 2, 0 ) = array.at( 5 );
+      this->operator()( 1, 0, 0 ) = array.at( 9 );
+      this->operator()( 1, 1, 0 ) = array.at( 2 );
+      this->operator()( 1, 2, 0 ) = array.at( 4 );
+      this->operator()( 2, 0, 0 ) = array.at( 8 );
+      this->operator()( 2, 1, 0 ) = array.at( 7 );
+      this->operator()( 2, 2, 0 ) = array.at( 3 );
+
+      this->operator()( 0, 0, 1 ) = array.at( 10 );
+      this->operator()( 0, 1, 1 ) = array.at( 15 );
+      this->operator()( 0, 2, 1 ) = array.at( 14 );
+      this->operator()( 1, 0, 1 ) = array.at( 18 );
+      this->operator()( 1, 1, 1 ) = array.at( 11 );
+      this->operator()( 1, 2, 1 ) = array.at( 13 );
+      this->operator()( 2, 0, 1 ) = array.at( 17 );
+      this->operator()( 2, 1, 1 ) = array.at( 16 );
+      this->operator()( 2, 2, 1 ) = array.at( 12 );
+
+      this->operator()( 0, 0, 2 ) = array.at( 19 );
+      this->operator()( 0, 1, 2 ) = array.at( 24 );
+      this->operator()( 0, 2, 2 ) = array.at( 23 );
+      this->operator()( 1, 0, 2 ) = array.at( 27 );
+      this->operator()( 1, 1, 2 ) = array.at( 20 );
+      this->operator()( 1, 2, 2 ) = array.at( 22 );
+      this->operator()( 2, 0, 2 ) = array.at( 26 );
+      this->operator()( 2, 1, 2 ) = array.at( 25 );
+      this->operator()( 2, 2, 2 ) = array.at( 21 );
+    }
+
 
     /**
      * Transforms a second-order tensor into a floatmatrixf<3, 9>,  using the Voigt notation
@@ -249,8 +287,47 @@ public:
         answer.at( 8, 3 ) = this->operator()( 2, 0, 2 );
         answer.at( 9, 3 ) = this->operator()( 1, 0, 2 );
 
-
         return answer;
+    }
+
+    /**
+     * Transforms a second-order tensor into a floatarrayf<27>,  using the Voigt notation
+     */
+
+    const inline FloatArrayF<27> to_voigt_form_27()
+    {
+      FloatArrayF<27> answer;
+      answer.at( 1 ) = this->operator()( 0, 0, 0 );
+      answer.at( 2 ) = this->operator()( 1, 1, 0 );
+      answer.at( 3 ) = this->operator()( 2, 2, 0 );
+      answer.at( 4 ) = this->operator()( 1, 2, 0 );
+      answer.at( 5 ) = this->operator()( 0, 2, 0 );
+      answer.at( 6 ) = this->operator()( 0, 1, 0 );
+      answer.at( 7 ) = this->operator()( 2, 1, 0 );
+      answer.at( 8 ) = this->operator()( 2, 0, 0 );
+      answer.at( 9 ) = this->operator()( 1, 0, 0 );
+
+      answer.at( 10 ) = this->operator()( 0, 0, 1 );
+      answer.at( 11 ) = this->operator()( 1, 1, 1 );
+      answer.at( 12 ) = this->operator()( 2, 2, 1 );
+      answer.at( 13 ) = this->operator()( 1, 2, 1 );
+      answer.at( 14 ) = this->operator()( 0, 2, 1 );
+      answer.at( 15 ) = this->operator()( 0, 1, 1 );
+      answer.at( 16 ) = this->operator()( 2, 1, 1 );
+      answer.at( 17 ) = this->operator()( 2, 0, 1 );
+      answer.at( 18 ) = this->operator()( 1, 0, 1 );
+                 
+      answer.at( 19 ) = this->operator()( 0, 0, 2 );
+      answer.at( 20 ) = this->operator()( 1, 1, 2 );
+      answer.at( 21 ) = this->operator()( 2, 2, 2 );
+      answer.at( 22 ) = this->operator()( 1, 2, 2 );
+      answer.at( 23 ) = this->operator()( 0, 2, 2 );
+      answer.at( 24 ) = this->operator()( 0, 1, 2 );
+      answer.at( 25 ) = this->operator()( 2, 1, 2 );
+      answer.at( 26 ) = this->operator()( 2, 0, 2 );
+      answer.at( 27 ) = this->operator()( 1, 0, 2 );
+
+      return answer;
     }
 
   void be_Levi_Civita()
