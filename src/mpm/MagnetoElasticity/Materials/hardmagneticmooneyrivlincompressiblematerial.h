@@ -134,7 +134,10 @@ protected:
   std::tuple<Tensor2_3d, Tensor1_3d> computeFirstPKStressMagneticInductionTensors_3d( const Tensor2_3d &F, const Tensor1_3d &H, const Tensor1_3d &M ) const;
   std::tuple<Tensor4_3d, Tensor3_3d, Tensor3_3d, Tensor2_3d> computeStiffnessTensors_dPdF_dBdH_dPdH_3d( const Tensor2_3d &F, const Tensor1_3d &H, const Tensor1_3d &M ) const;
 
-  
+private:
+  Tensor1_3d compute_gradJ_3d( const Tensor2_3d &F, const Tensor3_3d &G ) const;
+  std::tuple<Tensor3_3d, Tensor4_3d> compute_gradJ_derivatives_3d( const Tensor2_3d &F, const Tensor3_3d &G ) const;
+  std::tuple<Tensor5_3d, Tensor6_3d, Tensor6_3d, Tensor7_3d> compute_gradJ_secondDerivatives_3d( const Tensor2_3d &F, const Tensor3_3d &G ) const;
 };
 
 
