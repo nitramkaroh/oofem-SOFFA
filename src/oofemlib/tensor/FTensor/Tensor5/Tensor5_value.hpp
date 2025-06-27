@@ -106,120 +106,124 @@ namespace FTensor
    // (i, i, k, l, m, )
     template <char i, char k, char l, char m, int Dim01, int Dim2, int Dim3, int Dim4>
     auto operator()( const Index<i, Dim01>, const Index<i, Dim01>, const Index<k, Dim2>, const Index<l, Dim3>, const Index<m, Dim4> ) const
-        static_assert( Tensor_Dim0 >= Dim01 && Tensor_Dim1 >= Dim01 && Tensor_Dim2 >= Dim2 && Tensor_Dim3 >= Dim3 && Tensor_Dim4 >= Dim4,
-            "Incompatible indices" );
+    {
+      static_assert( Tensor_Dim0 >= Dim01 && Tensor_Dim1 >= Dim01 && Tensor_Dim2 >= Dim2 && Tensor_Dim3 >= Dim3 && Tensor_Dim4 >= Dim4,
+          "Incompatible indices" );
 
-    using TensorExpr = Tensor5_contracted_01<
-        Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim01>;
-    return Tensor3_Expr<TensorExpr, T, Dim2, Dim3, Dim4, k, l, m>( TensorExpr( *this ) );
-  };
+      using TensorExpr = Tensor5_contracted_01<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim01>;
+      return Tensor3_Expr<TensorExpr, T, Dim2, Dim3, Dim4, k, l, m>( TensorExpr( *this ) );
+    };
 
-  // (i, j, i, l, m, )
-  template <char i, char j, char l, char m, int Dim02, int Dim1, int Dim3, int Dim4>
-  auto operator()( const Index<i, Dim02>, const Index<j, Dim1>, const Index<i, Dim02>, const Index<l, Dim3>, const Index<m, Dim4> ) const
+    // (i, j, i, l, m, )
+    template <char i, char j, char l, char m, int Dim02, int Dim1, int Dim3, int Dim4>
+    auto operator()( const Index<i, Dim02>, const Index<j, Dim1>, const Index<i, Dim02>, const Index<l, Dim3>, const Index<m, Dim4> ) const
+    {
       static_assert( Tensor_Dim0 >= Dim02 && Tensor_Dim1 >= Dim1 && Tensor_Dim2 >= Dim02 && Tensor_Dim3 >= Dim3 && Tensor_Dim4 >= Dim4,
           "Incompatible indices" );
 
-  using TensorExpr = Tensor5_contracted_02<
-      Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim02>;
-  return Tensor3_Expr<TensorExpr, T, Dim1, Dim3, Dim4, j, l, m>( TensorExpr( *this ) );
-  };
+      using TensorExpr = Tensor5_contracted_02<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim02>;
+      return Tensor3_Expr<TensorExpr, T, Dim1, Dim3, Dim4, j, l, m>( TensorExpr( *this ) );
+    };
 
-  // (i, j, k, i, m, )
-  template <char i, char j, char k, char m, int Dim03, int Dim1, int Dim2, int Dim4>
-  auto operator()( const Index<i, Dim03>, const Index<j, Dim1>, const Index<k, Dim2>, const Index<i, Dim03>, const Index<m, Dim4> ) const
+    // (i, j, k, i, m, )
+    template <char i, char j, char k, char m, int Dim03, int Dim1, int Dim2, int Dim4>
+    auto operator()( const Index<i, Dim03>, const Index<j, Dim1>, const Index<k, Dim2>, const Index<i, Dim03>, const Index<m, Dim4> ) const
+    {
       static_assert( Tensor_Dim0 >= Dim03 && Tensor_Dim1 >= Dim1 && Tensor_Dim2 >= Dim2 && Tensor_Dim3 >= Dim03 && Tensor_Dim4 >= Dim4,
           "Incompatible indices" );
 
-  using TensorExpr = Tensor5_contracted_03<
-      Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim03>;
-  return Tensor3_Expr<TensorExpr, T, Dim1, Dim2, Dim4, j, k, m>( TensorExpr( *this ) );
-  }
-  ;
+      using TensorExpr = Tensor5_contracted_03<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim03>;
+      return Tensor3_Expr<TensorExpr, T, Dim1, Dim2, Dim4, j, k, m>( TensorExpr( *this ) );
+    };
 
-  // (i, j, k, l, i, )
-  template <char i, char j, char k, char l, int Dim04, int Dim1, int Dim2, int Dim3>
-  auto operator()( const Index<i, Dim04>, const Index<j, Dim1>, const Index<k, Dim2>, const Index<l, Dim3>, const Index<i, Dim04> ) const
+    // (i, j, k, l, i, )
+    template <char i, char j, char k, char l, int Dim04, int Dim1, int Dim2, int Dim3>
+    auto operator()( const Index<i, Dim04>, const Index<j, Dim1>, const Index<k, Dim2>, const Index<l, Dim3>, const Index<i, Dim04> ) const
+    {
       static_assert( Tensor_Dim0 >= Dim04 && Tensor_Dim1 >= Dim1 && Tensor_Dim2 >= Dim2 && Tensor_Dim3 >= Dim3 && Tensor_Dim4 >= Dim04,
           "Incompatible indices" );
 
-  using TensorExpr = Tensor5_contracted_04<
-      Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim04>;
-  return Tensor3_Expr<TensorExpr, T, Dim1, Dim2, Dim3, j, k, l>( TensorExpr( *this ) );
-  }
-  ;
+      using TensorExpr = Tensor5_contracted_04<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim04>;
+      return Tensor3_Expr<TensorExpr, T, Dim1, Dim2, Dim3, j, k, l>( TensorExpr( *this ) );
+    };
 
-  // (i, j, j, l, m, )
-  template <char i, char j, char l, char m, int Dim0, int Dim12, int Dim3, int Dim4>
-  auto operator()( const Index<i, Dim0>, const Index<j, Dim12>, const Index<j, Dim12>, const Index<l, Dim3>, const Index<m, Dim4> ) const
+    // (i, j, j, l, m, )
+    template <char i, char j, char l, char m, int Dim0, int Dim12, int Dim3, int Dim4>
+    auto operator()( const Index<i, Dim0>, const Index<j, Dim12>, const Index<j, Dim12>, const Index<l, Dim3>, const Index<m, Dim4> ) const
+    {
       static_assert( Tensor_Dim0 >= Dim0 && Tensor_Dim1 >= Dim12 && Tensor_Dim2 >= Dim12 && Tensor_Dim3 >= Dim3 && Tensor_Dim4 >= Dim4,
           "Incompatible indices" );
 
-  using TensorExpr = Tensor5_contracted_12<
-      Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim12>;
-  return Tensor3_Expr<TensorExpr, T, Dim0, Dim3, Dim4, i, l, m>( TensorExpr( *this ) );
-  }
-  ;
+      using TensorExpr = Tensor5_contracted_12<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim12>;
+      return Tensor3_Expr<TensorExpr, T, Dim0, Dim3, Dim4, i, l, m>( TensorExpr( *this ) );
+    };
 
-  // (i, j, k, j, m, )
-  template <char i, char j, char k, char m, int Dim0, int Dim13, int Dim2, int Dim4>
-  auto operator()( const Index<i, Dim0>, const Index<j, Dim13>, const Index<k, Dim2>, const Index<j, Dim13>, const Index<m, Dim4> ) const
+    // (i, j, k, j, m, )
+    template <char i, char j, char k, char m, int Dim0, int Dim13, int Dim2, int Dim4>
+    auto operator()( const Index<i, Dim0>, const Index<j, Dim13>, const Index<k, Dim2>, const Index<j, Dim13>, const Index<m, Dim4> ) const
+    {
       static_assert( Tensor_Dim0 >= Dim0 && Tensor_Dim1 >= Dim13 && Tensor_Dim2 >= Dim2 && Tensor_Dim3 >= Dim13 && Tensor_Dim4 >= Dim4,
           "Incompatible indices" );
 
-  using TensorExpr = Tensor5_contracted_13<
-      Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim13>;
-  return Tensor3_Expr<TensorExpr, T, Dim0, Dim2, Dim4, i, k, m>( TensorExpr( *this ) );
-  }
-  ;
+      using TensorExpr = Tensor5_contracted_13<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim13>;
+      return Tensor3_Expr<TensorExpr, T, Dim0, Dim2, Dim4, i, k, m>( TensorExpr( *this ) );
+    };
 
-  // (i, j, k, l, j, )
-  template <char i, char j, char k, char l, int Dim0, int Dim14, int Dim2, int Dim3>
-  auto operator()( const Index<i, Dim0>, const Index<j, Dim14>, const Index<k, Dim2>, const Index<l, Dim3>, const Index<j, Dim14> ) const
+    // (i, j, k, l, j, )
+    template <char i, char j, char k, char l, int Dim0, int Dim14, int Dim2, int Dim3>
+    auto operator()( const Index<i, Dim0>, const Index<j, Dim14>, const Index<k, Dim2>, const Index<l, Dim3>, const Index<j, Dim14> ) const
+    {
       static_assert( Tensor_Dim0 >= Dim0 && Tensor_Dim1 >= Dim14 && Tensor_Dim2 >= Dim2 && Tensor_Dim3 >= Dim3 && Tensor_Dim4 >= Dim14,
           "Incompatible indices" );
 
-  using TensorExpr = Tensor5_contracted_14<
-      Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim14>;
-  return Tensor3_Expr<TensorExpr, T, Dim0, Dim2, Dim3, i, k, l>( TensorExpr( *this ) );
-  }
-  ;
+      using TensorExpr = Tensor5_contracted_14<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim14>;
+      return Tensor3_Expr<TensorExpr, T, Dim0, Dim2, Dim3, i, k, l>( TensorExpr( *this ) );
+    };
 
-  // (i, j, k, k, m, )
-  template <char i, char j, char k, char m, int Dim0, int Dim1, int Dim23, int Dim4>
-  auto operator()( const Index<i, Dim0>, const Index<j, Dim1>, const Index<k, Dim23>, const Index<k, Dim23>, const Index<m, Dim4> ) const
+    // (i, j, k, k, m, )
+    template <char i, char j, char k, char m, int Dim0, int Dim1, int Dim23, int Dim4>
+    auto operator()( const Index<i, Dim0>, const Index<j, Dim1>, const Index<k, Dim23>, const Index<k, Dim23>, const Index<m, Dim4> ) const
+    {
       static_assert( Tensor_Dim0 >= Dim0 && Tensor_Dim1 >= Dim1 && Tensor_Dim2 >= Dim23 && Tensor_Dim3 >= Dim23 && Tensor_Dim4 >= Dim4,
           "Incompatible indices" );
 
-  using TensorExpr = Tensor5_contracted_23<
-      Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim23>;
-  return Tensor3_Expr<TensorExpr, T, Dim0, Dim1, Dim4, i, j, m>( TensorExpr( *this ) );
-  }
-  ;
+      using TensorExpr = Tensor5_contracted_23<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim23>;
+      return Tensor3_Expr<TensorExpr, T, Dim0, Dim1, Dim4, i, j, m>( TensorExpr( *this ) );
+    };
 
-  // (i, j, k, l, k, )
-  template <char i, char j, char k, char l, int Dim0, int Dim1, int Dim24, int Dim3>
-  auto operator()( const Index<i, Dim0>, const Index<j, Dim1>, const Index<k, Dim24>, const Index<l, Dim3>, const Index<k, Dim24> ) const
+    // (i, j, k, l, k, )
+    template <char i, char j, char k, char l, int Dim0, int Dim1, int Dim24, int Dim3>
+    auto operator()( const Index<i, Dim0>, const Index<j, Dim1>, const Index<k, Dim24>, const Index<l, Dim3>, const Index<k, Dim24> ) const
+    {
       static_assert( Tensor_Dim0 >= Dim0 && Tensor_Dim1 >= Dim1 && Tensor_Dim2 >= Dim24 && Tensor_Dim3 >= Dim3 && Tensor_Dim4 >= Dim24,
           "Incompatible indices" );
 
-  using TensorExpr = Tensor5_contracted_24<
-      Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim24>;
-  return Tensor3_Expr<TensorExpr, T, Dim0, Dim1, Dim3, i, j, l>( TensorExpr( *this ) );
-  }
-  ;
+      using TensorExpr = Tensor5_contracted_24<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim24>;
+      return Tensor3_Expr<TensorExpr, T, Dim0, Dim1, Dim3, i, j, l>( TensorExpr( *this ) );
+    };
 
-  // (i, j, k, l, l, )
-  template <char i, char j, char k, char l, int Dim0, int Dim1, int Dim2, int Dim34>
-  auto operator()( const Index<i, Dim0>, const Index<j, Dim1>, const Index<k, Dim2>, const Index<l, Dim34>, const Index<l, Dim34> ) const
+    // (i, j, k, l, l, )
+    template <char i, char j, char k, char l, int Dim0, int Dim1, int Dim2, int Dim34>
+    auto operator()( const Index<i, Dim0>, const Index<j, Dim1>, const Index<k, Dim2>, const Index<l, Dim34>, const Index<l, Dim34> ) const
+    {
       static_assert( Tensor_Dim0 >= Dim0 && Tensor_Dim1 >= Dim1 && Tensor_Dim2 >= Dim2 && Tensor_Dim3 >= Dim34 && Tensor_Dim4 >= Dim34,
           "Incompatible indices" );
 
-  using TensorExpr = Tensor5_contracted_34<
-      Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim34>;
-  return Tensor3_Expr<TensorExpr, T, Dim0, Dim1, Dim2, i, j, k>( TensorExpr( *this ) );
-  }
-  ;
+      using TensorExpr = Tensor5_contracted_34<
+          Tensor5<T, Tensor_Dim0, Tensor_Dim1, Tensor_Dim2, Tensor_Dim3, Tensor_Dim4>, T, Dim34>;
+      return Tensor3_Expr<TensorExpr, T, Dim0, Dim1, Dim2, i, j, k>( TensorExpr( *this ) );
+    };
+
+
 
     /* This is for expressions where a number is used for one slot, and
        an index for another, yielding a Tensor3_Expr.  The non-const
@@ -294,7 +298,6 @@ namespace FTensor
 
     return os;
   }
-}
 
   template <class T, int Tensor_Dim0, int Tensor_Dim1, int Tensor_Dim2,
     int Tensor_Dim3, int Tensor_Dim4>
@@ -312,7 +315,6 @@ std::ostream &Tensor5_01000(
   os << ']';
 
   return os;
-}
 }
 
 template <class T, int Tensor_Dim0, int Tensor_Dim1, int Tensor_Dim2,
@@ -332,3 +334,5 @@ std::ostream &operator<<(std::ostream &os,
 
   return os;
 }
+
+} //namespace FTensor

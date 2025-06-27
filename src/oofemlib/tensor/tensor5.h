@@ -37,6 +37,7 @@
 #include "mathfem.h"
 #include "index.h"
 #include "tensor2.h"
+#include "FTensor/Tensor5/Tensor5_value.hpp"
 #pragma once
 
 using namespace FTensor;
