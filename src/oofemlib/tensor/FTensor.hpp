@@ -66,6 +66,12 @@ namespace FTensor
             char j, char k, char l>
   class Tensor4_Expr;
 
+  template <class T, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4>
+  class Tensor5;
+  template <class A, class T, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, char i,
+      char j, char k, char l, char m>
+  class Tensor5_Expr;
+
   /*template <class T, int Dim> class Riemann;
   template <class A, class T, int Dim, char i, char j, char k, char l>
   class Riemann_Expr;
@@ -102,3 +108,6 @@ namespace FTensor
 #include "FTensor/Tensor3_antisymmetric.hpp"
 #include "FTensor/Tensor4.hpp"
 #include "FTensor/Tensor4/Tensor4_contracted.hpp"
+#include "FTensor/Tensor5.hpp"
+#include "FTensor/Tensor5/Tensor5_contracted.hpp"
+
