@@ -30,7 +30,7 @@ class Tensor5_times_Tensor1_single1
   {
   }
 
-  typename promote<T, U>::V operator( const int N1, const int N2, const int N3, const int N4 ) const
+  typename promote<T, U>::V operator()( const int N1, const int N2, const int N3, const int N4 ) const
   {
     return eval( N1, N2, N3, N4, Number<Dim0>() );
   }
@@ -86,7 +86,7 @@ class Tensor5_times_Tensor1_single2
   {
   }
 
-  typename promote<T, U>::V operator( const int N1, const int N2, const int N3, const int N4 ) const
+  typename promote<T, U>::V operator()( const int N1, const int N2, const int N3, const int N4 ) const
   {
     return eval( N1, N2, N3, N4, Number<Dim1>() );
   }
@@ -142,7 +142,7 @@ class Tensor5_times_Tensor1_single3
   {
   }
 
-  typename promote<T, U>::V operator( const int N1, const int N2, const int N3, const int N4 ) const
+  typename promote<T, U>::V operator()( const int N1, const int N2, const int N3, const int N4 ) const
   {
     return eval( N1, N2, N3, N4, Number<Dim2>() );
   }
@@ -198,7 +198,7 @@ class Tensor5_times_Tensor1_single4
   {
   }
 
-  typename promote<T, U>::V operator( const int N1, const int N2, const int N3, const int N4 ) const
+  typename promote<T, U>::V operator()( const int N1, const int N2, const int N3, const int N4 ) const
   {
     return eval( N1, N2, N3, N4, Number<Dim3>() );
   }
@@ -254,7 +254,7 @@ class Tensor5_times_Tensor1_single5
   {
   }
 
-  typename promote<T, U>::V operator( const int N1, const int N2, const int N3, const int N4 ) const
+  typename promote<T, U>::V operator()( const int N1, const int N2, const int N3, const int N4 ) const
   {
     return eval( N1, N2, N3, N4, Number<Dim4>() );
   }
@@ -283,7 +283,4 @@ operator*( const Tensor1_Expr<B, U, Dim4, m> &b,
 }
 
 
-
-  
-  
 }

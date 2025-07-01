@@ -7,7 +7,7 @@
 #include "Tensor5_times_Tensor1_single.hpp"
 #include "Tensor5_times_Tensor2_single.hpp"
 #include "Tensor5_times_Tensor2_double.hpp"
-#include "Tensor5_times_Tensor2_symmetric.hpp"
+//#include "Tensor5_times_Tensor2_symmetric.hpp"
 #include "Tensor5_times_Tensor3_triple.hpp"
 #include "Tensor5_times_generic.hpp"
 
@@ -31,7 +31,7 @@ namespace FTensor
 
   template <class A, class T, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, char i,
             char j, char k, char l, char m>
-  class Tensor5_Expr<Tensor4<A, Dim0, Dim1, Dim2, Dim3, Dim4>, T, Dim0, Dim1, Dim2,
+  class Tensor5_Expr<Tensor5<A, Dim0, Dim1, Dim2, Dim3, Dim4>, T, Dim0, Dim1, Dim2,
                      Dim3, Dim4, i, j, k, l, m>
   {
     Tensor5<A, Dim0, Dim1, Dim2, Dim3, Dim4> &iter;
@@ -69,7 +69,7 @@ namespace FTensor
 
     template <class B, class U, int Dim1_0, int Dim1_1, int Dim1_2, int Dim1_3, int Dim1_4,
               char i_1, char j_1, char k_1, char l_1, char m_1>
-    auto &operator=(const Tensor5_Expr<B, U, Dim1_0, Dim1_1, Dim1_2, Dim1_3, Dim1_4
+    auto &operator=(const Tensor5_Expr<B, U, Dim1_0, Dim1_1, Dim1_2, Dim1_3, Dim1_4,
                                        i_1, j_1, k_1, l_1, m_1> &rhs)
     {
       return equals(rhs);
@@ -100,7 +100,7 @@ namespace FTensor
 
     template <class B, class U, int Dim1_0, int Dim1_1, int Dim1_2, int Dim1_3, int Dim1_4,
               char i_1, char j_1, char k_1, char l_1, char m_1>
-    auto &operator-=(const Tensor5_Expr<B, U, Dim1_0, Dim1_1, Dim1_2, Dim1_3, Dim1_4
+    auto &operator-=(const Tensor5_Expr<B, U, Dim1_0, Dim1_1, Dim1_2, Dim1_3, Dim1_4,
                                         i_1, j_1, k_1, l_1, m_1> &rhs)
     {
       for(int ii = 0; ii < Dim0; ++ii)

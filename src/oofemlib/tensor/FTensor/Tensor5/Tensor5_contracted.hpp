@@ -94,7 +94,7 @@ namespace FTensor
     A iterA;
 
   public:
-    T operator()(const int N0, const int N1 const int N2) const
+    T operator()(const int N0, const int N1, const int N2) const
     {
       T result(0);
       for(int ii = 0; ii < Dim; ++ii)
