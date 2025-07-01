@@ -72,6 +72,18 @@ namespace FTensor
       char j, char k, char l, char m>
   class Tensor5_Expr;
 
+    template <class T, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5>
+  class Tensor6;
+  template <class A, class T, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, char i,
+      char j, char k, char l, char m, char n>
+  class Tensor6_Expr;
+
+      template <class T, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6>
+  class Tensor7;
+  template <class A, class T, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i,
+      char j, char k, char l, char m, char n, char o>
+  class Tensor7_Expr;
+
   /*template <class T, int Dim> class Riemann;
   template <class A, class T, int Dim, char i, char j, char k, char l>
   class Riemann_Expr;
