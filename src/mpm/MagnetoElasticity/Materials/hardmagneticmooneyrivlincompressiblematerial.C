@@ -43,6 +43,7 @@
 #include "tensor/tensor2.h"
 #include "tensor/tensor4.h"
 #include "tensor/tensor5.h"
+#include "tensor/tensor6.h"
 #include "domain.h"
 #include "function.h"
 
