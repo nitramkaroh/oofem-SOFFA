@@ -5,7 +5,7 @@
 namespace FTensor
 {
   template <class A, class B, class T, class U, int Dim0_0, int Dim1_0,
-            int Dim2_0, int Dim3_0, int Dim4_0, int Dim5_0, int Dim0_1 int Dim1_1, int Dim2_1,
+            int Dim2_0, int Dim3_0, int Dim4_0, int Dim5_0, int Dim0_1, int Dim1_1, int Dim2_1,
             int Dim3_1, int Dim4_1, int Dim5_1, char i0, char j0, char k0, char l0, char m0, char n0, char i1, char j1,
             char k1, char l1, char m1, char n1>
   class Tensor6_plus_Tensor6

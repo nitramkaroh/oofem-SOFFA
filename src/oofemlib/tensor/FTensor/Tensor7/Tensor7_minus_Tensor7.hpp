@@ -11,7 +11,7 @@ namespace FTensor
   class Tensor7_minus_Tensor7
   {
     Tensor7_Expr<A, T, Dim0_0, Dim1_0, Dim2_0, Dim3_0, Dim4_0, Dim5_0, Dim6_0, i0, j0, k0, l0, m0, n0, o0> iterA;
-    Tensor7_Expr<B, U, Dim0_1, Dim1_1, Dim2_1, Dim3_1, Dim4_1, Dim5_1, Dim6_1, i1, j1, k1, l1, m1. n1, o1> iterB;
+    Tensor7_Expr<B, U, Dim0_1, Dim1_1, Dim2_1, Dim3_1, Dim4_1, Dim5_1, Dim6_1, i1, j1, k1, l1, m1, n1, o1> iterB;
 
   public:
     typename promote<T, U>::V
@@ -31,7 +31,7 @@ namespace FTensor
   template <class A, class B, class T, class U, int Dim0_0, int Dim1_0,
             int Dim2_0, int Dim3_0, int Dim4_0, int Dim5_0, int Dim6_0, int Dim0_1, int Dim1_1, int Dim2_1,
             int Dim3_1, int Dim4_1, int Dim5_1, int Dim6_1, char i0, char j0, char k0, char l0, char m0, char n0, char o0, char i1, char j1,
-            char k1, char l1, char m1. char n1, char o1>
+            char k1, char l1, char m1, char n1, char o1>
   auto operator-(
     const Tensor7_Expr<A, T, Dim0_0, Dim1_0, Dim2_0, Dim3_0, Dim4_0, Dim5_0, Dim6_0, i0, j0, k0, l0, m0, n0, o0> &a,
     const Tensor7_Expr<B, U, Dim0_1, Dim1_1, Dim2_1, Dim3_1, Dim4_1, Dim5_1, Dim6_1, i1, j1, k1, l1, m1, n1, o1> &b)

@@ -7,7 +7,7 @@
 #include "Tensor6_times_Tensor1_single.hpp"
 #include "Tensor6_times_Tensor2_single.hpp"
 #include "Tensor6_times_Tensor2_double.hpp"
-#include "Tensor6_times_Tensor2_symmetric.hpp"
+//#include "Tensor6_times_Tensor2_symmetric.hpp"
 #include "Tensor6_times_Tensor3_triple.hpp"
 #include "Tensor6_times_generic.hpp"
 
@@ -118,8 +118,7 @@ namespace FTensor
     }
 
     template <class U>
-    Tensor6_Expr<Tensor6<A, Dim0, Dim1, Dim2, D
-      im3, Dim4, Dim5>, T, Dim0,
+    Tensor6_Expr<Tensor6<A, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5>, T, Dim0,
         Dim1, Dim2, Dim3, Dim4, Dim5, i, j, k, l, m, n> &
     operator=( const U &u )
     {
