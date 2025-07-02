@@ -536,7 +536,7 @@ std::tuple<Tensor5_3d, Tensor6_3d, Tensor6_3d, Tensor7_3d> HardMagneticMooneyRiv
   d2GradJdFdF(m_3, r_3, s_3, u_3, v_3) = eps(i_3,r_3,u_3)*eps(j_3,s_3,v_3)*gradF(i_3,j_3,m_3);
   d2GradJdFdGradF(m_3, r_3, s_3, u_3, v_3, w_3) = eps(u_3,r_3,p_3)*eps(v_3,s_3,q_3)*F(p_3,q_3)*delta(m_3,w_3);
   d2GradJdFdGradF(m_3, r_3, s_3, t_3, u_3, v_3) = eps(r_3,u_3,p_3)*eps(s_3,v_3,q_3)*F(p_3,q_3)*delta(m_3,t_3);
-  //d2GradJdGradFdGradF(m_3, r_3, s_3, t_3, u_3, v_3, w_3) = 0.;
+  d2GradJdGradFdGradF(m_3, r_3, s_3, t_3, u_3, v_3, w_3) = 0.;
 
   return std::make_tuple( d2GradJdFdF, d2GradJdFdGradF, d2GradJdGradFdF, d2GradJdGradFdGradF );
 }

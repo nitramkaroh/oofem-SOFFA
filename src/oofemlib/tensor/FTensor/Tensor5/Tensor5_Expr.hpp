@@ -113,5 +113,21 @@ namespace FTensor
               }
       return *this;
     }
+
+    template <class U>
+    Tensor5_Expr<Tensor5<A, Dim0, Dim1, Dim2, Dim3, Dim4>, T, Dim0,
+        Dim1, Dim2, Dim3, Dim4, i, j, k, l, m> &
+    operator=( const U &u )
+    {
+      for ( int ii = 0; ii < Dim0; ++ii )
+        for ( int jj = 0; jj < Dim1; ++jj )
+          for ( int kk = 0; kk < Dim2; ++kk )
+            for ( int ll = 0; ll < Dim3; ++ll )
+              for ( int mm = 0; mm < Dim4; ++mm ) {
+                iter( ii, jj, kk, ll, mm ) = u;
+              }
+      return *this;
+    }
+
   };
 }
