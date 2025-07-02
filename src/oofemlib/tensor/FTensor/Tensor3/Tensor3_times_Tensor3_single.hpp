@@ -13,7 +13,7 @@ public:
   typename promote<T, U>::V operator()(const int N1, const int N2, const int N3, const int N4) const
   {
     typename promote<T, U>::V result(0);
-    for(int xx = 0; xx < DimX, ++xx)
+    for(int xx = 0; xx < DimX; ++xx)
       {
         // Permutation is where the indices get checked.
         result += Permutation3<DimA, DimB, DimX, a, b, x>().eval(
