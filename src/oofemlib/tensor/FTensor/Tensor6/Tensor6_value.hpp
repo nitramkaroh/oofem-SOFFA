@@ -42,7 +42,7 @@ namespace FTensor
         {
           std::stringstream s;
           s << "Bad index in Tensor6<T," << Tensor_Dim0 << "," << Tensor_Dim1
-            << "," << Tensor_Dim2 << "," << Tensor_Dim3 << "," << Tensor_Dim4 << Tensor_Dim5 << ">.operator(" << N1
+            << "," << Tensor_Dim2 << "," << Tensor_Dim3 << "," << Tensor_Dim4 << "," << Tensor_Dim5 << ">.operator(" << N1
             << "," << N2 << "," << N3 << "," << N4 "," << N5 << "," << N6 << ") const" << std::endl;
           throw std::out_of_range(s.str());
         }
@@ -59,7 +59,7 @@ namespace FTensor
         {
           std::stringstream s;
         s << "Bad index in Tensor6<T," << Tensor_Dim0 << "," << Tensor_Dim1
-          << "," << Tensor_Dim2 << "," << Tensor_Dim3 << "," << Tensor_Dim4 << ">.operator(" << N1
+            << "," << Tensor_Dim2 << "," << Tensor_Dim3 << "," << Tensor_Dim4 << "," << Tensor_Dim5 ">.operator(" << N1
           << "," << N2 << "," << N3 << "," << N4 "," << N5 << "," << N6 << ") const" << std::endl;
           throw std::out_of_range(s.str());
         }
@@ -339,7 +339,7 @@ namespace FTensor
         FTensor::Tensor6_000001(os, t, iterator0, iterator1, iterator2, iterator3, i);
         os << ',';
       }
-    FTensor::Tensor6_000001(os, t, iterator0, iterator1, iterator2, Tensor_Dim4 - 1);
+    FTensor::Tensor6_000001(os, t, iterator0, iterator1, iterator2, iterator3, Tensor_Dim4 - 1);
     os << ']';
 
     return os;
