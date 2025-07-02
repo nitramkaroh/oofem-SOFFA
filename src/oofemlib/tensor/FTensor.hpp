@@ -122,4 +122,8 @@ namespace FTensor
 #include "FTensor/Tensor4/Tensor4_contracted.hpp"
 #include "FTensor/Tensor5.hpp"
 #include "FTensor/Tensor5/Tensor5_contracted.hpp"
+#include "FTensor/Tensor6.hpp"
+#include "FTensor/Tensor6/Tensor6_contracted.hpp"
+#include "FTensor/Tensor7.hpp"
+#include "FTensor/Tensor7/Tensor7_contracted.hpp"
 
