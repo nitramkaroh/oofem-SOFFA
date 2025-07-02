@@ -45,6 +45,7 @@ MagnetoElasticMaterialStatus :: MagnetoElasticMaterialStatus(GaussPoint *g) :
     FVector.at(1) = FVector.at(2) = FVector.at(3) = 1.;
     tempPVector = PVector;
     tempFVector = FVector;
+    tempGradFVector = gradFVector;
     
     HVector.resize(3);
     BVector.resize(3);
@@ -99,10 +100,11 @@ void MagnetoElasticMaterialStatus :: updateYourself(TimeStep *tStep)
 {
     MaterialStatus :: updateYourself(tStep);
 
-    PVector      = tempPVector;
-    FVector      = tempFVector;
-    HVector      = tempHVector;
-    BVector      = tempBVector;
+    PVector = tempPVector;
+    FVector = tempFVector;
+    gradFVector = tempGradFVector;
+    HVector = tempHVector;
+    BVector = tempBVector;
 }
 
 
@@ -113,11 +115,12 @@ void MagnetoElasticMaterialStatus :: initTempStatus()
 {
     MaterialStatus :: initTempStatus();
 
-    tempPVector      = PVector;
-    tempFVector      = FVector;
+    tempPVector = PVector;
+    tempFVector = FVector;
+    tempGradFVector = gradFVector;
 
-    tempHVector      = HVector;
-    tempBVector      = BVector;
+    tempHVector = HVector;
+    tempBVector = BVector;
 
 }
 

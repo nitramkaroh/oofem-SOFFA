@@ -74,6 +74,11 @@ protected:
     /// Temporary deformation gradient in reduced form (to find balanced state)
     FloatArray tempFVector;
 
+    /// Equilibrated second deformation gradient in reduced form
+    FloatArray gradFVector;
+    /// Temporary second deformation gradient in reduced form (to find balanced state)
+    FloatArray tempGradFVector;
+
     /// Equilibrated first Piola-Kirchhoff stress vector
     FloatArray HVector;
     /// Temporary first Piola-Kirchhoff stress vector (to find balanced state)
@@ -103,6 +108,8 @@ public:
     const FloatArray &givePVector() const { return PVector; }
     /// Returns the const pointer to receiver's deformation gradient vector.
     const FloatArray &giveFVector() const { return FVector; }
+    /// Returns the const pointer to receiver's second deformation gradient vector.
+    const FloatArray &giveGradFVector() const { return gradFVector; }
     /// Returns the const pointer to receiver's first Piola-Kirchhoff stress vector.
     const FloatArray &giveHVector() const { return HVector; }
     /// Returns the const pointer to receiver's deformation gradient vector.
@@ -111,6 +118,7 @@ public:
     const FloatArray &giveTempPVector() const { return tempPVector; }
     /// Returns the const pointer to receiver's temporary deformation gradient vector.
     const FloatArray &giveTempFVector() const { return tempFVector; }
+    const FloatArray &giveTempGradFVector() const { return tempGradFVector; }
     const FloatArray &giveTempHVector() const { return tempHVector; }
     /// Returns the const pointer to receiver's temporary deformation gradient vector.
     const FloatArray &giveTempBVector() const { return tempBVector; }
@@ -119,6 +127,8 @@ public:
     void letTempPVectorBe(const FloatArray &v) { tempPVector = v; }
     /// Assigns tempFVector to given vector v
     void letTempFVectorBe(const FloatArray &v) { tempFVector = v; }
+    /// Assigns tempGradFVector to given vector v
+    void letTempGradFVectorBe( const FloatArray &v ) { tempGradFVector = v; }
     /// Assigns tempPVector to given vector v
     void letTempHVectorBe(const FloatArray &v) { tempHVector = v; }
     /// Assigns tempFVector to given vector v

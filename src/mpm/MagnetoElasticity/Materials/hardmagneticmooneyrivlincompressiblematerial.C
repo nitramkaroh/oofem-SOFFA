@@ -44,6 +44,7 @@
 #include "tensor/tensor4.h"
 #include "tensor/tensor5.h"
 #include "tensor/tensor6.h"
+#include "tensor/tensor7.h"
 #include "domain.h"
 #include "function.h"
 
@@ -454,6 +455,11 @@ HardMagneticMooneyRivlinCompressibleMaterial ::give_JacobianGradient_FirstPKStre
   P(r_3, s_3) = kappaGradJGradJ * gradJ(m_3) * dGradJdF(m_3,r_3,s_3);
   T(r_3, s_3, t_3) = kappaGradJGradJ * gradJ(m_3) * dGradJdGradF(m_3, r_3, s_3, t_3);
 
+  //save gradients
+  MagnetoElasticMaterialStatus *status = static_cast<MagnetoElasticMaterialStatus *>( this->giveStatus( gp ) );
+  status->letTempFVectorBe( vF );
+  status->letTempGradFVectorBe( vGradF );
+
   return std::make_tuple(P.to_voigt_form(), T.to_voigt_form_27());
 }
 
@@ -461,6 +467,14 @@ HardMagneticMooneyRivlinCompressibleMaterial ::give_JacobianGradient_FirstPKStre
 std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 27>, FloatMatrixF<27, 9>, FloatMatrixF<27, 27> >
 HardMagneticMooneyRivlinCompressibleMaterial ::give_JacobianGradient_ConstitutiveMatrices_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
 {
+  //load F and GradF
+  MagnetoElasticMaterialStatus *status = static_cast<MagnetoElasticMaterialStatus *>( this->giveStatus( gp ) );
+  FloatArray vF = status->giveTempFVector();
+  FloatArray vGradF = status->giveTempGradFVector();
+  
+  Tensor2_3d F(vF);
+  Tensor3_3d gradF(vGradF);
+
   Tensor4_3d D_FF;
   Tensor5_3d C_FG;
   Tensor6_3d C_GG;
@@ -522,7 +536,7 @@ std::tuple<Tensor5_3d, Tensor6_3d, Tensor6_3d, Tensor7_3d> HardMagneticMooneyRiv
   d2GradJdFdF(m_3, r_3, s_3, u_3, v_3) = eps(i_3,r_3,u_3)*eps(j_3,s_3,v_3)*gradF(i_3,j_3,m_3);
   d2GradJdFdGradF(m_3, r_3, s_3, u_3, v_3, w_3) = eps(u_3,r_3,p_3)*eps(v_3,s_3,q_3)*F(p_3,q_3)*delta(m_3,w_3);
   d2GradJdFdGradF(m_3, r_3, s_3, t_3, u_3, v_3) = eps(r_3,u_3,p_3)*eps(s_3,v_3,q_3)*F(p_3,q_3)*delta(m_3,t_3);
-  d2GradJdGradFdGradF(m_3, r_3, s_3, t_3, u_3, v_3, w_3) = 0.;
+  //d2GradJdGradFdGradF(m_3, r_3, s_3, t_3, u_3, v_3, w_3) = 0.;
 
   return std::make_tuple( d2GradJdFdF, d2GradJdFdGradF, d2GradJdGradFdF, d2GradJdGradFdGradF );
 }

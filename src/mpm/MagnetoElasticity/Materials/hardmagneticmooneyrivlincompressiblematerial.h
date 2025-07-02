@@ -44,6 +44,7 @@
 #include "tensor/tensor4.h"
 #include "tensor/tensor5.h"
 #include "tensor/tensor6.h"
+#include "tensor/tensor7.h"
 
 
 ///@name Input fields for MooneyRivlinMaterial
