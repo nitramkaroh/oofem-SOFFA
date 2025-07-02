@@ -1,0 +1,15155 @@
+#pragma once
+
+namespace FTensor
+{
+//Universal A(i, j, k, l, m, n, o, )*B(p, q, r, s, ) quadruple contraction
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, int Dim7, int Dim8, int Dim9, int Dim10, char i, char j, char k, char l, char m, char n, char o, char p, char q, char r, char s, int DimA, int DimB, int DimC, int DimX, int DimY, int DimZ, int DimW, char a, char b, char c, char x, char y, char z, char w>
+class Tensor7_times_Tensor4_quadruple
+{
+  Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> iterA;
+  Tensor4_Expr<B, U, Dim7, Dim8, Dim9, Dim10, p, q, r, s> iterB;
+
+public:
+  typename promote<T, U>::V operator()(const int N1, const int N2, const int N3) const
+  {
+    typename promote<T, U>::V result(0);
+    for(int xx = 0; xx < DimX; ++xx)
+      for(int yy = 0; yy < DimY; ++yy)
+        for(int zz = 0; zz < DimZ; ++zz)
+          for(int ww = 0; ww < DimW; ++ww)
+            {
+              // Permutation is where the indices get checked.
+              result += Permutation7<DimA, DimB, DimC, DimX, DimY, DimZ, DimW, a, b, c, x, y, z, w>().eval(
+                iterA, N1, N2, N3, xx, yy, zz, ww) * Permutation4<DimX, DimY, DimZ, DimW, x, y, z, w>().eval(iterB, xx, yy, zz, ww);
+            }
+    return result;
+  }
+
+  Tensor7_times_Tensor4_quadruple(
+    const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &iter_a,
+    const Tensor4_Expr<B, U, Dim7, Dim8, Dim9, Dim10, p, q, r, s> &iter_b)
+      : iterA(iter_a), iterB(iter_b)
+  {}
+};
+
+//A(i, j, k, l, m, n, o, )*B(l, k, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim1, Dim0, l, k, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim1, Dim0, i, j, k, l, m, n, o, l, k, j, i, Dim4, Dim5, Dim6, Dim3, Dim2, Dim1, Dim0, m, n, o, l, k, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(l, k, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim1, Dim0, l, k, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim1, Dim0, k, l, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim1, Dim0, i, j, k, l, m, n, o, k, l, j, i, Dim4, Dim5, Dim6, Dim2, Dim3, Dim1, Dim0, m, n, o, k, l, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(k, l, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim1, Dim0, k, l, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim2, Dim0, l, j, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim2, Dim0, i, j, k, l, m, n, o, l, j, k, i, Dim4, Dim5, Dim6, Dim3, Dim1, Dim2, Dim0, m, n, o, l, j, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(l, j, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim2, Dim0, l, j, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim3, Dim0, k, j, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim3, Dim0, i, j, k, l, m, n, o, k, j, l, i, Dim4, Dim5, Dim6, Dim2, Dim1, Dim3, Dim0, m, n, o, k, j, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(k, j, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim3, Dim0, k, j, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim2, Dim0, j, l, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim2, Dim0, i, j, k, l, m, n, o, j, l, k, i, Dim4, Dim5, Dim6, Dim1, Dim3, Dim2, Dim0, m, n, o, j, l, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(j, l, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim2, Dim0, j, l, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim3, Dim0, j, k, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim3, Dim0, i, j, k, l, m, n, o, j, k, l, i, Dim4, Dim5, Dim6, Dim1, Dim2, Dim3, Dim0, m, n, o, j, k, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(j, k, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim3, Dim0, j, k, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim0, Dim1, l, k, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim0, Dim1, i, j, k, l, m, n, o, l, k, i, j, Dim4, Dim5, Dim6, Dim3, Dim2, Dim0, Dim1, m, n, o, l, k, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(l, k, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim0, Dim1, l, k, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim0, Dim1, k, l, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim0, Dim1, i, j, k, l, m, n, o, k, l, i, j, Dim4, Dim5, Dim6, Dim2, Dim3, Dim0, Dim1, m, n, o, k, l, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(k, l, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim0, Dim1, k, l, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim0, Dim2, l, j, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim0, Dim2, i, j, k, l, m, n, o, l, j, i, k, Dim4, Dim5, Dim6, Dim3, Dim1, Dim0, Dim2, m, n, o, l, j, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(l, j, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim0, Dim2, l, j, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim0, Dim3, k, j, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim0, Dim3, i, j, k, l, m, n, o, k, j, i, l, Dim4, Dim5, Dim6, Dim2, Dim1, Dim0, Dim3, m, n, o, k, j, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(k, j, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim0, Dim3, k, j, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim0, Dim2, j, l, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim0, Dim2, i, j, k, l, m, n, o, j, l, i, k, Dim4, Dim5, Dim6, Dim1, Dim3, Dim0, Dim2, m, n, o, j, l, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(j, l, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim0, Dim2, j, l, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim0, Dim3, j, k, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim0, Dim3, i, j, k, l, m, n, o, j, k, i, l, Dim4, Dim5, Dim6, Dim1, Dim2, Dim0, Dim3, m, n, o, j, k, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(j, k, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim0, Dim3, j, k, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim2, Dim1, l, i, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim2, Dim1, i, j, k, l, m, n, o, l, i, k, j, Dim4, Dim5, Dim6, Dim3, Dim0, Dim2, Dim1, m, n, o, l, i, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(l, i, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim2, Dim1, l, i, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim3, Dim1, k, i, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim3, Dim1, i, j, k, l, m, n, o, k, i, l, j, Dim4, Dim5, Dim6, Dim2, Dim0, Dim3, Dim1, m, n, o, k, i, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(k, i, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim3, Dim1, k, i, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim1, Dim2, l, i, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim1, Dim2, i, j, k, l, m, n, o, l, i, j, k, Dim4, Dim5, Dim6, Dim3, Dim0, Dim1, Dim2, m, n, o, l, i, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(l, i, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim1, Dim2, l, i, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim1, Dim3, k, i, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim1, Dim3, i, j, k, l, m, n, o, k, i, j, l, Dim4, Dim5, Dim6, Dim2, Dim0, Dim1, Dim3, m, n, o, k, i, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(k, i, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim1, Dim3, k, i, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim3, Dim2, j, i, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim3, Dim2, i, j, k, l, m, n, o, j, i, l, k, Dim4, Dim5, Dim6, Dim1, Dim0, Dim3, Dim2, m, n, o, j, i, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(j, i, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim3, Dim2, j, i, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim2, Dim3, j, i, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim2, Dim3, i, j, k, l, m, n, o, j, i, k, l, Dim4, Dim5, Dim6, Dim1, Dim0, Dim2, Dim3, m, n, o, j, i, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(j, i, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim2, Dim3, j, i, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim2, Dim1, i, l, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim2, Dim1, i, j, k, l, m, n, o, i, l, k, j, Dim4, Dim5, Dim6, Dim0, Dim3, Dim2, Dim1, m, n, o, i, l, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(i, l, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim2, Dim1, i, l, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim3, Dim1, i, k, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim3, Dim1, i, j, k, l, m, n, o, i, k, l, j, Dim4, Dim5, Dim6, Dim0, Dim2, Dim3, Dim1, m, n, o, i, k, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(i, k, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim3, Dim1, i, k, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim1, Dim2, i, l, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim1, Dim2, i, j, k, l, m, n, o, i, l, j, k, Dim4, Dim5, Dim6, Dim0, Dim3, Dim1, Dim2, m, n, o, i, l, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(i, l, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim1, Dim2, i, l, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim1, Dim3, i, k, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim1, Dim3, i, j, k, l, m, n, o, i, k, j, l, Dim4, Dim5, Dim6, Dim0, Dim2, Dim1, Dim3, m, n, o, i, k, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(i, k, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim1, Dim3, i, k, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim3, Dim2, i, j, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim3, Dim2, i, j, k, l, m, n, o, i, j, l, k, Dim4, Dim5, Dim6, Dim0, Dim1, Dim3, Dim2, m, n, o, i, j, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(i, j, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim3, Dim2, i, j, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim2, Dim3, i, j, k, l, m, n, o, i, j, k, l, Dim4, Dim5, Dim6, Dim0, Dim1, Dim2, Dim3, m, n, o, i, j, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim4, Dim5, Dim6, m, n, o>(TensorExpr(a, b));
+}
+
+//B(i, j, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim1, Dim0, m, k, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim1, Dim0, i, j, k, l, m, n, o, m, k, j, i, Dim3, Dim5, Dim6, Dim4, Dim2, Dim1, Dim0, l, n, o, m, k, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(m, k, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim1, Dim0, m, k, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim1, Dim0, k, m, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim1, Dim0, i, j, k, l, m, n, o, k, m, j, i, Dim3, Dim5, Dim6, Dim2, Dim4, Dim1, Dim0, l, n, o, k, m, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(k, m, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim1, Dim0, k, m, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim2, Dim0, m, j, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim2, Dim0, i, j, k, l, m, n, o, m, j, k, i, Dim3, Dim5, Dim6, Dim4, Dim1, Dim2, Dim0, l, n, o, m, j, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(m, j, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim2, Dim0, m, j, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim4, Dim0, k, j, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim4, Dim0, i, j, k, l, m, n, o, k, j, m, i, Dim3, Dim5, Dim6, Dim2, Dim1, Dim4, Dim0, l, n, o, k, j, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(k, j, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim4, Dim0, k, j, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim2, Dim0, j, m, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim2, Dim0, i, j, k, l, m, n, o, j, m, k, i, Dim3, Dim5, Dim6, Dim1, Dim4, Dim2, Dim0, l, n, o, j, m, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(j, m, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim2, Dim0, j, m, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim4, Dim0, j, k, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim4, Dim0, i, j, k, l, m, n, o, j, k, m, i, Dim3, Dim5, Dim6, Dim1, Dim2, Dim4, Dim0, l, n, o, j, k, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(j, k, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim4, Dim0, j, k, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim0, Dim1, m, k, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim0, Dim1, i, j, k, l, m, n, o, m, k, i, j, Dim3, Dim5, Dim6, Dim4, Dim2, Dim0, Dim1, l, n, o, m, k, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(m, k, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim0, Dim1, m, k, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim0, Dim1, k, m, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim0, Dim1, i, j, k, l, m, n, o, k, m, i, j, Dim3, Dim5, Dim6, Dim2, Dim4, Dim0, Dim1, l, n, o, k, m, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(k, m, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim0, Dim1, k, m, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim0, Dim2, m, j, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim0, Dim2, i, j, k, l, m, n, o, m, j, i, k, Dim3, Dim5, Dim6, Dim4, Dim1, Dim0, Dim2, l, n, o, m, j, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(m, j, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim0, Dim2, m, j, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim0, Dim4, k, j, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim0, Dim4, i, j, k, l, m, n, o, k, j, i, m, Dim3, Dim5, Dim6, Dim2, Dim1, Dim0, Dim4, l, n, o, k, j, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(k, j, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim0, Dim4, k, j, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim0, Dim2, j, m, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim0, Dim2, i, j, k, l, m, n, o, j, m, i, k, Dim3, Dim5, Dim6, Dim1, Dim4, Dim0, Dim2, l, n, o, j, m, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(j, m, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim0, Dim2, j, m, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim0, Dim4, j, k, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim0, Dim4, i, j, k, l, m, n, o, j, k, i, m, Dim3, Dim5, Dim6, Dim1, Dim2, Dim0, Dim4, l, n, o, j, k, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(j, k, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim0, Dim4, j, k, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim2, Dim1, m, i, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim2, Dim1, i, j, k, l, m, n, o, m, i, k, j, Dim3, Dim5, Dim6, Dim4, Dim0, Dim2, Dim1, l, n, o, m, i, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(m, i, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim2, Dim1, m, i, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim4, Dim1, k, i, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim4, Dim1, i, j, k, l, m, n, o, k, i, m, j, Dim3, Dim5, Dim6, Dim2, Dim0, Dim4, Dim1, l, n, o, k, i, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(k, i, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim4, Dim1, k, i, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim1, Dim2, m, i, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim1, Dim2, i, j, k, l, m, n, o, m, i, j, k, Dim3, Dim5, Dim6, Dim4, Dim0, Dim1, Dim2, l, n, o, m, i, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(m, i, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim1, Dim2, m, i, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim1, Dim4, k, i, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim1, Dim4, i, j, k, l, m, n, o, k, i, j, m, Dim3, Dim5, Dim6, Dim2, Dim0, Dim1, Dim4, l, n, o, k, i, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(k, i, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim1, Dim4, k, i, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim4, Dim2, j, i, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim4, Dim2, i, j, k, l, m, n, o, j, i, m, k, Dim3, Dim5, Dim6, Dim1, Dim0, Dim4, Dim2, l, n, o, j, i, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(j, i, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim4, Dim2, j, i, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim2, Dim4, j, i, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim2, Dim4, i, j, k, l, m, n, o, j, i, k, m, Dim3, Dim5, Dim6, Dim1, Dim0, Dim2, Dim4, l, n, o, j, i, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(j, i, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim2, Dim4, j, i, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim2, Dim1, i, m, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim2, Dim1, i, j, k, l, m, n, o, i, m, k, j, Dim3, Dim5, Dim6, Dim0, Dim4, Dim2, Dim1, l, n, o, i, m, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(i, m, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim2, Dim1, i, m, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim4, Dim1, i, k, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim4, Dim1, i, j, k, l, m, n, o, i, k, m, j, Dim3, Dim5, Dim6, Dim0, Dim2, Dim4, Dim1, l, n, o, i, k, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(i, k, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim4, Dim1, i, k, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim1, Dim2, i, m, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim1, Dim2, i, j, k, l, m, n, o, i, m, j, k, Dim3, Dim5, Dim6, Dim0, Dim4, Dim1, Dim2, l, n, o, i, m, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(i, m, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim1, Dim2, i, m, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim1, Dim4, i, k, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim1, Dim4, i, j, k, l, m, n, o, i, k, j, m, Dim3, Dim5, Dim6, Dim0, Dim2, Dim1, Dim4, l, n, o, i, k, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(i, k, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim1, Dim4, i, k, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim4, Dim2, i, j, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim4, Dim2, i, j, k, l, m, n, o, i, j, m, k, Dim3, Dim5, Dim6, Dim0, Dim1, Dim4, Dim2, l, n, o, i, j, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(i, j, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim4, Dim2, i, j, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim2, Dim4, i, j, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim2, Dim4, i, j, k, l, m, n, o, i, j, k, m, Dim3, Dim5, Dim6, Dim0, Dim1, Dim2, Dim4, l, n, o, i, j, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim5, Dim6, l, n, o>(TensorExpr(a, b));
+}
+
+//B(i, j, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim2, Dim4, i, j, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim1, Dim0, n, k, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim1, Dim0, i, j, k, l, m, n, o, n, k, j, i, Dim3, Dim4, Dim6, Dim5, Dim2, Dim1, Dim0, l, m, o, n, k, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(n, k, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim1, Dim0, n, k, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim1, Dim0, k, n, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim1, Dim0, i, j, k, l, m, n, o, k, n, j, i, Dim3, Dim4, Dim6, Dim2, Dim5, Dim1, Dim0, l, m, o, k, n, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(k, n, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim1, Dim0, k, n, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim2, Dim0, n, j, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim2, Dim0, i, j, k, l, m, n, o, n, j, k, i, Dim3, Dim4, Dim6, Dim5, Dim1, Dim2, Dim0, l, m, o, n, j, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(n, j, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim2, Dim0, n, j, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim5, Dim0, k, j, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim5, Dim0, i, j, k, l, m, n, o, k, j, n, i, Dim3, Dim4, Dim6, Dim2, Dim1, Dim5, Dim0, l, m, o, k, j, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(k, j, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim5, Dim0, k, j, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim2, Dim0, j, n, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim2, Dim0, i, j, k, l, m, n, o, j, n, k, i, Dim3, Dim4, Dim6, Dim1, Dim5, Dim2, Dim0, l, m, o, j, n, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(j, n, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim2, Dim0, j, n, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim5, Dim0, j, k, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim5, Dim0, i, j, k, l, m, n, o, j, k, n, i, Dim3, Dim4, Dim6, Dim1, Dim2, Dim5, Dim0, l, m, o, j, k, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(j, k, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim5, Dim0, j, k, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim0, Dim1, n, k, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim0, Dim1, i, j, k, l, m, n, o, n, k, i, j, Dim3, Dim4, Dim6, Dim5, Dim2, Dim0, Dim1, l, m, o, n, k, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(n, k, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim0, Dim1, n, k, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim0, Dim1, k, n, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim0, Dim1, i, j, k, l, m, n, o, k, n, i, j, Dim3, Dim4, Dim6, Dim2, Dim5, Dim0, Dim1, l, m, o, k, n, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(k, n, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim0, Dim1, k, n, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim0, Dim2, n, j, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim0, Dim2, i, j, k, l, m, n, o, n, j, i, k, Dim3, Dim4, Dim6, Dim5, Dim1, Dim0, Dim2, l, m, o, n, j, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(n, j, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim0, Dim2, n, j, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim0, Dim5, k, j, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim0, Dim5, i, j, k, l, m, n, o, k, j, i, n, Dim3, Dim4, Dim6, Dim2, Dim1, Dim0, Dim5, l, m, o, k, j, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(k, j, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim0, Dim5, k, j, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim0, Dim2, j, n, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim0, Dim2, i, j, k, l, m, n, o, j, n, i, k, Dim3, Dim4, Dim6, Dim1, Dim5, Dim0, Dim2, l, m, o, j, n, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(j, n, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim0, Dim2, j, n, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim0, Dim5, j, k, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim0, Dim5, i, j, k, l, m, n, o, j, k, i, n, Dim3, Dim4, Dim6, Dim1, Dim2, Dim0, Dim5, l, m, o, j, k, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(j, k, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim0, Dim5, j, k, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim2, Dim1, n, i, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim2, Dim1, i, j, k, l, m, n, o, n, i, k, j, Dim3, Dim4, Dim6, Dim5, Dim0, Dim2, Dim1, l, m, o, n, i, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(n, i, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim2, Dim1, n, i, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim5, Dim1, k, i, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim5, Dim1, i, j, k, l, m, n, o, k, i, n, j, Dim3, Dim4, Dim6, Dim2, Dim0, Dim5, Dim1, l, m, o, k, i, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(k, i, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim5, Dim1, k, i, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim1, Dim2, n, i, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim1, Dim2, i, j, k, l, m, n, o, n, i, j, k, Dim3, Dim4, Dim6, Dim5, Dim0, Dim1, Dim2, l, m, o, n, i, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(n, i, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim1, Dim2, n, i, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim1, Dim5, k, i, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim1, Dim5, i, j, k, l, m, n, o, k, i, j, n, Dim3, Dim4, Dim6, Dim2, Dim0, Dim1, Dim5, l, m, o, k, i, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(k, i, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim1, Dim5, k, i, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim5, Dim2, j, i, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim5, Dim2, i, j, k, l, m, n, o, j, i, n, k, Dim3, Dim4, Dim6, Dim1, Dim0, Dim5, Dim2, l, m, o, j, i, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(j, i, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim5, Dim2, j, i, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim2, Dim5, j, i, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim2, Dim5, i, j, k, l, m, n, o, j, i, k, n, Dim3, Dim4, Dim6, Dim1, Dim0, Dim2, Dim5, l, m, o, j, i, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(j, i, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim2, Dim5, j, i, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim2, Dim1, i, n, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim2, Dim1, i, j, k, l, m, n, o, i, n, k, j, Dim3, Dim4, Dim6, Dim0, Dim5, Dim2, Dim1, l, m, o, i, n, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(i, n, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim2, Dim1, i, n, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim5, Dim1, i, k, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim5, Dim1, i, j, k, l, m, n, o, i, k, n, j, Dim3, Dim4, Dim6, Dim0, Dim2, Dim5, Dim1, l, m, o, i, k, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(i, k, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim5, Dim1, i, k, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim1, Dim2, i, n, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim1, Dim2, i, j, k, l, m, n, o, i, n, j, k, Dim3, Dim4, Dim6, Dim0, Dim5, Dim1, Dim2, l, m, o, i, n, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(i, n, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim1, Dim2, i, n, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim1, Dim5, i, k, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim1, Dim5, i, j, k, l, m, n, o, i, k, j, n, Dim3, Dim4, Dim6, Dim0, Dim2, Dim1, Dim5, l, m, o, i, k, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(i, k, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim1, Dim5, i, k, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim5, Dim2, i, j, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim5, Dim2, i, j, k, l, m, n, o, i, j, n, k, Dim3, Dim4, Dim6, Dim0, Dim1, Dim5, Dim2, l, m, o, i, j, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(i, j, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim5, Dim2, i, j, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim2, Dim5, i, j, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim2, Dim5, i, j, k, l, m, n, o, i, j, k, n, Dim3, Dim4, Dim6, Dim0, Dim1, Dim2, Dim5, l, m, o, i, j, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim6, l, m, o>(TensorExpr(a, b));
+}
+
+//B(i, j, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim2, Dim5, i, j, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim1, Dim0, o, k, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim1, Dim0, i, j, k, l, m, n, o, o, k, j, i, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim0, l, m, n, o, k, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(o, k, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim1, Dim0, o, k, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim1, Dim0, k, o, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim1, Dim0, i, j, k, l, m, n, o, k, o, j, i, Dim3, Dim4, Dim5, Dim2, Dim6, Dim1, Dim0, l, m, n, k, o, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(k, o, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim1, Dim0, k, o, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim2, Dim0, o, j, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim2, Dim0, i, j, k, l, m, n, o, o, j, k, i, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim0, l, m, n, o, j, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(o, j, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim2, Dim0, o, j, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim6, Dim0, k, j, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim6, Dim0, i, j, k, l, m, n, o, k, j, o, i, Dim3, Dim4, Dim5, Dim2, Dim1, Dim6, Dim0, l, m, n, k, j, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(k, j, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim6, Dim0, k, j, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim2, Dim0, j, o, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim2, Dim0, i, j, k, l, m, n, o, j, o, k, i, Dim3, Dim4, Dim5, Dim1, Dim6, Dim2, Dim0, l, m, n, j, o, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(j, o, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim2, Dim0, j, o, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim6, Dim0, j, k, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim6, Dim0, i, j, k, l, m, n, o, j, k, o, i, Dim3, Dim4, Dim5, Dim1, Dim2, Dim6, Dim0, l, m, n, j, k, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(j, k, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim6, Dim0, j, k, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim0, Dim1, o, k, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim0, Dim1, i, j, k, l, m, n, o, o, k, i, j, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim1, l, m, n, o, k, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(o, k, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim0, Dim1, o, k, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim0, Dim1, k, o, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim0, Dim1, i, j, k, l, m, n, o, k, o, i, j, Dim3, Dim4, Dim5, Dim2, Dim6, Dim0, Dim1, l, m, n, k, o, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(k, o, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim0, Dim1, k, o, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim0, Dim2, o, j, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim0, Dim2, i, j, k, l, m, n, o, o, j, i, k, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim2, l, m, n, o, j, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(o, j, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim0, Dim2, o, j, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim0, Dim6, k, j, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim0, Dim6, i, j, k, l, m, n, o, k, j, i, o, Dim3, Dim4, Dim5, Dim2, Dim1, Dim0, Dim6, l, m, n, k, j, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(k, j, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim0, Dim6, k, j, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim0, Dim2, j, o, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim0, Dim2, i, j, k, l, m, n, o, j, o, i, k, Dim3, Dim4, Dim5, Dim1, Dim6, Dim0, Dim2, l, m, n, j, o, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(j, o, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim0, Dim2, j, o, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim0, Dim6, j, k, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim0, Dim6, i, j, k, l, m, n, o, j, k, i, o, Dim3, Dim4, Dim5, Dim1, Dim2, Dim0, Dim6, l, m, n, j, k, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(j, k, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim0, Dim6, j, k, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim2, Dim1, o, i, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim2, Dim1, i, j, k, l, m, n, o, o, i, k, j, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim1, l, m, n, o, i, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(o, i, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim2, Dim1, o, i, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim6, Dim1, k, i, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim6, Dim1, i, j, k, l, m, n, o, k, i, o, j, Dim3, Dim4, Dim5, Dim2, Dim0, Dim6, Dim1, l, m, n, k, i, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(k, i, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim6, Dim1, k, i, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim1, Dim2, o, i, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim1, Dim2, i, j, k, l, m, n, o, o, i, j, k, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim2, l, m, n, o, i, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(o, i, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim1, Dim2, o, i, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim1, Dim6, k, i, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim1, Dim6, i, j, k, l, m, n, o, k, i, j, o, Dim3, Dim4, Dim5, Dim2, Dim0, Dim1, Dim6, l, m, n, k, i, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(k, i, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim1, Dim6, k, i, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim6, Dim2, j, i, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim6, Dim2, i, j, k, l, m, n, o, j, i, o, k, Dim3, Dim4, Dim5, Dim1, Dim0, Dim6, Dim2, l, m, n, j, i, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(j, i, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim6, Dim2, j, i, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim2, Dim6, j, i, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim2, Dim6, i, j, k, l, m, n, o, j, i, k, o, Dim3, Dim4, Dim5, Dim1, Dim0, Dim2, Dim6, l, m, n, j, i, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(j, i, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim2, Dim6, j, i, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim2, Dim1, i, o, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim2, Dim1, i, j, k, l, m, n, o, i, o, k, j, Dim3, Dim4, Dim5, Dim0, Dim6, Dim2, Dim1, l, m, n, i, o, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(i, o, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim2, Dim1, i, o, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim6, Dim1, i, k, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim6, Dim1, i, j, k, l, m, n, o, i, k, o, j, Dim3, Dim4, Dim5, Dim0, Dim2, Dim6, Dim1, l, m, n, i, k, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(i, k, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim6, Dim1, i, k, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim1, Dim2, i, o, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim1, Dim2, i, j, k, l, m, n, o, i, o, j, k, Dim3, Dim4, Dim5, Dim0, Dim6, Dim1, Dim2, l, m, n, i, o, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(i, o, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim1, Dim2, i, o, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim1, Dim6, i, k, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim1, Dim6, i, j, k, l, m, n, o, i, k, j, o, Dim3, Dim4, Dim5, Dim0, Dim2, Dim1, Dim6, l, m, n, i, k, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(i, k, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim1, Dim6, i, k, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim6, Dim2, i, j, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim6, Dim2, i, j, k, l, m, n, o, i, j, o, k, Dim3, Dim4, Dim5, Dim0, Dim1, Dim6, Dim2, l, m, n, i, j, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(i, j, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim6, Dim2, i, j, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim2, Dim6, i, j, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim2, Dim6, i, j, k, l, m, n, o, i, j, k, o, Dim3, Dim4, Dim5, Dim0, Dim1, Dim2, Dim6, l, m, n, i, j, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim3, Dim4, Dim5, l, m, n>(TensorExpr(a, b));
+}
+
+//B(i, j, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim2, Dim6, i, j, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim1, Dim0, m, l, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim1, Dim0, i, j, k, l, m, n, o, m, l, j, i, Dim2, Dim5, Dim6, Dim4, Dim3, Dim1, Dim0, k, n, o, m, l, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(m, l, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim1, Dim0, m, l, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim1, Dim0, l, m, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim1, Dim0, i, j, k, l, m, n, o, l, m, j, i, Dim2, Dim5, Dim6, Dim3, Dim4, Dim1, Dim0, k, n, o, l, m, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(l, m, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim1, Dim0, l, m, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim3, Dim0, m, j, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim3, Dim0, i, j, k, l, m, n, o, m, j, l, i, Dim2, Dim5, Dim6, Dim4, Dim1, Dim3, Dim0, k, n, o, m, j, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(m, j, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim3, Dim0, m, j, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim4, Dim0, l, j, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim4, Dim0, i, j, k, l, m, n, o, l, j, m, i, Dim2, Dim5, Dim6, Dim3, Dim1, Dim4, Dim0, k, n, o, l, j, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(l, j, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim4, Dim0, l, j, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim3, Dim0, j, m, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim3, Dim0, i, j, k, l, m, n, o, j, m, l, i, Dim2, Dim5, Dim6, Dim1, Dim4, Dim3, Dim0, k, n, o, j, m, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(j, m, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim3, Dim0, j, m, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim4, Dim0, j, l, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim4, Dim0, i, j, k, l, m, n, o, j, l, m, i, Dim2, Dim5, Dim6, Dim1, Dim3, Dim4, Dim0, k, n, o, j, l, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(j, l, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim4, Dim0, j, l, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim0, Dim1, m, l, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim0, Dim1, i, j, k, l, m, n, o, m, l, i, j, Dim2, Dim5, Dim6, Dim4, Dim3, Dim0, Dim1, k, n, o, m, l, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(m, l, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim0, Dim1, m, l, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim0, Dim1, l, m, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim0, Dim1, i, j, k, l, m, n, o, l, m, i, j, Dim2, Dim5, Dim6, Dim3, Dim4, Dim0, Dim1, k, n, o, l, m, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(l, m, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim0, Dim1, l, m, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim0, Dim3, m, j, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim0, Dim3, i, j, k, l, m, n, o, m, j, i, l, Dim2, Dim5, Dim6, Dim4, Dim1, Dim0, Dim3, k, n, o, m, j, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(m, j, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim0, Dim3, m, j, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim0, Dim4, l, j, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim0, Dim4, i, j, k, l, m, n, o, l, j, i, m, Dim2, Dim5, Dim6, Dim3, Dim1, Dim0, Dim4, k, n, o, l, j, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(l, j, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim0, Dim4, l, j, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim0, Dim3, j, m, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim0, Dim3, i, j, k, l, m, n, o, j, m, i, l, Dim2, Dim5, Dim6, Dim1, Dim4, Dim0, Dim3, k, n, o, j, m, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(j, m, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim0, Dim3, j, m, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim0, Dim4, j, l, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim0, Dim4, i, j, k, l, m, n, o, j, l, i, m, Dim2, Dim5, Dim6, Dim1, Dim3, Dim0, Dim4, k, n, o, j, l, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(j, l, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim0, Dim4, j, l, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim3, Dim1, m, i, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim3, Dim1, i, j, k, l, m, n, o, m, i, l, j, Dim2, Dim5, Dim6, Dim4, Dim0, Dim3, Dim1, k, n, o, m, i, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(m, i, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim3, Dim1, m, i, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim4, Dim1, l, i, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim4, Dim1, i, j, k, l, m, n, o, l, i, m, j, Dim2, Dim5, Dim6, Dim3, Dim0, Dim4, Dim1, k, n, o, l, i, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(l, i, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim4, Dim1, l, i, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim1, Dim3, m, i, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim1, Dim3, i, j, k, l, m, n, o, m, i, j, l, Dim2, Dim5, Dim6, Dim4, Dim0, Dim1, Dim3, k, n, o, m, i, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(m, i, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim1, Dim3, m, i, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim1, Dim4, l, i, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim1, Dim4, i, j, k, l, m, n, o, l, i, j, m, Dim2, Dim5, Dim6, Dim3, Dim0, Dim1, Dim4, k, n, o, l, i, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(l, i, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim1, Dim4, l, i, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim4, Dim3, j, i, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim4, Dim3, i, j, k, l, m, n, o, j, i, m, l, Dim2, Dim5, Dim6, Dim1, Dim0, Dim4, Dim3, k, n, o, j, i, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(j, i, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim4, Dim3, j, i, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim3, Dim4, j, i, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim3, Dim4, i, j, k, l, m, n, o, j, i, l, m, Dim2, Dim5, Dim6, Dim1, Dim0, Dim3, Dim4, k, n, o, j, i, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(j, i, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim3, Dim4, j, i, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim3, Dim1, i, m, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim3, Dim1, i, j, k, l, m, n, o, i, m, l, j, Dim2, Dim5, Dim6, Dim0, Dim4, Dim3, Dim1, k, n, o, i, m, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(i, m, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim3, Dim1, i, m, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim4, Dim1, i, l, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim4, Dim1, i, j, k, l, m, n, o, i, l, m, j, Dim2, Dim5, Dim6, Dim0, Dim3, Dim4, Dim1, k, n, o, i, l, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(i, l, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim4, Dim1, i, l, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim1, Dim3, i, m, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim1, Dim3, i, j, k, l, m, n, o, i, m, j, l, Dim2, Dim5, Dim6, Dim0, Dim4, Dim1, Dim3, k, n, o, i, m, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(i, m, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim1, Dim3, i, m, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim1, Dim4, i, l, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim1, Dim4, i, j, k, l, m, n, o, i, l, j, m, Dim2, Dim5, Dim6, Dim0, Dim3, Dim1, Dim4, k, n, o, i, l, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(i, l, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim1, Dim4, i, l, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim4, Dim3, i, j, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim4, Dim3, i, j, k, l, m, n, o, i, j, m, l, Dim2, Dim5, Dim6, Dim0, Dim1, Dim4, Dim3, k, n, o, i, j, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(i, j, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim4, Dim3, i, j, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim3, Dim4, i, j, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim3, Dim4, i, j, k, l, m, n, o, i, j, l, m, Dim2, Dim5, Dim6, Dim0, Dim1, Dim3, Dim4, k, n, o, i, j, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim5, Dim6, k, n, o>(TensorExpr(a, b));
+}
+
+//B(i, j, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim3, Dim4, i, j, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim1, Dim0, n, l, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim1, Dim0, i, j, k, l, m, n, o, n, l, j, i, Dim2, Dim4, Dim6, Dim5, Dim3, Dim1, Dim0, k, m, o, n, l, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(n, l, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim1, Dim0, n, l, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim1, Dim0, l, n, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim1, Dim0, i, j, k, l, m, n, o, l, n, j, i, Dim2, Dim4, Dim6, Dim3, Dim5, Dim1, Dim0, k, m, o, l, n, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(l, n, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim1, Dim0, l, n, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim3, Dim0, n, j, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim3, Dim0, i, j, k, l, m, n, o, n, j, l, i, Dim2, Dim4, Dim6, Dim5, Dim1, Dim3, Dim0, k, m, o, n, j, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(n, j, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim3, Dim0, n, j, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim5, Dim0, l, j, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim5, Dim0, i, j, k, l, m, n, o, l, j, n, i, Dim2, Dim4, Dim6, Dim3, Dim1, Dim5, Dim0, k, m, o, l, j, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(l, j, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim5, Dim0, l, j, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim3, Dim0, j, n, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim3, Dim0, i, j, k, l, m, n, o, j, n, l, i, Dim2, Dim4, Dim6, Dim1, Dim5, Dim3, Dim0, k, m, o, j, n, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(j, n, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim3, Dim0, j, n, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim5, Dim0, j, l, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim5, Dim0, i, j, k, l, m, n, o, j, l, n, i, Dim2, Dim4, Dim6, Dim1, Dim3, Dim5, Dim0, k, m, o, j, l, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(j, l, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim5, Dim0, j, l, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim0, Dim1, n, l, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim0, Dim1, i, j, k, l, m, n, o, n, l, i, j, Dim2, Dim4, Dim6, Dim5, Dim3, Dim0, Dim1, k, m, o, n, l, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(n, l, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim0, Dim1, n, l, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim0, Dim1, l, n, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim0, Dim1, i, j, k, l, m, n, o, l, n, i, j, Dim2, Dim4, Dim6, Dim3, Dim5, Dim0, Dim1, k, m, o, l, n, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(l, n, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim0, Dim1, l, n, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim0, Dim3, n, j, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim0, Dim3, i, j, k, l, m, n, o, n, j, i, l, Dim2, Dim4, Dim6, Dim5, Dim1, Dim0, Dim3, k, m, o, n, j, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(n, j, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim0, Dim3, n, j, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim0, Dim5, l, j, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim0, Dim5, i, j, k, l, m, n, o, l, j, i, n, Dim2, Dim4, Dim6, Dim3, Dim1, Dim0, Dim5, k, m, o, l, j, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(l, j, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim0, Dim5, l, j, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim0, Dim3, j, n, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim0, Dim3, i, j, k, l, m, n, o, j, n, i, l, Dim2, Dim4, Dim6, Dim1, Dim5, Dim0, Dim3, k, m, o, j, n, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(j, n, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim0, Dim3, j, n, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim0, Dim5, j, l, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim0, Dim5, i, j, k, l, m, n, o, j, l, i, n, Dim2, Dim4, Dim6, Dim1, Dim3, Dim0, Dim5, k, m, o, j, l, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(j, l, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim0, Dim5, j, l, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim3, Dim1, n, i, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim3, Dim1, i, j, k, l, m, n, o, n, i, l, j, Dim2, Dim4, Dim6, Dim5, Dim0, Dim3, Dim1, k, m, o, n, i, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(n, i, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim3, Dim1, n, i, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim5, Dim1, l, i, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim5, Dim1, i, j, k, l, m, n, o, l, i, n, j, Dim2, Dim4, Dim6, Dim3, Dim0, Dim5, Dim1, k, m, o, l, i, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(l, i, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim5, Dim1, l, i, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim1, Dim3, n, i, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim1, Dim3, i, j, k, l, m, n, o, n, i, j, l, Dim2, Dim4, Dim6, Dim5, Dim0, Dim1, Dim3, k, m, o, n, i, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(n, i, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim1, Dim3, n, i, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim1, Dim5, l, i, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim1, Dim5, i, j, k, l, m, n, o, l, i, j, n, Dim2, Dim4, Dim6, Dim3, Dim0, Dim1, Dim5, k, m, o, l, i, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(l, i, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim1, Dim5, l, i, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim5, Dim3, j, i, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim5, Dim3, i, j, k, l, m, n, o, j, i, n, l, Dim2, Dim4, Dim6, Dim1, Dim0, Dim5, Dim3, k, m, o, j, i, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(j, i, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim5, Dim3, j, i, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim3, Dim5, j, i, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim3, Dim5, i, j, k, l, m, n, o, j, i, l, n, Dim2, Dim4, Dim6, Dim1, Dim0, Dim3, Dim5, k, m, o, j, i, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(j, i, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim3, Dim5, j, i, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim3, Dim1, i, n, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim3, Dim1, i, j, k, l, m, n, o, i, n, l, j, Dim2, Dim4, Dim6, Dim0, Dim5, Dim3, Dim1, k, m, o, i, n, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(i, n, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim3, Dim1, i, n, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim5, Dim1, i, l, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim5, Dim1, i, j, k, l, m, n, o, i, l, n, j, Dim2, Dim4, Dim6, Dim0, Dim3, Dim5, Dim1, k, m, o, i, l, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(i, l, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim5, Dim1, i, l, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim1, Dim3, i, n, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim1, Dim3, i, j, k, l, m, n, o, i, n, j, l, Dim2, Dim4, Dim6, Dim0, Dim5, Dim1, Dim3, k, m, o, i, n, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(i, n, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim1, Dim3, i, n, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim1, Dim5, i, l, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim1, Dim5, i, j, k, l, m, n, o, i, l, j, n, Dim2, Dim4, Dim6, Dim0, Dim3, Dim1, Dim5, k, m, o, i, l, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(i, l, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim1, Dim5, i, l, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim5, Dim3, i, j, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim5, Dim3, i, j, k, l, m, n, o, i, j, n, l, Dim2, Dim4, Dim6, Dim0, Dim1, Dim5, Dim3, k, m, o, i, j, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(i, j, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim5, Dim3, i, j, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim3, Dim5, i, j, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim3, Dim5, i, j, k, l, m, n, o, i, j, l, n, Dim2, Dim4, Dim6, Dim0, Dim1, Dim3, Dim5, k, m, o, i, j, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim6, k, m, o>(TensorExpr(a, b));
+}
+
+//B(i, j, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim3, Dim5, i, j, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim1, Dim0, o, l, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim1, Dim0, i, j, k, l, m, n, o, o, l, j, i, Dim2, Dim4, Dim5, Dim6, Dim3, Dim1, Dim0, k, m, n, o, l, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(o, l, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim1, Dim0, o, l, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim1, Dim0, l, o, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim1, Dim0, i, j, k, l, m, n, o, l, o, j, i, Dim2, Dim4, Dim5, Dim3, Dim6, Dim1, Dim0, k, m, n, l, o, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(l, o, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim1, Dim0, l, o, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim3, Dim0, o, j, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim3, Dim0, i, j, k, l, m, n, o, o, j, l, i, Dim2, Dim4, Dim5, Dim6, Dim1, Dim3, Dim0, k, m, n, o, j, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(o, j, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim3, Dim0, o, j, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim6, Dim0, l, j, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim6, Dim0, i, j, k, l, m, n, o, l, j, o, i, Dim2, Dim4, Dim5, Dim3, Dim1, Dim6, Dim0, k, m, n, l, j, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(l, j, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim6, Dim0, l, j, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim3, Dim0, j, o, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim3, Dim0, i, j, k, l, m, n, o, j, o, l, i, Dim2, Dim4, Dim5, Dim1, Dim6, Dim3, Dim0, k, m, n, j, o, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(j, o, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim3, Dim0, j, o, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim6, Dim0, j, l, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim6, Dim0, i, j, k, l, m, n, o, j, l, o, i, Dim2, Dim4, Dim5, Dim1, Dim3, Dim6, Dim0, k, m, n, j, l, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(j, l, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim6, Dim0, j, l, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim0, Dim1, o, l, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim0, Dim1, i, j, k, l, m, n, o, o, l, i, j, Dim2, Dim4, Dim5, Dim6, Dim3, Dim0, Dim1, k, m, n, o, l, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(o, l, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim0, Dim1, o, l, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim0, Dim1, l, o, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim0, Dim1, i, j, k, l, m, n, o, l, o, i, j, Dim2, Dim4, Dim5, Dim3, Dim6, Dim0, Dim1, k, m, n, l, o, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(l, o, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim0, Dim1, l, o, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim0, Dim3, o, j, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim0, Dim3, i, j, k, l, m, n, o, o, j, i, l, Dim2, Dim4, Dim5, Dim6, Dim1, Dim0, Dim3, k, m, n, o, j, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(o, j, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim0, Dim3, o, j, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim0, Dim6, l, j, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim0, Dim6, i, j, k, l, m, n, o, l, j, i, o, Dim2, Dim4, Dim5, Dim3, Dim1, Dim0, Dim6, k, m, n, l, j, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(l, j, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim0, Dim6, l, j, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim0, Dim3, j, o, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim0, Dim3, i, j, k, l, m, n, o, j, o, i, l, Dim2, Dim4, Dim5, Dim1, Dim6, Dim0, Dim3, k, m, n, j, o, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(j, o, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim0, Dim3, j, o, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim0, Dim6, j, l, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim0, Dim6, i, j, k, l, m, n, o, j, l, i, o, Dim2, Dim4, Dim5, Dim1, Dim3, Dim0, Dim6, k, m, n, j, l, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(j, l, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim0, Dim6, j, l, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim3, Dim1, o, i, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim3, Dim1, i, j, k, l, m, n, o, o, i, l, j, Dim2, Dim4, Dim5, Dim6, Dim0, Dim3, Dim1, k, m, n, o, i, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(o, i, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim3, Dim1, o, i, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim6, Dim1, l, i, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim6, Dim1, i, j, k, l, m, n, o, l, i, o, j, Dim2, Dim4, Dim5, Dim3, Dim0, Dim6, Dim1, k, m, n, l, i, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(l, i, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim6, Dim1, l, i, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim1, Dim3, o, i, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim1, Dim3, i, j, k, l, m, n, o, o, i, j, l, Dim2, Dim4, Dim5, Dim6, Dim0, Dim1, Dim3, k, m, n, o, i, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(o, i, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim1, Dim3, o, i, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim1, Dim6, l, i, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim1, Dim6, i, j, k, l, m, n, o, l, i, j, o, Dim2, Dim4, Dim5, Dim3, Dim0, Dim1, Dim6, k, m, n, l, i, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(l, i, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim1, Dim6, l, i, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim6, Dim3, j, i, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim6, Dim3, i, j, k, l, m, n, o, j, i, o, l, Dim2, Dim4, Dim5, Dim1, Dim0, Dim6, Dim3, k, m, n, j, i, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(j, i, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim6, Dim3, j, i, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim3, Dim6, j, i, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim3, Dim6, i, j, k, l, m, n, o, j, i, l, o, Dim2, Dim4, Dim5, Dim1, Dim0, Dim3, Dim6, k, m, n, j, i, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(j, i, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim3, Dim6, j, i, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim3, Dim1, i, o, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim3, Dim1, i, j, k, l, m, n, o, i, o, l, j, Dim2, Dim4, Dim5, Dim0, Dim6, Dim3, Dim1, k, m, n, i, o, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(i, o, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim3, Dim1, i, o, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim6, Dim1, i, l, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim6, Dim1, i, j, k, l, m, n, o, i, l, o, j, Dim2, Dim4, Dim5, Dim0, Dim3, Dim6, Dim1, k, m, n, i, l, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(i, l, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim6, Dim1, i, l, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim1, Dim3, i, o, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim1, Dim3, i, j, k, l, m, n, o, i, o, j, l, Dim2, Dim4, Dim5, Dim0, Dim6, Dim1, Dim3, k, m, n, i, o, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(i, o, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim1, Dim3, i, o, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim1, Dim6, i, l, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim1, Dim6, i, j, k, l, m, n, o, i, l, j, o, Dim2, Dim4, Dim5, Dim0, Dim3, Dim1, Dim6, k, m, n, i, l, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(i, l, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim1, Dim6, i, l, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim6, Dim3, i, j, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim6, Dim3, i, j, k, l, m, n, o, i, j, o, l, Dim2, Dim4, Dim5, Dim0, Dim1, Dim6, Dim3, k, m, n, i, j, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(i, j, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim6, Dim3, i, j, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim3, Dim6, i, j, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim3, Dim6, i, j, k, l, m, n, o, i, j, l, o, Dim2, Dim4, Dim5, Dim0, Dim1, Dim3, Dim6, k, m, n, i, j, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim4, Dim5, k, m, n>(TensorExpr(a, b));
+}
+
+//B(i, j, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim3, Dim6, i, j, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim1, Dim0, n, m, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim1, Dim0, i, j, k, l, m, n, o, n, m, j, i, Dim2, Dim3, Dim6, Dim5, Dim4, Dim1, Dim0, k, l, o, n, m, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(n, m, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim1, Dim0, n, m, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim1, Dim0, m, n, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim1, Dim0, i, j, k, l, m, n, o, m, n, j, i, Dim2, Dim3, Dim6, Dim4, Dim5, Dim1, Dim0, k, l, o, m, n, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(m, n, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim1, Dim0, m, n, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim4, Dim0, n, j, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim4, Dim0, i, j, k, l, m, n, o, n, j, m, i, Dim2, Dim3, Dim6, Dim5, Dim1, Dim4, Dim0, k, l, o, n, j, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(n, j, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim4, Dim0, n, j, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim5, Dim0, m, j, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim5, Dim0, i, j, k, l, m, n, o, m, j, n, i, Dim2, Dim3, Dim6, Dim4, Dim1, Dim5, Dim0, k, l, o, m, j, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(m, j, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim5, Dim0, m, j, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim4, Dim0, j, n, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim4, Dim0, i, j, k, l, m, n, o, j, n, m, i, Dim2, Dim3, Dim6, Dim1, Dim5, Dim4, Dim0, k, l, o, j, n, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(j, n, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim4, Dim0, j, n, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim5, Dim0, j, m, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim5, Dim0, i, j, k, l, m, n, o, j, m, n, i, Dim2, Dim3, Dim6, Dim1, Dim4, Dim5, Dim0, k, l, o, j, m, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(j, m, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim5, Dim0, j, m, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim0, Dim1, n, m, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim0, Dim1, i, j, k, l, m, n, o, n, m, i, j, Dim2, Dim3, Dim6, Dim5, Dim4, Dim0, Dim1, k, l, o, n, m, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(n, m, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim0, Dim1, n, m, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim0, Dim1, m, n, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim0, Dim1, i, j, k, l, m, n, o, m, n, i, j, Dim2, Dim3, Dim6, Dim4, Dim5, Dim0, Dim1, k, l, o, m, n, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(m, n, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim0, Dim1, m, n, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim0, Dim4, n, j, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim0, Dim4, i, j, k, l, m, n, o, n, j, i, m, Dim2, Dim3, Dim6, Dim5, Dim1, Dim0, Dim4, k, l, o, n, j, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(n, j, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim0, Dim4, n, j, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim0, Dim5, m, j, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim0, Dim5, i, j, k, l, m, n, o, m, j, i, n, Dim2, Dim3, Dim6, Dim4, Dim1, Dim0, Dim5, k, l, o, m, j, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(m, j, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim0, Dim5, m, j, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim0, Dim4, j, n, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim0, Dim4, i, j, k, l, m, n, o, j, n, i, m, Dim2, Dim3, Dim6, Dim1, Dim5, Dim0, Dim4, k, l, o, j, n, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(j, n, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim0, Dim4, j, n, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim0, Dim5, j, m, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim0, Dim5, i, j, k, l, m, n, o, j, m, i, n, Dim2, Dim3, Dim6, Dim1, Dim4, Dim0, Dim5, k, l, o, j, m, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(j, m, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim0, Dim5, j, m, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim4, Dim1, n, i, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim4, Dim1, i, j, k, l, m, n, o, n, i, m, j, Dim2, Dim3, Dim6, Dim5, Dim0, Dim4, Dim1, k, l, o, n, i, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(n, i, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim4, Dim1, n, i, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim5, Dim1, m, i, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim5, Dim1, i, j, k, l, m, n, o, m, i, n, j, Dim2, Dim3, Dim6, Dim4, Dim0, Dim5, Dim1, k, l, o, m, i, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(m, i, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim5, Dim1, m, i, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim1, Dim4, n, i, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim1, Dim4, i, j, k, l, m, n, o, n, i, j, m, Dim2, Dim3, Dim6, Dim5, Dim0, Dim1, Dim4, k, l, o, n, i, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(n, i, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim1, Dim4, n, i, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim1, Dim5, m, i, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim1, Dim5, i, j, k, l, m, n, o, m, i, j, n, Dim2, Dim3, Dim6, Dim4, Dim0, Dim1, Dim5, k, l, o, m, i, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(m, i, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim1, Dim5, m, i, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim5, Dim4, j, i, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim5, Dim4, i, j, k, l, m, n, o, j, i, n, m, Dim2, Dim3, Dim6, Dim1, Dim0, Dim5, Dim4, k, l, o, j, i, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(j, i, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim5, Dim4, j, i, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim4, Dim5, j, i, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim4, Dim5, i, j, k, l, m, n, o, j, i, m, n, Dim2, Dim3, Dim6, Dim1, Dim0, Dim4, Dim5, k, l, o, j, i, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(j, i, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim4, Dim5, j, i, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim4, Dim1, i, n, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim4, Dim1, i, j, k, l, m, n, o, i, n, m, j, Dim2, Dim3, Dim6, Dim0, Dim5, Dim4, Dim1, k, l, o, i, n, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(i, n, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim4, Dim1, i, n, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim5, Dim1, i, m, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim5, Dim1, i, j, k, l, m, n, o, i, m, n, j, Dim2, Dim3, Dim6, Dim0, Dim4, Dim5, Dim1, k, l, o, i, m, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(i, m, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim5, Dim1, i, m, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim1, Dim4, i, n, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim1, Dim4, i, j, k, l, m, n, o, i, n, j, m, Dim2, Dim3, Dim6, Dim0, Dim5, Dim1, Dim4, k, l, o, i, n, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(i, n, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim1, Dim4, i, n, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim1, Dim5, i, m, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim1, Dim5, i, j, k, l, m, n, o, i, m, j, n, Dim2, Dim3, Dim6, Dim0, Dim4, Dim1, Dim5, k, l, o, i, m, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(i, m, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim1, Dim5, i, m, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim5, Dim4, i, j, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim5, Dim4, i, j, k, l, m, n, o, i, j, n, m, Dim2, Dim3, Dim6, Dim0, Dim1, Dim5, Dim4, k, l, o, i, j, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(i, j, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim5, Dim4, i, j, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim4, Dim5, i, j, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim4, Dim5, i, j, k, l, m, n, o, i, j, m, n, Dim2, Dim3, Dim6, Dim0, Dim1, Dim4, Dim5, k, l, o, i, j, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim6, k, l, o>(TensorExpr(a, b));
+}
+
+//B(i, j, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim4, Dim5, i, j, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim1, Dim0, o, m, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim1, Dim0, i, j, k, l, m, n, o, o, m, j, i, Dim2, Dim3, Dim5, Dim6, Dim4, Dim1, Dim0, k, l, n, o, m, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(o, m, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim1, Dim0, o, m, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim1, Dim0, m, o, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim1, Dim0, i, j, k, l, m, n, o, m, o, j, i, Dim2, Dim3, Dim5, Dim4, Dim6, Dim1, Dim0, k, l, n, m, o, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(m, o, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim1, Dim0, m, o, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim4, Dim0, o, j, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim4, Dim0, i, j, k, l, m, n, o, o, j, m, i, Dim2, Dim3, Dim5, Dim6, Dim1, Dim4, Dim0, k, l, n, o, j, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(o, j, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim4, Dim0, o, j, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim6, Dim0, m, j, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim6, Dim0, i, j, k, l, m, n, o, m, j, o, i, Dim2, Dim3, Dim5, Dim4, Dim1, Dim6, Dim0, k, l, n, m, j, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(m, j, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim6, Dim0, m, j, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim4, Dim0, j, o, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim4, Dim0, i, j, k, l, m, n, o, j, o, m, i, Dim2, Dim3, Dim5, Dim1, Dim6, Dim4, Dim0, k, l, n, j, o, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(j, o, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim4, Dim0, j, o, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim6, Dim0, j, m, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim6, Dim0, i, j, k, l, m, n, o, j, m, o, i, Dim2, Dim3, Dim5, Dim1, Dim4, Dim6, Dim0, k, l, n, j, m, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(j, m, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim6, Dim0, j, m, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim0, Dim1, o, m, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim0, Dim1, i, j, k, l, m, n, o, o, m, i, j, Dim2, Dim3, Dim5, Dim6, Dim4, Dim0, Dim1, k, l, n, o, m, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(o, m, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim0, Dim1, o, m, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim0, Dim1, m, o, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim0, Dim1, i, j, k, l, m, n, o, m, o, i, j, Dim2, Dim3, Dim5, Dim4, Dim6, Dim0, Dim1, k, l, n, m, o, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(m, o, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim0, Dim1, m, o, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim0, Dim4, o, j, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim0, Dim4, i, j, k, l, m, n, o, o, j, i, m, Dim2, Dim3, Dim5, Dim6, Dim1, Dim0, Dim4, k, l, n, o, j, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(o, j, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim0, Dim4, o, j, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim0, Dim6, m, j, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim0, Dim6, i, j, k, l, m, n, o, m, j, i, o, Dim2, Dim3, Dim5, Dim4, Dim1, Dim0, Dim6, k, l, n, m, j, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(m, j, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim0, Dim6, m, j, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim0, Dim4, j, o, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim0, Dim4, i, j, k, l, m, n, o, j, o, i, m, Dim2, Dim3, Dim5, Dim1, Dim6, Dim0, Dim4, k, l, n, j, o, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(j, o, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim0, Dim4, j, o, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim0, Dim6, j, m, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim0, Dim6, i, j, k, l, m, n, o, j, m, i, o, Dim2, Dim3, Dim5, Dim1, Dim4, Dim0, Dim6, k, l, n, j, m, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(j, m, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim0, Dim6, j, m, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim4, Dim1, o, i, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim4, Dim1, i, j, k, l, m, n, o, o, i, m, j, Dim2, Dim3, Dim5, Dim6, Dim0, Dim4, Dim1, k, l, n, o, i, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(o, i, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim4, Dim1, o, i, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim6, Dim1, m, i, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim6, Dim1, i, j, k, l, m, n, o, m, i, o, j, Dim2, Dim3, Dim5, Dim4, Dim0, Dim6, Dim1, k, l, n, m, i, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(m, i, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim6, Dim1, m, i, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim1, Dim4, o, i, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim1, Dim4, i, j, k, l, m, n, o, o, i, j, m, Dim2, Dim3, Dim5, Dim6, Dim0, Dim1, Dim4, k, l, n, o, i, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(o, i, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim1, Dim4, o, i, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim1, Dim6, m, i, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim1, Dim6, i, j, k, l, m, n, o, m, i, j, o, Dim2, Dim3, Dim5, Dim4, Dim0, Dim1, Dim6, k, l, n, m, i, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(m, i, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim1, Dim6, m, i, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim6, Dim4, j, i, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim6, Dim4, i, j, k, l, m, n, o, j, i, o, m, Dim2, Dim3, Dim5, Dim1, Dim0, Dim6, Dim4, k, l, n, j, i, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(j, i, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim6, Dim4, j, i, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim4, Dim6, j, i, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim4, Dim6, i, j, k, l, m, n, o, j, i, m, o, Dim2, Dim3, Dim5, Dim1, Dim0, Dim4, Dim6, k, l, n, j, i, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(j, i, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim4, Dim6, j, i, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim4, Dim1, i, o, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim4, Dim1, i, j, k, l, m, n, o, i, o, m, j, Dim2, Dim3, Dim5, Dim0, Dim6, Dim4, Dim1, k, l, n, i, o, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(i, o, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim4, Dim1, i, o, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim6, Dim1, i, m, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim6, Dim1, i, j, k, l, m, n, o, i, m, o, j, Dim2, Dim3, Dim5, Dim0, Dim4, Dim6, Dim1, k, l, n, i, m, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(i, m, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim6, Dim1, i, m, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim1, Dim4, i, o, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim1, Dim4, i, j, k, l, m, n, o, i, o, j, m, Dim2, Dim3, Dim5, Dim0, Dim6, Dim1, Dim4, k, l, n, i, o, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(i, o, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim1, Dim4, i, o, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim1, Dim6, i, m, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim1, Dim6, i, j, k, l, m, n, o, i, m, j, o, Dim2, Dim3, Dim5, Dim0, Dim4, Dim1, Dim6, k, l, n, i, m, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(i, m, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim1, Dim6, i, m, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim6, Dim4, i, j, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim6, Dim4, i, j, k, l, m, n, o, i, j, o, m, Dim2, Dim3, Dim5, Dim0, Dim1, Dim6, Dim4, k, l, n, i, j, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(i, j, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim6, Dim4, i, j, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim4, Dim6, i, j, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim4, Dim6, i, j, k, l, m, n, o, i, j, m, o, Dim2, Dim3, Dim5, Dim0, Dim1, Dim4, Dim6, k, l, n, i, j, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim5, k, l, n>(TensorExpr(a, b));
+}
+
+//B(i, j, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim4, Dim6, i, j, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim1, Dim0, o, n, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim1, Dim0, i, j, k, l, m, n, o, o, n, j, i, Dim2, Dim3, Dim4, Dim6, Dim5, Dim1, Dim0, k, l, m, o, n, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(o, n, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim1, Dim0, o, n, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, j, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim1, Dim0, n, o, j, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim1, Dim0, i, j, k, l, m, n, o, n, o, j, i, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, k, l, m, n, o, j, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(n, o, j, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim1, Dim0, n, o, j, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim5, Dim0, o, j, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim5, Dim0, i, j, k, l, m, n, o, o, j, n, i, Dim2, Dim3, Dim4, Dim6, Dim1, Dim5, Dim0, k, l, m, o, j, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(o, j, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim5, Dim0, o, j, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim6, Dim0, n, j, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim6, Dim0, i, j, k, l, m, n, o, n, j, o, i, Dim2, Dim3, Dim4, Dim5, Dim1, Dim6, Dim0, k, l, m, n, j, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(n, j, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim6, Dim0, n, j, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim5, Dim0, j, o, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim5, Dim0, i, j, k, l, m, n, o, j, o, n, i, Dim2, Dim3, Dim4, Dim1, Dim6, Dim5, Dim0, k, l, m, j, o, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(j, o, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim5, Dim0, j, o, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim6, Dim0, j, n, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim6, Dim0, i, j, k, l, m, n, o, j, n, o, i, Dim2, Dim3, Dim4, Dim1, Dim5, Dim6, Dim0, k, l, m, j, n, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(j, n, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim6, Dim0, j, n, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim0, Dim1, o, n, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim0, Dim1, i, j, k, l, m, n, o, o, n, i, j, Dim2, Dim3, Dim4, Dim6, Dim5, Dim0, Dim1, k, l, m, o, n, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(o, n, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim0, Dim1, o, n, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, i, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim0, Dim1, n, o, i, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim0, Dim1, i, j, k, l, m, n, o, n, o, i, j, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, k, l, m, n, o, i, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(n, o, i, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim0, Dim1, n, o, i, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim0, Dim5, o, j, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim0, Dim5, i, j, k, l, m, n, o, o, j, i, n, Dim2, Dim3, Dim4, Dim6, Dim1, Dim0, Dim5, k, l, m, o, j, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(o, j, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim0, Dim5, o, j, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim0, Dim6, n, j, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim0, Dim6, i, j, k, l, m, n, o, n, j, i, o, Dim2, Dim3, Dim4, Dim5, Dim1, Dim0, Dim6, k, l, m, n, j, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(n, j, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim0, Dim6, n, j, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim0, Dim5, j, o, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim0, Dim5, i, j, k, l, m, n, o, j, o, i, n, Dim2, Dim3, Dim4, Dim1, Dim6, Dim0, Dim5, k, l, m, j, o, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(j, o, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim0, Dim5, j, o, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim0, Dim6, j, n, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim0, Dim6, i, j, k, l, m, n, o, j, n, i, o, Dim2, Dim3, Dim4, Dim1, Dim5, Dim0, Dim6, k, l, m, j, n, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(j, n, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim0, Dim6, j, n, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim5, Dim1, o, i, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim5, Dim1, i, j, k, l, m, n, o, o, i, n, j, Dim2, Dim3, Dim4, Dim6, Dim0, Dim5, Dim1, k, l, m, o, i, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(o, i, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim5, Dim1, o, i, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim6, Dim1, n, i, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim6, Dim1, i, j, k, l, m, n, o, n, i, o, j, Dim2, Dim3, Dim4, Dim5, Dim0, Dim6, Dim1, k, l, m, n, i, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(n, i, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim6, Dim1, n, i, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim1, Dim5, o, i, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim1, Dim5, i, j, k, l, m, n, o, o, i, j, n, Dim2, Dim3, Dim4, Dim6, Dim0, Dim1, Dim5, k, l, m, o, i, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(o, i, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim1, Dim5, o, i, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim1, Dim6, n, i, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim1, Dim6, i, j, k, l, m, n, o, n, i, j, o, Dim2, Dim3, Dim4, Dim5, Dim0, Dim1, Dim6, k, l, m, n, i, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(n, i, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim1, Dim6, n, i, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim6, Dim5, j, i, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim6, Dim5, i, j, k, l, m, n, o, j, i, o, n, Dim2, Dim3, Dim4, Dim1, Dim0, Dim6, Dim5, k, l, m, j, i, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(j, i, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim6, Dim5, j, i, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, i, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim0, Dim5, Dim6, j, i, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim0, Dim5, Dim6, i, j, k, l, m, n, o, j, i, n, o, Dim2, Dim3, Dim4, Dim1, Dim0, Dim5, Dim6, k, l, m, j, i, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(j, i, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim0, Dim5, Dim6, j, i, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim5, Dim1, i, o, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim5, Dim1, i, j, k, l, m, n, o, i, o, n, j, Dim2, Dim3, Dim4, Dim0, Dim6, Dim5, Dim1, k, l, m, i, o, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(i, o, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim5, Dim1, i, o, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim6, Dim1, i, n, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim6, Dim1, i, j, k, l, m, n, o, i, n, o, j, Dim2, Dim3, Dim4, Dim0, Dim5, Dim6, Dim1, k, l, m, i, n, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(i, n, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim6, Dim1, i, n, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim1, Dim5, i, o, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim1, Dim5, i, j, k, l, m, n, o, i, o, j, n, Dim2, Dim3, Dim4, Dim0, Dim6, Dim1, Dim5, k, l, m, i, o, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(i, o, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim1, Dim5, i, o, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim1, Dim6, i, n, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim1, Dim6, i, j, k, l, m, n, o, i, n, j, o, Dim2, Dim3, Dim4, Dim0, Dim5, Dim1, Dim6, k, l, m, i, n, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(i, n, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim1, Dim6, i, n, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim6, Dim5, i, j, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim6, Dim5, i, j, k, l, m, n, o, i, j, o, n, Dim2, Dim3, Dim4, Dim0, Dim1, Dim6, Dim5, k, l, m, i, j, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(i, j, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim6, Dim5, i, j, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, j, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim1, Dim5, Dim6, i, j, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim1, Dim5, Dim6, i, j, k, l, m, n, o, i, j, n, o, Dim2, Dim3, Dim4, Dim0, Dim1, Dim5, Dim6, k, l, m, i, j, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
+}
+
+//B(i, j, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim1, Dim5, Dim6, i, j, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim2, Dim0, m, l, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim2, Dim0, i, j, k, l, m, n, o, m, l, k, i, Dim1, Dim5, Dim6, Dim4, Dim3, Dim2, Dim0, j, n, o, m, l, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(m, l, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim2, Dim0, m, l, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim2, Dim0, l, m, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim2, Dim0, i, j, k, l, m, n, o, l, m, k, i, Dim1, Dim5, Dim6, Dim3, Dim4, Dim2, Dim0, j, n, o, l, m, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(l, m, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim2, Dim0, l, m, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim3, Dim0, m, k, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim3, Dim0, i, j, k, l, m, n, o, m, k, l, i, Dim1, Dim5, Dim6, Dim4, Dim2, Dim3, Dim0, j, n, o, m, k, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(m, k, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim3, Dim0, m, k, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim4, Dim0, l, k, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim4, Dim0, i, j, k, l, m, n, o, l, k, m, i, Dim1, Dim5, Dim6, Dim3, Dim2, Dim4, Dim0, j, n, o, l, k, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(l, k, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim4, Dim0, l, k, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim3, Dim0, k, m, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim3, Dim0, i, j, k, l, m, n, o, k, m, l, i, Dim1, Dim5, Dim6, Dim2, Dim4, Dim3, Dim0, j, n, o, k, m, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(k, m, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim3, Dim0, k, m, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim4, Dim0, k, l, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim4, Dim0, i, j, k, l, m, n, o, k, l, m, i, Dim1, Dim5, Dim6, Dim2, Dim3, Dim4, Dim0, j, n, o, k, l, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(k, l, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim4, Dim0, k, l, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim0, Dim2, m, l, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim0, Dim2, i, j, k, l, m, n, o, m, l, i, k, Dim1, Dim5, Dim6, Dim4, Dim3, Dim0, Dim2, j, n, o, m, l, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(m, l, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim0, Dim2, m, l, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim0, Dim2, l, m, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim0, Dim2, i, j, k, l, m, n, o, l, m, i, k, Dim1, Dim5, Dim6, Dim3, Dim4, Dim0, Dim2, j, n, o, l, m, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(l, m, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim0, Dim2, l, m, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim0, Dim3, m, k, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim0, Dim3, i, j, k, l, m, n, o, m, k, i, l, Dim1, Dim5, Dim6, Dim4, Dim2, Dim0, Dim3, j, n, o, m, k, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(m, k, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim0, Dim3, m, k, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim0, Dim4, l, k, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim0, Dim4, i, j, k, l, m, n, o, l, k, i, m, Dim1, Dim5, Dim6, Dim3, Dim2, Dim0, Dim4, j, n, o, l, k, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(l, k, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim0, Dim4, l, k, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim0, Dim3, k, m, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim0, Dim3, i, j, k, l, m, n, o, k, m, i, l, Dim1, Dim5, Dim6, Dim2, Dim4, Dim0, Dim3, j, n, o, k, m, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(k, m, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim0, Dim3, k, m, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim0, Dim4, k, l, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim0, Dim4, i, j, k, l, m, n, o, k, l, i, m, Dim1, Dim5, Dim6, Dim2, Dim3, Dim0, Dim4, j, n, o, k, l, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(k, l, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim0, Dim4, k, l, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim3, Dim2, m, i, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim3, Dim2, i, j, k, l, m, n, o, m, i, l, k, Dim1, Dim5, Dim6, Dim4, Dim0, Dim3, Dim2, j, n, o, m, i, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(m, i, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim3, Dim2, m, i, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim4, Dim2, l, i, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim4, Dim2, i, j, k, l, m, n, o, l, i, m, k, Dim1, Dim5, Dim6, Dim3, Dim0, Dim4, Dim2, j, n, o, l, i, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(l, i, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim4, Dim2, l, i, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim2, Dim3, m, i, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim2, Dim3, i, j, k, l, m, n, o, m, i, k, l, Dim1, Dim5, Dim6, Dim4, Dim0, Dim2, Dim3, j, n, o, m, i, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(m, i, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim2, Dim3, m, i, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim2, Dim4, l, i, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim2, Dim4, i, j, k, l, m, n, o, l, i, k, m, Dim1, Dim5, Dim6, Dim3, Dim0, Dim2, Dim4, j, n, o, l, i, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(l, i, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim2, Dim4, l, i, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim4, Dim3, k, i, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim4, Dim3, i, j, k, l, m, n, o, k, i, m, l, Dim1, Dim5, Dim6, Dim2, Dim0, Dim4, Dim3, j, n, o, k, i, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(k, i, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim4, Dim3, k, i, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim3, Dim4, k, i, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim3, Dim4, i, j, k, l, m, n, o, k, i, l, m, Dim1, Dim5, Dim6, Dim2, Dim0, Dim3, Dim4, j, n, o, k, i, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(k, i, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim3, Dim4, k, i, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim3, Dim2, i, m, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim3, Dim2, i, j, k, l, m, n, o, i, m, l, k, Dim1, Dim5, Dim6, Dim0, Dim4, Dim3, Dim2, j, n, o, i, m, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(i, m, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim3, Dim2, i, m, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim4, Dim2, i, l, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim4, Dim2, i, j, k, l, m, n, o, i, l, m, k, Dim1, Dim5, Dim6, Dim0, Dim3, Dim4, Dim2, j, n, o, i, l, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(i, l, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim4, Dim2, i, l, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim2, Dim3, i, m, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim2, Dim3, i, j, k, l, m, n, o, i, m, k, l, Dim1, Dim5, Dim6, Dim0, Dim4, Dim2, Dim3, j, n, o, i, m, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(i, m, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim2, Dim3, i, m, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim2, Dim4, i, l, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim2, Dim4, i, j, k, l, m, n, o, i, l, k, m, Dim1, Dim5, Dim6, Dim0, Dim3, Dim2, Dim4, j, n, o, i, l, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(i, l, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim2, Dim4, i, l, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim4, Dim3, i, k, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim4, Dim3, i, j, k, l, m, n, o, i, k, m, l, Dim1, Dim5, Dim6, Dim0, Dim2, Dim4, Dim3, j, n, o, i, k, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(i, k, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim4, Dim3, i, k, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim3, Dim4, i, k, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim3, Dim4, i, j, k, l, m, n, o, i, k, l, m, Dim1, Dim5, Dim6, Dim0, Dim2, Dim3, Dim4, j, n, o, i, k, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim5, Dim6, j, n, o>(TensorExpr(a, b));
+}
+
+//B(i, k, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim3, Dim4, i, k, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim2, Dim0, n, l, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim2, Dim0, i, j, k, l, m, n, o, n, l, k, i, Dim1, Dim4, Dim6, Dim5, Dim3, Dim2, Dim0, j, m, o, n, l, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(n, l, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim2, Dim0, n, l, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim2, Dim0, l, n, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim2, Dim0, i, j, k, l, m, n, o, l, n, k, i, Dim1, Dim4, Dim6, Dim3, Dim5, Dim2, Dim0, j, m, o, l, n, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(l, n, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim2, Dim0, l, n, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim3, Dim0, n, k, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim3, Dim0, i, j, k, l, m, n, o, n, k, l, i, Dim1, Dim4, Dim6, Dim5, Dim2, Dim3, Dim0, j, m, o, n, k, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(n, k, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim3, Dim0, n, k, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim5, Dim0, l, k, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim5, Dim0, i, j, k, l, m, n, o, l, k, n, i, Dim1, Dim4, Dim6, Dim3, Dim2, Dim5, Dim0, j, m, o, l, k, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(l, k, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim5, Dim0, l, k, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim3, Dim0, k, n, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim3, Dim0, i, j, k, l, m, n, o, k, n, l, i, Dim1, Dim4, Dim6, Dim2, Dim5, Dim3, Dim0, j, m, o, k, n, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(k, n, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim3, Dim0, k, n, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim5, Dim0, k, l, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim5, Dim0, i, j, k, l, m, n, o, k, l, n, i, Dim1, Dim4, Dim6, Dim2, Dim3, Dim5, Dim0, j, m, o, k, l, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(k, l, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim5, Dim0, k, l, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim0, Dim2, n, l, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim0, Dim2, i, j, k, l, m, n, o, n, l, i, k, Dim1, Dim4, Dim6, Dim5, Dim3, Dim0, Dim2, j, m, o, n, l, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(n, l, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim0, Dim2, n, l, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim0, Dim2, l, n, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim0, Dim2, i, j, k, l, m, n, o, l, n, i, k, Dim1, Dim4, Dim6, Dim3, Dim5, Dim0, Dim2, j, m, o, l, n, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(l, n, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim0, Dim2, l, n, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim0, Dim3, n, k, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim0, Dim3, i, j, k, l, m, n, o, n, k, i, l, Dim1, Dim4, Dim6, Dim5, Dim2, Dim0, Dim3, j, m, o, n, k, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(n, k, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim0, Dim3, n, k, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim0, Dim5, l, k, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim0, Dim5, i, j, k, l, m, n, o, l, k, i, n, Dim1, Dim4, Dim6, Dim3, Dim2, Dim0, Dim5, j, m, o, l, k, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(l, k, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim0, Dim5, l, k, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim0, Dim3, k, n, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim0, Dim3, i, j, k, l, m, n, o, k, n, i, l, Dim1, Dim4, Dim6, Dim2, Dim5, Dim0, Dim3, j, m, o, k, n, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(k, n, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim0, Dim3, k, n, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim0, Dim5, k, l, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim0, Dim5, i, j, k, l, m, n, o, k, l, i, n, Dim1, Dim4, Dim6, Dim2, Dim3, Dim0, Dim5, j, m, o, k, l, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(k, l, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim0, Dim5, k, l, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim3, Dim2, n, i, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim3, Dim2, i, j, k, l, m, n, o, n, i, l, k, Dim1, Dim4, Dim6, Dim5, Dim0, Dim3, Dim2, j, m, o, n, i, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(n, i, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim3, Dim2, n, i, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim5, Dim2, l, i, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim5, Dim2, i, j, k, l, m, n, o, l, i, n, k, Dim1, Dim4, Dim6, Dim3, Dim0, Dim5, Dim2, j, m, o, l, i, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(l, i, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim5, Dim2, l, i, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim2, Dim3, n, i, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim2, Dim3, i, j, k, l, m, n, o, n, i, k, l, Dim1, Dim4, Dim6, Dim5, Dim0, Dim2, Dim3, j, m, o, n, i, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(n, i, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim2, Dim3, n, i, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim2, Dim5, l, i, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim2, Dim5, i, j, k, l, m, n, o, l, i, k, n, Dim1, Dim4, Dim6, Dim3, Dim0, Dim2, Dim5, j, m, o, l, i, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(l, i, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim2, Dim5, l, i, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim5, Dim3, k, i, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim5, Dim3, i, j, k, l, m, n, o, k, i, n, l, Dim1, Dim4, Dim6, Dim2, Dim0, Dim5, Dim3, j, m, o, k, i, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(k, i, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim5, Dim3, k, i, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim3, Dim5, k, i, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim3, Dim5, i, j, k, l, m, n, o, k, i, l, n, Dim1, Dim4, Dim6, Dim2, Dim0, Dim3, Dim5, j, m, o, k, i, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(k, i, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim3, Dim5, k, i, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim3, Dim2, i, n, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim3, Dim2, i, j, k, l, m, n, o, i, n, l, k, Dim1, Dim4, Dim6, Dim0, Dim5, Dim3, Dim2, j, m, o, i, n, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(i, n, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim3, Dim2, i, n, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim5, Dim2, i, l, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim5, Dim2, i, j, k, l, m, n, o, i, l, n, k, Dim1, Dim4, Dim6, Dim0, Dim3, Dim5, Dim2, j, m, o, i, l, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(i, l, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim5, Dim2, i, l, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim2, Dim3, i, n, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim2, Dim3, i, j, k, l, m, n, o, i, n, k, l, Dim1, Dim4, Dim6, Dim0, Dim5, Dim2, Dim3, j, m, o, i, n, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(i, n, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim2, Dim3, i, n, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim2, Dim5, i, l, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim2, Dim5, i, j, k, l, m, n, o, i, l, k, n, Dim1, Dim4, Dim6, Dim0, Dim3, Dim2, Dim5, j, m, o, i, l, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(i, l, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim2, Dim5, i, l, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim5, Dim3, i, k, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim5, Dim3, i, j, k, l, m, n, o, i, k, n, l, Dim1, Dim4, Dim6, Dim0, Dim2, Dim5, Dim3, j, m, o, i, k, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(i, k, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim5, Dim3, i, k, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim3, Dim5, i, k, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim3, Dim5, i, j, k, l, m, n, o, i, k, l, n, Dim1, Dim4, Dim6, Dim0, Dim2, Dim3, Dim5, j, m, o, i, k, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim6, j, m, o>(TensorExpr(a, b));
+}
+
+//B(i, k, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim3, Dim5, i, k, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim2, Dim0, o, l, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim2, Dim0, i, j, k, l, m, n, o, o, l, k, i, Dim1, Dim4, Dim5, Dim6, Dim3, Dim2, Dim0, j, m, n, o, l, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(o, l, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim2, Dim0, o, l, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim2, Dim0, l, o, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim2, Dim0, i, j, k, l, m, n, o, l, o, k, i, Dim1, Dim4, Dim5, Dim3, Dim6, Dim2, Dim0, j, m, n, l, o, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(l, o, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim2, Dim0, l, o, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim3, Dim0, o, k, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim3, Dim0, i, j, k, l, m, n, o, o, k, l, i, Dim1, Dim4, Dim5, Dim6, Dim2, Dim3, Dim0, j, m, n, o, k, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(o, k, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim3, Dim0, o, k, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim6, Dim0, l, k, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim6, Dim0, i, j, k, l, m, n, o, l, k, o, i, Dim1, Dim4, Dim5, Dim3, Dim2, Dim6, Dim0, j, m, n, l, k, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(l, k, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim6, Dim0, l, k, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim3, Dim0, k, o, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim3, Dim0, i, j, k, l, m, n, o, k, o, l, i, Dim1, Dim4, Dim5, Dim2, Dim6, Dim3, Dim0, j, m, n, k, o, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(k, o, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim3, Dim0, k, o, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim6, Dim0, k, l, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim6, Dim0, i, j, k, l, m, n, o, k, l, o, i, Dim1, Dim4, Dim5, Dim2, Dim3, Dim6, Dim0, j, m, n, k, l, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(k, l, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim6, Dim0, k, l, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim0, Dim2, o, l, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim0, Dim2, i, j, k, l, m, n, o, o, l, i, k, Dim1, Dim4, Dim5, Dim6, Dim3, Dim0, Dim2, j, m, n, o, l, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(o, l, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim0, Dim2, o, l, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim0, Dim2, l, o, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim0, Dim2, i, j, k, l, m, n, o, l, o, i, k, Dim1, Dim4, Dim5, Dim3, Dim6, Dim0, Dim2, j, m, n, l, o, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(l, o, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim0, Dim2, l, o, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim0, Dim3, o, k, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim0, Dim3, i, j, k, l, m, n, o, o, k, i, l, Dim1, Dim4, Dim5, Dim6, Dim2, Dim0, Dim3, j, m, n, o, k, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(o, k, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim0, Dim3, o, k, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim0, Dim6, l, k, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim0, Dim6, i, j, k, l, m, n, o, l, k, i, o, Dim1, Dim4, Dim5, Dim3, Dim2, Dim0, Dim6, j, m, n, l, k, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(l, k, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim0, Dim6, l, k, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim0, Dim3, k, o, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim0, Dim3, i, j, k, l, m, n, o, k, o, i, l, Dim1, Dim4, Dim5, Dim2, Dim6, Dim0, Dim3, j, m, n, k, o, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(k, o, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim0, Dim3, k, o, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim0, Dim6, k, l, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim0, Dim6, i, j, k, l, m, n, o, k, l, i, o, Dim1, Dim4, Dim5, Dim2, Dim3, Dim0, Dim6, j, m, n, k, l, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(k, l, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim0, Dim6, k, l, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim3, Dim2, o, i, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim3, Dim2, i, j, k, l, m, n, o, o, i, l, k, Dim1, Dim4, Dim5, Dim6, Dim0, Dim3, Dim2, j, m, n, o, i, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(o, i, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim3, Dim2, o, i, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim6, Dim2, l, i, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim6, Dim2, i, j, k, l, m, n, o, l, i, o, k, Dim1, Dim4, Dim5, Dim3, Dim0, Dim6, Dim2, j, m, n, l, i, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(l, i, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim6, Dim2, l, i, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim2, Dim3, o, i, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim2, Dim3, i, j, k, l, m, n, o, o, i, k, l, Dim1, Dim4, Dim5, Dim6, Dim0, Dim2, Dim3, j, m, n, o, i, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(o, i, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim2, Dim3, o, i, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim2, Dim6, l, i, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim2, Dim6, i, j, k, l, m, n, o, l, i, k, o, Dim1, Dim4, Dim5, Dim3, Dim0, Dim2, Dim6, j, m, n, l, i, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(l, i, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim2, Dim6, l, i, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim6, Dim3, k, i, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim6, Dim3, i, j, k, l, m, n, o, k, i, o, l, Dim1, Dim4, Dim5, Dim2, Dim0, Dim6, Dim3, j, m, n, k, i, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(k, i, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim6, Dim3, k, i, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim3, Dim6, k, i, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim3, Dim6, i, j, k, l, m, n, o, k, i, l, o, Dim1, Dim4, Dim5, Dim2, Dim0, Dim3, Dim6, j, m, n, k, i, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(k, i, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim3, Dim6, k, i, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim3, Dim2, i, o, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim3, Dim2, i, j, k, l, m, n, o, i, o, l, k, Dim1, Dim4, Dim5, Dim0, Dim6, Dim3, Dim2, j, m, n, i, o, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(i, o, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim3, Dim2, i, o, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim6, Dim2, i, l, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim6, Dim2, i, j, k, l, m, n, o, i, l, o, k, Dim1, Dim4, Dim5, Dim0, Dim3, Dim6, Dim2, j, m, n, i, l, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(i, l, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim6, Dim2, i, l, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim2, Dim3, i, o, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim2, Dim3, i, j, k, l, m, n, o, i, o, k, l, Dim1, Dim4, Dim5, Dim0, Dim6, Dim2, Dim3, j, m, n, i, o, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(i, o, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim2, Dim3, i, o, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim2, Dim6, i, l, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim2, Dim6, i, j, k, l, m, n, o, i, l, k, o, Dim1, Dim4, Dim5, Dim0, Dim3, Dim2, Dim6, j, m, n, i, l, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(i, l, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim2, Dim6, i, l, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim6, Dim3, i, k, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim6, Dim3, i, j, k, l, m, n, o, i, k, o, l, Dim1, Dim4, Dim5, Dim0, Dim2, Dim6, Dim3, j, m, n, i, k, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(i, k, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim6, Dim3, i, k, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim3, Dim6, i, k, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim3, Dim6, i, j, k, l, m, n, o, i, k, l, o, Dim1, Dim4, Dim5, Dim0, Dim2, Dim3, Dim6, j, m, n, i, k, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim4, Dim5, j, m, n>(TensorExpr(a, b));
+}
+
+//B(i, k, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim3, Dim6, i, k, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim2, Dim0, n, m, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim2, Dim0, i, j, k, l, m, n, o, n, m, k, i, Dim1, Dim3, Dim6, Dim5, Dim4, Dim2, Dim0, j, l, o, n, m, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(n, m, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim2, Dim0, n, m, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim2, Dim0, m, n, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim2, Dim0, i, j, k, l, m, n, o, m, n, k, i, Dim1, Dim3, Dim6, Dim4, Dim5, Dim2, Dim0, j, l, o, m, n, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(m, n, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim2, Dim0, m, n, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim4, Dim0, n, k, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim4, Dim0, i, j, k, l, m, n, o, n, k, m, i, Dim1, Dim3, Dim6, Dim5, Dim2, Dim4, Dim0, j, l, o, n, k, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(n, k, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim4, Dim0, n, k, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim5, Dim0, m, k, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim5, Dim0, i, j, k, l, m, n, o, m, k, n, i, Dim1, Dim3, Dim6, Dim4, Dim2, Dim5, Dim0, j, l, o, m, k, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(m, k, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim5, Dim0, m, k, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim4, Dim0, k, n, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim4, Dim0, i, j, k, l, m, n, o, k, n, m, i, Dim1, Dim3, Dim6, Dim2, Dim5, Dim4, Dim0, j, l, o, k, n, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(k, n, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim4, Dim0, k, n, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim5, Dim0, k, m, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim5, Dim0, i, j, k, l, m, n, o, k, m, n, i, Dim1, Dim3, Dim6, Dim2, Dim4, Dim5, Dim0, j, l, o, k, m, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(k, m, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim5, Dim0, k, m, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim0, Dim2, n, m, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim0, Dim2, i, j, k, l, m, n, o, n, m, i, k, Dim1, Dim3, Dim6, Dim5, Dim4, Dim0, Dim2, j, l, o, n, m, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(n, m, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim0, Dim2, n, m, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim0, Dim2, m, n, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim0, Dim2, i, j, k, l, m, n, o, m, n, i, k, Dim1, Dim3, Dim6, Dim4, Dim5, Dim0, Dim2, j, l, o, m, n, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(m, n, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim0, Dim2, m, n, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim0, Dim4, n, k, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim0, Dim4, i, j, k, l, m, n, o, n, k, i, m, Dim1, Dim3, Dim6, Dim5, Dim2, Dim0, Dim4, j, l, o, n, k, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(n, k, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim0, Dim4, n, k, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim0, Dim5, m, k, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim0, Dim5, i, j, k, l, m, n, o, m, k, i, n, Dim1, Dim3, Dim6, Dim4, Dim2, Dim0, Dim5, j, l, o, m, k, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(m, k, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim0, Dim5, m, k, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim0, Dim4, k, n, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim0, Dim4, i, j, k, l, m, n, o, k, n, i, m, Dim1, Dim3, Dim6, Dim2, Dim5, Dim0, Dim4, j, l, o, k, n, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(k, n, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim0, Dim4, k, n, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim0, Dim5, k, m, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim0, Dim5, i, j, k, l, m, n, o, k, m, i, n, Dim1, Dim3, Dim6, Dim2, Dim4, Dim0, Dim5, j, l, o, k, m, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(k, m, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim0, Dim5, k, m, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim4, Dim2, n, i, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim4, Dim2, i, j, k, l, m, n, o, n, i, m, k, Dim1, Dim3, Dim6, Dim5, Dim0, Dim4, Dim2, j, l, o, n, i, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(n, i, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim4, Dim2, n, i, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim5, Dim2, m, i, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim5, Dim2, i, j, k, l, m, n, o, m, i, n, k, Dim1, Dim3, Dim6, Dim4, Dim0, Dim5, Dim2, j, l, o, m, i, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(m, i, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim5, Dim2, m, i, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim2, Dim4, n, i, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim2, Dim4, i, j, k, l, m, n, o, n, i, k, m, Dim1, Dim3, Dim6, Dim5, Dim0, Dim2, Dim4, j, l, o, n, i, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(n, i, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim2, Dim4, n, i, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim2, Dim5, m, i, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim2, Dim5, i, j, k, l, m, n, o, m, i, k, n, Dim1, Dim3, Dim6, Dim4, Dim0, Dim2, Dim5, j, l, o, m, i, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(m, i, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim2, Dim5, m, i, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim5, Dim4, k, i, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim5, Dim4, i, j, k, l, m, n, o, k, i, n, m, Dim1, Dim3, Dim6, Dim2, Dim0, Dim5, Dim4, j, l, o, k, i, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(k, i, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim5, Dim4, k, i, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim4, Dim5, k, i, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim4, Dim5, i, j, k, l, m, n, o, k, i, m, n, Dim1, Dim3, Dim6, Dim2, Dim0, Dim4, Dim5, j, l, o, k, i, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(k, i, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim4, Dim5, k, i, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim4, Dim2, i, n, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim4, Dim2, i, j, k, l, m, n, o, i, n, m, k, Dim1, Dim3, Dim6, Dim0, Dim5, Dim4, Dim2, j, l, o, i, n, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(i, n, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim4, Dim2, i, n, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim5, Dim2, i, m, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim5, Dim2, i, j, k, l, m, n, o, i, m, n, k, Dim1, Dim3, Dim6, Dim0, Dim4, Dim5, Dim2, j, l, o, i, m, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(i, m, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim5, Dim2, i, m, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim2, Dim4, i, n, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim2, Dim4, i, j, k, l, m, n, o, i, n, k, m, Dim1, Dim3, Dim6, Dim0, Dim5, Dim2, Dim4, j, l, o, i, n, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(i, n, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim2, Dim4, i, n, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim2, Dim5, i, m, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim2, Dim5, i, j, k, l, m, n, o, i, m, k, n, Dim1, Dim3, Dim6, Dim0, Dim4, Dim2, Dim5, j, l, o, i, m, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(i, m, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim2, Dim5, i, m, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim5, Dim4, i, k, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim5, Dim4, i, j, k, l, m, n, o, i, k, n, m, Dim1, Dim3, Dim6, Dim0, Dim2, Dim5, Dim4, j, l, o, i, k, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(i, k, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim5, Dim4, i, k, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim4, Dim5, i, k, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim4, Dim5, i, j, k, l, m, n, o, i, k, m, n, Dim1, Dim3, Dim6, Dim0, Dim2, Dim4, Dim5, j, l, o, i, k, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim6, j, l, o>(TensorExpr(a, b));
+}
+
+//B(i, k, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim4, Dim5, i, k, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim2, Dim0, o, m, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim2, Dim0, i, j, k, l, m, n, o, o, m, k, i, Dim1, Dim3, Dim5, Dim6, Dim4, Dim2, Dim0, j, l, n, o, m, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(o, m, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim2, Dim0, o, m, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim2, Dim0, m, o, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim2, Dim0, i, j, k, l, m, n, o, m, o, k, i, Dim1, Dim3, Dim5, Dim4, Dim6, Dim2, Dim0, j, l, n, m, o, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(m, o, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim2, Dim0, m, o, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim4, Dim0, o, k, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim4, Dim0, i, j, k, l, m, n, o, o, k, m, i, Dim1, Dim3, Dim5, Dim6, Dim2, Dim4, Dim0, j, l, n, o, k, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(o, k, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim4, Dim0, o, k, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim6, Dim0, m, k, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim6, Dim0, i, j, k, l, m, n, o, m, k, o, i, Dim1, Dim3, Dim5, Dim4, Dim2, Dim6, Dim0, j, l, n, m, k, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(m, k, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim6, Dim0, m, k, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim4, Dim0, k, o, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim4, Dim0, i, j, k, l, m, n, o, k, o, m, i, Dim1, Dim3, Dim5, Dim2, Dim6, Dim4, Dim0, j, l, n, k, o, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(k, o, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim4, Dim0, k, o, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim6, Dim0, k, m, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim6, Dim0, i, j, k, l, m, n, o, k, m, o, i, Dim1, Dim3, Dim5, Dim2, Dim4, Dim6, Dim0, j, l, n, k, m, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(k, m, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim6, Dim0, k, m, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim0, Dim2, o, m, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim0, Dim2, i, j, k, l, m, n, o, o, m, i, k, Dim1, Dim3, Dim5, Dim6, Dim4, Dim0, Dim2, j, l, n, o, m, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(o, m, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim0, Dim2, o, m, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim0, Dim2, m, o, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim0, Dim2, i, j, k, l, m, n, o, m, o, i, k, Dim1, Dim3, Dim5, Dim4, Dim6, Dim0, Dim2, j, l, n, m, o, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(m, o, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim0, Dim2, m, o, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim0, Dim4, o, k, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim0, Dim4, i, j, k, l, m, n, o, o, k, i, m, Dim1, Dim3, Dim5, Dim6, Dim2, Dim0, Dim4, j, l, n, o, k, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(o, k, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim0, Dim4, o, k, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim0, Dim6, m, k, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim0, Dim6, i, j, k, l, m, n, o, m, k, i, o, Dim1, Dim3, Dim5, Dim4, Dim2, Dim0, Dim6, j, l, n, m, k, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(m, k, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim0, Dim6, m, k, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim0, Dim4, k, o, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim0, Dim4, i, j, k, l, m, n, o, k, o, i, m, Dim1, Dim3, Dim5, Dim2, Dim6, Dim0, Dim4, j, l, n, k, o, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(k, o, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim0, Dim4, k, o, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim0, Dim6, k, m, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim0, Dim6, i, j, k, l, m, n, o, k, m, i, o, Dim1, Dim3, Dim5, Dim2, Dim4, Dim0, Dim6, j, l, n, k, m, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(k, m, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim0, Dim6, k, m, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim4, Dim2, o, i, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim4, Dim2, i, j, k, l, m, n, o, o, i, m, k, Dim1, Dim3, Dim5, Dim6, Dim0, Dim4, Dim2, j, l, n, o, i, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(o, i, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim4, Dim2, o, i, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim6, Dim2, m, i, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim6, Dim2, i, j, k, l, m, n, o, m, i, o, k, Dim1, Dim3, Dim5, Dim4, Dim0, Dim6, Dim2, j, l, n, m, i, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(m, i, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim6, Dim2, m, i, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim2, Dim4, o, i, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim2, Dim4, i, j, k, l, m, n, o, o, i, k, m, Dim1, Dim3, Dim5, Dim6, Dim0, Dim2, Dim4, j, l, n, o, i, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(o, i, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim2, Dim4, o, i, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim2, Dim6, m, i, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim2, Dim6, i, j, k, l, m, n, o, m, i, k, o, Dim1, Dim3, Dim5, Dim4, Dim0, Dim2, Dim6, j, l, n, m, i, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(m, i, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim2, Dim6, m, i, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim6, Dim4, k, i, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim6, Dim4, i, j, k, l, m, n, o, k, i, o, m, Dim1, Dim3, Dim5, Dim2, Dim0, Dim6, Dim4, j, l, n, k, i, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(k, i, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim6, Dim4, k, i, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim4, Dim6, k, i, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim4, Dim6, i, j, k, l, m, n, o, k, i, m, o, Dim1, Dim3, Dim5, Dim2, Dim0, Dim4, Dim6, j, l, n, k, i, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(k, i, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim4, Dim6, k, i, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim4, Dim2, i, o, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim4, Dim2, i, j, k, l, m, n, o, i, o, m, k, Dim1, Dim3, Dim5, Dim0, Dim6, Dim4, Dim2, j, l, n, i, o, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(i, o, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim4, Dim2, i, o, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim6, Dim2, i, m, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim6, Dim2, i, j, k, l, m, n, o, i, m, o, k, Dim1, Dim3, Dim5, Dim0, Dim4, Dim6, Dim2, j, l, n, i, m, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(i, m, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim6, Dim2, i, m, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim2, Dim4, i, o, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim2, Dim4, i, j, k, l, m, n, o, i, o, k, m, Dim1, Dim3, Dim5, Dim0, Dim6, Dim2, Dim4, j, l, n, i, o, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(i, o, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim2, Dim4, i, o, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim2, Dim6, i, m, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim2, Dim6, i, j, k, l, m, n, o, i, m, k, o, Dim1, Dim3, Dim5, Dim0, Dim4, Dim2, Dim6, j, l, n, i, m, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(i, m, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim2, Dim6, i, m, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim6, Dim4, i, k, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim6, Dim4, i, j, k, l, m, n, o, i, k, o, m, Dim1, Dim3, Dim5, Dim0, Dim2, Dim6, Dim4, j, l, n, i, k, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(i, k, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim6, Dim4, i, k, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim4, Dim6, i, k, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim4, Dim6, i, j, k, l, m, n, o, i, k, m, o, Dim1, Dim3, Dim5, Dim0, Dim2, Dim4, Dim6, j, l, n, i, k, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim5, j, l, n>(TensorExpr(a, b));
+}
+
+//B(i, k, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim4, Dim6, i, k, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim2, Dim0, o, n, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim2, Dim0, i, j, k, l, m, n, o, o, n, k, i, Dim1, Dim3, Dim4, Dim6, Dim5, Dim2, Dim0, j, l, m, o, n, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(o, n, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim2, Dim0, o, n, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, k, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim2, Dim0, n, o, k, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim2, Dim0, i, j, k, l, m, n, o, n, o, k, i, Dim1, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, j, l, m, n, o, k, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(n, o, k, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim2, Dim0, n, o, k, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim5, Dim0, o, k, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim5, Dim0, i, j, k, l, m, n, o, o, k, n, i, Dim1, Dim3, Dim4, Dim6, Dim2, Dim5, Dim0, j, l, m, o, k, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(o, k, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim5, Dim0, o, k, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim6, Dim0, n, k, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim6, Dim0, i, j, k, l, m, n, o, n, k, o, i, Dim1, Dim3, Dim4, Dim5, Dim2, Dim6, Dim0, j, l, m, n, k, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(n, k, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim6, Dim0, n, k, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim5, Dim0, k, o, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim5, Dim0, i, j, k, l, m, n, o, k, o, n, i, Dim1, Dim3, Dim4, Dim2, Dim6, Dim5, Dim0, j, l, m, k, o, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(k, o, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim5, Dim0, k, o, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim6, Dim0, k, n, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim6, Dim0, i, j, k, l, m, n, o, k, n, o, i, Dim1, Dim3, Dim4, Dim2, Dim5, Dim6, Dim0, j, l, m, k, n, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(k, n, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim6, Dim0, k, n, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim0, Dim2, o, n, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim0, Dim2, i, j, k, l, m, n, o, o, n, i, k, Dim1, Dim3, Dim4, Dim6, Dim5, Dim0, Dim2, j, l, m, o, n, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(o, n, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim0, Dim2, o, n, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, i, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim0, Dim2, n, o, i, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim0, Dim2, i, j, k, l, m, n, o, n, o, i, k, Dim1, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, j, l, m, n, o, i, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(n, o, i, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim0, Dim2, n, o, i, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim0, Dim5, o, k, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim0, Dim5, i, j, k, l, m, n, o, o, k, i, n, Dim1, Dim3, Dim4, Dim6, Dim2, Dim0, Dim5, j, l, m, o, k, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(o, k, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim0, Dim5, o, k, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim0, Dim6, n, k, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim0, Dim6, i, j, k, l, m, n, o, n, k, i, o, Dim1, Dim3, Dim4, Dim5, Dim2, Dim0, Dim6, j, l, m, n, k, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(n, k, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim0, Dim6, n, k, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim0, Dim5, k, o, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim0, Dim5, i, j, k, l, m, n, o, k, o, i, n, Dim1, Dim3, Dim4, Dim2, Dim6, Dim0, Dim5, j, l, m, k, o, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(k, o, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim0, Dim5, k, o, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim0, Dim6, k, n, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim0, Dim6, i, j, k, l, m, n, o, k, n, i, o, Dim1, Dim3, Dim4, Dim2, Dim5, Dim0, Dim6, j, l, m, k, n, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(k, n, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim0, Dim6, k, n, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim5, Dim2, o, i, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim5, Dim2, i, j, k, l, m, n, o, o, i, n, k, Dim1, Dim3, Dim4, Dim6, Dim0, Dim5, Dim2, j, l, m, o, i, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(o, i, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim5, Dim2, o, i, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim6, Dim2, n, i, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim6, Dim2, i, j, k, l, m, n, o, n, i, o, k, Dim1, Dim3, Dim4, Dim5, Dim0, Dim6, Dim2, j, l, m, n, i, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(n, i, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim6, Dim2, n, i, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim2, Dim5, o, i, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim2, Dim5, i, j, k, l, m, n, o, o, i, k, n, Dim1, Dim3, Dim4, Dim6, Dim0, Dim2, Dim5, j, l, m, o, i, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(o, i, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim2, Dim5, o, i, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim2, Dim6, n, i, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim2, Dim6, i, j, k, l, m, n, o, n, i, k, o, Dim1, Dim3, Dim4, Dim5, Dim0, Dim2, Dim6, j, l, m, n, i, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(n, i, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim2, Dim6, n, i, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim6, Dim5, k, i, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim6, Dim5, i, j, k, l, m, n, o, k, i, o, n, Dim1, Dim3, Dim4, Dim2, Dim0, Dim6, Dim5, j, l, m, k, i, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(k, i, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim6, Dim5, k, i, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, i, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim0, Dim5, Dim6, k, i, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim0, Dim5, Dim6, i, j, k, l, m, n, o, k, i, n, o, Dim1, Dim3, Dim4, Dim2, Dim0, Dim5, Dim6, j, l, m, k, i, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(k, i, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim0, Dim5, Dim6, k, i, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim5, Dim2, i, o, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim5, Dim2, i, j, k, l, m, n, o, i, o, n, k, Dim1, Dim3, Dim4, Dim0, Dim6, Dim5, Dim2, j, l, m, i, o, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(i, o, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim5, Dim2, i, o, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim6, Dim2, i, n, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim6, Dim2, i, j, k, l, m, n, o, i, n, o, k, Dim1, Dim3, Dim4, Dim0, Dim5, Dim6, Dim2, j, l, m, i, n, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(i, n, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim6, Dim2, i, n, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim2, Dim5, i, o, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim2, Dim5, i, j, k, l, m, n, o, i, o, k, n, Dim1, Dim3, Dim4, Dim0, Dim6, Dim2, Dim5, j, l, m, i, o, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(i, o, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim2, Dim5, i, o, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim2, Dim6, i, n, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim2, Dim6, i, j, k, l, m, n, o, i, n, k, o, Dim1, Dim3, Dim4, Dim0, Dim5, Dim2, Dim6, j, l, m, i, n, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(i, n, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim2, Dim6, i, n, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim6, Dim5, i, k, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim6, Dim5, i, j, k, l, m, n, o, i, k, o, n, Dim1, Dim3, Dim4, Dim0, Dim2, Dim6, Dim5, j, l, m, i, k, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(i, k, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim6, Dim5, i, k, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, k, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim2, Dim5, Dim6, i, k, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim2, Dim5, Dim6, i, j, k, l, m, n, o, i, k, n, o, Dim1, Dim3, Dim4, Dim0, Dim2, Dim5, Dim6, j, l, m, i, k, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
+}
+
+//B(i, k, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim2, Dim5, Dim6, i, k, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim3, Dim0, n, m, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim3, Dim0, i, j, k, l, m, n, o, n, m, l, i, Dim1, Dim2, Dim6, Dim5, Dim4, Dim3, Dim0, j, k, o, n, m, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(n, m, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim3, Dim0, n, m, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim3, Dim0, m, n, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim3, Dim0, i, j, k, l, m, n, o, m, n, l, i, Dim1, Dim2, Dim6, Dim4, Dim5, Dim3, Dim0, j, k, o, m, n, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(m, n, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim3, Dim0, m, n, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim4, Dim0, n, l, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim4, Dim0, i, j, k, l, m, n, o, n, l, m, i, Dim1, Dim2, Dim6, Dim5, Dim3, Dim4, Dim0, j, k, o, n, l, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(n, l, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim4, Dim0, n, l, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim5, Dim0, m, l, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim5, Dim0, i, j, k, l, m, n, o, m, l, n, i, Dim1, Dim2, Dim6, Dim4, Dim3, Dim5, Dim0, j, k, o, m, l, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(m, l, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim5, Dim0, m, l, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim4, Dim0, l, n, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim4, Dim0, i, j, k, l, m, n, o, l, n, m, i, Dim1, Dim2, Dim6, Dim3, Dim5, Dim4, Dim0, j, k, o, l, n, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(l, n, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim4, Dim0, l, n, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim5, Dim0, l, m, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim5, Dim0, i, j, k, l, m, n, o, l, m, n, i, Dim1, Dim2, Dim6, Dim3, Dim4, Dim5, Dim0, j, k, o, l, m, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(l, m, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim5, Dim0, l, m, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim0, Dim3, n, m, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim0, Dim3, i, j, k, l, m, n, o, n, m, i, l, Dim1, Dim2, Dim6, Dim5, Dim4, Dim0, Dim3, j, k, o, n, m, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(n, m, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim0, Dim3, n, m, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim0, Dim3, m, n, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim0, Dim3, i, j, k, l, m, n, o, m, n, i, l, Dim1, Dim2, Dim6, Dim4, Dim5, Dim0, Dim3, j, k, o, m, n, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(m, n, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim0, Dim3, m, n, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim0, Dim4, n, l, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim0, Dim4, i, j, k, l, m, n, o, n, l, i, m, Dim1, Dim2, Dim6, Dim5, Dim3, Dim0, Dim4, j, k, o, n, l, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(n, l, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim0, Dim4, n, l, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim0, Dim5, m, l, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim0, Dim5, i, j, k, l, m, n, o, m, l, i, n, Dim1, Dim2, Dim6, Dim4, Dim3, Dim0, Dim5, j, k, o, m, l, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(m, l, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim0, Dim5, m, l, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim0, Dim4, l, n, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim0, Dim4, i, j, k, l, m, n, o, l, n, i, m, Dim1, Dim2, Dim6, Dim3, Dim5, Dim0, Dim4, j, k, o, l, n, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(l, n, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim0, Dim4, l, n, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim0, Dim5, l, m, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim0, Dim5, i, j, k, l, m, n, o, l, m, i, n, Dim1, Dim2, Dim6, Dim3, Dim4, Dim0, Dim5, j, k, o, l, m, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(l, m, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim0, Dim5, l, m, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim4, Dim3, n, i, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim4, Dim3, i, j, k, l, m, n, o, n, i, m, l, Dim1, Dim2, Dim6, Dim5, Dim0, Dim4, Dim3, j, k, o, n, i, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(n, i, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim4, Dim3, n, i, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim5, Dim3, m, i, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim5, Dim3, i, j, k, l, m, n, o, m, i, n, l, Dim1, Dim2, Dim6, Dim4, Dim0, Dim5, Dim3, j, k, o, m, i, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(m, i, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim5, Dim3, m, i, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim3, Dim4, n, i, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim3, Dim4, i, j, k, l, m, n, o, n, i, l, m, Dim1, Dim2, Dim6, Dim5, Dim0, Dim3, Dim4, j, k, o, n, i, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(n, i, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim3, Dim4, n, i, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim3, Dim5, m, i, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim3, Dim5, i, j, k, l, m, n, o, m, i, l, n, Dim1, Dim2, Dim6, Dim4, Dim0, Dim3, Dim5, j, k, o, m, i, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(m, i, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim3, Dim5, m, i, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim5, Dim4, l, i, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim5, Dim4, i, j, k, l, m, n, o, l, i, n, m, Dim1, Dim2, Dim6, Dim3, Dim0, Dim5, Dim4, j, k, o, l, i, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(l, i, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim5, Dim4, l, i, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim4, Dim5, l, i, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim4, Dim5, i, j, k, l, m, n, o, l, i, m, n, Dim1, Dim2, Dim6, Dim3, Dim0, Dim4, Dim5, j, k, o, l, i, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(l, i, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim4, Dim5, l, i, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim4, Dim3, i, n, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim4, Dim3, i, j, k, l, m, n, o, i, n, m, l, Dim1, Dim2, Dim6, Dim0, Dim5, Dim4, Dim3, j, k, o, i, n, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(i, n, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim4, Dim3, i, n, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim5, Dim3, i, m, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim5, Dim3, i, j, k, l, m, n, o, i, m, n, l, Dim1, Dim2, Dim6, Dim0, Dim4, Dim5, Dim3, j, k, o, i, m, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(i, m, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim5, Dim3, i, m, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim3, Dim4, i, n, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim3, Dim4, i, j, k, l, m, n, o, i, n, l, m, Dim1, Dim2, Dim6, Dim0, Dim5, Dim3, Dim4, j, k, o, i, n, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(i, n, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim3, Dim4, i, n, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim3, Dim5, i, m, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim3, Dim5, i, j, k, l, m, n, o, i, m, l, n, Dim1, Dim2, Dim6, Dim0, Dim4, Dim3, Dim5, j, k, o, i, m, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(i, m, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim3, Dim5, i, m, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim5, Dim4, i, l, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim5, Dim4, i, j, k, l, m, n, o, i, l, n, m, Dim1, Dim2, Dim6, Dim0, Dim3, Dim5, Dim4, j, k, o, i, l, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(i, l, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim5, Dim4, i, l, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim4, Dim5, i, l, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim4, Dim5, i, j, k, l, m, n, o, i, l, m, n, Dim1, Dim2, Dim6, Dim0, Dim3, Dim4, Dim5, j, k, o, i, l, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim6, j, k, o>(TensorExpr(a, b));
+}
+
+//B(i, l, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim4, Dim5, i, l, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim3, Dim0, o, m, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim3, Dim0, i, j, k, l, m, n, o, o, m, l, i, Dim1, Dim2, Dim5, Dim6, Dim4, Dim3, Dim0, j, k, n, o, m, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(o, m, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim3, Dim0, o, m, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim3, Dim0, m, o, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim3, Dim0, i, j, k, l, m, n, o, m, o, l, i, Dim1, Dim2, Dim5, Dim4, Dim6, Dim3, Dim0, j, k, n, m, o, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(m, o, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim3, Dim0, m, o, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim4, Dim0, o, l, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim4, Dim0, i, j, k, l, m, n, o, o, l, m, i, Dim1, Dim2, Dim5, Dim6, Dim3, Dim4, Dim0, j, k, n, o, l, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(o, l, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim4, Dim0, o, l, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim6, Dim0, m, l, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim6, Dim0, i, j, k, l, m, n, o, m, l, o, i, Dim1, Dim2, Dim5, Dim4, Dim3, Dim6, Dim0, j, k, n, m, l, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(m, l, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim6, Dim0, m, l, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim4, Dim0, l, o, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim4, Dim0, i, j, k, l, m, n, o, l, o, m, i, Dim1, Dim2, Dim5, Dim3, Dim6, Dim4, Dim0, j, k, n, l, o, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(l, o, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim4, Dim0, l, o, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim6, Dim0, l, m, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim6, Dim0, i, j, k, l, m, n, o, l, m, o, i, Dim1, Dim2, Dim5, Dim3, Dim4, Dim6, Dim0, j, k, n, l, m, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(l, m, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim6, Dim0, l, m, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim0, Dim3, o, m, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim0, Dim3, i, j, k, l, m, n, o, o, m, i, l, Dim1, Dim2, Dim5, Dim6, Dim4, Dim0, Dim3, j, k, n, o, m, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(o, m, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim0, Dim3, o, m, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim0, Dim3, m, o, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim0, Dim3, i, j, k, l, m, n, o, m, o, i, l, Dim1, Dim2, Dim5, Dim4, Dim6, Dim0, Dim3, j, k, n, m, o, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(m, o, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim0, Dim3, m, o, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim0, Dim4, o, l, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim0, Dim4, i, j, k, l, m, n, o, o, l, i, m, Dim1, Dim2, Dim5, Dim6, Dim3, Dim0, Dim4, j, k, n, o, l, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(o, l, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim0, Dim4, o, l, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim0, Dim6, m, l, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim0, Dim6, i, j, k, l, m, n, o, m, l, i, o, Dim1, Dim2, Dim5, Dim4, Dim3, Dim0, Dim6, j, k, n, m, l, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(m, l, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim0, Dim6, m, l, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim0, Dim4, l, o, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim0, Dim4, i, j, k, l, m, n, o, l, o, i, m, Dim1, Dim2, Dim5, Dim3, Dim6, Dim0, Dim4, j, k, n, l, o, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(l, o, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim0, Dim4, l, o, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim0, Dim6, l, m, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim0, Dim6, i, j, k, l, m, n, o, l, m, i, o, Dim1, Dim2, Dim5, Dim3, Dim4, Dim0, Dim6, j, k, n, l, m, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(l, m, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim0, Dim6, l, m, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim4, Dim3, o, i, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim4, Dim3, i, j, k, l, m, n, o, o, i, m, l, Dim1, Dim2, Dim5, Dim6, Dim0, Dim4, Dim3, j, k, n, o, i, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(o, i, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim4, Dim3, o, i, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim6, Dim3, m, i, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim6, Dim3, i, j, k, l, m, n, o, m, i, o, l, Dim1, Dim2, Dim5, Dim4, Dim0, Dim6, Dim3, j, k, n, m, i, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(m, i, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim6, Dim3, m, i, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim3, Dim4, o, i, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim3, Dim4, i, j, k, l, m, n, o, o, i, l, m, Dim1, Dim2, Dim5, Dim6, Dim0, Dim3, Dim4, j, k, n, o, i, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(o, i, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim3, Dim4, o, i, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim3, Dim6, m, i, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim3, Dim6, i, j, k, l, m, n, o, m, i, l, o, Dim1, Dim2, Dim5, Dim4, Dim0, Dim3, Dim6, j, k, n, m, i, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(m, i, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim3, Dim6, m, i, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim6, Dim4, l, i, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim6, Dim4, i, j, k, l, m, n, o, l, i, o, m, Dim1, Dim2, Dim5, Dim3, Dim0, Dim6, Dim4, j, k, n, l, i, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(l, i, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim6, Dim4, l, i, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim4, Dim6, l, i, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim4, Dim6, i, j, k, l, m, n, o, l, i, m, o, Dim1, Dim2, Dim5, Dim3, Dim0, Dim4, Dim6, j, k, n, l, i, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(l, i, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim4, Dim6, l, i, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim4, Dim3, i, o, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim4, Dim3, i, j, k, l, m, n, o, i, o, m, l, Dim1, Dim2, Dim5, Dim0, Dim6, Dim4, Dim3, j, k, n, i, o, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(i, o, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim4, Dim3, i, o, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim6, Dim3, i, m, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim6, Dim3, i, j, k, l, m, n, o, i, m, o, l, Dim1, Dim2, Dim5, Dim0, Dim4, Dim6, Dim3, j, k, n, i, m, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(i, m, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim6, Dim3, i, m, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim3, Dim4, i, o, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim3, Dim4, i, j, k, l, m, n, o, i, o, l, m, Dim1, Dim2, Dim5, Dim0, Dim6, Dim3, Dim4, j, k, n, i, o, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(i, o, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim3, Dim4, i, o, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim3, Dim6, i, m, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim3, Dim6, i, j, k, l, m, n, o, i, m, l, o, Dim1, Dim2, Dim5, Dim0, Dim4, Dim3, Dim6, j, k, n, i, m, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(i, m, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim3, Dim6, i, m, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim6, Dim4, i, l, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim6, Dim4, i, j, k, l, m, n, o, i, l, o, m, Dim1, Dim2, Dim5, Dim0, Dim3, Dim6, Dim4, j, k, n, i, l, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(i, l, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim6, Dim4, i, l, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim4, Dim6, i, l, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim4, Dim6, i, j, k, l, m, n, o, i, l, m, o, Dim1, Dim2, Dim5, Dim0, Dim3, Dim4, Dim6, j, k, n, i, l, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim5, j, k, n>(TensorExpr(a, b));
+}
+
+//B(i, l, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim4, Dim6, i, l, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim3, Dim0, o, n, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim3, Dim0, i, j, k, l, m, n, o, o, n, l, i, Dim1, Dim2, Dim4, Dim6, Dim5, Dim3, Dim0, j, k, m, o, n, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(o, n, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim3, Dim0, o, n, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, l, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim3, Dim0, n, o, l, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim3, Dim0, i, j, k, l, m, n, o, n, o, l, i, Dim1, Dim2, Dim4, Dim5, Dim6, Dim3, Dim0, j, k, m, n, o, l, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(n, o, l, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim3, Dim0, n, o, l, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim5, Dim0, o, l, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim5, Dim0, i, j, k, l, m, n, o, o, l, n, i, Dim1, Dim2, Dim4, Dim6, Dim3, Dim5, Dim0, j, k, m, o, l, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(o, l, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim5, Dim0, o, l, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim6, Dim0, n, l, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim6, Dim0, i, j, k, l, m, n, o, n, l, o, i, Dim1, Dim2, Dim4, Dim5, Dim3, Dim6, Dim0, j, k, m, n, l, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(n, l, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim6, Dim0, n, l, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim5, Dim0, l, o, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim5, Dim0, i, j, k, l, m, n, o, l, o, n, i, Dim1, Dim2, Dim4, Dim3, Dim6, Dim5, Dim0, j, k, m, l, o, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(l, o, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim5, Dim0, l, o, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim6, Dim0, l, n, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim6, Dim0, i, j, k, l, m, n, o, l, n, o, i, Dim1, Dim2, Dim4, Dim3, Dim5, Dim6, Dim0, j, k, m, l, n, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(l, n, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim6, Dim0, l, n, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim0, Dim3, o, n, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim0, Dim3, i, j, k, l, m, n, o, o, n, i, l, Dim1, Dim2, Dim4, Dim6, Dim5, Dim0, Dim3, j, k, m, o, n, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(o, n, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim0, Dim3, o, n, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, i, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim0, Dim3, n, o, i, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim0, Dim3, i, j, k, l, m, n, o, n, o, i, l, Dim1, Dim2, Dim4, Dim5, Dim6, Dim0, Dim3, j, k, m, n, o, i, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(n, o, i, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim0, Dim3, n, o, i, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim0, Dim5, o, l, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim0, Dim5, i, j, k, l, m, n, o, o, l, i, n, Dim1, Dim2, Dim4, Dim6, Dim3, Dim0, Dim5, j, k, m, o, l, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(o, l, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim0, Dim5, o, l, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim0, Dim6, n, l, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim0, Dim6, i, j, k, l, m, n, o, n, l, i, o, Dim1, Dim2, Dim4, Dim5, Dim3, Dim0, Dim6, j, k, m, n, l, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(n, l, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim0, Dim6, n, l, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim0, Dim5, l, o, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim0, Dim5, i, j, k, l, m, n, o, l, o, i, n, Dim1, Dim2, Dim4, Dim3, Dim6, Dim0, Dim5, j, k, m, l, o, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(l, o, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim0, Dim5, l, o, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim0, Dim6, l, n, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim0, Dim6, i, j, k, l, m, n, o, l, n, i, o, Dim1, Dim2, Dim4, Dim3, Dim5, Dim0, Dim6, j, k, m, l, n, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(l, n, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim0, Dim6, l, n, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim5, Dim3, o, i, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim5, Dim3, i, j, k, l, m, n, o, o, i, n, l, Dim1, Dim2, Dim4, Dim6, Dim0, Dim5, Dim3, j, k, m, o, i, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(o, i, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim5, Dim3, o, i, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim6, Dim3, n, i, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim6, Dim3, i, j, k, l, m, n, o, n, i, o, l, Dim1, Dim2, Dim4, Dim5, Dim0, Dim6, Dim3, j, k, m, n, i, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(n, i, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim6, Dim3, n, i, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim3, Dim5, o, i, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim3, Dim5, i, j, k, l, m, n, o, o, i, l, n, Dim1, Dim2, Dim4, Dim6, Dim0, Dim3, Dim5, j, k, m, o, i, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(o, i, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim3, Dim5, o, i, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim3, Dim6, n, i, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim3, Dim6, i, j, k, l, m, n, o, n, i, l, o, Dim1, Dim2, Dim4, Dim5, Dim0, Dim3, Dim6, j, k, m, n, i, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(n, i, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim3, Dim6, n, i, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim6, Dim5, l, i, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim6, Dim5, i, j, k, l, m, n, o, l, i, o, n, Dim1, Dim2, Dim4, Dim3, Dim0, Dim6, Dim5, j, k, m, l, i, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(l, i, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim6, Dim5, l, i, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, i, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim0, Dim5, Dim6, l, i, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim0, Dim5, Dim6, i, j, k, l, m, n, o, l, i, n, o, Dim1, Dim2, Dim4, Dim3, Dim0, Dim5, Dim6, j, k, m, l, i, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(l, i, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim0, Dim5, Dim6, l, i, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim5, Dim3, i, o, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim5, Dim3, i, j, k, l, m, n, o, i, o, n, l, Dim1, Dim2, Dim4, Dim0, Dim6, Dim5, Dim3, j, k, m, i, o, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(i, o, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim5, Dim3, i, o, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim6, Dim3, i, n, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim6, Dim3, i, j, k, l, m, n, o, i, n, o, l, Dim1, Dim2, Dim4, Dim0, Dim5, Dim6, Dim3, j, k, m, i, n, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(i, n, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim6, Dim3, i, n, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim3, Dim5, i, o, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim3, Dim5, i, j, k, l, m, n, o, i, o, l, n, Dim1, Dim2, Dim4, Dim0, Dim6, Dim3, Dim5, j, k, m, i, o, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(i, o, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim3, Dim5, i, o, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim3, Dim6, i, n, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim3, Dim6, i, j, k, l, m, n, o, i, n, l, o, Dim1, Dim2, Dim4, Dim0, Dim5, Dim3, Dim6, j, k, m, i, n, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(i, n, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim3, Dim6, i, n, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim6, Dim5, i, l, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim6, Dim5, i, j, k, l, m, n, o, i, l, o, n, Dim1, Dim2, Dim4, Dim0, Dim3, Dim6, Dim5, j, k, m, i, l, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(i, l, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim6, Dim5, i, l, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, l, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim3, Dim5, Dim6, i, l, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim3, Dim5, Dim6, i, j, k, l, m, n, o, i, l, n, o, Dim1, Dim2, Dim4, Dim0, Dim3, Dim5, Dim6, j, k, m, i, l, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
+}
+
+//B(i, l, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim3, Dim5, Dim6, i, l, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim4, Dim0, o, n, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim4, Dim0, i, j, k, l, m, n, o, o, n, m, i, Dim1, Dim2, Dim3, Dim6, Dim5, Dim4, Dim0, j, k, l, o, n, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(o, n, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim4, Dim0, o, n, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, m, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim4, Dim0, n, o, m, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim4, Dim0, i, j, k, l, m, n, o, n, o, m, i, Dim1, Dim2, Dim3, Dim5, Dim6, Dim4, Dim0, j, k, l, n, o, m, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(n, o, m, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim4, Dim0, n, o, m, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim5, Dim0, o, m, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim5, Dim0, i, j, k, l, m, n, o, o, m, n, i, Dim1, Dim2, Dim3, Dim6, Dim4, Dim5, Dim0, j, k, l, o, m, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(o, m, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim5, Dim0, o, m, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim6, Dim0, n, m, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim6, Dim0, i, j, k, l, m, n, o, n, m, o, i, Dim1, Dim2, Dim3, Dim5, Dim4, Dim6, Dim0, j, k, l, n, m, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(n, m, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim6, Dim0, n, m, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, n, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim5, Dim0, m, o, n, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim5, Dim0, i, j, k, l, m, n, o, m, o, n, i, Dim1, Dim2, Dim3, Dim4, Dim6, Dim5, Dim0, j, k, l, m, o, n, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(m, o, n, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim5, Dim0, m, o, n, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, o, i, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim6, Dim0, m, n, o, i> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim6, Dim0, i, j, k, l, m, n, o, m, n, o, i, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, j, k, l, m, n, o, i>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(m, n, o, i, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim6, Dim0, m, n, o, i> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim0, Dim4, o, n, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim0, Dim4, i, j, k, l, m, n, o, o, n, i, m, Dim1, Dim2, Dim3, Dim6, Dim5, Dim0, Dim4, j, k, l, o, n, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(o, n, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim0, Dim4, o, n, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, i, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim0, Dim4, n, o, i, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim0, Dim4, i, j, k, l, m, n, o, n, o, i, m, Dim1, Dim2, Dim3, Dim5, Dim6, Dim0, Dim4, j, k, l, n, o, i, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(n, o, i, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim0, Dim4, n, o, i, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim0, Dim5, o, m, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim0, Dim5, i, j, k, l, m, n, o, o, m, i, n, Dim1, Dim2, Dim3, Dim6, Dim4, Dim0, Dim5, j, k, l, o, m, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(o, m, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim0, Dim5, o, m, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim0, Dim6, n, m, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim0, Dim6, i, j, k, l, m, n, o, n, m, i, o, Dim1, Dim2, Dim3, Dim5, Dim4, Dim0, Dim6, j, k, l, n, m, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(n, m, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim0, Dim6, n, m, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, i, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim0, Dim5, m, o, i, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim0, Dim5, i, j, k, l, m, n, o, m, o, i, n, Dim1, Dim2, Dim3, Dim4, Dim6, Dim0, Dim5, j, k, l, m, o, i, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(m, o, i, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim0, Dim5, m, o, i, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, i, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim0, Dim6, m, n, i, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim0, Dim6, i, j, k, l, m, n, o, m, n, i, o, Dim1, Dim2, Dim3, Dim4, Dim5, Dim0, Dim6, j, k, l, m, n, i, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(m, n, i, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim0, Dim6, m, n, i, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim5, Dim4, o, i, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim5, Dim4, i, j, k, l, m, n, o, o, i, n, m, Dim1, Dim2, Dim3, Dim6, Dim0, Dim5, Dim4, j, k, l, o, i, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(o, i, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim5, Dim4, o, i, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim6, Dim4, n, i, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim6, Dim4, i, j, k, l, m, n, o, n, i, o, m, Dim1, Dim2, Dim3, Dim5, Dim0, Dim6, Dim4, j, k, l, n, i, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(n, i, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim6, Dim4, n, i, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, i, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim0, Dim4, Dim5, o, i, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim0, Dim4, Dim5, i, j, k, l, m, n, o, o, i, m, n, Dim1, Dim2, Dim3, Dim6, Dim0, Dim4, Dim5, j, k, l, o, i, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(o, i, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim0, Dim4, Dim5, o, i, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, i, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim0, Dim4, Dim6, n, i, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim0, Dim4, Dim6, i, j, k, l, m, n, o, n, i, m, o, Dim1, Dim2, Dim3, Dim5, Dim0, Dim4, Dim6, j, k, l, n, i, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(n, i, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim0, Dim4, Dim6, n, i, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim6, Dim5, m, i, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim6, Dim5, i, j, k, l, m, n, o, m, i, o, n, Dim1, Dim2, Dim3, Dim4, Dim0, Dim6, Dim5, j, k, l, m, i, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(m, i, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim6, Dim5, m, i, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, i, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim0, Dim5, Dim6, m, i, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim0, Dim5, Dim6, i, j, k, l, m, n, o, m, i, n, o, Dim1, Dim2, Dim3, Dim4, Dim0, Dim5, Dim6, j, k, l, m, i, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(m, i, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim0, Dim5, Dim6, m, i, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim5, Dim4, i, o, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim5, Dim4, i, j, k, l, m, n, o, i, o, n, m, Dim1, Dim2, Dim3, Dim0, Dim6, Dim5, Dim4, j, k, l, i, o, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(i, o, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim5, Dim4, i, o, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim6, Dim4, i, n, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim6, Dim4, i, j, k, l, m, n, o, i, n, o, m, Dim1, Dim2, Dim3, Dim0, Dim5, Dim6, Dim4, j, k, l, i, n, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(i, n, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim6, Dim4, i, n, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, o, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim6, Dim4, Dim5, i, o, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim6, Dim4, Dim5, i, j, k, l, m, n, o, i, o, m, n, Dim1, Dim2, Dim3, Dim0, Dim6, Dim4, Dim5, j, k, l, i, o, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(i, o, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim6, Dim4, Dim5, i, o, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, n, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim5, Dim4, Dim6, i, n, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim5, Dim4, Dim6, i, j, k, l, m, n, o, i, n, m, o, Dim1, Dim2, Dim3, Dim0, Dim5, Dim4, Dim6, j, k, l, i, n, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(i, n, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim5, Dim4, Dim6, i, n, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim6, Dim5, i, m, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim6, Dim5, i, j, k, l, m, n, o, i, m, o, n, Dim1, Dim2, Dim3, Dim0, Dim4, Dim6, Dim5, j, k, l, i, m, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(i, m, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim6, Dim5, i, m, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(i, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim0, Dim4, Dim5, Dim6, i, m, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim0, Dim4, Dim5, Dim6, i, j, k, l, m, n, o, i, m, n, o, Dim1, Dim2, Dim3, Dim0, Dim4, Dim5, Dim6, j, k, l, i, m, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim3, j, k, l>(TensorExpr(a, b));
+}
+
+//B(i, m, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim0, Dim4, Dim5, Dim6, i, m, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim2, Dim1, m, l, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim2, Dim1, i, j, k, l, m, n, o, m, l, k, j, Dim0, Dim5, Dim6, Dim4, Dim3, Dim2, Dim1, i, n, o, m, l, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(m, l, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim2, Dim1, m, l, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim2, Dim1, l, m, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim2, Dim1, i, j, k, l, m, n, o, l, m, k, j, Dim0, Dim5, Dim6, Dim3, Dim4, Dim2, Dim1, i, n, o, l, m, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(l, m, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim2, Dim1, l, m, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim3, Dim1, m, k, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim3, Dim1, i, j, k, l, m, n, o, m, k, l, j, Dim0, Dim5, Dim6, Dim4, Dim2, Dim3, Dim1, i, n, o, m, k, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(m, k, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim3, Dim1, m, k, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim4, Dim1, l, k, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim4, Dim1, i, j, k, l, m, n, o, l, k, m, j, Dim0, Dim5, Dim6, Dim3, Dim2, Dim4, Dim1, i, n, o, l, k, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(l, k, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim4, Dim1, l, k, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim3, Dim1, k, m, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim3, Dim1, i, j, k, l, m, n, o, k, m, l, j, Dim0, Dim5, Dim6, Dim2, Dim4, Dim3, Dim1, i, n, o, k, m, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(k, m, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim3, Dim1, k, m, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim4, Dim1, k, l, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim4, Dim1, i, j, k, l, m, n, o, k, l, m, j, Dim0, Dim5, Dim6, Dim2, Dim3, Dim4, Dim1, i, n, o, k, l, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(k, l, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim4, Dim1, k, l, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim1, Dim2, m, l, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim1, Dim2, i, j, k, l, m, n, o, m, l, j, k, Dim0, Dim5, Dim6, Dim4, Dim3, Dim1, Dim2, i, n, o, m, l, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(m, l, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim1, Dim2, m, l, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim1, Dim2, l, m, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim1, Dim2, i, j, k, l, m, n, o, l, m, j, k, Dim0, Dim5, Dim6, Dim3, Dim4, Dim1, Dim2, i, n, o, l, m, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(l, m, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim1, Dim2, l, m, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim1, Dim3, m, k, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim1, Dim3, i, j, k, l, m, n, o, m, k, j, l, Dim0, Dim5, Dim6, Dim4, Dim2, Dim1, Dim3, i, n, o, m, k, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(m, k, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim1, Dim3, m, k, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim1, Dim4, l, k, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim1, Dim4, i, j, k, l, m, n, o, l, k, j, m, Dim0, Dim5, Dim6, Dim3, Dim2, Dim1, Dim4, i, n, o, l, k, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(l, k, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim1, Dim4, l, k, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim1, Dim3, k, m, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim1, Dim3, i, j, k, l, m, n, o, k, m, j, l, Dim0, Dim5, Dim6, Dim2, Dim4, Dim1, Dim3, i, n, o, k, m, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(k, m, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim1, Dim3, k, m, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim1, Dim4, k, l, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim1, Dim4, i, j, k, l, m, n, o, k, l, j, m, Dim0, Dim5, Dim6, Dim2, Dim3, Dim1, Dim4, i, n, o, k, l, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(k, l, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim1, Dim4, k, l, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim3, Dim2, m, j, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim3, Dim2, i, j, k, l, m, n, o, m, j, l, k, Dim0, Dim5, Dim6, Dim4, Dim1, Dim3, Dim2, i, n, o, m, j, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(m, j, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim3, Dim2, m, j, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim4, Dim2, l, j, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim4, Dim2, i, j, k, l, m, n, o, l, j, m, k, Dim0, Dim5, Dim6, Dim3, Dim1, Dim4, Dim2, i, n, o, l, j, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(l, j, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim4, Dim2, l, j, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim2, Dim3, m, j, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim2, Dim3, i, j, k, l, m, n, o, m, j, k, l, Dim0, Dim5, Dim6, Dim4, Dim1, Dim2, Dim3, i, n, o, m, j, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(m, j, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim2, Dim3, m, j, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim2, Dim4, l, j, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim2, Dim4, i, j, k, l, m, n, o, l, j, k, m, Dim0, Dim5, Dim6, Dim3, Dim1, Dim2, Dim4, i, n, o, l, j, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(l, j, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim2, Dim4, l, j, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim4, Dim3, k, j, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim4, Dim3, i, j, k, l, m, n, o, k, j, m, l, Dim0, Dim5, Dim6, Dim2, Dim1, Dim4, Dim3, i, n, o, k, j, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(k, j, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim4, Dim3, k, j, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim3, Dim4, k, j, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim3, Dim4, i, j, k, l, m, n, o, k, j, l, m, Dim0, Dim5, Dim6, Dim2, Dim1, Dim3, Dim4, i, n, o, k, j, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(k, j, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim3, Dim4, k, j, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim3, Dim2, j, m, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim3, Dim2, i, j, k, l, m, n, o, j, m, l, k, Dim0, Dim5, Dim6, Dim1, Dim4, Dim3, Dim2, i, n, o, j, m, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(j, m, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim3, Dim2, j, m, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim4, Dim2, j, l, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim4, Dim2, i, j, k, l, m, n, o, j, l, m, k, Dim0, Dim5, Dim6, Dim1, Dim3, Dim4, Dim2, i, n, o, j, l, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(j, l, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim4, Dim2, j, l, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim2, Dim3, j, m, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim2, Dim3, i, j, k, l, m, n, o, j, m, k, l, Dim0, Dim5, Dim6, Dim1, Dim4, Dim2, Dim3, i, n, o, j, m, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(j, m, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim2, Dim3, j, m, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim2, Dim4, j, l, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim2, Dim4, i, j, k, l, m, n, o, j, l, k, m, Dim0, Dim5, Dim6, Dim1, Dim3, Dim2, Dim4, i, n, o, j, l, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(j, l, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim2, Dim4, j, l, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim4, Dim3, j, k, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim4, Dim3, i, j, k, l, m, n, o, j, k, m, l, Dim0, Dim5, Dim6, Dim1, Dim2, Dim4, Dim3, i, n, o, j, k, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(j, k, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim4, Dim3, j, k, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim3, Dim4, j, k, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim3, Dim4, i, j, k, l, m, n, o, j, k, l, m, Dim0, Dim5, Dim6, Dim1, Dim2, Dim3, Dim4, i, n, o, j, k, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim5, Dim6, i, n, o>(TensorExpr(a, b));
+}
+
+//B(j, k, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim3, Dim4, j, k, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim2, Dim1, n, l, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim2, Dim1, i, j, k, l, m, n, o, n, l, k, j, Dim0, Dim4, Dim6, Dim5, Dim3, Dim2, Dim1, i, m, o, n, l, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(n, l, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim2, Dim1, n, l, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim2, Dim1, l, n, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim2, Dim1, i, j, k, l, m, n, o, l, n, k, j, Dim0, Dim4, Dim6, Dim3, Dim5, Dim2, Dim1, i, m, o, l, n, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(l, n, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim2, Dim1, l, n, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim3, Dim1, n, k, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim3, Dim1, i, j, k, l, m, n, o, n, k, l, j, Dim0, Dim4, Dim6, Dim5, Dim2, Dim3, Dim1, i, m, o, n, k, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(n, k, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim3, Dim1, n, k, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim5, Dim1, l, k, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim5, Dim1, i, j, k, l, m, n, o, l, k, n, j, Dim0, Dim4, Dim6, Dim3, Dim2, Dim5, Dim1, i, m, o, l, k, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(l, k, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim5, Dim1, l, k, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim3, Dim1, k, n, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim3, Dim1, i, j, k, l, m, n, o, k, n, l, j, Dim0, Dim4, Dim6, Dim2, Dim5, Dim3, Dim1, i, m, o, k, n, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(k, n, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim3, Dim1, k, n, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim5, Dim1, k, l, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim5, Dim1, i, j, k, l, m, n, o, k, l, n, j, Dim0, Dim4, Dim6, Dim2, Dim3, Dim5, Dim1, i, m, o, k, l, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(k, l, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim5, Dim1, k, l, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim1, Dim2, n, l, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim1, Dim2, i, j, k, l, m, n, o, n, l, j, k, Dim0, Dim4, Dim6, Dim5, Dim3, Dim1, Dim2, i, m, o, n, l, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(n, l, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim1, Dim2, n, l, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim1, Dim2, l, n, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim1, Dim2, i, j, k, l, m, n, o, l, n, j, k, Dim0, Dim4, Dim6, Dim3, Dim5, Dim1, Dim2, i, m, o, l, n, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(l, n, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim1, Dim2, l, n, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim1, Dim3, n, k, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim1, Dim3, i, j, k, l, m, n, o, n, k, j, l, Dim0, Dim4, Dim6, Dim5, Dim2, Dim1, Dim3, i, m, o, n, k, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(n, k, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim1, Dim3, n, k, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim1, Dim5, l, k, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim1, Dim5, i, j, k, l, m, n, o, l, k, j, n, Dim0, Dim4, Dim6, Dim3, Dim2, Dim1, Dim5, i, m, o, l, k, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(l, k, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim1, Dim5, l, k, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim1, Dim3, k, n, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim1, Dim3, i, j, k, l, m, n, o, k, n, j, l, Dim0, Dim4, Dim6, Dim2, Dim5, Dim1, Dim3, i, m, o, k, n, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(k, n, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim1, Dim3, k, n, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim1, Dim5, k, l, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim1, Dim5, i, j, k, l, m, n, o, k, l, j, n, Dim0, Dim4, Dim6, Dim2, Dim3, Dim1, Dim5, i, m, o, k, l, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(k, l, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim1, Dim5, k, l, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim3, Dim2, n, j, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim3, Dim2, i, j, k, l, m, n, o, n, j, l, k, Dim0, Dim4, Dim6, Dim5, Dim1, Dim3, Dim2, i, m, o, n, j, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(n, j, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim3, Dim2, n, j, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim5, Dim2, l, j, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim5, Dim2, i, j, k, l, m, n, o, l, j, n, k, Dim0, Dim4, Dim6, Dim3, Dim1, Dim5, Dim2, i, m, o, l, j, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(l, j, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim5, Dim2, l, j, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim2, Dim3, n, j, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim2, Dim3, i, j, k, l, m, n, o, n, j, k, l, Dim0, Dim4, Dim6, Dim5, Dim1, Dim2, Dim3, i, m, o, n, j, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(n, j, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim2, Dim3, n, j, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim2, Dim5, l, j, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim2, Dim5, i, j, k, l, m, n, o, l, j, k, n, Dim0, Dim4, Dim6, Dim3, Dim1, Dim2, Dim5, i, m, o, l, j, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(l, j, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim2, Dim5, l, j, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim5, Dim3, k, j, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim5, Dim3, i, j, k, l, m, n, o, k, j, n, l, Dim0, Dim4, Dim6, Dim2, Dim1, Dim5, Dim3, i, m, o, k, j, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(k, j, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim5, Dim3, k, j, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim3, Dim5, k, j, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim3, Dim5, i, j, k, l, m, n, o, k, j, l, n, Dim0, Dim4, Dim6, Dim2, Dim1, Dim3, Dim5, i, m, o, k, j, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(k, j, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim3, Dim5, k, j, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim3, Dim2, j, n, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim3, Dim2, i, j, k, l, m, n, o, j, n, l, k, Dim0, Dim4, Dim6, Dim1, Dim5, Dim3, Dim2, i, m, o, j, n, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(j, n, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim3, Dim2, j, n, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim5, Dim2, j, l, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim5, Dim2, i, j, k, l, m, n, o, j, l, n, k, Dim0, Dim4, Dim6, Dim1, Dim3, Dim5, Dim2, i, m, o, j, l, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(j, l, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim5, Dim2, j, l, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim2, Dim3, j, n, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim2, Dim3, i, j, k, l, m, n, o, j, n, k, l, Dim0, Dim4, Dim6, Dim1, Dim5, Dim2, Dim3, i, m, o, j, n, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(j, n, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim2, Dim3, j, n, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim2, Dim5, j, l, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim2, Dim5, i, j, k, l, m, n, o, j, l, k, n, Dim0, Dim4, Dim6, Dim1, Dim3, Dim2, Dim5, i, m, o, j, l, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(j, l, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim2, Dim5, j, l, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim5, Dim3, j, k, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim5, Dim3, i, j, k, l, m, n, o, j, k, n, l, Dim0, Dim4, Dim6, Dim1, Dim2, Dim5, Dim3, i, m, o, j, k, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(j, k, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim5, Dim3, j, k, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim3, Dim5, j, k, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim3, Dim5, i, j, k, l, m, n, o, j, k, l, n, Dim0, Dim4, Dim6, Dim1, Dim2, Dim3, Dim5, i, m, o, j, k, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim6, i, m, o>(TensorExpr(a, b));
+}
+
+//B(j, k, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim3, Dim5, j, k, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim2, Dim1, o, l, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim2, Dim1, i, j, k, l, m, n, o, o, l, k, j, Dim0, Dim4, Dim5, Dim6, Dim3, Dim2, Dim1, i, m, n, o, l, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(o, l, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim2, Dim1, o, l, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim2, Dim1, l, o, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim2, Dim1, i, j, k, l, m, n, o, l, o, k, j, Dim0, Dim4, Dim5, Dim3, Dim6, Dim2, Dim1, i, m, n, l, o, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(l, o, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim2, Dim1, l, o, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim3, Dim1, o, k, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim3, Dim1, i, j, k, l, m, n, o, o, k, l, j, Dim0, Dim4, Dim5, Dim6, Dim2, Dim3, Dim1, i, m, n, o, k, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(o, k, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim3, Dim1, o, k, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim6, Dim1, l, k, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim6, Dim1, i, j, k, l, m, n, o, l, k, o, j, Dim0, Dim4, Dim5, Dim3, Dim2, Dim6, Dim1, i, m, n, l, k, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(l, k, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim6, Dim1, l, k, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim3, Dim1, k, o, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim3, Dim1, i, j, k, l, m, n, o, k, o, l, j, Dim0, Dim4, Dim5, Dim2, Dim6, Dim3, Dim1, i, m, n, k, o, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(k, o, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim3, Dim1, k, o, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim6, Dim1, k, l, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim6, Dim1, i, j, k, l, m, n, o, k, l, o, j, Dim0, Dim4, Dim5, Dim2, Dim3, Dim6, Dim1, i, m, n, k, l, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(k, l, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim6, Dim1, k, l, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim1, Dim2, o, l, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim1, Dim2, i, j, k, l, m, n, o, o, l, j, k, Dim0, Dim4, Dim5, Dim6, Dim3, Dim1, Dim2, i, m, n, o, l, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(o, l, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim1, Dim2, o, l, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim1, Dim2, l, o, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim1, Dim2, i, j, k, l, m, n, o, l, o, j, k, Dim0, Dim4, Dim5, Dim3, Dim6, Dim1, Dim2, i, m, n, l, o, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(l, o, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim1, Dim2, l, o, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim1, Dim3, o, k, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim1, Dim3, i, j, k, l, m, n, o, o, k, j, l, Dim0, Dim4, Dim5, Dim6, Dim2, Dim1, Dim3, i, m, n, o, k, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(o, k, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim1, Dim3, o, k, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim1, Dim6, l, k, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim1, Dim6, i, j, k, l, m, n, o, l, k, j, o, Dim0, Dim4, Dim5, Dim3, Dim2, Dim1, Dim6, i, m, n, l, k, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(l, k, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim1, Dim6, l, k, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim1, Dim3, k, o, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim1, Dim3, i, j, k, l, m, n, o, k, o, j, l, Dim0, Dim4, Dim5, Dim2, Dim6, Dim1, Dim3, i, m, n, k, o, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(k, o, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim1, Dim3, k, o, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim1, Dim6, k, l, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim1, Dim6, i, j, k, l, m, n, o, k, l, j, o, Dim0, Dim4, Dim5, Dim2, Dim3, Dim1, Dim6, i, m, n, k, l, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(k, l, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim1, Dim6, k, l, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim3, Dim2, o, j, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim3, Dim2, i, j, k, l, m, n, o, o, j, l, k, Dim0, Dim4, Dim5, Dim6, Dim1, Dim3, Dim2, i, m, n, o, j, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(o, j, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim3, Dim2, o, j, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim6, Dim2, l, j, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim6, Dim2, i, j, k, l, m, n, o, l, j, o, k, Dim0, Dim4, Dim5, Dim3, Dim1, Dim6, Dim2, i, m, n, l, j, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(l, j, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim6, Dim2, l, j, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim2, Dim3, o, j, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim2, Dim3, i, j, k, l, m, n, o, o, j, k, l, Dim0, Dim4, Dim5, Dim6, Dim1, Dim2, Dim3, i, m, n, o, j, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(o, j, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim2, Dim3, o, j, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim2, Dim6, l, j, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim2, Dim6, i, j, k, l, m, n, o, l, j, k, o, Dim0, Dim4, Dim5, Dim3, Dim1, Dim2, Dim6, i, m, n, l, j, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(l, j, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim2, Dim6, l, j, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim6, Dim3, k, j, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim6, Dim3, i, j, k, l, m, n, o, k, j, o, l, Dim0, Dim4, Dim5, Dim2, Dim1, Dim6, Dim3, i, m, n, k, j, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(k, j, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim6, Dim3, k, j, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim3, Dim6, k, j, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim3, Dim6, i, j, k, l, m, n, o, k, j, l, o, Dim0, Dim4, Dim5, Dim2, Dim1, Dim3, Dim6, i, m, n, k, j, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(k, j, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim3, Dim6, k, j, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim3, Dim2, j, o, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim3, Dim2, i, j, k, l, m, n, o, j, o, l, k, Dim0, Dim4, Dim5, Dim1, Dim6, Dim3, Dim2, i, m, n, j, o, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(j, o, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim3, Dim2, j, o, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim6, Dim2, j, l, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim6, Dim2, i, j, k, l, m, n, o, j, l, o, k, Dim0, Dim4, Dim5, Dim1, Dim3, Dim6, Dim2, i, m, n, j, l, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(j, l, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim6, Dim2, j, l, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim2, Dim3, j, o, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim2, Dim3, i, j, k, l, m, n, o, j, o, k, l, Dim0, Dim4, Dim5, Dim1, Dim6, Dim2, Dim3, i, m, n, j, o, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(j, o, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim2, Dim3, j, o, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim2, Dim6, j, l, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim2, Dim6, i, j, k, l, m, n, o, j, l, k, o, Dim0, Dim4, Dim5, Dim1, Dim3, Dim2, Dim6, i, m, n, j, l, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(j, l, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim2, Dim6, j, l, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim6, Dim3, j, k, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim6, Dim3, i, j, k, l, m, n, o, j, k, o, l, Dim0, Dim4, Dim5, Dim1, Dim2, Dim6, Dim3, i, m, n, j, k, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(j, k, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim6, Dim3, j, k, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim3, Dim6, j, k, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim3, Dim6, i, j, k, l, m, n, o, j, k, l, o, Dim0, Dim4, Dim5, Dim1, Dim2, Dim3, Dim6, i, m, n, j, k, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim4, Dim5, i, m, n>(TensorExpr(a, b));
+}
+
+//B(j, k, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim3, Dim6, j, k, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim2, Dim1, n, m, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim2, Dim1, i, j, k, l, m, n, o, n, m, k, j, Dim0, Dim3, Dim6, Dim5, Dim4, Dim2, Dim1, i, l, o, n, m, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(n, m, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim2, Dim1, n, m, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim2, Dim1, m, n, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim2, Dim1, i, j, k, l, m, n, o, m, n, k, j, Dim0, Dim3, Dim6, Dim4, Dim5, Dim2, Dim1, i, l, o, m, n, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(m, n, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim2, Dim1, m, n, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim4, Dim1, n, k, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim4, Dim1, i, j, k, l, m, n, o, n, k, m, j, Dim0, Dim3, Dim6, Dim5, Dim2, Dim4, Dim1, i, l, o, n, k, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(n, k, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim4, Dim1, n, k, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim5, Dim1, m, k, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim5, Dim1, i, j, k, l, m, n, o, m, k, n, j, Dim0, Dim3, Dim6, Dim4, Dim2, Dim5, Dim1, i, l, o, m, k, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(m, k, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim5, Dim1, m, k, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim4, Dim1, k, n, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim4, Dim1, i, j, k, l, m, n, o, k, n, m, j, Dim0, Dim3, Dim6, Dim2, Dim5, Dim4, Dim1, i, l, o, k, n, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(k, n, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim4, Dim1, k, n, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim5, Dim1, k, m, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim5, Dim1, i, j, k, l, m, n, o, k, m, n, j, Dim0, Dim3, Dim6, Dim2, Dim4, Dim5, Dim1, i, l, o, k, m, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(k, m, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim5, Dim1, k, m, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim1, Dim2, n, m, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim1, Dim2, i, j, k, l, m, n, o, n, m, j, k, Dim0, Dim3, Dim6, Dim5, Dim4, Dim1, Dim2, i, l, o, n, m, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(n, m, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim1, Dim2, n, m, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim1, Dim2, m, n, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim1, Dim2, i, j, k, l, m, n, o, m, n, j, k, Dim0, Dim3, Dim6, Dim4, Dim5, Dim1, Dim2, i, l, o, m, n, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(m, n, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim1, Dim2, m, n, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim1, Dim4, n, k, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim1, Dim4, i, j, k, l, m, n, o, n, k, j, m, Dim0, Dim3, Dim6, Dim5, Dim2, Dim1, Dim4, i, l, o, n, k, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(n, k, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim1, Dim4, n, k, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim1, Dim5, m, k, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim1, Dim5, i, j, k, l, m, n, o, m, k, j, n, Dim0, Dim3, Dim6, Dim4, Dim2, Dim1, Dim5, i, l, o, m, k, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(m, k, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim1, Dim5, m, k, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim1, Dim4, k, n, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim1, Dim4, i, j, k, l, m, n, o, k, n, j, m, Dim0, Dim3, Dim6, Dim2, Dim5, Dim1, Dim4, i, l, o, k, n, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(k, n, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim1, Dim4, k, n, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim1, Dim5, k, m, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim1, Dim5, i, j, k, l, m, n, o, k, m, j, n, Dim0, Dim3, Dim6, Dim2, Dim4, Dim1, Dim5, i, l, o, k, m, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(k, m, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim1, Dim5, k, m, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim4, Dim2, n, j, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim4, Dim2, i, j, k, l, m, n, o, n, j, m, k, Dim0, Dim3, Dim6, Dim5, Dim1, Dim4, Dim2, i, l, o, n, j, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(n, j, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim4, Dim2, n, j, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim5, Dim2, m, j, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim5, Dim2, i, j, k, l, m, n, o, m, j, n, k, Dim0, Dim3, Dim6, Dim4, Dim1, Dim5, Dim2, i, l, o, m, j, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(m, j, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim5, Dim2, m, j, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim2, Dim4, n, j, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim2, Dim4, i, j, k, l, m, n, o, n, j, k, m, Dim0, Dim3, Dim6, Dim5, Dim1, Dim2, Dim4, i, l, o, n, j, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(n, j, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim2, Dim4, n, j, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim2, Dim5, m, j, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim2, Dim5, i, j, k, l, m, n, o, m, j, k, n, Dim0, Dim3, Dim6, Dim4, Dim1, Dim2, Dim5, i, l, o, m, j, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(m, j, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim2, Dim5, m, j, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim5, Dim4, k, j, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim5, Dim4, i, j, k, l, m, n, o, k, j, n, m, Dim0, Dim3, Dim6, Dim2, Dim1, Dim5, Dim4, i, l, o, k, j, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(k, j, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim5, Dim4, k, j, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim4, Dim5, k, j, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim4, Dim5, i, j, k, l, m, n, o, k, j, m, n, Dim0, Dim3, Dim6, Dim2, Dim1, Dim4, Dim5, i, l, o, k, j, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(k, j, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim4, Dim5, k, j, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim4, Dim2, j, n, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim4, Dim2, i, j, k, l, m, n, o, j, n, m, k, Dim0, Dim3, Dim6, Dim1, Dim5, Dim4, Dim2, i, l, o, j, n, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(j, n, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim4, Dim2, j, n, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim5, Dim2, j, m, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim5, Dim2, i, j, k, l, m, n, o, j, m, n, k, Dim0, Dim3, Dim6, Dim1, Dim4, Dim5, Dim2, i, l, o, j, m, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(j, m, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim5, Dim2, j, m, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim2, Dim4, j, n, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim2, Dim4, i, j, k, l, m, n, o, j, n, k, m, Dim0, Dim3, Dim6, Dim1, Dim5, Dim2, Dim4, i, l, o, j, n, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(j, n, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim2, Dim4, j, n, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim2, Dim5, j, m, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim2, Dim5, i, j, k, l, m, n, o, j, m, k, n, Dim0, Dim3, Dim6, Dim1, Dim4, Dim2, Dim5, i, l, o, j, m, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(j, m, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim2, Dim5, j, m, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim5, Dim4, j, k, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim5, Dim4, i, j, k, l, m, n, o, j, k, n, m, Dim0, Dim3, Dim6, Dim1, Dim2, Dim5, Dim4, i, l, o, j, k, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(j, k, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim5, Dim4, j, k, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim4, Dim5, j, k, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim4, Dim5, i, j, k, l, m, n, o, j, k, m, n, Dim0, Dim3, Dim6, Dim1, Dim2, Dim4, Dim5, i, l, o, j, k, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim6, i, l, o>(TensorExpr(a, b));
+}
+
+//B(j, k, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim4, Dim5, j, k, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim2, Dim1, o, m, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim2, Dim1, i, j, k, l, m, n, o, o, m, k, j, Dim0, Dim3, Dim5, Dim6, Dim4, Dim2, Dim1, i, l, n, o, m, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(o, m, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim2, Dim1, o, m, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim2, Dim1, m, o, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim2, Dim1, i, j, k, l, m, n, o, m, o, k, j, Dim0, Dim3, Dim5, Dim4, Dim6, Dim2, Dim1, i, l, n, m, o, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(m, o, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim2, Dim1, m, o, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim4, Dim1, o, k, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim4, Dim1, i, j, k, l, m, n, o, o, k, m, j, Dim0, Dim3, Dim5, Dim6, Dim2, Dim4, Dim1, i, l, n, o, k, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(o, k, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim4, Dim1, o, k, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim6, Dim1, m, k, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim6, Dim1, i, j, k, l, m, n, o, m, k, o, j, Dim0, Dim3, Dim5, Dim4, Dim2, Dim6, Dim1, i, l, n, m, k, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(m, k, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim6, Dim1, m, k, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim4, Dim1, k, o, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim4, Dim1, i, j, k, l, m, n, o, k, o, m, j, Dim0, Dim3, Dim5, Dim2, Dim6, Dim4, Dim1, i, l, n, k, o, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(k, o, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim4, Dim1, k, o, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim6, Dim1, k, m, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim6, Dim1, i, j, k, l, m, n, o, k, m, o, j, Dim0, Dim3, Dim5, Dim2, Dim4, Dim6, Dim1, i, l, n, k, m, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(k, m, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim6, Dim1, k, m, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim1, Dim2, o, m, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim1, Dim2, i, j, k, l, m, n, o, o, m, j, k, Dim0, Dim3, Dim5, Dim6, Dim4, Dim1, Dim2, i, l, n, o, m, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(o, m, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim1, Dim2, o, m, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim1, Dim2, m, o, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim1, Dim2, i, j, k, l, m, n, o, m, o, j, k, Dim0, Dim3, Dim5, Dim4, Dim6, Dim1, Dim2, i, l, n, m, o, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(m, o, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim1, Dim2, m, o, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim1, Dim4, o, k, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim1, Dim4, i, j, k, l, m, n, o, o, k, j, m, Dim0, Dim3, Dim5, Dim6, Dim2, Dim1, Dim4, i, l, n, o, k, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(o, k, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim1, Dim4, o, k, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim1, Dim6, m, k, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim1, Dim6, i, j, k, l, m, n, o, m, k, j, o, Dim0, Dim3, Dim5, Dim4, Dim2, Dim1, Dim6, i, l, n, m, k, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(m, k, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim1, Dim6, m, k, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim1, Dim4, k, o, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim1, Dim4, i, j, k, l, m, n, o, k, o, j, m, Dim0, Dim3, Dim5, Dim2, Dim6, Dim1, Dim4, i, l, n, k, o, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(k, o, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim1, Dim4, k, o, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim1, Dim6, k, m, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim1, Dim6, i, j, k, l, m, n, o, k, m, j, o, Dim0, Dim3, Dim5, Dim2, Dim4, Dim1, Dim6, i, l, n, k, m, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(k, m, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim1, Dim6, k, m, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim4, Dim2, o, j, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim4, Dim2, i, j, k, l, m, n, o, o, j, m, k, Dim0, Dim3, Dim5, Dim6, Dim1, Dim4, Dim2, i, l, n, o, j, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(o, j, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim4, Dim2, o, j, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim6, Dim2, m, j, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim6, Dim2, i, j, k, l, m, n, o, m, j, o, k, Dim0, Dim3, Dim5, Dim4, Dim1, Dim6, Dim2, i, l, n, m, j, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(m, j, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim6, Dim2, m, j, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim2, Dim4, o, j, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim2, Dim4, i, j, k, l, m, n, o, o, j, k, m, Dim0, Dim3, Dim5, Dim6, Dim1, Dim2, Dim4, i, l, n, o, j, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(o, j, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim2, Dim4, o, j, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim2, Dim6, m, j, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim2, Dim6, i, j, k, l, m, n, o, m, j, k, o, Dim0, Dim3, Dim5, Dim4, Dim1, Dim2, Dim6, i, l, n, m, j, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(m, j, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim2, Dim6, m, j, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim6, Dim4, k, j, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim6, Dim4, i, j, k, l, m, n, o, k, j, o, m, Dim0, Dim3, Dim5, Dim2, Dim1, Dim6, Dim4, i, l, n, k, j, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(k, j, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim6, Dim4, k, j, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim4, Dim6, k, j, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim4, Dim6, i, j, k, l, m, n, o, k, j, m, o, Dim0, Dim3, Dim5, Dim2, Dim1, Dim4, Dim6, i, l, n, k, j, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(k, j, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim4, Dim6, k, j, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim4, Dim2, j, o, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim4, Dim2, i, j, k, l, m, n, o, j, o, m, k, Dim0, Dim3, Dim5, Dim1, Dim6, Dim4, Dim2, i, l, n, j, o, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(j, o, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim4, Dim2, j, o, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim6, Dim2, j, m, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim6, Dim2, i, j, k, l, m, n, o, j, m, o, k, Dim0, Dim3, Dim5, Dim1, Dim4, Dim6, Dim2, i, l, n, j, m, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(j, m, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim6, Dim2, j, m, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim2, Dim4, j, o, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim2, Dim4, i, j, k, l, m, n, o, j, o, k, m, Dim0, Dim3, Dim5, Dim1, Dim6, Dim2, Dim4, i, l, n, j, o, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(j, o, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim2, Dim4, j, o, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim2, Dim6, j, m, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim2, Dim6, i, j, k, l, m, n, o, j, m, k, o, Dim0, Dim3, Dim5, Dim1, Dim4, Dim2, Dim6, i, l, n, j, m, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(j, m, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim2, Dim6, j, m, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim6, Dim4, j, k, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim6, Dim4, i, j, k, l, m, n, o, j, k, o, m, Dim0, Dim3, Dim5, Dim1, Dim2, Dim6, Dim4, i, l, n, j, k, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(j, k, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim6, Dim4, j, k, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim4, Dim6, j, k, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim4, Dim6, i, j, k, l, m, n, o, j, k, m, o, Dim0, Dim3, Dim5, Dim1, Dim2, Dim4, Dim6, i, l, n, j, k, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim5, i, l, n>(TensorExpr(a, b));
+}
+
+//B(j, k, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim4, Dim6, j, k, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim2, Dim1, o, n, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim2, Dim1, i, j, k, l, m, n, o, o, n, k, j, Dim0, Dim3, Dim4, Dim6, Dim5, Dim2, Dim1, i, l, m, o, n, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(o, n, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim2, Dim1, o, n, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, k, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim2, Dim1, n, o, k, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim2, Dim1, i, j, k, l, m, n, o, n, o, k, j, Dim0, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, i, l, m, n, o, k, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(n, o, k, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim2, Dim1, n, o, k, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim5, Dim1, o, k, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim5, Dim1, i, j, k, l, m, n, o, o, k, n, j, Dim0, Dim3, Dim4, Dim6, Dim2, Dim5, Dim1, i, l, m, o, k, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(o, k, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim5, Dim1, o, k, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim6, Dim1, n, k, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim6, Dim1, i, j, k, l, m, n, o, n, k, o, j, Dim0, Dim3, Dim4, Dim5, Dim2, Dim6, Dim1, i, l, m, n, k, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(n, k, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim6, Dim1, n, k, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim5, Dim1, k, o, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim5, Dim1, i, j, k, l, m, n, o, k, o, n, j, Dim0, Dim3, Dim4, Dim2, Dim6, Dim5, Dim1, i, l, m, k, o, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(k, o, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim5, Dim1, k, o, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim6, Dim1, k, n, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim6, Dim1, i, j, k, l, m, n, o, k, n, o, j, Dim0, Dim3, Dim4, Dim2, Dim5, Dim6, Dim1, i, l, m, k, n, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(k, n, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim6, Dim1, k, n, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim1, Dim2, o, n, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim1, Dim2, i, j, k, l, m, n, o, o, n, j, k, Dim0, Dim3, Dim4, Dim6, Dim5, Dim1, Dim2, i, l, m, o, n, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(o, n, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim1, Dim2, o, n, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, j, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim1, Dim2, n, o, j, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim1, Dim2, i, j, k, l, m, n, o, n, o, j, k, Dim0, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, i, l, m, n, o, j, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(n, o, j, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim1, Dim2, n, o, j, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim1, Dim5, o, k, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim1, Dim5, i, j, k, l, m, n, o, o, k, j, n, Dim0, Dim3, Dim4, Dim6, Dim2, Dim1, Dim5, i, l, m, o, k, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(o, k, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim1, Dim5, o, k, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim1, Dim6, n, k, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim1, Dim6, i, j, k, l, m, n, o, n, k, j, o, Dim0, Dim3, Dim4, Dim5, Dim2, Dim1, Dim6, i, l, m, n, k, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(n, k, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim1, Dim6, n, k, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim1, Dim5, k, o, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim1, Dim5, i, j, k, l, m, n, o, k, o, j, n, Dim0, Dim3, Dim4, Dim2, Dim6, Dim1, Dim5, i, l, m, k, o, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(k, o, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim1, Dim5, k, o, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim1, Dim6, k, n, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim1, Dim6, i, j, k, l, m, n, o, k, n, j, o, Dim0, Dim3, Dim4, Dim2, Dim5, Dim1, Dim6, i, l, m, k, n, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(k, n, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim1, Dim6, k, n, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim5, Dim2, o, j, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim5, Dim2, i, j, k, l, m, n, o, o, j, n, k, Dim0, Dim3, Dim4, Dim6, Dim1, Dim5, Dim2, i, l, m, o, j, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(o, j, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim5, Dim2, o, j, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim6, Dim2, n, j, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim6, Dim2, i, j, k, l, m, n, o, n, j, o, k, Dim0, Dim3, Dim4, Dim5, Dim1, Dim6, Dim2, i, l, m, n, j, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(n, j, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim6, Dim2, n, j, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim2, Dim5, o, j, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim2, Dim5, i, j, k, l, m, n, o, o, j, k, n, Dim0, Dim3, Dim4, Dim6, Dim1, Dim2, Dim5, i, l, m, o, j, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(o, j, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim2, Dim5, o, j, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim2, Dim6, n, j, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim2, Dim6, i, j, k, l, m, n, o, n, j, k, o, Dim0, Dim3, Dim4, Dim5, Dim1, Dim2, Dim6, i, l, m, n, j, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(n, j, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim2, Dim6, n, j, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim6, Dim5, k, j, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim6, Dim5, i, j, k, l, m, n, o, k, j, o, n, Dim0, Dim3, Dim4, Dim2, Dim1, Dim6, Dim5, i, l, m, k, j, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(k, j, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim6, Dim5, k, j, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, j, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim1, Dim5, Dim6, k, j, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim1, Dim5, Dim6, i, j, k, l, m, n, o, k, j, n, o, Dim0, Dim3, Dim4, Dim2, Dim1, Dim5, Dim6, i, l, m, k, j, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(k, j, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim1, Dim5, Dim6, k, j, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim5, Dim2, j, o, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim5, Dim2, i, j, k, l, m, n, o, j, o, n, k, Dim0, Dim3, Dim4, Dim1, Dim6, Dim5, Dim2, i, l, m, j, o, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(j, o, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim5, Dim2, j, o, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim6, Dim2, j, n, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim6, Dim2, i, j, k, l, m, n, o, j, n, o, k, Dim0, Dim3, Dim4, Dim1, Dim5, Dim6, Dim2, i, l, m, j, n, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(j, n, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim6, Dim2, j, n, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim2, Dim5, j, o, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim2, Dim5, i, j, k, l, m, n, o, j, o, k, n, Dim0, Dim3, Dim4, Dim1, Dim6, Dim2, Dim5, i, l, m, j, o, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(j, o, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim2, Dim5, j, o, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim2, Dim6, j, n, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim2, Dim6, i, j, k, l, m, n, o, j, n, k, o, Dim0, Dim3, Dim4, Dim1, Dim5, Dim2, Dim6, i, l, m, j, n, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(j, n, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim2, Dim6, j, n, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim6, Dim5, j, k, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim6, Dim5, i, j, k, l, m, n, o, j, k, o, n, Dim0, Dim3, Dim4, Dim1, Dim2, Dim6, Dim5, i, l, m, j, k, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(j, k, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim6, Dim5, j, k, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, k, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim2, Dim5, Dim6, j, k, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim2, Dim5, Dim6, i, j, k, l, m, n, o, j, k, n, o, Dim0, Dim3, Dim4, Dim1, Dim2, Dim5, Dim6, i, l, m, j, k, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
+}
+
+//B(j, k, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim2, Dim5, Dim6, j, k, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim3, Dim1, n, m, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim3, Dim1, i, j, k, l, m, n, o, n, m, l, j, Dim0, Dim2, Dim6, Dim5, Dim4, Dim3, Dim1, i, k, o, n, m, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(n, m, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim3, Dim1, n, m, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim3, Dim1, m, n, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim3, Dim1, i, j, k, l, m, n, o, m, n, l, j, Dim0, Dim2, Dim6, Dim4, Dim5, Dim3, Dim1, i, k, o, m, n, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(m, n, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim3, Dim1, m, n, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim4, Dim1, n, l, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim4, Dim1, i, j, k, l, m, n, o, n, l, m, j, Dim0, Dim2, Dim6, Dim5, Dim3, Dim4, Dim1, i, k, o, n, l, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(n, l, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim4, Dim1, n, l, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim5, Dim1, m, l, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim5, Dim1, i, j, k, l, m, n, o, m, l, n, j, Dim0, Dim2, Dim6, Dim4, Dim3, Dim5, Dim1, i, k, o, m, l, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(m, l, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim5, Dim1, m, l, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim4, Dim1, l, n, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim4, Dim1, i, j, k, l, m, n, o, l, n, m, j, Dim0, Dim2, Dim6, Dim3, Dim5, Dim4, Dim1, i, k, o, l, n, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(l, n, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim4, Dim1, l, n, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim5, Dim1, l, m, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim5, Dim1, i, j, k, l, m, n, o, l, m, n, j, Dim0, Dim2, Dim6, Dim3, Dim4, Dim5, Dim1, i, k, o, l, m, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(l, m, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim5, Dim1, l, m, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim1, Dim3, n, m, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim1, Dim3, i, j, k, l, m, n, o, n, m, j, l, Dim0, Dim2, Dim6, Dim5, Dim4, Dim1, Dim3, i, k, o, n, m, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(n, m, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim1, Dim3, n, m, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim1, Dim3, m, n, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim1, Dim3, i, j, k, l, m, n, o, m, n, j, l, Dim0, Dim2, Dim6, Dim4, Dim5, Dim1, Dim3, i, k, o, m, n, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(m, n, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim1, Dim3, m, n, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim1, Dim4, n, l, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim1, Dim4, i, j, k, l, m, n, o, n, l, j, m, Dim0, Dim2, Dim6, Dim5, Dim3, Dim1, Dim4, i, k, o, n, l, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(n, l, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim1, Dim4, n, l, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim1, Dim5, m, l, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim1, Dim5, i, j, k, l, m, n, o, m, l, j, n, Dim0, Dim2, Dim6, Dim4, Dim3, Dim1, Dim5, i, k, o, m, l, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(m, l, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim1, Dim5, m, l, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim1, Dim4, l, n, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim1, Dim4, i, j, k, l, m, n, o, l, n, j, m, Dim0, Dim2, Dim6, Dim3, Dim5, Dim1, Dim4, i, k, o, l, n, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(l, n, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim1, Dim4, l, n, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim1, Dim5, l, m, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim1, Dim5, i, j, k, l, m, n, o, l, m, j, n, Dim0, Dim2, Dim6, Dim3, Dim4, Dim1, Dim5, i, k, o, l, m, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(l, m, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim1, Dim5, l, m, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim4, Dim3, n, j, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim4, Dim3, i, j, k, l, m, n, o, n, j, m, l, Dim0, Dim2, Dim6, Dim5, Dim1, Dim4, Dim3, i, k, o, n, j, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(n, j, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim4, Dim3, n, j, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim5, Dim3, m, j, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim5, Dim3, i, j, k, l, m, n, o, m, j, n, l, Dim0, Dim2, Dim6, Dim4, Dim1, Dim5, Dim3, i, k, o, m, j, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(m, j, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim5, Dim3, m, j, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim3, Dim4, n, j, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim3, Dim4, i, j, k, l, m, n, o, n, j, l, m, Dim0, Dim2, Dim6, Dim5, Dim1, Dim3, Dim4, i, k, o, n, j, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(n, j, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim3, Dim4, n, j, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim3, Dim5, m, j, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim3, Dim5, i, j, k, l, m, n, o, m, j, l, n, Dim0, Dim2, Dim6, Dim4, Dim1, Dim3, Dim5, i, k, o, m, j, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(m, j, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim3, Dim5, m, j, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim5, Dim4, l, j, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim5, Dim4, i, j, k, l, m, n, o, l, j, n, m, Dim0, Dim2, Dim6, Dim3, Dim1, Dim5, Dim4, i, k, o, l, j, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(l, j, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim5, Dim4, l, j, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim4, Dim5, l, j, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim4, Dim5, i, j, k, l, m, n, o, l, j, m, n, Dim0, Dim2, Dim6, Dim3, Dim1, Dim4, Dim5, i, k, o, l, j, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(l, j, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim4, Dim5, l, j, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim4, Dim3, j, n, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim4, Dim3, i, j, k, l, m, n, o, j, n, m, l, Dim0, Dim2, Dim6, Dim1, Dim5, Dim4, Dim3, i, k, o, j, n, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(j, n, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim4, Dim3, j, n, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim5, Dim3, j, m, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim5, Dim3, i, j, k, l, m, n, o, j, m, n, l, Dim0, Dim2, Dim6, Dim1, Dim4, Dim5, Dim3, i, k, o, j, m, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(j, m, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim5, Dim3, j, m, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim3, Dim4, j, n, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim3, Dim4, i, j, k, l, m, n, o, j, n, l, m, Dim0, Dim2, Dim6, Dim1, Dim5, Dim3, Dim4, i, k, o, j, n, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(j, n, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim3, Dim4, j, n, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim3, Dim5, j, m, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim3, Dim5, i, j, k, l, m, n, o, j, m, l, n, Dim0, Dim2, Dim6, Dim1, Dim4, Dim3, Dim5, i, k, o, j, m, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(j, m, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim3, Dim5, j, m, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim5, Dim4, j, l, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim5, Dim4, i, j, k, l, m, n, o, j, l, n, m, Dim0, Dim2, Dim6, Dim1, Dim3, Dim5, Dim4, i, k, o, j, l, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(j, l, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim5, Dim4, j, l, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim4, Dim5, j, l, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim4, Dim5, i, j, k, l, m, n, o, j, l, m, n, Dim0, Dim2, Dim6, Dim1, Dim3, Dim4, Dim5, i, k, o, j, l, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim6, i, k, o>(TensorExpr(a, b));
+}
+
+//B(j, l, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim4, Dim5, j, l, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim3, Dim1, o, m, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim3, Dim1, i, j, k, l, m, n, o, o, m, l, j, Dim0, Dim2, Dim5, Dim6, Dim4, Dim3, Dim1, i, k, n, o, m, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(o, m, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim3, Dim1, o, m, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim3, Dim1, m, o, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim3, Dim1, i, j, k, l, m, n, o, m, o, l, j, Dim0, Dim2, Dim5, Dim4, Dim6, Dim3, Dim1, i, k, n, m, o, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(m, o, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim3, Dim1, m, o, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim4, Dim1, o, l, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim4, Dim1, i, j, k, l, m, n, o, o, l, m, j, Dim0, Dim2, Dim5, Dim6, Dim3, Dim4, Dim1, i, k, n, o, l, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(o, l, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim4, Dim1, o, l, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim6, Dim1, m, l, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim6, Dim1, i, j, k, l, m, n, o, m, l, o, j, Dim0, Dim2, Dim5, Dim4, Dim3, Dim6, Dim1, i, k, n, m, l, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(m, l, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim6, Dim1, m, l, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim4, Dim1, l, o, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim4, Dim1, i, j, k, l, m, n, o, l, o, m, j, Dim0, Dim2, Dim5, Dim3, Dim6, Dim4, Dim1, i, k, n, l, o, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(l, o, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim4, Dim1, l, o, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim6, Dim1, l, m, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim6, Dim1, i, j, k, l, m, n, o, l, m, o, j, Dim0, Dim2, Dim5, Dim3, Dim4, Dim6, Dim1, i, k, n, l, m, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(l, m, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim6, Dim1, l, m, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim1, Dim3, o, m, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim1, Dim3, i, j, k, l, m, n, o, o, m, j, l, Dim0, Dim2, Dim5, Dim6, Dim4, Dim1, Dim3, i, k, n, o, m, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(o, m, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim1, Dim3, o, m, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim1, Dim3, m, o, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim1, Dim3, i, j, k, l, m, n, o, m, o, j, l, Dim0, Dim2, Dim5, Dim4, Dim6, Dim1, Dim3, i, k, n, m, o, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(m, o, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim1, Dim3, m, o, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim1, Dim4, o, l, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim1, Dim4, i, j, k, l, m, n, o, o, l, j, m, Dim0, Dim2, Dim5, Dim6, Dim3, Dim1, Dim4, i, k, n, o, l, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(o, l, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim1, Dim4, o, l, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim1, Dim6, m, l, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim1, Dim6, i, j, k, l, m, n, o, m, l, j, o, Dim0, Dim2, Dim5, Dim4, Dim3, Dim1, Dim6, i, k, n, m, l, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(m, l, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim1, Dim6, m, l, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim1, Dim4, l, o, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim1, Dim4, i, j, k, l, m, n, o, l, o, j, m, Dim0, Dim2, Dim5, Dim3, Dim6, Dim1, Dim4, i, k, n, l, o, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(l, o, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim1, Dim4, l, o, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim1, Dim6, l, m, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim1, Dim6, i, j, k, l, m, n, o, l, m, j, o, Dim0, Dim2, Dim5, Dim3, Dim4, Dim1, Dim6, i, k, n, l, m, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(l, m, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim1, Dim6, l, m, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim4, Dim3, o, j, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim4, Dim3, i, j, k, l, m, n, o, o, j, m, l, Dim0, Dim2, Dim5, Dim6, Dim1, Dim4, Dim3, i, k, n, o, j, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(o, j, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim4, Dim3, o, j, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim6, Dim3, m, j, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim6, Dim3, i, j, k, l, m, n, o, m, j, o, l, Dim0, Dim2, Dim5, Dim4, Dim1, Dim6, Dim3, i, k, n, m, j, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(m, j, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim6, Dim3, m, j, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim3, Dim4, o, j, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim3, Dim4, i, j, k, l, m, n, o, o, j, l, m, Dim0, Dim2, Dim5, Dim6, Dim1, Dim3, Dim4, i, k, n, o, j, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(o, j, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim3, Dim4, o, j, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim3, Dim6, m, j, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim3, Dim6, i, j, k, l, m, n, o, m, j, l, o, Dim0, Dim2, Dim5, Dim4, Dim1, Dim3, Dim6, i, k, n, m, j, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(m, j, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim3, Dim6, m, j, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim6, Dim4, l, j, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim6, Dim4, i, j, k, l, m, n, o, l, j, o, m, Dim0, Dim2, Dim5, Dim3, Dim1, Dim6, Dim4, i, k, n, l, j, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(l, j, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim6, Dim4, l, j, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim4, Dim6, l, j, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim4, Dim6, i, j, k, l, m, n, o, l, j, m, o, Dim0, Dim2, Dim5, Dim3, Dim1, Dim4, Dim6, i, k, n, l, j, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(l, j, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim4, Dim6, l, j, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim4, Dim3, j, o, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim4, Dim3, i, j, k, l, m, n, o, j, o, m, l, Dim0, Dim2, Dim5, Dim1, Dim6, Dim4, Dim3, i, k, n, j, o, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(j, o, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim4, Dim3, j, o, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim6, Dim3, j, m, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim6, Dim3, i, j, k, l, m, n, o, j, m, o, l, Dim0, Dim2, Dim5, Dim1, Dim4, Dim6, Dim3, i, k, n, j, m, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(j, m, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim6, Dim3, j, m, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim3, Dim4, j, o, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim3, Dim4, i, j, k, l, m, n, o, j, o, l, m, Dim0, Dim2, Dim5, Dim1, Dim6, Dim3, Dim4, i, k, n, j, o, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(j, o, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim3, Dim4, j, o, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim3, Dim6, j, m, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim3, Dim6, i, j, k, l, m, n, o, j, m, l, o, Dim0, Dim2, Dim5, Dim1, Dim4, Dim3, Dim6, i, k, n, j, m, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(j, m, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim3, Dim6, j, m, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim6, Dim4, j, l, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim6, Dim4, i, j, k, l, m, n, o, j, l, o, m, Dim0, Dim2, Dim5, Dim1, Dim3, Dim6, Dim4, i, k, n, j, l, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(j, l, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim6, Dim4, j, l, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim4, Dim6, j, l, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim4, Dim6, i, j, k, l, m, n, o, j, l, m, o, Dim0, Dim2, Dim5, Dim1, Dim3, Dim4, Dim6, i, k, n, j, l, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim5, i, k, n>(TensorExpr(a, b));
+}
+
+//B(j, l, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim4, Dim6, j, l, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim3, Dim1, o, n, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim3, Dim1, i, j, k, l, m, n, o, o, n, l, j, Dim0, Dim2, Dim4, Dim6, Dim5, Dim3, Dim1, i, k, m, o, n, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(o, n, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim3, Dim1, o, n, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, l, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim3, Dim1, n, o, l, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim3, Dim1, i, j, k, l, m, n, o, n, o, l, j, Dim0, Dim2, Dim4, Dim5, Dim6, Dim3, Dim1, i, k, m, n, o, l, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(n, o, l, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim3, Dim1, n, o, l, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim5, Dim1, o, l, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim5, Dim1, i, j, k, l, m, n, o, o, l, n, j, Dim0, Dim2, Dim4, Dim6, Dim3, Dim5, Dim1, i, k, m, o, l, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(o, l, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim5, Dim1, o, l, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim6, Dim1, n, l, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim6, Dim1, i, j, k, l, m, n, o, n, l, o, j, Dim0, Dim2, Dim4, Dim5, Dim3, Dim6, Dim1, i, k, m, n, l, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(n, l, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim6, Dim1, n, l, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim5, Dim1, l, o, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim5, Dim1, i, j, k, l, m, n, o, l, o, n, j, Dim0, Dim2, Dim4, Dim3, Dim6, Dim5, Dim1, i, k, m, l, o, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(l, o, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim5, Dim1, l, o, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim6, Dim1, l, n, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim6, Dim1, i, j, k, l, m, n, o, l, n, o, j, Dim0, Dim2, Dim4, Dim3, Dim5, Dim6, Dim1, i, k, m, l, n, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(l, n, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim6, Dim1, l, n, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim1, Dim3, o, n, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim1, Dim3, i, j, k, l, m, n, o, o, n, j, l, Dim0, Dim2, Dim4, Dim6, Dim5, Dim1, Dim3, i, k, m, o, n, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(o, n, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim1, Dim3, o, n, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, j, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim1, Dim3, n, o, j, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim1, Dim3, i, j, k, l, m, n, o, n, o, j, l, Dim0, Dim2, Dim4, Dim5, Dim6, Dim1, Dim3, i, k, m, n, o, j, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(n, o, j, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim1, Dim3, n, o, j, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim1, Dim5, o, l, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim1, Dim5, i, j, k, l, m, n, o, o, l, j, n, Dim0, Dim2, Dim4, Dim6, Dim3, Dim1, Dim5, i, k, m, o, l, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(o, l, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim1, Dim5, o, l, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim1, Dim6, n, l, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim1, Dim6, i, j, k, l, m, n, o, n, l, j, o, Dim0, Dim2, Dim4, Dim5, Dim3, Dim1, Dim6, i, k, m, n, l, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(n, l, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim1, Dim6, n, l, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim1, Dim5, l, o, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim1, Dim5, i, j, k, l, m, n, o, l, o, j, n, Dim0, Dim2, Dim4, Dim3, Dim6, Dim1, Dim5, i, k, m, l, o, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(l, o, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim1, Dim5, l, o, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim1, Dim6, l, n, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim1, Dim6, i, j, k, l, m, n, o, l, n, j, o, Dim0, Dim2, Dim4, Dim3, Dim5, Dim1, Dim6, i, k, m, l, n, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(l, n, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim1, Dim6, l, n, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim5, Dim3, o, j, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim5, Dim3, i, j, k, l, m, n, o, o, j, n, l, Dim0, Dim2, Dim4, Dim6, Dim1, Dim5, Dim3, i, k, m, o, j, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(o, j, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim5, Dim3, o, j, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim6, Dim3, n, j, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim6, Dim3, i, j, k, l, m, n, o, n, j, o, l, Dim0, Dim2, Dim4, Dim5, Dim1, Dim6, Dim3, i, k, m, n, j, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(n, j, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim6, Dim3, n, j, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim3, Dim5, o, j, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim3, Dim5, i, j, k, l, m, n, o, o, j, l, n, Dim0, Dim2, Dim4, Dim6, Dim1, Dim3, Dim5, i, k, m, o, j, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(o, j, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim3, Dim5, o, j, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim3, Dim6, n, j, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim3, Dim6, i, j, k, l, m, n, o, n, j, l, o, Dim0, Dim2, Dim4, Dim5, Dim1, Dim3, Dim6, i, k, m, n, j, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(n, j, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim3, Dim6, n, j, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim6, Dim5, l, j, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim6, Dim5, i, j, k, l, m, n, o, l, j, o, n, Dim0, Dim2, Dim4, Dim3, Dim1, Dim6, Dim5, i, k, m, l, j, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(l, j, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim6, Dim5, l, j, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, j, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim1, Dim5, Dim6, l, j, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim1, Dim5, Dim6, i, j, k, l, m, n, o, l, j, n, o, Dim0, Dim2, Dim4, Dim3, Dim1, Dim5, Dim6, i, k, m, l, j, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(l, j, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim1, Dim5, Dim6, l, j, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim5, Dim3, j, o, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim5, Dim3, i, j, k, l, m, n, o, j, o, n, l, Dim0, Dim2, Dim4, Dim1, Dim6, Dim5, Dim3, i, k, m, j, o, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(j, o, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim5, Dim3, j, o, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim6, Dim3, j, n, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim6, Dim3, i, j, k, l, m, n, o, j, n, o, l, Dim0, Dim2, Dim4, Dim1, Dim5, Dim6, Dim3, i, k, m, j, n, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(j, n, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim6, Dim3, j, n, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim3, Dim5, j, o, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim3, Dim5, i, j, k, l, m, n, o, j, o, l, n, Dim0, Dim2, Dim4, Dim1, Dim6, Dim3, Dim5, i, k, m, j, o, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(j, o, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim3, Dim5, j, o, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim3, Dim6, j, n, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim3, Dim6, i, j, k, l, m, n, o, j, n, l, o, Dim0, Dim2, Dim4, Dim1, Dim5, Dim3, Dim6, i, k, m, j, n, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(j, n, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim3, Dim6, j, n, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim6, Dim5, j, l, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim6, Dim5, i, j, k, l, m, n, o, j, l, o, n, Dim0, Dim2, Dim4, Dim1, Dim3, Dim6, Dim5, i, k, m, j, l, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(j, l, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim6, Dim5, j, l, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, l, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim3, Dim5, Dim6, j, l, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim3, Dim5, Dim6, i, j, k, l, m, n, o, j, l, n, o, Dim0, Dim2, Dim4, Dim1, Dim3, Dim5, Dim6, i, k, m, j, l, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
+}
+
+//B(j, l, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim3, Dim5, Dim6, j, l, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim4, Dim1, o, n, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim4, Dim1, i, j, k, l, m, n, o, o, n, m, j, Dim0, Dim2, Dim3, Dim6, Dim5, Dim4, Dim1, i, k, l, o, n, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(o, n, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim4, Dim1, o, n, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, m, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim4, Dim1, n, o, m, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim4, Dim1, i, j, k, l, m, n, o, n, o, m, j, Dim0, Dim2, Dim3, Dim5, Dim6, Dim4, Dim1, i, k, l, n, o, m, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(n, o, m, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim4, Dim1, n, o, m, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim5, Dim1, o, m, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim5, Dim1, i, j, k, l, m, n, o, o, m, n, j, Dim0, Dim2, Dim3, Dim6, Dim4, Dim5, Dim1, i, k, l, o, m, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(o, m, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim5, Dim1, o, m, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim6, Dim1, n, m, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim6, Dim1, i, j, k, l, m, n, o, n, m, o, j, Dim0, Dim2, Dim3, Dim5, Dim4, Dim6, Dim1, i, k, l, n, m, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(n, m, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim6, Dim1, n, m, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, n, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim5, Dim1, m, o, n, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim5, Dim1, i, j, k, l, m, n, o, m, o, n, j, Dim0, Dim2, Dim3, Dim4, Dim6, Dim5, Dim1, i, k, l, m, o, n, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(m, o, n, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim5, Dim1, m, o, n, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, o, j, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim6, Dim1, m, n, o, j> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim6, Dim1, i, j, k, l, m, n, o, m, n, o, j, Dim0, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, i, k, l, m, n, o, j>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(m, n, o, j, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim6, Dim1, m, n, o, j> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim1, Dim4, o, n, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim1, Dim4, i, j, k, l, m, n, o, o, n, j, m, Dim0, Dim2, Dim3, Dim6, Dim5, Dim1, Dim4, i, k, l, o, n, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(o, n, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim1, Dim4, o, n, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, j, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim1, Dim4, n, o, j, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim1, Dim4, i, j, k, l, m, n, o, n, o, j, m, Dim0, Dim2, Dim3, Dim5, Dim6, Dim1, Dim4, i, k, l, n, o, j, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(n, o, j, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim1, Dim4, n, o, j, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim1, Dim5, o, m, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim1, Dim5, i, j, k, l, m, n, o, o, m, j, n, Dim0, Dim2, Dim3, Dim6, Dim4, Dim1, Dim5, i, k, l, o, m, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(o, m, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim1, Dim5, o, m, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim1, Dim6, n, m, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim1, Dim6, i, j, k, l, m, n, o, n, m, j, o, Dim0, Dim2, Dim3, Dim5, Dim4, Dim1, Dim6, i, k, l, n, m, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(n, m, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim1, Dim6, n, m, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, j, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim1, Dim5, m, o, j, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim1, Dim5, i, j, k, l, m, n, o, m, o, j, n, Dim0, Dim2, Dim3, Dim4, Dim6, Dim1, Dim5, i, k, l, m, o, j, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(m, o, j, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim1, Dim5, m, o, j, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, j, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim1, Dim6, m, n, j, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim1, Dim6, i, j, k, l, m, n, o, m, n, j, o, Dim0, Dim2, Dim3, Dim4, Dim5, Dim1, Dim6, i, k, l, m, n, j, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(m, n, j, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim1, Dim6, m, n, j, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim5, Dim4, o, j, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim5, Dim4, i, j, k, l, m, n, o, o, j, n, m, Dim0, Dim2, Dim3, Dim6, Dim1, Dim5, Dim4, i, k, l, o, j, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(o, j, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim5, Dim4, o, j, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim6, Dim4, n, j, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim6, Dim4, i, j, k, l, m, n, o, n, j, o, m, Dim0, Dim2, Dim3, Dim5, Dim1, Dim6, Dim4, i, k, l, n, j, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(n, j, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim6, Dim4, n, j, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, j, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim1, Dim4, Dim5, o, j, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim1, Dim4, Dim5, i, j, k, l, m, n, o, o, j, m, n, Dim0, Dim2, Dim3, Dim6, Dim1, Dim4, Dim5, i, k, l, o, j, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(o, j, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim1, Dim4, Dim5, o, j, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, j, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim1, Dim4, Dim6, n, j, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim1, Dim4, Dim6, i, j, k, l, m, n, o, n, j, m, o, Dim0, Dim2, Dim3, Dim5, Dim1, Dim4, Dim6, i, k, l, n, j, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(n, j, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim1, Dim4, Dim6, n, j, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim6, Dim5, m, j, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim6, Dim5, i, j, k, l, m, n, o, m, j, o, n, Dim0, Dim2, Dim3, Dim4, Dim1, Dim6, Dim5, i, k, l, m, j, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(m, j, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim6, Dim5, m, j, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, j, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim1, Dim5, Dim6, m, j, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim1, Dim5, Dim6, i, j, k, l, m, n, o, m, j, n, o, Dim0, Dim2, Dim3, Dim4, Dim1, Dim5, Dim6, i, k, l, m, j, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(m, j, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim1, Dim5, Dim6, m, j, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim5, Dim4, j, o, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim5, Dim4, i, j, k, l, m, n, o, j, o, n, m, Dim0, Dim2, Dim3, Dim1, Dim6, Dim5, Dim4, i, k, l, j, o, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(j, o, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim5, Dim4, j, o, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim6, Dim4, j, n, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim6, Dim4, i, j, k, l, m, n, o, j, n, o, m, Dim0, Dim2, Dim3, Dim1, Dim5, Dim6, Dim4, i, k, l, j, n, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(j, n, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim6, Dim4, j, n, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, o, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim6, Dim4, Dim5, j, o, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim6, Dim4, Dim5, i, j, k, l, m, n, o, j, o, m, n, Dim0, Dim2, Dim3, Dim1, Dim6, Dim4, Dim5, i, k, l, j, o, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(j, o, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim6, Dim4, Dim5, j, o, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, n, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim5, Dim4, Dim6, j, n, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim5, Dim4, Dim6, i, j, k, l, m, n, o, j, n, m, o, Dim0, Dim2, Dim3, Dim1, Dim5, Dim4, Dim6, i, k, l, j, n, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(j, n, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim5, Dim4, Dim6, j, n, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim6, Dim5, j, m, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim6, Dim5, i, j, k, l, m, n, o, j, m, o, n, Dim0, Dim2, Dim3, Dim1, Dim4, Dim6, Dim5, i, k, l, j, m, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(j, m, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim6, Dim5, j, m, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(j, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim1, Dim4, Dim5, Dim6, j, m, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim1, Dim4, Dim5, Dim6, i, j, k, l, m, n, o, j, m, n, o, Dim0, Dim2, Dim3, Dim1, Dim4, Dim5, Dim6, i, k, l, j, m, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim3, i, k, l>(TensorExpr(a, b));
+}
+
+//B(j, m, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim1, Dim4, Dim5, Dim6, j, m, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim3, Dim2, n, m, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim3, Dim2, i, j, k, l, m, n, o, n, m, l, k, Dim0, Dim1, Dim6, Dim5, Dim4, Dim3, Dim2, i, j, o, n, m, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(n, m, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim3, Dim2, n, m, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim3, Dim2, m, n, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim3, Dim2, i, j, k, l, m, n, o, m, n, l, k, Dim0, Dim1, Dim6, Dim4, Dim5, Dim3, Dim2, i, j, o, m, n, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(m, n, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim3, Dim2, m, n, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim4, Dim2, n, l, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim4, Dim2, i, j, k, l, m, n, o, n, l, m, k, Dim0, Dim1, Dim6, Dim5, Dim3, Dim4, Dim2, i, j, o, n, l, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(n, l, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim4, Dim2, n, l, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim5, Dim2, m, l, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim5, Dim2, i, j, k, l, m, n, o, m, l, n, k, Dim0, Dim1, Dim6, Dim4, Dim3, Dim5, Dim2, i, j, o, m, l, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(m, l, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim5, Dim2, m, l, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim4, Dim2, l, n, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim4, Dim2, i, j, k, l, m, n, o, l, n, m, k, Dim0, Dim1, Dim6, Dim3, Dim5, Dim4, Dim2, i, j, o, l, n, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(l, n, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim4, Dim2, l, n, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim5, Dim2, l, m, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim5, Dim2, i, j, k, l, m, n, o, l, m, n, k, Dim0, Dim1, Dim6, Dim3, Dim4, Dim5, Dim2, i, j, o, l, m, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(l, m, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim5, Dim2, l, m, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim2, Dim3, n, m, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim2, Dim3, i, j, k, l, m, n, o, n, m, k, l, Dim0, Dim1, Dim6, Dim5, Dim4, Dim2, Dim3, i, j, o, n, m, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(n, m, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim2, Dim3, n, m, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim2, Dim3, m, n, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim2, Dim3, i, j, k, l, m, n, o, m, n, k, l, Dim0, Dim1, Dim6, Dim4, Dim5, Dim2, Dim3, i, j, o, m, n, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(m, n, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim2, Dim3, m, n, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim2, Dim4, n, l, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim2, Dim4, i, j, k, l, m, n, o, n, l, k, m, Dim0, Dim1, Dim6, Dim5, Dim3, Dim2, Dim4, i, j, o, n, l, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(n, l, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim2, Dim4, n, l, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim2, Dim5, m, l, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim2, Dim5, i, j, k, l, m, n, o, m, l, k, n, Dim0, Dim1, Dim6, Dim4, Dim3, Dim2, Dim5, i, j, o, m, l, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(m, l, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim2, Dim5, m, l, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim2, Dim4, l, n, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim2, Dim4, i, j, k, l, m, n, o, l, n, k, m, Dim0, Dim1, Dim6, Dim3, Dim5, Dim2, Dim4, i, j, o, l, n, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(l, n, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim2, Dim4, l, n, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim2, Dim5, l, m, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim2, Dim5, i, j, k, l, m, n, o, l, m, k, n, Dim0, Dim1, Dim6, Dim3, Dim4, Dim2, Dim5, i, j, o, l, m, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(l, m, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim2, Dim5, l, m, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim4, Dim3, n, k, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim4, Dim3, i, j, k, l, m, n, o, n, k, m, l, Dim0, Dim1, Dim6, Dim5, Dim2, Dim4, Dim3, i, j, o, n, k, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(n, k, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim4, Dim3, n, k, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim5, Dim3, m, k, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim5, Dim3, i, j, k, l, m, n, o, m, k, n, l, Dim0, Dim1, Dim6, Dim4, Dim2, Dim5, Dim3, i, j, o, m, k, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(m, k, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim5, Dim3, m, k, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim3, Dim4, n, k, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim3, Dim4, i, j, k, l, m, n, o, n, k, l, m, Dim0, Dim1, Dim6, Dim5, Dim2, Dim3, Dim4, i, j, o, n, k, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(n, k, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim3, Dim4, n, k, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim3, Dim5, m, k, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim3, Dim5, i, j, k, l, m, n, o, m, k, l, n, Dim0, Dim1, Dim6, Dim4, Dim2, Dim3, Dim5, i, j, o, m, k, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(m, k, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim3, Dim5, m, k, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim5, Dim4, l, k, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim5, Dim4, i, j, k, l, m, n, o, l, k, n, m, Dim0, Dim1, Dim6, Dim3, Dim2, Dim5, Dim4, i, j, o, l, k, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(l, k, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim5, Dim4, l, k, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim4, Dim5, l, k, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim4, Dim5, i, j, k, l, m, n, o, l, k, m, n, Dim0, Dim1, Dim6, Dim3, Dim2, Dim4, Dim5, i, j, o, l, k, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(l, k, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim4, Dim5, l, k, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim4, Dim3, k, n, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim4, Dim3, i, j, k, l, m, n, o, k, n, m, l, Dim0, Dim1, Dim6, Dim2, Dim5, Dim4, Dim3, i, j, o, k, n, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(k, n, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim4, Dim3, k, n, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim5, Dim3, k, m, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim5, Dim3, i, j, k, l, m, n, o, k, m, n, l, Dim0, Dim1, Dim6, Dim2, Dim4, Dim5, Dim3, i, j, o, k, m, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(k, m, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim5, Dim3, k, m, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim3, Dim4, k, n, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim3, Dim4, i, j, k, l, m, n, o, k, n, l, m, Dim0, Dim1, Dim6, Dim2, Dim5, Dim3, Dim4, i, j, o, k, n, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(k, n, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim3, Dim4, k, n, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim3, Dim5, k, m, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim3, Dim5, i, j, k, l, m, n, o, k, m, l, n, Dim0, Dim1, Dim6, Dim2, Dim4, Dim3, Dim5, i, j, o, k, m, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(k, m, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim3, Dim5, k, m, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim5, Dim4, k, l, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim5, Dim4, i, j, k, l, m, n, o, k, l, n, m, Dim0, Dim1, Dim6, Dim2, Dim3, Dim5, Dim4, i, j, o, k, l, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(k, l, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim5, Dim4, k, l, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim4, Dim5, k, l, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim4, Dim5, i, j, k, l, m, n, o, k, l, m, n, Dim0, Dim1, Dim6, Dim2, Dim3, Dim4, Dim5, i, j, o, k, l, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim6, i, j, o>(TensorExpr(a, b));
+}
+
+//B(k, l, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim4, Dim5, k, l, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim3, Dim2, o, m, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim3, Dim2, i, j, k, l, m, n, o, o, m, l, k, Dim0, Dim1, Dim5, Dim6, Dim4, Dim3, Dim2, i, j, n, o, m, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(o, m, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim3, Dim2, o, m, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim3, Dim2, m, o, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim3, Dim2, i, j, k, l, m, n, o, m, o, l, k, Dim0, Dim1, Dim5, Dim4, Dim6, Dim3, Dim2, i, j, n, m, o, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(m, o, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim3, Dim2, m, o, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim4, Dim2, o, l, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim4, Dim2, i, j, k, l, m, n, o, o, l, m, k, Dim0, Dim1, Dim5, Dim6, Dim3, Dim4, Dim2, i, j, n, o, l, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(o, l, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim4, Dim2, o, l, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim6, Dim2, m, l, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim6, Dim2, i, j, k, l, m, n, o, m, l, o, k, Dim0, Dim1, Dim5, Dim4, Dim3, Dim6, Dim2, i, j, n, m, l, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(m, l, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim6, Dim2, m, l, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim4, Dim2, l, o, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim4, Dim2, i, j, k, l, m, n, o, l, o, m, k, Dim0, Dim1, Dim5, Dim3, Dim6, Dim4, Dim2, i, j, n, l, o, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(l, o, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim4, Dim2, l, o, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim6, Dim2, l, m, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim6, Dim2, i, j, k, l, m, n, o, l, m, o, k, Dim0, Dim1, Dim5, Dim3, Dim4, Dim6, Dim2, i, j, n, l, m, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(l, m, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim6, Dim2, l, m, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim2, Dim3, o, m, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim2, Dim3, i, j, k, l, m, n, o, o, m, k, l, Dim0, Dim1, Dim5, Dim6, Dim4, Dim2, Dim3, i, j, n, o, m, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(o, m, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim2, Dim3, o, m, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim2, Dim3, m, o, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim2, Dim3, i, j, k, l, m, n, o, m, o, k, l, Dim0, Dim1, Dim5, Dim4, Dim6, Dim2, Dim3, i, j, n, m, o, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(m, o, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim2, Dim3, m, o, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim2, Dim4, o, l, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim2, Dim4, i, j, k, l, m, n, o, o, l, k, m, Dim0, Dim1, Dim5, Dim6, Dim3, Dim2, Dim4, i, j, n, o, l, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(o, l, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim2, Dim4, o, l, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim2, Dim6, m, l, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim2, Dim6, i, j, k, l, m, n, o, m, l, k, o, Dim0, Dim1, Dim5, Dim4, Dim3, Dim2, Dim6, i, j, n, m, l, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(m, l, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim2, Dim6, m, l, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim2, Dim4, l, o, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim2, Dim4, i, j, k, l, m, n, o, l, o, k, m, Dim0, Dim1, Dim5, Dim3, Dim6, Dim2, Dim4, i, j, n, l, o, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(l, o, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim2, Dim4, l, o, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim2, Dim6, l, m, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim2, Dim6, i, j, k, l, m, n, o, l, m, k, o, Dim0, Dim1, Dim5, Dim3, Dim4, Dim2, Dim6, i, j, n, l, m, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(l, m, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim2, Dim6, l, m, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim4, Dim3, o, k, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim4, Dim3, i, j, k, l, m, n, o, o, k, m, l, Dim0, Dim1, Dim5, Dim6, Dim2, Dim4, Dim3, i, j, n, o, k, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(o, k, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim4, Dim3, o, k, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim6, Dim3, m, k, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim6, Dim3, i, j, k, l, m, n, o, m, k, o, l, Dim0, Dim1, Dim5, Dim4, Dim2, Dim6, Dim3, i, j, n, m, k, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(m, k, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim6, Dim3, m, k, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim3, Dim4, o, k, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim3, Dim4, i, j, k, l, m, n, o, o, k, l, m, Dim0, Dim1, Dim5, Dim6, Dim2, Dim3, Dim4, i, j, n, o, k, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(o, k, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim3, Dim4, o, k, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim3, Dim6, m, k, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim3, Dim6, i, j, k, l, m, n, o, m, k, l, o, Dim0, Dim1, Dim5, Dim4, Dim2, Dim3, Dim6, i, j, n, m, k, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(m, k, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim3, Dim6, m, k, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim6, Dim4, l, k, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim6, Dim4, i, j, k, l, m, n, o, l, k, o, m, Dim0, Dim1, Dim5, Dim3, Dim2, Dim6, Dim4, i, j, n, l, k, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(l, k, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim6, Dim4, l, k, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim4, Dim6, l, k, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim4, Dim6, i, j, k, l, m, n, o, l, k, m, o, Dim0, Dim1, Dim5, Dim3, Dim2, Dim4, Dim6, i, j, n, l, k, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(l, k, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim4, Dim6, l, k, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim4, Dim3, k, o, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim4, Dim3, i, j, k, l, m, n, o, k, o, m, l, Dim0, Dim1, Dim5, Dim2, Dim6, Dim4, Dim3, i, j, n, k, o, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(k, o, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim4, Dim3, k, o, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim6, Dim3, k, m, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim6, Dim3, i, j, k, l, m, n, o, k, m, o, l, Dim0, Dim1, Dim5, Dim2, Dim4, Dim6, Dim3, i, j, n, k, m, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(k, m, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim6, Dim3, k, m, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim3, Dim4, k, o, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim3, Dim4, i, j, k, l, m, n, o, k, o, l, m, Dim0, Dim1, Dim5, Dim2, Dim6, Dim3, Dim4, i, j, n, k, o, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(k, o, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim3, Dim4, k, o, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim3, Dim6, k, m, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim3, Dim6, i, j, k, l, m, n, o, k, m, l, o, Dim0, Dim1, Dim5, Dim2, Dim4, Dim3, Dim6, i, j, n, k, m, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(k, m, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim3, Dim6, k, m, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim6, Dim4, k, l, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim6, Dim4, i, j, k, l, m, n, o, k, l, o, m, Dim0, Dim1, Dim5, Dim2, Dim3, Dim6, Dim4, i, j, n, k, l, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(k, l, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim6, Dim4, k, l, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim4, Dim6, k, l, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim4, Dim6, i, j, k, l, m, n, o, k, l, m, o, Dim0, Dim1, Dim5, Dim2, Dim3, Dim4, Dim6, i, j, n, k, l, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim5, i, j, n>(TensorExpr(a, b));
+}
+
+//B(k, l, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim4, Dim6, k, l, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim3, Dim2, o, n, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim3, Dim2, i, j, k, l, m, n, o, o, n, l, k, Dim0, Dim1, Dim4, Dim6, Dim5, Dim3, Dim2, i, j, m, o, n, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(o, n, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim3, Dim2, o, n, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, l, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim3, Dim2, n, o, l, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim3, Dim2, i, j, k, l, m, n, o, n, o, l, k, Dim0, Dim1, Dim4, Dim5, Dim6, Dim3, Dim2, i, j, m, n, o, l, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(n, o, l, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim3, Dim2, n, o, l, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim5, Dim2, o, l, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim5, Dim2, i, j, k, l, m, n, o, o, l, n, k, Dim0, Dim1, Dim4, Dim6, Dim3, Dim5, Dim2, i, j, m, o, l, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(o, l, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim5, Dim2, o, l, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim6, Dim2, n, l, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim6, Dim2, i, j, k, l, m, n, o, n, l, o, k, Dim0, Dim1, Dim4, Dim5, Dim3, Dim6, Dim2, i, j, m, n, l, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(n, l, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim6, Dim2, n, l, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim5, Dim2, l, o, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim5, Dim2, i, j, k, l, m, n, o, l, o, n, k, Dim0, Dim1, Dim4, Dim3, Dim6, Dim5, Dim2, i, j, m, l, o, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(l, o, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim5, Dim2, l, o, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim6, Dim2, l, n, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim6, Dim2, i, j, k, l, m, n, o, l, n, o, k, Dim0, Dim1, Dim4, Dim3, Dim5, Dim6, Dim2, i, j, m, l, n, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(l, n, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim6, Dim2, l, n, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim2, Dim3, o, n, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim2, Dim3, i, j, k, l, m, n, o, o, n, k, l, Dim0, Dim1, Dim4, Dim6, Dim5, Dim2, Dim3, i, j, m, o, n, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(o, n, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim2, Dim3, o, n, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, k, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim2, Dim3, n, o, k, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim2, Dim3, i, j, k, l, m, n, o, n, o, k, l, Dim0, Dim1, Dim4, Dim5, Dim6, Dim2, Dim3, i, j, m, n, o, k, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(n, o, k, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim2, Dim3, n, o, k, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim2, Dim5, o, l, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim2, Dim5, i, j, k, l, m, n, o, o, l, k, n, Dim0, Dim1, Dim4, Dim6, Dim3, Dim2, Dim5, i, j, m, o, l, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(o, l, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim2, Dim5, o, l, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim2, Dim6, n, l, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim2, Dim6, i, j, k, l, m, n, o, n, l, k, o, Dim0, Dim1, Dim4, Dim5, Dim3, Dim2, Dim6, i, j, m, n, l, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(n, l, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim2, Dim6, n, l, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim2, Dim5, l, o, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim2, Dim5, i, j, k, l, m, n, o, l, o, k, n, Dim0, Dim1, Dim4, Dim3, Dim6, Dim2, Dim5, i, j, m, l, o, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(l, o, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim2, Dim5, l, o, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim2, Dim6, l, n, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim2, Dim6, i, j, k, l, m, n, o, l, n, k, o, Dim0, Dim1, Dim4, Dim3, Dim5, Dim2, Dim6, i, j, m, l, n, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(l, n, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim2, Dim6, l, n, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim5, Dim3, o, k, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim5, Dim3, i, j, k, l, m, n, o, o, k, n, l, Dim0, Dim1, Dim4, Dim6, Dim2, Dim5, Dim3, i, j, m, o, k, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(o, k, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim5, Dim3, o, k, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim6, Dim3, n, k, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim6, Dim3, i, j, k, l, m, n, o, n, k, o, l, Dim0, Dim1, Dim4, Dim5, Dim2, Dim6, Dim3, i, j, m, n, k, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(n, k, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim6, Dim3, n, k, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim3, Dim5, o, k, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim3, Dim5, i, j, k, l, m, n, o, o, k, l, n, Dim0, Dim1, Dim4, Dim6, Dim2, Dim3, Dim5, i, j, m, o, k, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(o, k, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim3, Dim5, o, k, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim3, Dim6, n, k, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim3, Dim6, i, j, k, l, m, n, o, n, k, l, o, Dim0, Dim1, Dim4, Dim5, Dim2, Dim3, Dim6, i, j, m, n, k, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(n, k, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim3, Dim6, n, k, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim6, Dim5, l, k, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim6, Dim5, i, j, k, l, m, n, o, l, k, o, n, Dim0, Dim1, Dim4, Dim3, Dim2, Dim6, Dim5, i, j, m, l, k, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(l, k, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim6, Dim5, l, k, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, k, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim2, Dim5, Dim6, l, k, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim2, Dim5, Dim6, i, j, k, l, m, n, o, l, k, n, o, Dim0, Dim1, Dim4, Dim3, Dim2, Dim5, Dim6, i, j, m, l, k, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(l, k, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim2, Dim5, Dim6, l, k, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim5, Dim3, k, o, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim5, Dim3, i, j, k, l, m, n, o, k, o, n, l, Dim0, Dim1, Dim4, Dim2, Dim6, Dim5, Dim3, i, j, m, k, o, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(k, o, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim5, Dim3, k, o, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim6, Dim3, k, n, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim6, Dim3, i, j, k, l, m, n, o, k, n, o, l, Dim0, Dim1, Dim4, Dim2, Dim5, Dim6, Dim3, i, j, m, k, n, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(k, n, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim6, Dim3, k, n, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim3, Dim5, k, o, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim3, Dim5, i, j, k, l, m, n, o, k, o, l, n, Dim0, Dim1, Dim4, Dim2, Dim6, Dim3, Dim5, i, j, m, k, o, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(k, o, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim3, Dim5, k, o, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim3, Dim6, k, n, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim3, Dim6, i, j, k, l, m, n, o, k, n, l, o, Dim0, Dim1, Dim4, Dim2, Dim5, Dim3, Dim6, i, j, m, k, n, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(k, n, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim3, Dim6, k, n, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim6, Dim5, k, l, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim6, Dim5, i, j, k, l, m, n, o, k, l, o, n, Dim0, Dim1, Dim4, Dim2, Dim3, Dim6, Dim5, i, j, m, k, l, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(k, l, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim6, Dim5, k, l, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, l, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim3, Dim5, Dim6, k, l, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim3, Dim5, Dim6, i, j, k, l, m, n, o, k, l, n, o, Dim0, Dim1, Dim4, Dim2, Dim3, Dim5, Dim6, i, j, m, k, l, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
+}
+
+//B(k, l, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim3, Dim5, Dim6, k, l, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim4, Dim2, o, n, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim4, Dim2, i, j, k, l, m, n, o, o, n, m, k, Dim0, Dim1, Dim3, Dim6, Dim5, Dim4, Dim2, i, j, l, o, n, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(o, n, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim4, Dim2, o, n, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, m, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim4, Dim2, n, o, m, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim4, Dim2, i, j, k, l, m, n, o, n, o, m, k, Dim0, Dim1, Dim3, Dim5, Dim6, Dim4, Dim2, i, j, l, n, o, m, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(n, o, m, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim4, Dim2, n, o, m, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim5, Dim2, o, m, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim5, Dim2, i, j, k, l, m, n, o, o, m, n, k, Dim0, Dim1, Dim3, Dim6, Dim4, Dim5, Dim2, i, j, l, o, m, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(o, m, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim5, Dim2, o, m, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim6, Dim2, n, m, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim6, Dim2, i, j, k, l, m, n, o, n, m, o, k, Dim0, Dim1, Dim3, Dim5, Dim4, Dim6, Dim2, i, j, l, n, m, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(n, m, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim6, Dim2, n, m, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, n, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim5, Dim2, m, o, n, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim5, Dim2, i, j, k, l, m, n, o, m, o, n, k, Dim0, Dim1, Dim3, Dim4, Dim6, Dim5, Dim2, i, j, l, m, o, n, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(m, o, n, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim5, Dim2, m, o, n, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, o, k, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim6, Dim2, m, n, o, k> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim6, Dim2, i, j, k, l, m, n, o, m, n, o, k, Dim0, Dim1, Dim3, Dim4, Dim5, Dim6, Dim2, i, j, l, m, n, o, k>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(m, n, o, k, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim6, Dim2, m, n, o, k> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim2, Dim4, o, n, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim2, Dim4, i, j, k, l, m, n, o, o, n, k, m, Dim0, Dim1, Dim3, Dim6, Dim5, Dim2, Dim4, i, j, l, o, n, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(o, n, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim2, Dim4, o, n, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, k, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim2, Dim4, n, o, k, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim2, Dim4, i, j, k, l, m, n, o, n, o, k, m, Dim0, Dim1, Dim3, Dim5, Dim6, Dim2, Dim4, i, j, l, n, o, k, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(n, o, k, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim2, Dim4, n, o, k, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim2, Dim5, o, m, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim2, Dim5, i, j, k, l, m, n, o, o, m, k, n, Dim0, Dim1, Dim3, Dim6, Dim4, Dim2, Dim5, i, j, l, o, m, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(o, m, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim2, Dim5, o, m, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim2, Dim6, n, m, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim2, Dim6, i, j, k, l, m, n, o, n, m, k, o, Dim0, Dim1, Dim3, Dim5, Dim4, Dim2, Dim6, i, j, l, n, m, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(n, m, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim2, Dim6, n, m, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, k, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim2, Dim5, m, o, k, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim2, Dim5, i, j, k, l, m, n, o, m, o, k, n, Dim0, Dim1, Dim3, Dim4, Dim6, Dim2, Dim5, i, j, l, m, o, k, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(m, o, k, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim2, Dim5, m, o, k, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, k, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim2, Dim6, m, n, k, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim2, Dim6, i, j, k, l, m, n, o, m, n, k, o, Dim0, Dim1, Dim3, Dim4, Dim5, Dim2, Dim6, i, j, l, m, n, k, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(m, n, k, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim2, Dim6, m, n, k, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim5, Dim4, o, k, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim5, Dim4, i, j, k, l, m, n, o, o, k, n, m, Dim0, Dim1, Dim3, Dim6, Dim2, Dim5, Dim4, i, j, l, o, k, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(o, k, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim5, Dim4, o, k, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim6, Dim4, n, k, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim6, Dim4, i, j, k, l, m, n, o, n, k, o, m, Dim0, Dim1, Dim3, Dim5, Dim2, Dim6, Dim4, i, j, l, n, k, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(n, k, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim6, Dim4, n, k, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, k, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim2, Dim4, Dim5, o, k, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim2, Dim4, Dim5, i, j, k, l, m, n, o, o, k, m, n, Dim0, Dim1, Dim3, Dim6, Dim2, Dim4, Dim5, i, j, l, o, k, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(o, k, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim2, Dim4, Dim5, o, k, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, k, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim2, Dim4, Dim6, n, k, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim2, Dim4, Dim6, i, j, k, l, m, n, o, n, k, m, o, Dim0, Dim1, Dim3, Dim5, Dim2, Dim4, Dim6, i, j, l, n, k, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(n, k, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim2, Dim4, Dim6, n, k, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim6, Dim5, m, k, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim6, Dim5, i, j, k, l, m, n, o, m, k, o, n, Dim0, Dim1, Dim3, Dim4, Dim2, Dim6, Dim5, i, j, l, m, k, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(m, k, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim6, Dim5, m, k, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, k, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim2, Dim5, Dim6, m, k, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim2, Dim5, Dim6, i, j, k, l, m, n, o, m, k, n, o, Dim0, Dim1, Dim3, Dim4, Dim2, Dim5, Dim6, i, j, l, m, k, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(m, k, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim2, Dim5, Dim6, m, k, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim5, Dim4, k, o, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim5, Dim4, i, j, k, l, m, n, o, k, o, n, m, Dim0, Dim1, Dim3, Dim2, Dim6, Dim5, Dim4, i, j, l, k, o, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(k, o, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim5, Dim4, k, o, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim6, Dim4, k, n, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim6, Dim4, i, j, k, l, m, n, o, k, n, o, m, Dim0, Dim1, Dim3, Dim2, Dim5, Dim6, Dim4, i, j, l, k, n, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(k, n, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim6, Dim4, k, n, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, o, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim6, Dim4, Dim5, k, o, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim6, Dim4, Dim5, i, j, k, l, m, n, o, k, o, m, n, Dim0, Dim1, Dim3, Dim2, Dim6, Dim4, Dim5, i, j, l, k, o, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(k, o, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim6, Dim4, Dim5, k, o, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, n, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim5, Dim4, Dim6, k, n, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim5, Dim4, Dim6, i, j, k, l, m, n, o, k, n, m, o, Dim0, Dim1, Dim3, Dim2, Dim5, Dim4, Dim6, i, j, l, k, n, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(k, n, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim5, Dim4, Dim6, k, n, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim6, Dim5, k, m, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim6, Dim5, i, j, k, l, m, n, o, k, m, o, n, Dim0, Dim1, Dim3, Dim2, Dim4, Dim6, Dim5, i, j, l, k, m, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(k, m, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim6, Dim5, k, m, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(k, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim2, Dim4, Dim5, Dim6, k, m, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim2, Dim4, Dim5, Dim6, i, j, k, l, m, n, o, k, m, n, o, Dim0, Dim1, Dim3, Dim2, Dim4, Dim5, Dim6, i, j, l, k, m, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim3, i, j, l>(TensorExpr(a, b));
+}
+
+//B(k, m, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim2, Dim4, Dim5, Dim6, k, m, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim4, Dim3, o, n, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim4, Dim3, i, j, k, l, m, n, o, o, n, m, l, Dim0, Dim1, Dim2, Dim6, Dim5, Dim4, Dim3, i, j, k, o, n, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(o, n, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim4, Dim3, o, n, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, m, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim4, Dim3, n, o, m, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim4, Dim3, i, j, k, l, m, n, o, n, o, m, l, Dim0, Dim1, Dim2, Dim5, Dim6, Dim4, Dim3, i, j, k, n, o, m, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(n, o, m, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim4, Dim3, n, o, m, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim5, Dim3, o, m, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim5, Dim3, i, j, k, l, m, n, o, o, m, n, l, Dim0, Dim1, Dim2, Dim6, Dim4, Dim5, Dim3, i, j, k, o, m, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(o, m, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim5, Dim3, o, m, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim6, Dim3, n, m, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim6, Dim3, i, j, k, l, m, n, o, n, m, o, l, Dim0, Dim1, Dim2, Dim5, Dim4, Dim6, Dim3, i, j, k, n, m, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(n, m, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim6, Dim3, n, m, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, n, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim5, Dim3, m, o, n, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim5, Dim3, i, j, k, l, m, n, o, m, o, n, l, Dim0, Dim1, Dim2, Dim4, Dim6, Dim5, Dim3, i, j, k, m, o, n, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(m, o, n, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim5, Dim3, m, o, n, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, o, l, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim6, Dim3, m, n, o, l> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim6, Dim3, i, j, k, l, m, n, o, m, n, o, l, Dim0, Dim1, Dim2, Dim4, Dim5, Dim6, Dim3, i, j, k, m, n, o, l>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(m, n, o, l, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim6, Dim3, m, n, o, l> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, n, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim5, Dim3, Dim4, o, n, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim5, Dim3, Dim4, i, j, k, l, m, n, o, o, n, l, m, Dim0, Dim1, Dim2, Dim6, Dim5, Dim3, Dim4, i, j, k, o, n, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(o, n, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim5, Dim3, Dim4, o, n, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, o, l, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim6, Dim3, Dim4, n, o, l, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim6, Dim3, Dim4, i, j, k, l, m, n, o, n, o, l, m, Dim0, Dim1, Dim2, Dim5, Dim6, Dim3, Dim4, i, j, k, n, o, l, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(n, o, l, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim6, Dim3, Dim4, n, o, l, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, m, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim4, Dim3, Dim5, o, m, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim4, Dim3, Dim5, i, j, k, l, m, n, o, o, m, l, n, Dim0, Dim1, Dim2, Dim6, Dim4, Dim3, Dim5, i, j, k, o, m, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(o, m, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim4, Dim3, Dim5, o, m, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, m, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim4, Dim3, Dim6, n, m, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim4, Dim3, Dim6, i, j, k, l, m, n, o, n, m, l, o, Dim0, Dim1, Dim2, Dim5, Dim4, Dim3, Dim6, i, j, k, n, m, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(n, m, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim4, Dim3, Dim6, n, m, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, o, l, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim6, Dim3, Dim5, m, o, l, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim6, Dim3, Dim5, i, j, k, l, m, n, o, m, o, l, n, Dim0, Dim1, Dim2, Dim4, Dim6, Dim3, Dim5, i, j, k, m, o, l, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(m, o, l, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim6, Dim3, Dim5, m, o, l, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, n, l, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim5, Dim3, Dim6, m, n, l, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim5, Dim3, Dim6, i, j, k, l, m, n, o, m, n, l, o, Dim0, Dim1, Dim2, Dim4, Dim5, Dim3, Dim6, i, j, k, m, n, l, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(m, n, l, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim5, Dim3, Dim6, m, n, l, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim5, Dim4, o, l, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim5, Dim4, i, j, k, l, m, n, o, o, l, n, m, Dim0, Dim1, Dim2, Dim6, Dim3, Dim5, Dim4, i, j, k, o, l, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(o, l, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim5, Dim4, o, l, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim6, Dim4, n, l, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim6, Dim4, i, j, k, l, m, n, o, n, l, o, m, Dim0, Dim1, Dim2, Dim5, Dim3, Dim6, Dim4, i, j, k, n, l, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(n, l, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim6, Dim4, n, l, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(o, l, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim6, Dim3, Dim4, Dim5, o, l, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim6, Dim3, Dim4, Dim5, i, j, k, l, m, n, o, o, l, m, n, Dim0, Dim1, Dim2, Dim6, Dim3, Dim4, Dim5, i, j, k, o, l, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(o, l, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim6, Dim3, Dim4, Dim5, o, l, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(n, l, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim5, Dim3, Dim4, Dim6, n, l, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim5, Dim3, Dim4, Dim6, i, j, k, l, m, n, o, n, l, m, o, Dim0, Dim1, Dim2, Dim5, Dim3, Dim4, Dim6, i, j, k, n, l, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(n, l, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim5, Dim3, Dim4, Dim6, n, l, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim6, Dim5, m, l, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim6, Dim5, i, j, k, l, m, n, o, m, l, o, n, Dim0, Dim1, Dim2, Dim4, Dim3, Dim6, Dim5, i, j, k, m, l, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(m, l, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim6, Dim5, m, l, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(m, l, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim4, Dim3, Dim5, Dim6, m, l, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim4, Dim3, Dim5, Dim6, i, j, k, l, m, n, o, m, l, n, o, Dim0, Dim1, Dim2, Dim4, Dim3, Dim5, Dim6, i, j, k, m, l, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(m, l, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim4, Dim3, Dim5, Dim6, m, l, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, n, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim5, Dim4, l, o, n, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim5, Dim4, i, j, k, l, m, n, o, l, o, n, m, Dim0, Dim1, Dim2, Dim3, Dim6, Dim5, Dim4, i, j, k, l, o, n, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(l, o, n, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim5, Dim4, l, o, n, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, o, m, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim6, Dim4, l, n, o, m> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim6, Dim4, i, j, k, l, m, n, o, l, n, o, m, Dim0, Dim1, Dim2, Dim3, Dim5, Dim6, Dim4, i, j, k, l, n, o, m>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(l, n, o, m, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim6, Dim4, l, n, o, m> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, o, m, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim6, Dim4, Dim5, l, o, m, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim6, Dim4, Dim5, i, j, k, l, m, n, o, l, o, m, n, Dim0, Dim1, Dim2, Dim3, Dim6, Dim4, Dim5, i, j, k, l, o, m, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(l, o, m, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim6, Dim4, Dim5, l, o, m, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, n, m, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim5, Dim4, Dim6, l, n, m, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim5, Dim4, Dim6, i, j, k, l, m, n, o, l, n, m, o, Dim0, Dim1, Dim2, Dim3, Dim5, Dim4, Dim6, i, j, k, l, n, m, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(l, n, m, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim5, Dim4, Dim6, l, n, m, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, o, n, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim6, Dim5, l, m, o, n> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim6, Dim5, i, j, k, l, m, n, o, l, m, o, n, Dim0, Dim1, Dim2, Dim3, Dim4, Dim6, Dim5, i, j, k, l, m, o, n>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(l, m, o, n, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim6, Dim5, l, m, o, n> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+//A(i, j, k, l, m, n, o, )*B(l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a,
+               const Tensor4_Expr<B, U, Dim3, Dim4, Dim5, Dim6, l, m, n, o> &b)
+{
+  using TensorExpr
+    = Tensor7_times_Tensor4_quadruple<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o, l, m, n, o, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o>;
+  return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim2, i, j, k>(TensorExpr(a, b));
+}
+
+//B(l, m, n, o, )*A(i, j, k, l, m, n, o, )
+template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int Dim3, int Dim4, int Dim5, int Dim6, char i, char j, char k, char l, char m, char n, char o>
+auto operator*(const Tensor4_Expr<B, U, Dim3, Dim4, Dim5, Dim6, l, m, n, o> &b,
+               const Tensor7_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o> &a)
+{
+  return a * b;
+}
+
+} //namespace FTensor

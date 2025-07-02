@@ -6,6 +6,18 @@
 #include "Tensor7_plus_Tensor7.hpp"
 #include "Tensor7_times_generic.hpp"
 
+#include "Tensor7_times_Tensor1_single.hpp"
+//#include "Tensor7_times_Tensor2_single.hpp"
+//#include "Tensor7_times_Tensor2_double.hpp"
+//#include "Tensor7_times_Tensor3_double.hpp"
+//#include "Tensor7_times_Tensor3_triple.hpp"
+//#include "Tensor7_times_Tensor4_double.hpp"
+//#include "Tensor7_times_Tensor4_triple.hpp"
+//#include "Tensor7_times_Tensor4_quadruple.hpp"
+//#include "Tensor7_times_Tensor5_triple.hpp"
+//#include "Tensor7_times_Tensor5_quadruple.hpp"
+//#include "Tensor7_times_Tensor5_quintuple.hpp"
+
 #include "../permute.hpp"
 
 namespace FTensor
@@ -126,7 +138,7 @@ namespace FTensor
             for ( int ll = 0; ll < Dim3; ++ll )
               for ( int mm = 0; mm < Dim4; ++mm )
                 for ( int nn = 0; nn < Dim5; ++nn )
-                  for ( int nn = 0; nn < Dim6; ++nn ) {
+                  for ( int oo = 0; oo < Dim6; ++oo ) {
                     iter( ii, jj, kk, ll, mm, nn, oo ) = u;
                   }
       return *this;
