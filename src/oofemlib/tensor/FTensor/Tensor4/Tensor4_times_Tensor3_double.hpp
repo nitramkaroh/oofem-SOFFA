@@ -36,7 +36,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim1, Dim0, Dim4, j, i, m> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim1, Dim0, Dim4, i, j, k, l, j, i, m, Dim2, Dim3, Dim1, Dim0, Dim4, k, l, j, i, m>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim1, Dim0, Dim4, i, j, k, l, j, i, m, Dim2, Dim3, Dim0, Dim1, Dim4, k, l, i, j, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
 }
 
@@ -72,7 +72,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim1, Dim4, Dim0, j, m, i> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim1, Dim4, Dim0, i, j, k, l, j, m, i, Dim2, Dim3, Dim1, Dim4, Dim0, k, l, j, m, i>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim1, Dim4, Dim0, i, j, k, l, j, m, i, Dim2, Dim3, Dim0, Dim1, Dim4, k, l, i, j, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
 }
 
@@ -90,7 +90,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim0, Dim4, Dim1, i, m, j> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim0, Dim4, Dim1, i, j, k, l, i, m, j, Dim2, Dim3, Dim0, Dim4, Dim1, k, l, i, m, j>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim0, Dim4, Dim1, i, j, k, l, i, m, j, Dim2, Dim3, Dim0, Dim1, Dim4, k, l, i, j, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
 }
 
@@ -108,7 +108,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim1, Dim0, m, j, i> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim1, Dim0, i, j, k, l, m, j, i, Dim2, Dim3, Dim4, Dim1, Dim0, k, l, m, j, i>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim1, Dim0, i, j, k, l, m, j, i, Dim2, Dim3, Dim0, Dim1, Dim4, k, l, i, j, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
 }
 
@@ -126,7 +126,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim0, Dim1, m, i, j> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim0, Dim1, i, j, k, l, m, i, j, Dim2, Dim3, Dim4, Dim0, Dim1, k, l, m, i, j>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim0, Dim1, i, j, k, l, m, i, j, Dim2, Dim3, Dim0, Dim1, Dim4, k, l, i, j, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim2, Dim3, Dim4, k, l, m>(TensorExpr(a, b));
 }
 
@@ -144,7 +144,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim2, Dim0, Dim4, k, i, m> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim0, Dim4, i, j, k, l, k, i, m, Dim1, Dim3, Dim2, Dim0, Dim4, j, l, k, i, m>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim0, Dim4, i, j, k, l, k, i, m, Dim1, Dim3, Dim0, Dim2, Dim4, j, l, i, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
 }
 
@@ -180,7 +180,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim2, Dim4, Dim0, k, m, i> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim4, Dim0, i, j, k, l, k, m, i, Dim1, Dim3, Dim2, Dim4, Dim0, j, l, k, m, i>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim4, Dim0, i, j, k, l, k, m, i, Dim1, Dim3, Dim0, Dim2, Dim4, j, l, i, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
 }
 
@@ -198,7 +198,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim0, Dim4, Dim2, i, m, k> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim0, Dim4, Dim2, i, j, k, l, i, m, k, Dim1, Dim3, Dim0, Dim4, Dim2, j, l, i, m, k>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim0, Dim4, Dim2, i, j, k, l, i, m, k, Dim1, Dim3, Dim0, Dim2, Dim4, j, l, i, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
 }
 
@@ -216,7 +216,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim2, Dim0, m, k, i> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim2, Dim0, i, j, k, l, m, k, i, Dim1, Dim3, Dim4, Dim2, Dim0, j, l, m, k, i>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim2, Dim0, i, j, k, l, m, k, i, Dim1, Dim3, Dim0, Dim2, Dim4, j, l, i, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
 }
 
@@ -234,7 +234,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim0, Dim2, m, i, k> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim0, Dim2, i, j, k, l, m, i, k, Dim1, Dim3, Dim4, Dim0, Dim2, j, l, m, i, k>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim0, Dim2, i, j, k, l, m, i, k, Dim1, Dim3, Dim0, Dim2, Dim4, j, l, i, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim3, Dim4, j, l, m>(TensorExpr(a, b));
 }
 
@@ -252,7 +252,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim3, Dim0, Dim4, l, i, m> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim0, Dim4, i, j, k, l, l, i, m, Dim1, Dim2, Dim3, Dim0, Dim4, j, k, l, i, m>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim0, Dim4, i, j, k, l, l, i, m, Dim1, Dim2, Dim0, Dim3, Dim4, j, k, i, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
 }
 
@@ -288,7 +288,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim3, Dim4, Dim0, l, m, i> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim4, Dim0, i, j, k, l, l, m, i, Dim1, Dim2, Dim3, Dim4, Dim0, j, k, l, m, i>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim4, Dim0, i, j, k, l, l, m, i, Dim1, Dim2, Dim0, Dim3, Dim4, j, k, i, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
 }
 
@@ -306,7 +306,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim0, Dim4, Dim3, i, m, l> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim0, Dim4, Dim3, i, j, k, l, i, m, l, Dim1, Dim2, Dim0, Dim4, Dim3, j, k, i, m, l>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim0, Dim4, Dim3, i, j, k, l, i, m, l, Dim1, Dim2, Dim0, Dim3, Dim4, j, k, i, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
 }
 
@@ -324,7 +324,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim3, Dim0, m, l, i> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim3, Dim0, i, j, k, l, m, l, i, Dim1, Dim2, Dim4, Dim3, Dim0, j, k, m, l, i>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim3, Dim0, i, j, k, l, m, l, i, Dim1, Dim2, Dim0, Dim3, Dim4, j, k, i, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
 }
 
@@ -342,7 +342,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim0, Dim3, m, i, l> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim0, Dim3, i, j, k, l, m, i, l, Dim1, Dim2, Dim4, Dim0, Dim3, j, k, m, i, l>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim0, Dim3, i, j, k, l, m, i, l, Dim1, Dim2, Dim0, Dim3, Dim4, j, k, i, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim1, Dim2, Dim4, j, k, m>(TensorExpr(a, b));
 }
 
@@ -360,7 +360,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim2, Dim1, Dim4, k, j, m> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim1, Dim4, i, j, k, l, k, j, m, Dim0, Dim3, Dim2, Dim1, Dim4, i, l, k, j, m>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim1, Dim4, i, j, k, l, k, j, m, Dim0, Dim3, Dim1, Dim2, Dim4, i, l, j, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
 }
 
@@ -396,7 +396,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim2, Dim4, Dim1, k, m, j> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim4, Dim1, i, j, k, l, k, m, j, Dim0, Dim3, Dim2, Dim4, Dim1, i, l, k, m, j>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim4, Dim1, i, j, k, l, k, m, j, Dim0, Dim3, Dim1, Dim2, Dim4, i, l, j, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
 }
 
@@ -414,7 +414,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim1, Dim4, Dim2, j, m, k> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim1, Dim4, Dim2, i, j, k, l, j, m, k, Dim0, Dim3, Dim1, Dim4, Dim2, i, l, j, m, k>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim1, Dim4, Dim2, i, j, k, l, j, m, k, Dim0, Dim3, Dim1, Dim2, Dim4, i, l, j, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
 }
 
@@ -432,7 +432,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim2, Dim1, m, k, j> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim2, Dim1, i, j, k, l, m, k, j, Dim0, Dim3, Dim4, Dim2, Dim1, i, l, m, k, j>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim2, Dim1, i, j, k, l, m, k, j, Dim0, Dim3, Dim1, Dim2, Dim4, i, l, j, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
 }
 
@@ -450,7 +450,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim1, Dim2, m, j, k> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim1, Dim2, i, j, k, l, m, j, k, Dim0, Dim3, Dim4, Dim1, Dim2, i, l, m, j, k>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim1, Dim2, i, j, k, l, m, j, k, Dim0, Dim3, Dim1, Dim2, Dim4, i, l, j, k, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim3, Dim4, i, l, m>(TensorExpr(a, b));
 }
 
@@ -468,7 +468,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim3, Dim1, Dim4, l, j, m> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim1, Dim4, i, j, k, l, l, j, m, Dim0, Dim2, Dim3, Dim1, Dim4, i, k, l, j, m>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim1, Dim4, i, j, k, l, l, j, m, Dim0, Dim2, Dim1, Dim3, Dim4, i, k, j, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
 }
 
@@ -504,7 +504,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim3, Dim4, Dim1, l, m, j> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim4, Dim1, i, j, k, l, l, m, j, Dim0, Dim2, Dim3, Dim4, Dim1, i, k, l, m, j>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim4, Dim1, i, j, k, l, l, m, j, Dim0, Dim2, Dim1, Dim3, Dim4, i, k, j, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
 }
 
@@ -522,7 +522,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim1, Dim4, Dim3, j, m, l> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim1, Dim4, Dim3, i, j, k, l, j, m, l, Dim0, Dim2, Dim1, Dim4, Dim3, i, k, j, m, l>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim1, Dim4, Dim3, i, j, k, l, j, m, l, Dim0, Dim2, Dim1, Dim3, Dim4, i, k, j, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
 }
 
@@ -540,7 +540,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim3, Dim1, m, l, j> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim3, Dim1, i, j, k, l, m, l, j, Dim0, Dim2, Dim4, Dim3, Dim1, i, k, m, l, j>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim3, Dim1, i, j, k, l, m, l, j, Dim0, Dim2, Dim1, Dim3, Dim4, i, k, j, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
 }
 
@@ -558,7 +558,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim1, Dim3, m, j, l> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim1, Dim3, i, j, k, l, m, j, l, Dim0, Dim2, Dim4, Dim1, Dim3, i, k, m, j, l>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim1, Dim3, i, j, k, l, m, j, l, Dim0, Dim2, Dim1, Dim3, Dim4, i, k, j, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim2, Dim4, i, k, m>(TensorExpr(a, b));
 }
 
@@ -576,7 +576,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim3, Dim2, Dim4, l, k, m> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim2, Dim4, i, j, k, l, l, k, m, Dim0, Dim1, Dim3, Dim2, Dim4, i, j, l, k, m>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim2, Dim4, i, j, k, l, l, k, m, Dim0, Dim1, Dim2, Dim3, Dim4, i, j, k, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
 }
 
@@ -612,7 +612,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim3, Dim4, Dim2, l, m, k> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim4, Dim2, i, j, k, l, l, m, k, Dim0, Dim1, Dim3, Dim4, Dim2, i, j, l, m, k>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim3, Dim4, Dim2, i, j, k, l, l, m, k, Dim0, Dim1, Dim2, Dim3, Dim4, i, j, k, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
 }
 
@@ -630,7 +630,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim2, Dim4, Dim3, k, m, l> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim4, Dim3, i, j, k, l, k, m, l, Dim0, Dim1, Dim2, Dim4, Dim3, i, j, k, m, l>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim2, Dim4, Dim3, i, j, k, l, k, m, l, Dim0, Dim1, Dim2, Dim3, Dim4, i, j, k, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
 }
 
@@ -648,7 +648,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim3, Dim2, m, l, k> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim3, Dim2, i, j, k, l, m, l, k, Dim0, Dim1, Dim4, Dim3, Dim2, i, j, m, l, k>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim3, Dim2, i, j, k, l, m, l, k, Dim0, Dim1, Dim2, Dim3, Dim4, i, j, k, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
 }
 
@@ -666,7 +666,7 @@ auto operator*(const Tensor4_Expr<A, T, Dim0, Dim1, Dim2, Dim3, i, j, k, l> &a,
                const Tensor3_Expr<B, U, Dim4, Dim2, Dim3, m, k, l> &b)
 {
   using TensorExpr
-    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim2, Dim3, i, j, k, l, m, k, l, Dim0, Dim1, Dim4, Dim2, Dim3, i, j, m, k, l>;
+    = Tensor4_times_Tensor3_double<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim2, Dim3, i, j, k, l, m, k, l, Dim0, Dim1, Dim2, Dim3, Dim4, i, j, k, l, m>;
   return Tensor3_Expr<TensorExpr, typename promote<T,U>::V, Dim0, Dim1, Dim4, i, j, m>(TensorExpr(a, b));
 }
 
