@@ -38,7 +38,7 @@
 
 namespace oofem {
 MagnetoElasticMaterialStatus :: MagnetoElasticMaterialStatus(GaussPoint *g) :
-  MaterialStatus(g), FVector(), tempFVector(), HVector(), tempHVector()
+  MaterialStatus(g), FVector(), tempFVector(), HVector(), tempHVector(), gradFVector()
 {
     PVector.resize(9);
     FVector.resize(9);
