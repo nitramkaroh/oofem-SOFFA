@@ -48,7 +48,7 @@
 #include "fei2dquadquad.h"
 #include "mathfem.h"
 #include "floatarrayf.h"
-
+#include "lobattoir.h"
 
 namespace oofem {
 
@@ -62,10 +62,14 @@ class ThirdMediumElement : public NLStructuralElement
   private:
   virtual int giveNumberOfDofs() const = 0;
   virtual const Variable &getU() const = 0;
+  FEICellGeometry *cellGeometryWrapper = nullptr;
 
   public:
   ThirdMediumElement( int n, Domain *d ) :
-          NLStructuralElement( n, d ) {}
+          NLStructuralElement( n, d )
+  {
+    cellGeometryWrapper == NULL;
+  }
 
 
   // Note: performance can be probably improved once it will be possible
@@ -132,6 +136,11 @@ class ThirdMediumElement : public NLStructuralElement
       gradJanswer.resize( this->giveNumberOfDofs() );
       gradJanswer.zero();
       this->integrateTerm_c( gradJanswer, ThirdMedium_GradGrad_JacobianGradientTerm( getU(), getU() ), ir, tStep );
+
+      answer.clear();
+      answer.add( standardAnswer );
+      answer.add( gradFanswer );
+      answer.add( gradJanswer );
 
     } else {
       NLStructuralElement::giveCharacteristicVector( answer, type, mode, tStep );
@@ -210,12 +219,44 @@ class ThirdMediumElement : public NLStructuralElement
     }
   }
 
+  double computeVolumeAround( GaussPoint *gp ) override
+  {
+    MaterialMode mmode = gp->giveMaterialMode();
+
+    if ( mmode == _PlaneStrain ) {
+      double weight = gp->giveWeight();
+      const FloatArray &lCoords = gp->giveNaturalCoordinates(); // local/natural coords of the gp (parent domain)
+      double detJ = fabs( this->giveInterpolation()->giveTransformationJacobian( lCoords, *this->giveCellGeometryWrapper() ) );
+      double thickness = this->giveCrossSection()->give( CS_Thickness, gp ); // the cross section keeps track of the thickness
+
+      return detJ * thickness * weight; // dV
+    } else if ( mmode == _3dMat ) {
+      double determinant, weight, volume;
+      determinant = fabs( this->giveInterpolation()->giveTransformationJacobian( gp->giveNaturalCoordinates(),
+          FEIElementGeometryWrapper( this ) ) );
+
+      weight = gp->giveWeight();
+      volume = determinant * weight;
+
+      return volume;
+    }
+  }
+
+  FEICellGeometry * giveCellGeometryWrapper()
+  {
+    if ( !cellGeometryWrapper ) {
+      cellGeometryWrapper = new FEIElementGeometryWrapper( this );
+    }
+
+    return cellGeometryWrapper;
+  }
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief 2D 3M elastic element with quadratic interpolation of displacements and linear interpolation of magnetic potential
+ * @brief 2D 3M elastic element with quadratic interpolation of displacements
  *
  */
 class ThirdMediumQuad_q : public ThirdMediumElement
@@ -229,7 +270,7 @@ class ThirdMediumQuad_q : public ThirdMediumElement
           ThirdMediumElement( n, d )
   {
     numberOfDofMans = 8;
-    numberOfGaussPoints = 4;
+    numberOfGaussPoints = 8;
     this->computeGaussPoints();
   }
 
@@ -278,7 +319,7 @@ class ThirdMediumQuad_q : public ThirdMediumElement
   {
     if ( integrationRulesArray.size() == 0 ) {
       integrationRulesArray.resize( 1 );
-      integrationRulesArray[0] = std::make_unique<GaussIntegrationRule>( 1, this );
+      integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this );
       integrationRulesArray[0]->SetUpPointsOnSquare( numberOfGaussPoints, _PlaneStrain );
     }
   }

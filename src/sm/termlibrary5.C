@@ -75,6 +75,8 @@ void ThirdMedium_GradGrad_SecondGradientTerm ::evaluate( FloatArray &answer, Str
   // Grad contains deformation gradient and magnetic field
   auto size = this->computeSecondGradientField(vGrad, B, cell, gp->giveNaturalCoordinates(), gp->giveMaterialMode(), tstep);
   //
+  auto time = tstep->giveIntrinsicTime();
+
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *> (cs);
   auto vFlux = tcs->give_SecondGradient_FluxVector(vGrad, gp, tstep);
