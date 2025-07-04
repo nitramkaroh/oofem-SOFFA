@@ -16,6 +16,7 @@ set (sm_crosssection
     CrossSections/variablecrosssection.C
     CrossSections/warpingcrosssection.C
     CrossSections/latticecrosssection.C
+    CrossSections/thirdmediumcrosssection.C
     )
 
 set (sm_emodel
@@ -111,6 +112,10 @@ set (sm_quasicontinuum
     Quasicontinuum/geometrygenerator.C
     )
 
+set (sm_thirdmediumterms
+    termlibrary5.C
+    )
+
 set (sm
     ${sm_crosssection}
     ${sm_loads}
@@ -122,7 +127,8 @@ set (sm
     ${sm_unsorted}
     ${sm_new}
     ${sm_boundary_conditions}
-    ${sm_quasicontinuum} 
+    ${sm_quasicontinuum}
+    ${sm_thirdmediumterms} 
     )
 
 if (USE_PARALLEL)

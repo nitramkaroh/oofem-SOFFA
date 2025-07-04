@@ -81,6 +81,11 @@ set (sm_material
     HyperelasticMaterials/hyperelasticmaterial1d.C
     HyperelasticMaterials/ReducedMagnetoElasticMaterials/reducedhardmagneticmooneyrivlincompressiblematerial_consistent.C
 
+    #Third medium models
+    HyperelasticMaterials/ThirdMediumMaterials/thirdmediummaterial.C
+    HyperelasticMaterials/ThirdMediumMaterials/thirdmediummaterialstatus.C
+    HyperelasticMaterials/ThirdMediumMaterials/thirdmediummooneyrivlincompressiblematerial.h
+
     #Lattice models
     LatticeMaterials/latticematstatus.C
     LatticeMaterials/latticestructuralmaterial.C	
