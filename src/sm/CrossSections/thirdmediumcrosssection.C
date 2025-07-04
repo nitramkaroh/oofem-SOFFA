@@ -2,8 +2,11 @@
 
 #include "thirdmediumcrosssection.h"
 #include "sm/Materials/HyperelasticMaterials/ThirdMediumMaterials/thirdmediummaterial.h"
+#include "classfactory.h"
 
 namespace oofem {
+
+REGISTER_CrossSection( ThirdMediumCrossSection );
 
 FloatArray
 ThirdMediumCrossSection::give_SecondGradient_FluxVector( const FloatArray &vGrad, GaussPoint *gp, TimeStep *tStep ) const
@@ -96,13 +99,13 @@ ThirdMediumCrossSection ::give_JacobianGradient_FluxVectors_PlaneStrain( const F
 }
 
 
-void ThirdMediumCrossSection ::give_JacobianGradient_dFluxes_dGrads( std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> &answer, MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep )
+std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> ThirdMediumCrossSection ::give_JacobianGradient_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep )
 {
   MaterialMode mode = gp->giveMaterialMode();
   if ( mode == _3dMat ) {
-    answer = this->give_JacobianGradient_ConstitutiveMatrices_3d( rmode, gp, tStep );
+    return this->give_JacobianGradient_ConstitutiveMatrices_3d( rmode, gp, tStep );
   } else if ( mode == _PlaneStrain ) {
-    answer = this->give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( rmode, gp, tStep );
+    return this->give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( rmode, gp, tStep );
   } else {
     OOFEM_ERROR( "unsupported mode" );
   }

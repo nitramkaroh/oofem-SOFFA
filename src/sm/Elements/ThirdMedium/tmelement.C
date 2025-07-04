@@ -43,6 +43,7 @@
 #include "classfactory.h"
 #include "gaussintegrationrule.h"
 #include "crosssection.h"
+#include "sm/CrossSections/structuralcrosssection.h"
 
 #include "fei2dquadquad.h"
 #include "mathfem.h"
@@ -104,7 +105,14 @@ class ThirdMediumElement : public NLStructuralElement
 
   virtual void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override
   {
-    OOFEM_ERROR( "huhu test" );
+    MaterialMode mmode = gp->giveMaterialMode();
+    if ( mmode == _PlaneStrain ) {
+      answer = this->giveStructuralCrossSection()->giveStiffnessMatrix_dPdF_PlaneStrain( rMode, gp, tStep );
+    } else if ( mmode == _3dMat ) {
+      answer = this->giveStructuralCrossSection()->giveStiffnessMatrix_3d( rMode, gp, tStep );
+    } else{
+      OOFEM_ERROR("Unsupported material mode");
+    }
   }
 
   virtual void giveCharacteristicVector( FloatArray &answer, CharType type, ValueModeType mode, TimeStep *tStep ) override
@@ -165,16 +173,55 @@ class ThirdMediumElement : public NLStructuralElement
       answer.add( dw );
     }
   }
+
+  virtual void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override
+  {
+    FloatMatrix dNdx;
+    MaterialMode mmode = gp->giveMaterialMode();
+    FEInterpolation* interpol = this->giveInterpolation();
+    // evaluate matrix of derivatives, the member at i,j position contains value of dNi/dxj
+    interpol->evaldNdx( dNdx, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( this ) );
+
+    if ( mmode == _3dMat ) {
+      answer.resize( 9, dNdx.giveNumberOfRows() * 3 );
+      answer.zero();
+      for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
+        answer.at( 1, 3 * i - 2 ) = dNdx.at( i, 1 ); // du/dx
+        answer.at( 2, 3 * i - 1 ) = dNdx.at( i, 2 ); // dv/dy
+        answer.at( 3, 3 * i - 0 ) = dNdx.at( i, 3 ); // dw/dz
+        answer.at( 4, 3 * i - 1 ) = dNdx.at( i, 3 ); // dv/dz
+        answer.at( 7, 3 * i - 0 ) = dNdx.at( i, 2 ); // dw/dy
+        answer.at( 5, 3 * i - 2 ) = dNdx.at( i, 3 ); // du/dz
+        answer.at( 8, 3 * i - 0 ) = dNdx.at( i, 1 ); // dw/dx
+        answer.at( 6, 3 * i - 2 ) = dNdx.at( i, 2 ); // du/dy
+        answer.at( 9, 3 * i - 1 ) = dNdx.at( i, 1 ); // dv/dx
+      }
+    } else if ( mmode == _PlaneStrain ) {
+      answer.resize( 5, dNdx.giveNumberOfRows() * 2 );
+      answer.zero();
+      for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
+        answer.at( 1, 2 * i - 1 ) = dNdx.at( i, 1 ); // du/dx -1
+        answer.at( 2, 2 * i - 0 ) = dNdx.at( i, 2 ); // dv/dy -2
+        answer.at( 4, 2 * i - 1 ) = dNdx.at( i, 2 ); // du/dy -6
+        answer.at( 5, 2 * i - 0 ) = dNdx.at( i, 1 ); // dv/dx -9
+      }
+    } else {
+      OOFEM_ERROR( "Unsupported material mode" );
+    }
+  }
+
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
- * @brief 2D 3M elatic element with quadratic interpolation of displacements and linear interpolation of magnetic potential
+ * @brief 2D 3M elastic element with quadratic interpolation of displacements and linear interpolation of magnetic potential
  *
  */
 class ThirdMediumQuad_q : public ThirdMediumElement
 {
   protected:
-  const static FEInterpolation &interpol;
+  static FEInterpolation &interpol;
   const static Variable &u;
 
   public:
@@ -203,6 +250,8 @@ class ThirdMediumQuad_q : public ThirdMediumElement
   {
     answer = {};
   }*/
+
+  virtual FEInterpolation* giveInterpolation() const override { return &interpol; }
 
   void giveDofManDofIDMask( int inode, IntArray &answer ) const override
   {
@@ -235,7 +284,7 @@ class ThirdMediumQuad_q : public ThirdMediumElement
   }
 };
 
-const FEInterpolation &ThirdMediumQuad_q ::interpol = FEI2dQuadQuad( 1, 2 );
+FEInterpolation &ThirdMediumQuad_q ::interpol = FEI2dQuadQuad( 1, 2 );
 const Variable &ThirdMediumQuad_q::u = Variable( ThirdMediumQuad_q::interpol, Variable::VariableQuantity::Displacement, Variable::VariableType::vector, 2, NULL, { 1, 2 } );
 
 #define _IFT_ThirdMediumQuad_q_Name "thirdmediumquad_q"

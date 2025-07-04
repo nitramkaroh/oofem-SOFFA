@@ -59,7 +59,11 @@ ThirdMediumMaterial ::give_SecondGradient_ConstitutiveMatrix_PlaneStrain( MatRes
 std::tuple<FloatArrayF<5>, FloatArrayF<8> >
 ThirdMediumMaterial ::give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep )
 {
-  OOFEM_ERROR( "No implement" );
+  // these elements should give all Tensor3 components without the third dimension in them
+  //  according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
+  auto [vP, vT] = give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_3d( assemble<9>( vF, { 0, 1, 2, 5, 8 } ), assemble<27>( vGradF, { 0, 1, 5, 8, 9, 10, 14, 17 } ), gp, tStep );
+  //
+  return std::make_tuple( vP[{ 0, 1, 2, 5, 8 }], vT[{ 0, 1, 5, 8, 9, 10, 14, 17 }] );
 }
 
 
@@ -116,7 +120,14 @@ ThirdMediumMaterial ::give_JacobianGradient_ConstitutiveMatrices_3d( MatResponse
 std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> >
 ThirdMediumMaterial ::give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
 {
-  OOFEM_ERROR( "Not implemented yet" );
+  //these elements should give all Tensor3 components without the third dimension in them
+  // according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
+  auto [vD_FF_3d, vC_FG_3d, vC_GF_3d, vC_GG_3d] = this->give_JacobianGradient_ConstitutiveMatrices_3d(mode, gp, tStep);
+  auto vD_FF_red = vD_FF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  auto vC_FG_red = vC_FG_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 5, 8, 9, 10, 14, 17 } );
+  auto vC_GF_red = vC_GF_3d( { 0, 1, 5, 8, 9, 10, 14, 17 }, { 0, 1, 2, 5, 8 } );
+  auto vC_GG_red = vC_GG_3d( { 0, 1, 5, 8, 9, 10, 14, 17 }, { 0, 1, 5, 8, 9, 10, 14, 17 } );
+  return std::make_tuple( vD_FF_red, vC_FG_red, vC_GF_red, vC_GG_red );
 }
 
 Tensor1_3d ThirdMediumMaterial::compute_gradJ_3d( const Tensor2_3d &F, const Tensor3_3d &gradF ) const

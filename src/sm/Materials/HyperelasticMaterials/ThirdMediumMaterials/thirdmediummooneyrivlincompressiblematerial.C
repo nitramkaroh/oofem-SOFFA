@@ -37,6 +37,7 @@
 #include "..\mooneyrivlincompressiblematerial.h"
 #include "thirdmediummaterial.h"
 #include "thirdmediummaterialstatus.h"
+#include "classfactory.h"
 
 
 ///@name Input fields for MooneyRivlinMaterial
@@ -59,7 +60,7 @@ class ThirdMediumMooneyRivlinCompressibleMaterial : public MooneyRivlinCompressi
 
   void initializeFrom( InputRecord &ir ) override
   {
-    ThirdMediumMooneyRivlinCompressibleMaterial::initializeFrom( ir );
+    ThirdMediumMaterial::initializeFrom( ir );
     MooneyRivlinCompressibleMaterial::initializeFrom( ir );
   }
 
@@ -75,4 +76,3 @@ class ThirdMediumMooneyRivlinCompressibleMaterial : public MooneyRivlinCompressi
 REGISTER_Material( ThirdMediumMooneyRivlinCompressibleMaterial );
 
 } // end namespace oofem
-#endif

@@ -37,10 +37,10 @@
 
 namespace oofem {
 ThirdMediumMaterialStatus ::ThirdMediumMaterialStatus( GaussPoint *g ) :
-  StructuralMaterialStatus(g), gradFVector()
+  StructuralMaterialStatus(g), gradFVector(), tempGradFVector()
 {
-    
-    tempGradFVector = gradFVector;   
+  gradFVector.resize( 27 );
+  tempGradFVector = gradFVector;   
 
 }
 

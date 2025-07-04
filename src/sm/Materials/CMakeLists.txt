@@ -84,7 +84,7 @@ set (sm_material
     #Third medium models
     HyperelasticMaterials/ThirdMediumMaterials/thirdmediummaterial.C
     HyperelasticMaterials/ThirdMediumMaterials/thirdmediummaterialstatus.C
-    HyperelasticMaterials/ThirdMediumMaterials/thirdmediummooneyrivlincompressiblematerial.h
+    HyperelasticMaterials/ThirdMediumMaterials/thirdmediummooneyrivlincompressiblematerial.C
 
     #Lattice models
     LatticeMaterials/latticematstatus.C

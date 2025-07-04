@@ -54,7 +54,7 @@ int ThirdMedium_GradGrad_SecondGradientTerm ::computeSecondGradientField( FloatA
 {
     FloatArray u;
     //
-    cell.computeVectorOf(VM_TotalIntrinsic, tstep, u);
+    cell.computeVectorOf(VM_Total, tstep, u);
     //cell.getUnknownVector(u, this->field, VM_TotalIntrinsic, tstep);
     this->computeGmatrixAt(G, this->field, this->field.interpolation, cell, lcoords, mmode);
     vGradF.beProductOf( G, u );
@@ -139,7 +139,7 @@ int ThirdMedium_GradGrad_JacobianGradientTerm ::computeGradientField( FloatArray
 {
   FloatArray u;
   //
-  cell.computeVectorOf( VM_TotalIntrinsic, tstep, u );
+  cell.computeVectorOf( VM_Total, tstep, u );
   // cell.getUnknownVector(u, this->field, VM_TotalIntrinsic, tstep);
   this->computeBHmatrixAt( BH, this->field, this->field.interpolation, cell, lcoords, mmode );
   vF.beProductOf( BH, u );
@@ -164,7 +164,7 @@ int ThirdMedium_GradGrad_JacobianGradientTerm ::computeSecondGradientField( Floa
 {
   FloatArray u;
   //
-  cell.computeVectorOf( VM_TotalIntrinsic, tstep, u );
+  cell.computeVectorOf( VM_Total, tstep, u );
   // cell.getUnknownVector(u, this->field, VM_TotalIntrinsic, tstep);
   this->computeGmatrixAt( G, this->field, this->field.interpolation, cell, lcoords, mmode );
   vGradF.beProductOf( G, u );
@@ -195,7 +195,7 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::evaluate_lin( FloatMatrix &answ
 {
   FloatArray vGradF, vF; //useless since they are not passed on
   FloatMatrix BH, G; //necessary, on the other hand - base function derivatives
-  FloatMatrix dPdF, dPdGradF, dTdF, dTdGradF; //constitutive matrices
+  //FloatMatrix dPdF, dPdGradF, dTdF, dTdGradF; //constitutive matrices
   FloatMatrix B_dPdF_B, B_dPdGradF_G, G_dTdF_B, G_dTdGradF_G; // constitutive matrices multiplied by base function derivatives
   FloatMatrix B_dPdF, B_dPdGradF, G_dTdF, G_dTdGradF; //intermediate results
   //
@@ -204,7 +204,7 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::evaluate_lin( FloatMatrix &answ
   // get constitutive matrices
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
-  tcs->give_JacobianGradient_dFluxes_dGrads( std::make_tuple( dPdF, dPdGradF, dTdF, dTdGradF ), TangentStiffness, gp, tstep );
+  auto [dPdF, dPdGradF, dTdF, dTdGradF] =  tcs->give_JacobianGradient_dFluxes_dGrads(TangentStiffness, gp, tstep );
   // construct result
   answer.resize(0,0);
   B_dPdF.beTProductOf(BH, dPdF);
@@ -212,7 +212,7 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::evaluate_lin( FloatMatrix &answ
   answer.add(B_dPdF_B);
 
   B_dPdGradF.beTProductOf( BH, dPdGradF );
-  B_dPdGradF_G.beProductOf( B_dPdGradF, BH );
+  B_dPdGradF_G.beProductOf( B_dPdGradF, G );
   answer.add( B_dPdGradF_G );
 
   G_dTdF.beTProductOf( G, dTdF );
@@ -220,7 +220,7 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::evaluate_lin( FloatMatrix &answ
   answer.add( G_dTdF_B );
 
   G_dTdGradF.beTProductOf( G, dTdGradF );
-  G_dTdGradF_G.beProductOf( G_dTdGradF, BH );
+  G_dTdGradF_G.beProductOf( G_dTdGradF, G );
   answer.add( G_dTdGradF_G );
 }
 

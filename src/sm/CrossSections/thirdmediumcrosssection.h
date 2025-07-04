@@ -62,22 +62,24 @@ public:
     ThirdMediumCrossSection( int n, Domain *d ) :
         SimpleCrossSection( n, d ) {}
 
-    void createMaterialStatus(GaussPoint &iGP) override;
-
     const char *giveClassName() const override { return "ThirdMediumCrossSection"; }
     const char *giveInputRecordName() const override { return _IFT_ThirdMediumCrossSection_Name; }
 
+    // normal second gradient handling
     FloatArray give_SecondGradient_FluxVector( const FloatArray &vGrad, GaussPoint *gp, TimeStep *tStep ) const;
     FloatArrayF<27> give_SecondGradient_FluxVector_3d( const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep ) const;
     FloatArrayF<8> give_SecondGradient_FluxVector_PlaneStrain( const FloatArrayF<8> &vG, GaussPoint *gp, TimeStep *tStep ) const;
+
     void give_SecondGradient_dFlux_dGrad( FloatMatrix &answer, MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep );
     FloatMatrixF<1, 1> give_SecondGradient_ConstitutiveMatrix_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
     FloatMatrixF<1, 1> give_SecondGradient_ConstitutiveMatrix_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
 
+    //Jacobian gradient handling
     std::tuple<FloatArray, FloatArray> give_JacobianGradient_FluxVectors( const FloatArray &vF, const FloatArray &vGradF, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatArrayF<9>, FloatArrayF<27> > give_JacobianGradient_FluxVectors_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatArrayF<5>, FloatArrayF<8> > give_JacobianGradient_FluxVectors_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep ) const;
-    void give_JacobianGradient_dFluxes_dGrads( std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> &answer, MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep );
+
+    std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> give_JacobianGradient_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep );
     std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 27>, FloatMatrixF<27, 9>, FloatMatrixF<27, 27> > give_JacobianGradient_ConstitutiveMatrices_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> > give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
 
