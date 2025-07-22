@@ -9,9 +9,12 @@
 #include "Tensor3_or_Tensor3.hpp"
 #include "Tensor3_plus_Tensor3.hpp"
 #include "Tensor3_times_Dg.hpp"
+#include "Tensor3_times_Tensor1_outer.hpp"
 #include "Tensor3_times_Tensor1.hpp"
+#include "Tensor3_times_Tensor2_outer.hpp"
 #include "Tensor3_times_Tensor2.hpp"
 #include "Tensor3_times_Tensor2_symmetric.hpp"
+#include "Tensor3_times_Tensor3_outer.hpp"
 #include "Tensor3_times_Tensor3.hpp" //handles triple contraction
 #include "Tensor3_times_generic.hpp"
 #include "Tensor3_times_Tensor3_single.hpp"

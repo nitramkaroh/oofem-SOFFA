@@ -4,7 +4,9 @@
 
 #include "Tensor5_minus_Tensor5.hpp"
 #include "Tensor5_plus_Tensor5.hpp"
+#include "Tensor5_times_Tensor1_outer.hpp"
 #include "Tensor5_times_Tensor1_single.hpp"
+#include "Tensor5_times_Tensor2_outer.hpp"
 #include "Tensor5_times_Tensor2_single.hpp"
 #include "Tensor5_times_Tensor2_double.hpp"
 //#include "Tensor5_times_Tensor2_symmetric.hpp"
@@ -118,7 +120,7 @@ namespace FTensor
             for(int ll = 0; ll < Dim3; ++ll)
               for ( int mm = 0; mm < Dim4; ++mm )
               {
-                iter(ii, jj, kk, ll, mm) += permute(*this, rhs, ii, jj, kk, ll, mm);
+                iter(ii, jj, kk, ll, mm) -= permute(*this, rhs, ii, jj, kk, ll, mm);
               }
       return *this;
     }

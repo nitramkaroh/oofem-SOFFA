@@ -193,7 +193,7 @@ namespace FTensor
 
       /* A(i,j,k)*B(l) -> Tensor4 */
 
-  template <class A, class B, class T, class U,
+ /* template <class A, class B, class T, class U,
 	    int Dim0, int Dim1, int Dim2, int Dim3,
             char i, char j, char k, char l>
   class Tensor3_otimes_Tensor1
@@ -224,7 +224,7 @@ namespace FTensor
       = Tensor3_otimes_Tensor1<A, B, T, U, Dim0, Dim1, Dim2, Dim3, i, j, k, l>;
     return Tensor4_Expr<TensorExpr, typename promote<T, U>::V, Dim0, Dim1, Dim2, Dim3,
 			i, j, k, l>(TensorExpr(a, b));
-  }
+  }*/
 
 
 

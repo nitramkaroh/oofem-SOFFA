@@ -122,7 +122,7 @@ namespace FTensor
                 for ( int nn = 0; nn < Dim5; ++nn )
                   for ( int oo = 0; oo < Dim6; ++oo ) 
                   {
-                    iter( ii, jj, kk, ll, mm, nn, oo ) += permute( *this, rhs, ii, jj, kk, ll, mm, nn, oo );
+                    iter( ii, jj, kk, ll, mm, nn, oo ) -= permute( *this, rhs, ii, jj, kk, ll, mm, nn, oo );
                   }
       return *this;
     }

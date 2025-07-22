@@ -4,6 +4,7 @@
 
 #include "Tensor6_minus_Tensor6.hpp"
 #include "Tensor6_plus_Tensor6.hpp"
+#include "Tensor6_times_Tensor1_outer.hpp"
 #include "Tensor6_times_Tensor1_single.hpp"
 #include "Tensor6_times_Tensor2_single.hpp"
 #include "Tensor6_times_Tensor2_double.hpp"
@@ -121,7 +122,7 @@ namespace FTensor
               for ( int mm = 0; mm < Dim4; ++mm )
                 for ( int nn = 0; nn < Dim5; ++nn )
                 {
-                  iter( ii, jj, kk, ll, mm, nn ) += permute( *this, rhs, ii, jj, kk, ll, mm, nn );
+                  iter( ii, jj, kk, ll, mm, nn ) -= permute( *this, rhs, ii, jj, kk, ll, mm, nn );
                 }
       return *this;
     }

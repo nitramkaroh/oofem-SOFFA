@@ -4,10 +4,13 @@
 
 #include "Tensor4_minus_Tensor4.hpp"
 #include "Tensor4_plus_Tensor4.hpp"
+#include "Tensor4_times_Tensor1_outer.hpp"
 #include "Tensor4_times_Tensor1_single.hpp"
+#include "Tensor4_times_Tensor2_outer.hpp"
 #include "Tensor4_times_Tensor2_single.hpp"
 #include "Tensor4_times_Tensor2_double.hpp"
 #include "Tensor4_times_Tensor2_symmetric.hpp"
+#include "Tensor4_times_Tensor3_outer.hpp"
 #include "Tensor4_times_Tensor3_triple.hpp"
 #include "Tensor4_times_generic.hpp"
 #include "Tensor4_times_Tensor4_single.hpp"
@@ -111,7 +114,7 @@ namespace FTensor
           for(int kk = 0; kk < Dim2; ++kk)
             for(int ll = 0; ll < Dim3; ++ll)
               {
-                iter(ii, jj, kk, ll) += permute(*this, rhs, ii, jj, kk, ll);
+                iter(ii, jj, kk, ll) -= permute(*this, rhs, ii, jj, kk, ll);
               }
       return *this;
     }
