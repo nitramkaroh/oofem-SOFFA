@@ -331,24 +331,35 @@ public:
     }
 
   void be_Levi_Civita()
-  {
-    for(int  i = 0; i < 3; i++) {
-      for(int  j = 0; j < 3; j++) {
-	for(int  k = 0; k < 3; k++) {
-	  if ((i != j) &&(j != k) && (i != k)) {
-	      if (((i == 1 ) && (j ==  2) && (k == 3 )) || ((i == 3 ) && (j ==  1) && (k == 2 )) || ((i == 2 ) && (j ==  3) && (k == 1 ))) {
-		    this->operator()( i, j, k ) = 1.;
-	      } else if (((i == 1 ) && (j ==  3) && (k == 2 )) || ((i == 3 ) && (j ==  2) && (k == 1 )) || ((i == 2 ) && (j ==  1) && (k == 3 ))) {
-		this->operator()( i, j, k ) = -1.;
-	      }
-	  } else {
-	    this->operator()( i, j, k ) = 0.;
-	  }
-	}
-      }
+    {      
+      this->operator()( 0, 0, 0 ) = 0.;
+      this->operator()( 0, 0, 1 ) = 0.;
+      this->operator()( 0, 0, 2 ) = 0.;
+      this->operator()( 0, 1, 0 ) = 0.;
+      this->operator()( 0, 1, 1 ) = 0.;
+      this->operator()( 0, 1, 2 ) = 1.;
+      this->operator()( 0, 2, 0 ) = 0.;
+      this->operator()( 0, 2, 1 ) = -1.;
+      this->operator()( 0, 2, 2 ) = 0.;
+      this->operator()( 1, 0, 0 ) = 0.;
+      this->operator()( 1, 0, 1 ) = 0.;
+      this->operator()( 1, 0, 2 ) = -1.;
+      this->operator()( 1, 1, 0 ) = 0.;
+      this->operator()( 1, 1, 1 ) = 0.;
+      this->operator()( 1, 1, 2 ) = 0.;
+      this->operator()( 1, 2, 0 ) = 1.;
+      this->operator()( 1, 2, 1 ) = 0.;
+      this->operator()( 1, 2, 2 ) = 0.;
+      this->operator()( 2, 0, 0 ) = 0.;
+      this->operator()( 2, 0, 1 ) = 1.;
+      this->operator()( 2, 0, 2 ) = 0.;
+      this->operator()( 2, 1, 0 ) = -1.;
+      this->operator()( 2, 1, 1 ) = 0.;
+      this->operator()( 2, 1, 2 ) = 0.;
+      this->operator()( 2, 2, 0 ) = 0.;
+      this->operator()( 2, 2, 1 ) = 0.;
+      this->operator()( 2, 2, 2 ) = 0.;
     }
-
-  }
   
 
   
