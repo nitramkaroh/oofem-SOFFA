@@ -743,7 +743,7 @@ MELhsAssembler :: MELhsAssembler(double alpha, double deltaT) :
 
 void MELhsAssembler :: matrixFromElement(FloatMatrix &answer, Element &el, TimeStep *tStep) const
 {
-  FloatMatrix contrib, gradContrib;
+  FloatMatrix contrib, gradContrib, jacobianGradContrib;
     IntArray loc, locu, locphi;
     MPElement *e = dynamic_cast<MPElement*>(&el);
     int ndofs = e->giveNumberOfDofs();
@@ -760,13 +760,16 @@ void MELhsAssembler :: matrixFromElement(FloatMatrix &answer, Element &el, TimeS
     //
     e->giveCharacteristicMatrix(gradContrib, MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad, tStep);
     answer.assemble(gradContrib, locu, locu);
+    //
+    e->giveCharacteristicMatrix( jacobianGradContrib, MagnetoElasticity_GradGrad_JacobianGradient_dFluxdGrad, tStep );
+    answer.assemble( jacobianGradContrib, locu, locu );
     
 }
   
 
 void MEResidualAssembler :: vectorFromElement(FloatArray &vec, Element &element, TimeStep *tStep, ValueModeType mode) const
 {
-  FloatArray contrib, gradContrib;
+  FloatArray contrib, gradContrib, jacobianGradContrib;
   IntArray loc, locu, locphi;
   MPElement *e = dynamic_cast<MPElement*>(&element);
   int ndofs = e->giveNumberOfDofs();
@@ -780,9 +783,11 @@ void MEResidualAssembler :: vectorFromElement(FloatArray &vec, Element &element,
   //
   e->giveCharacteristicVector(contrib, MagnetoElasticity_GradGrad_Flux, mode, tStep);
   e->giveCharacteristicVector(gradContrib, MagnetoElasticity_GradGrad_SecondGradient_Flux, mode, tStep);
+  e->giveCharacteristicVector(jacobianGradContrib, MagnetoElasticity_GradGrad_JacobianGradient_Flux, mode, tStep);
   //
   vec.assemble(contrib, loc);
   vec.assemble(gradContrib, locu);   
+  vec.assemble(jacobianGradContrib, locu);   
 }
 
 

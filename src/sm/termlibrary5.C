@@ -118,7 +118,7 @@ void ThirdMedium_GradGrad_SecondGradientTerm ::computeGmatrixAt( FloatMatrix &an
         answer.at(1, i * 2 - 1) = d2Ndx2.at(i, 1);
         answer.at(2, i * 2 - 1) = d2Ndx2.at(i, 3);
 	
-     	answer.at(3, i * 2 - 0) = d2Ndx2.at(i, 3);
+     	  answer.at( 3, i * 2 - 0 ) = d2Ndx2.at( i, 3 );
         answer.at(4, i * 2 - 0) = d2Ndx2.at(i, 2);
 
         answer.at(5, i * 2 - 1) = d2Ndx2.at(i, 3);
