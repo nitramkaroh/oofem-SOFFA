@@ -234,12 +234,17 @@ class MagnetoElasticQuad_qq : public MagnetoElasticElement
       int udofs = this->giveNumberOfUDofs();
       answer.resize( udofs, udofs );
       answer.zero();
-      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU(), getPhi() ), ir, tStep );
+      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
     } else if ( type == MagnetoElasticity_GradGrad_JacobianGradient_dFluxdGrad ) {
       int udofs = this->giveNumberOfUDofs();
       answer.resize( udofs, udofs );
       answer.zero();
-      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_JacobianGradientTerm( getU(), getU(), getPhi() ), ir, tStep );
+      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_JacobianGradientTerm( getU(), getU() ), ir, tStep );
+    } else if ( type == MagnetoElasticity_GradGrad_RotationGradient_dFluxdGrad ) {
+      int udofs = this->giveNumberOfUDofs();
+      answer.resize( udofs, udofs );
+      answer.zero();
+      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_RotationGradientTerm( getU(), getU() ), ir, tStep );
     } else {
       MagnetoElasticElement::giveCharacteristicMatrix(answer, type, tStep);
     }
@@ -251,13 +256,15 @@ class MagnetoElasticQuad_qq : public MagnetoElasticElement
     if ( type == MagnetoElasticity_GradGrad_SecondGradient_Flux ) {
       answer.resize( this->giveNumberOfUDofs() );
       answer.zero();
-      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU(), getPhi() ), ir, tStep );
+      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
     } else if ( type == MagnetoElasticity_GradGrad_JacobianGradient_Flux ) {
       answer.resize( this->giveNumberOfUDofs() );
       answer.zero();
-      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_JacobianGradientTerm( getU(), getU(), getPhi() ), ir, tStep );
+      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_JacobianGradientTerm( getU(), getU() ), ir, tStep );
     } else if ( type == MagnetoElasticity_GradGrad_RotationGradient_Flux ) {
-      OOFEM_ERROR( "Not implemented yet" );
+      answer.resize( this->giveNumberOfUDofs() );
+      answer.zero();
+      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_RotationGradientTerm( getU(), getU() ), ir, tStep );
     } else
     {
       MagnetoElasticElement::giveCharacteristicVector(answer,type,mode,tStep);
