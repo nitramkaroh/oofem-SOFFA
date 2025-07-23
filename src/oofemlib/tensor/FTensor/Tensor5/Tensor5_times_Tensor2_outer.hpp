@@ -27,7 +27,7 @@ Tensor7_Expr<
   Tensor5_times_Tensor2_outer<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o>,
   typename promote<T, U>::V, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o>
 operator*(const Tensor5_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, i, j, k, l, m> &a,
-          const Tensor2_Expr<A, T, Dim5, Dim6, n, o> &b)
+          const Tensor2_Expr<B, U, Dim5, Dim6, n, o> &b)
 {
   using TensorExpr
     = Tensor5_times_Tensor2_outer<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o>;
@@ -39,7 +39,7 @@ template<class A, class B, class T, class U, int Dim0, int Dim1, int Dim2, int D
 Tensor7_Expr<
   Tensor5_times_Tensor2_outer<A, B, T, U, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o>,
   typename promote<T, U>::V, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5, Dim6, i, j, k, l, m, n, o>
-operator*(const Tensor2_Expr<A, T, Dim5, Dim6, n, o> &b,
+operator*(const Tensor2_Expr<B, U, Dim5, Dim6, n, o> &b,
           const Tensor5_Expr<A, T, Dim0, Dim1, Dim2, Dim3, Dim4, i, j, k, l, m> &a)
 {
   return a * b;

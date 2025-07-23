@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "Tensor2_times_generic.hpp"
 #include "Tensor2_and_Tensor1.hpp"
 #include "Tensor2_carat_Tensor2.hpp"
 #include "Tensor2_divide_generic.hpp"
@@ -13,7 +14,6 @@
 #include "Tensor2_plus_Tensor2.hpp"
 #include "Tensor2_times_Tensor1.hpp"
 #include "Tensor2_times_Tensor2.hpp"
-#include "Tensor2_times_generic.hpp"
 #include "Tensor2_transform.hpp"
 #include "conj_Tensor2.hpp"
 #include "minus_Tensor2.hpp"

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Tensor4_times_generic.hpp"
 #include "Tensor4_minus_Tensor4.hpp"
 #include "Tensor4_plus_Tensor4.hpp"
 #include "Tensor4_times_Tensor1_outer.hpp"
@@ -12,7 +13,6 @@
 #include "Tensor4_times_Tensor2_symmetric.hpp"
 #include "Tensor4_times_Tensor3_outer.hpp"
 #include "Tensor4_times_Tensor3_triple.hpp"
-#include "Tensor4_times_generic.hpp"
 #include "Tensor4_times_Tensor4_single.hpp"
 #include "Tensor4_times_Tensor4_double.hpp"
 #include "Tensor4_times_Tensor4_triple.hpp"
