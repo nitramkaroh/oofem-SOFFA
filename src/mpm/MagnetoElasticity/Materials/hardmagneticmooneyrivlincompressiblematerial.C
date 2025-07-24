@@ -686,7 +686,7 @@ std::tuple<Tensor5_3d, Tensor6_3d, Tensor7_3d> HardMagneticMooneyRivlinCompressi
 
 double HardMagneticMooneyRivlinCompressibleMaterial::compute_Z_fraction_PlaneStrain( const Tensor2_3d &F ) const
 {
-  return (F(1,2) - F(1,0))/(F(0,0)+F(1,1));
+  return (F(0,1) - F(1,0))/(F(0,0)+F(1,1));
 }
 
 Tensor2_3d HardMagneticMooneyRivlinCompressibleMaterial::compute_Z_fraction_derivative_PlaneStrain( const Tensor2_3d &F ) const
@@ -694,7 +694,7 @@ Tensor2_3d HardMagneticMooneyRivlinCompressibleMaterial::compute_Z_fraction_deri
   Tensor2_3d dZdF, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
 
   dZdF( p_3, q_3 ) = -( F( 0, 1 ) - F( 1, 0 ) ) / (( F( 0, 0 ) + F( 1, 1 ) )*( F( 0, 0 ) + F( 1, 1 ) )) * (delta(p_3,0)*delta(q_3,0) + delta(p_3,1)*delta(q_3,1))
-      + ( delta( p_3, 0 ) * delta( q_3, 1 ) + delta( p_3, 1 ) * delta( q_3, 0 ) ) / (F(0,0)+F(1,1));
+      + ( delta( p_3, 0 ) * delta( q_3, 1 ) - delta( p_3, 1 ) * delta( q_3, 0 ) ) / (F(0,0)+F(1,1));
 
   return dZdF;
 }
@@ -706,7 +706,7 @@ Tensor4_3d HardMagneticMooneyRivlinCompressibleMaterial::compute_Z_fraction_seco
 
   d2ZdFdF( p_3, q_3, i_3, j_3 ) = - ( delta( i_3, 0 ) * delta( j_3, 1 ) - delta( i_3, 1 ) * delta( j_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) )
       + 2. * ( F( 0, 1 ) - F( 1, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) )
-      - ( delta( p_3, 0 ) * delta( q_3, 1 ) + delta( p_3, 1 ) * delta( q_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) );
+      - ( delta( p_3, 0 ) * delta( q_3, 1 ) - delta( p_3, 1 ) * delta( q_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) );
 
   return d2ZdFdF;
 }
@@ -717,9 +717,9 @@ Tensor6_3d HardMagneticMooneyRivlinCompressibleMaterial::compute_Z_fraction_thir
   Tensor6_3d d3ZdFdFdF;
 
   d3ZdFdFdF( p_3, q_3, i_3, j_3, r_3, s_3 ) = 2. * ( delta( i_3, 0 ) * delta( j_3, 1 ) - delta( i_3, 1 ) * delta( j_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( r_3, 0 ) * delta( s_3, 0 ) + delta( r_3, 1 ) * delta( s_3, 1 ) )
-      + 2. * ( delta( r_3, 0 ) * delta( s_3, 1 ) - delta( r_3, 1 ) * delta( s_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) )
-      - 6. * ( F( 0, 1 ) - F( 1, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) ) * ( delta( r_3, 0 ) * delta( s_3, 0 ) + delta( r_3, 1 ) * delta( s_3, 1 ) )
-      + 2. * ( delta( p_3, 0 ) * delta( q_3, 1 ) - delta( p_3, 1 ) * delta( q_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( r_3, 0 ) * delta( s_3, 0 ) + delta( r_3, 1 ) * delta( s_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) );
+                                            + 2. * ( delta( r_3, 0 ) * delta( s_3, 1 ) - delta( r_3, 1 ) * delta( s_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) )
+                                                                                            - 6. * ( F( 0, 1 ) - F( 1, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) ) * ( delta( r_3, 0 ) * delta( s_3, 0 ) + delta( r_3, 1 ) * delta( s_3, 1 ) )
+                                            + 2. * ( delta( p_3, 0 ) * delta( q_3, 1 ) - delta( p_3, 1 ) * delta( q_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( r_3, 0 ) * delta( s_3, 0 ) + delta( r_3, 1 ) * delta( s_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) );
 
   return d3ZdFdFdF;
 }
