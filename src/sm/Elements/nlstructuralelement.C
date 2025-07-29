@@ -48,6 +48,7 @@
 #include "engngm.h"
 #include "mathfem.h"
 
+
 namespace oofem {
 NLStructuralElement::NLStructuralElement(int n, Domain *aDomain) :
     StructuralElement(n, aDomain)
@@ -126,7 +127,37 @@ NLStructuralElement::computeFirstPKStressVector(FloatArray &answer, GaussPoint *
 
     FloatArray vF;
     this->computeDeformationGradientVector(vF, gp, tStep);
-    answer = cs->giveFirstPKStresses(vF, gp, tStep);
+
+    // Include prestrain Prestrain
+    FloatArray vFmod;
+    Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+    if ( this->giveMaterialMode()==_3dMat ) { // This should be changed
+        this->PrestrainDeformationGradient( vF, vFmod, F0, gp, tStep );
+    } else {
+        vFmod = vF;
+    }
+
+
+    FloatArray answerTmp = cs->giveFirstPKStresses( vFmod, gp, tStep ); // Compute stress with modified F
+
+    if ( this->giveMaterialMode() == _3dMat ) { // This should be changed
+        Tensor2_3d P( FloatArrayF<9>::FloatArrayF<9>( answerTmp ) ), Pmod;
+        Pmod( i_3, j_3 ) = 1. / F0.compute_determinant() * P( i_3, k_3 ) * F0( j_3, k_3 ); // Modify the answer
+        answer           = Pmod.to_voigt_form();
+    }
+    else {
+        answer = answerTmp;
+    }
+
+    
+
+    // update status
+    if ( this->giveMaterialMode() == _3dMat ) { // This should be changed
+        auto mat                         = dynamic_cast<StructuralMaterial *>( cs->giveMaterial( gp ) );
+        StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
+        status->letTempFVectorBe( vF );
+        status->letTempPVectorBe( answer );
+    }
 }
 
 void
@@ -533,4 +564,62 @@ NLStructuralElement::checkConsistency()
         return 1;
     }
 }
+
+void NLStructuralElement::PrestrainDeformationGradient( const FloatArray &vF, FloatArray &vFmod, Tensor2_3d &F0, GaussPoint *gp, TimeStep *tStep )
+{
+    FloatArray vF0_temp;
+    if ( this->giveIPValue( vF0_temp, gp, IST_PrestrainDeformationGradient, tStep ) ) {
+        FloatArrayF<9> vF0( vF0_temp );
+        F0 = Tensor2_3d::Tensor2_3d( vF0 );
+    }
+    FloatArrayF<9> vF2( vF );
+    Tensor2_3d Fmod, Fcurrent( vF2 );
+    Fmod( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
+    vFmod = Fmod.to_voigt_form();
+}
+
+double NLStructuralElement::giveElementMaximumLineSearchStep( FloatArray &element_ddX, TimeStep *tStep )
+{
+    double alpha = 1.e9, alpha_1, alpha_2, a, b, c, Dsc;
+  
+    if ( integrationRulesArray.size() == 1 ) {
+        FloatArray Fls, vF;
+        for ( auto &gp : *this->giveDefaultIntegrationRulePtr() ) {
+            // Compute current deformation gradient
+            this->computeDeformationGradientVector( vF, gp, tStep);
+            Tensor2_3d F(  FloatArrayF<9>::FloatArrayF<9> (vF) );
+            auto [J, cofF] = F.compute_determinant_and_cofactor();
+
+            // Compute ddX deformation gradient
+            FloatMatrix B;
+            this->computeBHmatrixAt( gp, B );
+            Fls.beProductOf( B, element_ddX );
+
+            Tensor2_3d Fls_T( FloatArrayF<9>::FloatArrayF<9> (Fls) );
+            auto [J_ls, cofF_ls] = Fls_T.compute_determinant_and_cofactor();
+
+            // solve the quadratic equation
+            c = J;
+            b = J_ls + cofF( i_3, j_3 ) * Fls_T( i_3, j_3 );
+            a = cofF_ls( i_3, j_3 ) * F( i_3, j_3 );
+
+            Dsc = b * b - 4 * a * c;
+            if ( Dsc > 0 ) {
+                alpha_1 = ( -b + sqrt( Dsc )) / 2. / a;
+                alpha_2 = ( -b - sqrt( Dsc )) / 2. / a;
+                if ( alpha_1 > 0 && alpha_2 > 0 ) {
+                    alpha = min( alpha_1, alpha_2 );
+                } else {
+                    alpha = max( alpha_1, alpha_2 );
+                }
+                
+            } else{
+                alpha = 1.e9;
+            }
+            
+        }
+    }
+    return alpha;
+}
+
 } // end namespace oofem

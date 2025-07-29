@@ -49,6 +49,10 @@
 #include "parallelcontext.h"
 #include "unknownnumberingscheme.h"
 
+#include "sm/Elements/nlstructuralelement.h"
+#include "sm/Elements/structural3delement.h"
+#include "initialcondition.h"
+
 
 #ifdef __PETSC_MODULE
  #include "petscsolver.h"
@@ -254,6 +258,12 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
     ddX.resize(neq);
     ddX.zero();
 
+    ////////////
+    //if ( tStep->giveIntrinsicTime() < 36 ) {
+        this->applyInitialGuess( X );
+    //}
+    ////////////
+
     // Fetch the matrix before evaluating internal forces.
     // This is intentional, since its a simple way to drastically increase convergence for nonlinear problems.
     // (This old tangent is just used)
@@ -279,6 +289,7 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
 
     bool LDLTbif = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
     bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation/eigenvector/postbif. LS options
+    //bool deflationBifurcation = false, eigenvectorBifurcation = false, postBifurcationLineSearch = false; // deflation/eigenvector/postbif. LS options
     std::vector<bool> bifurcTypes( { LDLTbif, deflationBifurcation, eigenvectorBifurcation } );
 
     if ( this->LsType == LST_Exact_Adaptive ) this->lsFlag = false; // For adaptive LS
@@ -347,6 +358,12 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
 
             linSolver->solve(k, rhs, ddX);
         }
+        ////////
+        //FloatMatrix kFM;
+        //k.toFloatMatrix( kFM );
+        //k.printYourself();
+        //k.writeToFile( "kmat.txt" );
+        ////////
 
         //
         // update solution
@@ -366,6 +383,13 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
             //this->giveConstrainedNRSolver()->solve(X, & ddX, this->forceErrVec, this->forceErrVecOld, status, tStep);
         }
 
+        // Check for maximum LS step
+        double alphaMax = this->giveMaximumLineSearchStep( ddX, tStep );
+        std::cout << alphaMax << std::endl;
+
+        if ( alphaMax < 1. && alphaMax > 0. ) {
+            ddX.times( 0.9 * alphaMax );
+        }
 
         /////////////////////////////////////////
 
@@ -389,6 +413,8 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
         X.add(ddX);
         dX.add(ddX);
 
+
+
         if ( solutionDependentExternalForcesFlag ) {
             engngModel->updateComponent(tStep, ExternalRhs, domain);
             RT = R;
@@ -404,6 +430,8 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
 
         engngModel->giveExportModuleManager()->doOutput(tStep, true);
     }
+
+    
 
     // Modify Load vector to include "quasi reaction"
     if ( R0 ) {
@@ -455,10 +483,54 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
     
 
     bool performBifurcation = LDLTbif || deflationBifurcation || eigenvectorBifurcation; // Any bifurcation is on, eigenvectors are default
-
     // For bifurcation using eigenvectors
     double alphaStability0 = alphaStability;
     int maxBifIte = 100, count = 0;
+
+    //////////////////////
+    // Just to test our model
+    //performBifurcation = false;
+    //if ( converged ) {
+    //    engngModel->updateComponent( tStep, NonLinearLhs, domain );
+    //    applyConstraintsToStiffness( k );
+    //    bool isPD = stabSolver->checkPD( k );
+    //    if ( isPD ) { // If matrix is not PD
+    //        OOFEM_LOG_INFO( "Is PD\n" );
+    //        double tfun = this->engngModel->giveDomain( 1 )->giveFunction( 3 )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    //        OOFEM_LOG_INFO( "time=%f\n", tfun );
+    //    }
+    //}
+    //////////////////////
+    // 
+    ////////////// Just chack positive defnitness
+    ////if ( stabSolver && !performBifurcation && converged ) {
+    //if ( stabSolver && converged ) {
+    //    engngModel->updateComponent( tStep, NonLinearLhs, domain );
+    //    applyConstraintsToStiffness( k );
+    //    bool isPD = stabSolver->checkPD( k );
+
+    //    // condense the pressure DOFs
+    //    int indPressure = 0;
+    //    bool exVal = this->findPressureDofIndex( indPressure );
+
+    //    if ( EigenMtrx *k_eigmat = dynamic_cast<EigenMtrx *>( &k ) ) {
+    //        std::unique_ptr<EigenMtrx> k_condensed = k_eigmat->doStaticCondensation( indPressure );
+    //        //k_condensed->printYourself();
+    //        isPD = stabSolver->checkPD( *k_condensed );
+    //    } 
+
+    //    //////////// Compute EV directly
+    //    //FloatArray evaluesFA;
+    //    //FloatMatrix evectorsFM;
+    //    //int answ = stabSolver->computeEigenValuesVectors( k, evaluesFA, evectorsFM );
+    //    //bool isPD = true;
+    //    //if ( evaluesFA.at( 1 ) < 0. ) isPD = false;
+    //    ////////////
+    //    if ( !isPD ) { // If matrix is not PD
+    //        OOFEM_LOG_INFO( "Negative eigenvalue\n" );
+    //    }
+    //}
+    //////////////
 
     // bifurcation analysis modifications
     if ( stabSolver && performBifurcation ) {
@@ -486,8 +558,24 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
             engngModel->updateComponent( tStep, NonLinearLhs, domain );
             applyConstraintsToStiffness( k );
             bool isPD = stabSolver->checkPD( k );
+            ///////////////
+            // condense the pressure DOFs
+            int indPressure = 0;
+            bool exVal      = this->findPressureDofIndex( indPressure );
+
+            EigenMtrx *k_eigmat = dynamic_cast<EigenMtrx *>( &k );
+            if ( exVal && k_eigmat ){
+                std::unique_ptr<EigenMtrx> k_condensed = k_eigmat->doStaticCondensation( indPressure );
+                // k_condensed->printYourself();
+                isPD = stabSolver->checkPD( *k_condensed );
+            } 
+            //////////////////////
+            
+            //if ( !isPD && stabSolver->giveNumFoundSols() < 1 ) { // If matrix is not PD
             if ( !isPD ) { // If matrix is not PD
                 OOFEM_LOG_INFO( "Negative eigenvalue\n" );
+                double tfun = this->engngModel->giveDomain( 1 )->giveFunction( 3 )->evaluateAtTime( tStep->giveIntrinsicTime() );
+                OOFEM_LOG_INFO( "gamma=%f\n", tfun );
                 stabSolver->setFoundLimitPoint( true );
                 stabSolver->setPostBifurcationLineSearchSolver( postBifurcationLineSearch ); // Set the post bifurcation exact linesearch
                 //this->setExactPreBifurcationLineSearch( false ); // turn off the pre Bifurcational LS
@@ -502,7 +590,9 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
 
                 if ( deflationBifurcation || eigenvectorBifurcation ) {
                     converged = false;
-
+                    ////
+                    stabSolver->incrementNumFoundSols();
+                    ////
                     FloatArray X0 = X; // Store the instable root
                     stabSolver->setX0Defl( X0 ); // set the instable root to the solver
 
@@ -554,6 +644,9 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
                     }
                 }
             } else { // is PD,
+                ////////////////
+                stabSolver->nullNumFoundSols();
+                ////////////////
                 // Compute distance from the instable solution
                 if ( stabSolver->getBifurcation() ) {
                     FloatArray solDif;
@@ -748,8 +841,8 @@ ExactLineSearchNM *NRSolver ::giveSetPostBifurcationLineSearchSolver(  FloatArra
 {
     if ( !this->linesearchSolverPostBifurcation ) {
         this->linesearchSolverPostBifurcation = std ::make_unique<ExactLineSearchNM>( domain, engngModel );
-        this->linesearchSolverPostBifurcation->setMaxIter( 100 );
-        this->linesearchSolverPostBifurcation->setTolerance( 1e-10 );
+        this->linesearchSolverPostBifurcation->setMaxIter( 20 );
+        this->linesearchSolverPostBifurcation->setTolerance( 1e-10);
         this->linesearchSolverPostBifurcation->setDeflation( doDeflation );
     }
 
@@ -1209,4 +1302,112 @@ NRSolver :: checkConvergence(FloatArray &RT, FloatArray &F, FloatArray &rhs,  Fl
 
     return answer;
 }
+
+
+double NRSolver::giveMaximumLineSearchStep( const FloatArray &ddX, TimeStep *tStep )
+{
+    EModelDefaultEquationNumbering dn;
+    double alphaMaxEl = 1.e9, alphaMaxElNew = alphaMaxEl;
+    
+    for ( auto &elem : domain->giveElements() ) {
+        // extract ddX from current element
+        FloatArray Element_ddX;
+        for ( int idofman = 1; idofman <= elem->giveNumberOfDofManagers(); idofman++ ) {
+            DofManager *dofman = elem->giveDofManager( idofman );
+            for ( Dof *dof : *dofman ) {           
+                int eq = dof->giveEquationNumber( dn );
+                if ( !eq ) {
+                    Element_ddX.append(0. );
+                } else {
+                    Element_ddX.append( ddX.at( eq ) );
+                }
+                
+            } 
+        }
+        //auto nlStEl = dynamic_cast<NLStructuralElement *>( elem.get() );
+        auto nlStEl = dynamic_cast<Structural3DElement *>( elem.get() );
+
+        if ( nlStEl ) {
+            alphaMaxElNew = nlStEl->giveElementMaximumLineSearchStep( Element_ddX, tStep );
+            if ( alphaMaxElNew < alphaMaxEl ) { // Find the smallest from all
+                alphaMaxEl = alphaMaxElNew;
+            }
+        }
+
+    }
+
+    return alphaMaxEl;
+}
+
+void NRSolver::applyInitialGuess(FloatArray& X) {
+    //Domain *d       = emodel->giveDomain( domainIndx );
+    //TimeStep *tStep = emodel->giveSolutionStepWhenIcApply();
+    // Copy over the old dictionary values to the new step as the initial guess:
+    EModelDefaultEquationNumbering dn;
+    for ( auto &dman : this->domain->giveDofManagers() ) {
+        if ( dman->isNull() ) continue;
+        for ( auto &dof : *dman ) {
+            //dof->updateUnknownsDictionary( tStep, VM_Total, 0. );
+            int icid = dof->giveIcId();
+            if ( icid > 0 && dof->isPrimaryDof() ) {
+                InitialCondition *ic = this->domain->giveIc( icid );
+                if ( ic->hasConditionOn( VM_Total ) ) {
+                    double val = ic->give( VM_Total );
+                    //dof->updateUnknownsDictionary( tStep, VM_Total, val );
+                    int eq = dof->giveEquationNumber( dn );
+                    if ( eq ) {
+                        X.at( eq ) += val;
+                    }
+
+                }
+            }
+        }
+    }
+}
+
+bool NRSolver::findPressureDofIndex( int &indMin )
+{
+    EModelDefaultEquationNumbering dn;
+    indMin         = INT_MAX;
+    bool ReturnVal = false;
+
+    for ( auto &elem : domain->giveElements() ) {
+        for ( int idofman = 1; idofman <= elem->giveNumberOfInternalDofManagers(); idofman++ ) {
+            DofManager *dofman = elem->giveInternalDofManager( idofman );
+            for ( Dof *dof : *dofman ) {
+                auto dofIdType = dof->giveDofID();
+                if ( dofIdType == P_f ) {
+                    int eq = dof->giveEquationNumber( dn );
+                    if ( eq < indMin ) {
+                        indMin    = eq;
+                        ReturnVal = true;
+                    }
+                }
+            }
+        }
+    }
+
+    /////////////////////
+
+    //EModelDefaultEquationNumbering dn;
+    //indMin = 1e32;
+    //bool ReturnVal = false;
+    //for ( auto &dman : this->domain->giveDofManagers() ) {
+    //    //if ( dman->isNull() ) continue;
+    //    for ( auto &dof : *dman ) {
+    //        auto dofIdType = dof->giveDofID();
+    //        if ( dofIdType == P_f ) {
+    //            int eq = dof->giveEquationNumber( dn );
+    //            if ( eq < indMin ) {
+    //                indMin = eq;
+    //                ReturnVal = true;
+    //            }
+    //        }
+    //    }
+    //}
+    return ReturnVal;
+
+}
+
+
 } // end namespace oofem

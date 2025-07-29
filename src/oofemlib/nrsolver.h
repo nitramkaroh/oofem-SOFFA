@@ -46,8 +46,9 @@
 #include "linesearch.h"
 #include "convergedreason.h"
 
-#include "eigensolverstability.h"
+//#include "eigensolverstability.h"
 #include "bifurcationinterface.h"
+#include "eigenmtrx.h"
 
 #include <memory>
 #include <map>
@@ -231,6 +232,13 @@ public:
     FloatArray &X0, FloatArray &direction, double mult, bool deflation );*/
 
     // void provisionalOutput( FloatArray &X, FloatArray &F, TimeStep *tStep, FloatArray &RT, FloatArray &direction, FloatArray &X0);
+
+    double giveMaximumLineSearchStep( const FloatArray &ddX, TimeStep *tStep );
+
+    void applyInitialGuess( FloatArray &X );
+
+    bool findPressureDofIndex( int &indMin );
+
 
 protected:
     /// Constructs and returns a line search solver.

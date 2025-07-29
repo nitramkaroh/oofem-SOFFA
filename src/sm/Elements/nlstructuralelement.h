@@ -36,6 +36,7 @@
 #define nlstructuralelement_h
 
 #include "sm/Elements/structuralelement.h"
+#include "tensor/tensor2.h"
 
 ///@name Input fields for NLStructuralElement
 //@{
@@ -240,17 +241,22 @@ public:
      * @param gp Integration point.
      * @param answer BF matrix at this point.
      */
-    virtual void computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer) {
-        OOFEM_ERROR("method not implemented for this element");
+    virtual void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
         return;
     }
 
-  
+    void PrestrainDeformationGradient( const FloatArray &vF, FloatArray &vFmod, Tensor2_3d &F0, GaussPoint *gp, TimeStep *tStep );
+    double giveElementMaximumLineSearchStep( FloatArray &element_ddX, TimeStep *tStep );
+
 protected:
     int checkConsistency() override;
-  friend class GradientDamageElement;
-  friend class PhaseFieldElement;
+
+    friend class GradientDamageElement;
+    friend class PhaseFieldElement;
     friend class XfemStructuralElementInterface;
+
 };
 } // end namespace oofem
 #endif // nlstructuralelement_h
