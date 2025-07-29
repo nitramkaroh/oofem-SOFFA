@@ -38,7 +38,10 @@
 #include "mathfem.h"
 #include "tensor/tensor1.h"
 #include "tensor/tensor2.h"
+#include "tensor/tensor3.h"
 #include "tensor/tensor4.h"
+#include "tensor/tensor5.h"
+#include "tensor/tensor6.h"
 
 #pragma once
 
@@ -81,5 +84,24 @@ public:
     Tensor2_3d compute_surface_a_dot_d_normal_dF( const Tensor2_3d &F, const FloatArray &a ) const;
 
     Tensor4_3d compute_surface_a_dot_d2_normal_d2F( const Tensor2_3d &F, const FloatArray &a ) const;
+
+    Tensor1_3d compute_surface_deformed_normal( const Tensor2_3d &F, const Tensor1_3d &undeformedNormal ) const;
+
+    Tensor2_3d compute_surface_pseudoinverse( const Tensor2_3d &F, const Tensor2_3d &I ) const;
+
+    // Implementations valid also for prestrained reference configuration
+    Tensor2_3d compute_surface_cofactor( const Tensor2_3d &F, const Tensor2_3d &I ) const;
+
+    Tensor4_3d compute_surface_dCof_dF( const Tensor2_3d &F, const Tensor2_3d &I ) const;
+
+    Tensor4_3d compute_surface_d2_normF_dF2( const Tensor2_3d &F, const Tensor2_3d &I ) const;
+
+    Tensor2_3d compute_surface_d_normFa_dF( const Tensor2_3d &F, const Tensor1_3d &a ) const;
+
+    Tensor4_3d compute_surface_d2_normFa_dF2( const Tensor2_3d &F, const Tensor1_3d &a ) const;
+
+    Tensor2_3d compute_surface_d_SqrtNormCa_dF( const Tensor2_3d &F, const Tensor1_3d &a ) const;
+
+    Tensor4_3d compute_surface_d2_SqrtNormCa_dF2( const Tensor2_3d &F, const Tensor1_3d &a ) const;
 };
 } // end namespace oofem
