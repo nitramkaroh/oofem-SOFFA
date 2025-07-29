@@ -2127,8 +2127,35 @@ StructuralMaterial::giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStat
     } else if ( type == IST_DeformationGradientTensor ) {
         answer = status->giveFVector();
         return 1;
+    } else if ( type == IST_GlobalDeformationGradientTensor ) {
+        answer = status->giveFVector();
+        // prestrain
+        FloatArray vF0_temp;      
+        if ( gp->giveElement()->giveIPValue( vF0_temp, gp, IST_PrestrainDeformationGradient, tStep ) ) {
+            FloatMatrix F0m, Fm, AnsM;
+            F0m.beMatrixForm( vF0_temp );
+            Fm.beMatrixForm( answer );
+            AnsM.beProductOf( Fm, F0m );
+            answer.beVectorForm( AnsM );
+        }
+        FloatMatrix R;
+        StructuralElement *selem = dynamic_cast<StructuralElement *>( gp->giveElement() );
+        if ( selem && selem->giveRotationMatrix( R ) ) {
+            IntArray pos( { 1, 2, 3 } );
+            FloatMatrix R3x3, Fmat, FR, RtFR;
+            R3x3.beSubMatrixOf( R, pos, pos );
+
+            Fmat.beMatrixForm( answer );
+            FR.beProductOf( Fmat, R3x3 );
+            RtFR.beTProductOf( R3x3, FR );
+            answer.beVectorForm( RtFR );
+        }
+        return 1;
     } else if ( type == IST_FirstPKStressTensor ) {
         answer = status->givePVector();
+        return 1;
+    } else if ( type == IST_CauchyStressTensor ) {
+        answer = status->giveCVector();
         return 1;
     } else if ( type == IST_EigenStrainTensor ) {
         FloatArray eigenstrain;
