@@ -54,6 +54,20 @@ public:
     virtual FloatMatrixF<6, 6> give3dSurfaceMaterialStiffnessMatrix( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const { OOFEM_ERROR( "not implemented " ); } // DODELAT
     int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
 
+    virtual FloatArrayF<27> giveSecondOrderSurfaceStressVector_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+    {
+        OOFEM_ERROR( "not implemented " );
+    }      
+    virtual FloatMatrixF<27, 27> give3dSurfaceMaterialStiffnessMatrix_dAddF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+    {
+        OOFEM_ERROR( "not implemented " );
+    }  
+
+    virtual FloatMatrixF<27, 9> give3dSurfaceMaterialStiffnessMatrix_dAdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+    {
+        OOFEM_ERROR( "not implemented " );
+    } 
+
 
 };
 } // end namespace oofem

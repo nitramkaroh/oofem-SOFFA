@@ -57,13 +57,18 @@ public:
     FloatArray giveRealSurfaceStresses( const FloatArray &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
     FloatArrayF<6> giveRealSurfaceStress_3d( const FloatArrayF<6> &reducedStrain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
     FloatArray giveFirstPKSurfaceStresses( const FloatArray &reducedF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatArray giveSecondOrderSurfaceStresses( const FloatArray &fullF, const FloatArray &fullG, const FloatArray &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+
     FloatArrayF<9> giveFirstPKSurfaceStress_3d( const FloatArrayF<9> &reducedF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatArrayF<27> giveSecondOrderSurfaceStress_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
  
     //void giveCharSurfaceMaterialStiffnessMatrix( FloatMatrix &answer, const FloatArray &normal, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ); // NOT SURE
     FloatMatrixF<6, 6> giveSurfaceStiffnessMatrix_3d( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const; // NOT SURE
 
     //void giveCharSurfaceMaterialStiffnessMatrix_dPdF( FloatMatrix &answer, const FloatArray &normal, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep );
     FloatMatrixF<9, 9> giveSurfaceStiffnessMatrix_dPdF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatMatrixF<27, 27> giveSurfaceStiffnessMatrix_dAddF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatMatrixF<27, 9> giveSurfaceStiffnessMatrix_dAdF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
 
 
     const char *giveClassName() const override { return "SimpleSurfaceCrossSection"; }

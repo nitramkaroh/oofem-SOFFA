@@ -92,11 +92,29 @@ SimpleSurfaceCrossSection::giveFirstPKSurfaceStresses( const FloatArray &fullF, 
     }
 }
 
+FloatArray
+SimpleSurfaceCrossSection::giveSecondOrderSurfaceStresses( const FloatArray &fullF, const FloatArray &fullG, const FloatArray &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+{
+    MaterialMode mode = gp->giveMaterialMode();
+    if ( mode == _3dMat ) {
+        return this->giveSecondOrderSurfaceStress_3d( fullF, fullG, gradI, normal, gp, tStep );
+    } else {
+        OOFEM_ERROR( "unsupported mode" );
+    }
+}
+
 FloatArrayF<9>
 SimpleSurfaceCrossSection::giveFirstPKSurfaceStress_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
     auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
     return mat->giveFirstPKSurfaceStressVector_3d( vF, normal, gp, tStep );
+}
+
+FloatArrayF<27>
+SimpleSurfaceCrossSection::giveSecondOrderSurfaceStress_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+{
+    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    return mat->giveSecondOrderSurfaceStressVector_3d( vF, vG, gradI, normal, gp, tStep );
 }
 
 FloatMatrixF<9, 9>
@@ -105,6 +123,21 @@ SimpleSurfaceCrossSection::giveSurfaceStiffnessMatrix_dPdF_3d( MatResponseMode r
     auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
     return mat->give3dSurfaceMaterialStiffnessMatrix_dPdF( rMode, normal, gp, tStep );
 }
+
+FloatMatrixF<27, 27>
+SimpleSurfaceCrossSection::giveSurfaceStiffnessMatrix_dAddF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+{
+    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    return mat->give3dSurfaceMaterialStiffnessMatrix_dAddF( rMode, normal, gp, tStep );
+}
+
+FloatMatrixF<27, 9>
+SimpleSurfaceCrossSection::giveSurfaceStiffnessMatrix_dAdF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+{
+    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    return mat->give3dSurfaceMaterialStiffnessMatrix_dAdF( rMode, normal, gp, tStep );
+}
+
 FloatMatrixF<6, 6>
 SimpleSurfaceCrossSection::giveSurfaceStiffnessMatrix_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
