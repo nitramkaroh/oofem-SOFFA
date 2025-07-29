@@ -241,7 +241,7 @@ AxisymSurfaceElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
     }
 
     for ( int i = 0; i < this->giveNumberOfDofManagers(); i++ ) {
-        answer.at( 3, 2 * i + 2 ) = -n.at( i + 1 ) / r; // dw/dz
+        answer.at( 3, 2 * i + 2 ) = -n.at( i + 1 ) / r; // dw/dz // IS THIS CORRECT? Yes, this is in local coordinate system
     }
 }
 
