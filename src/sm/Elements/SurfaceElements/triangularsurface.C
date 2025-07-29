@@ -58,7 +58,7 @@ TriangularSurface ::TriangularSurface( int n, Domain *aDomain ) :
 {
     this->GtoLRotationMatrix = NULL;
     numberOfDofMans          = 3;
-    numberOfGaussPoints      = 3;
+    numberOfGaussPoints      = 1;
 }
 
 
@@ -67,8 +67,37 @@ FEInterpolation *TriangularSurface ::giveInterpolation() const { return &interpo
 
 void TriangularSurface ::initializeFrom( InputRecord &ir )
 {
-    numberOfGaussPoints = 3;
+    numberOfGaussPoints = 1;
     Structural3DSurfaceElement ::initializeFrom( ir );
+
+    IR_GIVE_OPTIONAL_FIELD( ir, this->prestrain, _IFT_TriangularSurface_prestrain );
+    if ( this->prestrain ) {
+        FloatArray F0_temp;
+        IR_GIVE_OPTIONAL_FIELD( ir, F0_temp, _IFT_TriangularSurface_f0 );
+        this->F0 = FloatArrayF<9>( F0_temp );
+    }  
+
+    FloatArray normal;
+    IR_GIVE_OPTIONAL_FIELD( ir, normal, _IFT_TriangularSurface_normal );
+    if ( normal.giveSize()>0) {
+        this->referenceNormal = FloatArrayF<3>( normal );
+        this->isReferenceNormalGiven = 1;
+    }
+
+    FloatArray G2L;
+    IR_GIVE_OPTIONAL_FIELD( ir, G2L, _IFT_TriangularSurface_g2l );
+    if ( G2L.giveSize() > 0 ) {
+        this->G2L_prescribed        = FloatArrayF<9>( G2L );
+        this->prescribedOrientation = 1;
+    }
+
+    FloatArray adir;
+    IR_GIVE_OPTIONAL_FIELD( ir, adir, _IFT_TriangularSurface_anisodir );
+    if ( adir.giveSize() > 0 ) {
+        this->anisoDir = FloatArrayF<3>( adir );
+        this->anisoDirGiven  = 1;
+    }
+    
 }
 
 
@@ -133,33 +162,73 @@ TriangularSurface ::computeGtoLRotationMatrix()
 // e2'    : e3' x e1'
 {
     if ( GtoLRotationMatrix == NULL ) {
-        FloatArray e1, e2, e3, help;
+        //if ( this->prescribedOrientation ) {
+        //    ////GtoLRotationMatrix = new FloatMatrix( 3, 3 );
+        //    //FloatArray g2l( this->G2L_prescribed );
+        //    //FloatMatrix g2l_test;
+        //    //GtoLRotationMatrix = new FloatMatrix( 3, 3 );
+        //    //GtoLRotationMatrix->beMatrixForm( g2l );
 
-        // compute e1' = [N2-N1]  and  help = [N3-N1]
-        e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
-        help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+        //    ////////////////////////////////////
+        //    //g2l_test = *GtoLRotationMatrix;
+        //    FloatArray e1, e2, e3, help;
 
-        // let us normalize e1'
-        e1.normalize();
+        //    // compute e1' = [N2-N1]  and  help = [N3-N1]
+        //    e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+        //    help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
 
-        // compute e3' : vector product of e1' x help
-        e3.beVectorProductOf( e1, help );
-        // let us normalize
-        e3.normalize();
+        //    // let us normalize e1'
+        //    e1.normalize();
 
-        // now from e3' x e1' compute e2'
-        e2.beVectorProductOf( e3, e1 );
+        //    // compute e3' : vector product of e1' x help
+        //    e3.beVectorProductOf( e1, help );
+        //    // let us normalize
+        //    e3.normalize();
 
-        //
-        GtoLRotationMatrix = new FloatMatrix( 3, 3 );
+        //    // now from e3' x e1' compute e2'
+        //    e2.beVectorProductOf( e3, e1 );
 
-        for ( int i = 1; i <= 3; i++ ) {
-            GtoLRotationMatrix->at( 1, i ) = e1.at( i );
-            GtoLRotationMatrix->at( 2, i ) = e2.at( i );
-            GtoLRotationMatrix->at( 3, i ) = e3.at( i );
-        }
+        //    //
+        //    GtoLRotationMatrix = new FloatMatrix( 3, 3 );
+
+        //    for ( int i = 1; i <= 3; i++ ) {
+        //        GtoLRotationMatrix->at( 1, i ) = e1.at( i );
+        //        GtoLRotationMatrix->at( 2, i ) = e2.at( i );
+        //        GtoLRotationMatrix->at( 3, i ) = e3.at( i );
+        //    }
+
+        //    /////////////
+        //    //FloatMatrix err = g2l_test - *GtoLRotationMatrix;
+
+        //} else {
+            FloatArray e1, e2, e3, help;
+
+            // compute e1' = [N2-N1]  and  help = [N3-N1]
+            e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+            help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+
+            // let us normalize e1'
+            e1.normalize();
+
+            // compute e3' : vector product of e1' x help
+            e3.beVectorProductOf( e1, help );
+            // let us normalize
+            e3.normalize();
+
+            // now from e3' x e1' compute e2'
+            e2.beVectorProductOf( e3, e1 );
+
+            //
+            GtoLRotationMatrix = new FloatMatrix( 3, 3 );
+
+            for ( int i = 1; i <= 3; i++ ) {
+                GtoLRotationMatrix->at( 1, i ) = e1.at( i );
+                GtoLRotationMatrix->at( 2, i ) = e2.at( i );
+                GtoLRotationMatrix->at( 3, i ) = e3.at( i );
+            }
+        //}
     }
-
+    //GtoLRotationMatrix->printYourself();
     return GtoLRotationMatrix;
 }
 
@@ -237,6 +306,191 @@ int TriangularSurface ::computeGlobalCoordinates( FloatArray &answer, const Floa
 
     return true;
 }
+
+int TriangularSurface::giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep )
+{
+    if ( type == IST_PrestrainDeformationGradient ) {
+        if ( this->prestrain ) {
+            answer = FloatArray( this->F0 );
+            FloatMatrix R;
+            if ( this->giveRotationMatrix( R ) ) {
+                IntArray pos( { 1, 2, 3 } );
+                FloatMatrix R3x3, Fmat, FRt, RFRt;
+                R3x3.beSubMatrixOf( R, pos, pos );
+
+                Fmat.beMatrixForm( answer );
+                FRt.beProductTOf( Fmat, R3x3 );
+                RFRt.beProductOf( R3x3, FRt );
+                ///////////
+                //FloatMatrix FRt2, RFRt2;
+                //FRt2.beProductOf( Fmat, R3x3 );
+                //RFRt2.beTProductOf( R3x3, FRt2 );
+
+                //FloatMatrix err = RFRt2 - RFRt;
+                ///////////
+
+                answer.beVectorForm( RFRt );
+                //answer.beVectorForm( RFRt2 );
+            }
+
+            return 1;
+        } else {
+            return 0;
+        }  
+    } else if ( type == IST_ElementReferenceNormal ) {
+        if ( this->isReferenceNormalGiven ) {
+            answer = FloatArray( this->referenceNormal );
+            
+            FloatMatrix R;
+            if ( this->giveRotationMatrix( R ) ) {
+                IntArray pos( { 1, 2, 3 } );
+                FloatMatrix R3x3;
+                R3x3.beSubMatrixOf( R, pos, pos );
+
+                FloatArray RN;
+                RN.beProductOf( R3x3, answer );
+                answer = RN;
+            }
+            return 1;
+        } else {
+            return 0;
+        }
+
+    }else if ( type == IST_DisplacementVector ) {
+        FloatArray u;
+        FloatMatrix N, G2L;
+        this->computeVectorOf( VM_Total, tStep, u );
+
+        if ( this->computeGtoLRotationMatrix( G2L ) ) {
+            u.rotatedWith( G2L, 't' );
+        }
+        this->computeNmatrixAt( gp->giveSubPatchCoordinates(), N );
+        answer.beProductOf( N, u );
+        return 1;
+
+
+        
+    } else if ( type == IST_AnisotropyDirection ){
+        if ( this->anisoDirGiven ) {
+            answer = FloatArray( this->anisoDir );
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    else
+    {
+        return Structural3DSurfaceElement::giveIPValue( answer, gp, type, tStep );
+    }
+}
+
+//void TriangularSurface::computeBHmatrixAt(GaussPoint* gp, FloatMatrix& answer) {
+//    
+//    //Structural3DSurfaceElement::computeBHmatrixAt( gp, answer );
+//
+//    ///////////////////////////////////////// Just some checks
+//    // Check transformations
+//    FloatMatrix dNdx;
+//    FEInterpolation *interp = this->giveInterpolation();
+//    interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(), *this->giveCellGeometryWrapper() ); // nno x 2
+//    // enlarge it
+//    FloatMatrix dNdx_L( 3, 3 );
+//    dNdx_L.setSubMatrix( dNdx, 1, 1 );
+//
+//
+//    // Check how it transforms
+//    FloatMatrix R, R3x3, Rotation_Ref_2_Ref_Old; 
+//
+//    this->giveRotationMatrix( R );
+//    IntArray pos( { 1, 2, 3 } );
+//    R3x3.beSubMatrixOf( R, pos, pos );
+//    FloatMatrix RefRotation( R3x3 );
+//
+//    //this->givePrescribedRotation( RefRotation ); 
+//
+//    //if ( this->givePrescribedRotation( RefRotation ) ) {
+//    //    Rotation_Ref_2_Ref_Old.beProductTOf( RefRotation, R3x3 );
+//    //} else {
+//    //    Rotation_Ref_2_Ref_Old.beTranspositionOf( R3x3 );
+//    //}
+//
+//    //Rotation_Ref_2_Ref_Old.beProductTOf( RefRotation, R3x3 );
+//
+//    // Get F0
+//    FloatMatrix F0m;
+//    FloatArray F0a( { 1., 1., 0., 0., 0., 0., 0., 0., 0. } );
+//    if ( this->prestrain ) {
+//        F0a = FloatArray( this->F0 );
+//        FloatMatrix Fmat, FRt;
+//        Fmat.beMatrixForm( F0a );
+//        FRt.beProductTOf( Fmat, R3x3 );
+//        F0m.beProductOf( R3x3, FRt );
+//    } else {
+//        F0m.beMatrixForm( F0a );
+//    }
+//    
+//
+//    // Try for 1 SF
+//    FloatArray dN1dX;
+//    FloatMatrix dNdx_Lt;
+//    dNdx_Lt.beTranspositionOf( dNdx_L );
+//
+//
+//    FloatMatrix dNdX_F0;
+//    dNdX_F0.beTProductOf( F0m, dNdx_Lt );
+//    FloatMatrix dNdX_F0_t;
+//    dNdX_F0_t.beTranspositionOf( dNdX_F0 );
+//
+//    answer.resize( 9, dNdX_F0_t.giveNumberOfRows() * 3 );
+//    answer.zero();
+//
+//    for ( int i = 1; i <= dNdX_F0_t.giveNumberOfRows(); i++ ) {
+//        answer.at( 1, 3 * i - 2 ) = dNdX_F0_t.at( i, 1 ); // du/dx
+//        answer.at( 2, 3 * i - 1 ) = dNdX_F0_t.at( i, 2 ); // dv/dy
+//        answer.at( 3, 3 * i - 0 ) = dNdX_F0_t.at( i, 3 ); // dw/dz
+//        answer.at( 4, 3 * i - 1 ) = dNdX_F0_t.at( i, 3 ); // dv/dz
+//        answer.at( 7, 3 * i - 0 ) = dNdX_F0_t.at( i, 2 ); // dw/dy
+//        answer.at( 5, 3 * i - 2 ) = dNdX_F0_t.at( i, 3 ); // du/dz
+//        answer.at( 8, 3 * i - 0 ) = dNdX_F0_t.at( i, 1 ); // dw/dx
+//        answer.at( 6, 3 * i - 2 ) = dNdX_F0_t.at( i, 2 ); // du/dy
+//        answer.at( 9, 3 * i - 1 ) = dNdX_F0_t.at( i, 1 ); // dv/dx
+//    }
+//
+//    //FloatMatrix answerTest;
+//    //Structural3DSurfaceElement::computeBHmatrixAt( gp, answerTest );
+//    //FloatMatrix Err = answerTest - answer;
+//
+//
+//    //// transformation to the original reference frame
+//    //FloatMatrix dNdX_F0_ref;
+//    //dNdX_F0_ref.beProductTOf( dNdX_F0_t, Rotation_Ref_2_Ref_Old);
+//
+//
+//}
+//
+//void TriangularSurface::computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) 
+//{
+//    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
+//    // the receiver at time step tStep.
+//    // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
+//
+//    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+//    FloatArray u;
+//    this->computeVectorOf( { D_u, D_v, D_w }, VM_Total, tStep, u ); // solution vector
+//    if ( initialDisplacements ) {
+//        u.subtract( *initialDisplacements );
+//    }
+//
+//    // Displacement gradient H = du/dX
+//    FloatMatrix B;
+//    Structural3DSurfaceElement::computeBHmatrixAt( gp, B );
+//
+//    answer.beProductOf( B, u );
+//
+//    // Deformation gradient F = H + I
+//    answer.at( 1 ) += 1.0;
+//    answer.at( 2 ) += 1.0;
+//}
 
 
 } // end namespace oofem

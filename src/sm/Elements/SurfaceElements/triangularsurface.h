@@ -40,6 +40,11 @@
 
 
 #define _IFT_TriangularSurface_Name "triangularsurface"
+#define _IFT_TriangularSurface_f0 "f0"
+#define _IFT_TriangularSurface_prestrain "prestrain"
+#define _IFT_TriangularSurface_normal "normal"
+#define _IFT_TriangularSurface_g2l "g2l"
+#define _IFT_TriangularSurface_anisodir "anisodir"
 
 namespace oofem {
 // class FEI3dQuadLin;
@@ -57,6 +62,14 @@ protected:
      * at the element level for computation efficiency
      */
     FloatMatrix *GtoLRotationMatrix;
+    FloatArrayF<9> F0; // Prestrain for single GP only
+    int prestrain = 0;
+    int isReferenceNormalGiven = 0; 
+    FloatArrayF<3> referenceNormal; // reference normal prescribed
+    int prescribedOrientation = 0;
+    FloatArrayF<9> G2L_prescribed; // prescribed orientation
+    int anisoDirGiven = 0;
+    FloatArrayF<3> anisoDir; // direction of anisotropuy for single GP only
 
 
 public:
@@ -86,6 +99,25 @@ public:
     int computeLoadGToLRotationMtrx( FloatMatrix &answer ) override;
 
     int computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords ) override;
+
+    int giveSpatialDimension() override { return 3; };
+
+    int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
+
+    bool givePrescribedRotation( FloatMatrix &Rotation ){
+        if ( prescribedOrientation ) {
+            FloatArray Rmat( G2L_prescribed );
+            Rotation.beMatrixForm( Rmat );
+            return 1;
+        } else {
+            return 0;
+        }
+    };
+
+    //void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
+
+    //void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
+
 
 protected:
     int giveNumberOfIPForMassMtrxIntegration() override { return 3; }
