@@ -38,6 +38,8 @@
 #include "sm/Materials/structuralmaterial.h"
 #include "sm/Materials/structuralms.h"
 #include "sm/Materials/HyperelasticSurfaceMaterials/isopolyconvexhyperelasticsurfacematerial.h"
+//#include "sm/Elements/SurfaceElements/triangularsurface.h"
+
 
 
 ///@name Input fields for SurfaceTensionMaterial
@@ -57,13 +59,14 @@ namespace oofem {
 /**
  * This class implements basic surface tension material for fluids
  */
+
 class AnisotropicPolyconvexHyperelasticSurfaceMaterial : public IsotropicPolyconvexHyperelasticSurfaceMaterial
 {
 protected:
     // Material parameters
     //FloatArray matdir;
     FloatArray P1, P2;
-    double beta, eta, zeta;
+    double beta = 0., eta = 0., zeta = 0.;
     int aniso_ltf = 0;
 
 
@@ -75,9 +78,9 @@ public:
     FloatMatrixF<9, 9> give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
     FloatArrayF<9> giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
 
-    FloatArray computeLocalMaterialDirection( GaussPoint *gp ) const;
+    Tensor1_3d computeLocalMaterialDirection( GaussPoint *gp, TimeStep *tStep ) const;
 
-    MaterialStatus *CreateStatus( GaussPoint *gp ) const override;
+    //MaterialStatus *CreateStatus( GaussPoint *gp ) const override;
 
     const char *giveInputRecordName() const override { return _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_Name; }
     const char *giveClassName() const override { return "AnisotropicPolyconvexHyperelasticSurfaceMaterial"; }
