@@ -64,6 +64,7 @@ protected:
     bool foundLimitPoint      = false;
     bool postBifurcationLineSearchSolver = false;
     bool LineSearchState                 = false;
+    int numberOfFoundUnstableSolutions  = 0;
 
     // for deflation bifurcation
     FloatArray x0_Defl, dx_Defl;
@@ -117,6 +118,10 @@ public:
     FloatMatrix &getEigenVectors() { return this->evectors; };
     FloatArray &getEigenValues() { return this->eigenvalues; };
     FloatArray &getXeigs() { return this->Xeigs; };
+
+    void incrementNumFoundSols() { this->numberOfFoundUnstableSolutions++; };
+    void nullNumFoundSols() { this->numberOfFoundUnstableSolutions = 0; };
+    int giveNumFoundSols() const { return this->numberOfFoundUnstableSolutions; }
 };
 } // end namespace oofem
 #endif // bifurcationinterface_h

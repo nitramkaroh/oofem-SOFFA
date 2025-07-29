@@ -126,7 +126,13 @@ public:
     /** Constructor. Before any operation an internal profile must be built.
      * @see buildInternalStructure
      */
-    EigenMtrx( int n=0 );
+    EigenMtrx( int n=0);
+
+    EigenMtrx( Eigen::SparseMatrix<double>& EigMat );
+
+    EigenMtrx( const EigenMtrx &EigenMtrxInput );
+
+    //EigenMtrx &operator= ( Eigen::SparseMatrix<double> & EigMat );
 
     /// Destructor
     virtual ~EigenMtrx() {}
@@ -144,7 +150,7 @@ public:
     double &at( int i, int j ) override;
     double at( int i, int j ) const override;
     /*void toFloatMatrix( FloatMatrix &answer ) const override;*/
-    void printYourself() const override;
+    //void printYourself() const override;
     const char *giveClassName() const override { return "EigenMtrx"; }
     SparseMtrxType giveType() const override { return SMT_EigenMtrx; }
     bool isAsymmetric() const override { return true; }
@@ -174,6 +180,14 @@ public:
     void times( const FloatArray &x, FloatArray &answer ) const override;
 
     void createMatrixFromTriplets();
+
+    void printYourself() const override;
+
+    ///////////
+    //void getBlock( int i, int j, int p, int q, EigenMtrx &BlockMatrix );
+    std::unique_ptr<EigenMtrx> getBlock( int i, int j, int p, int q );
+    std::unique_ptr<EigenMtrx> doStaticCondensation( int i );
+    ///////////
 };
 } // end namespace oofem
 #endif // eigenmtrx_h

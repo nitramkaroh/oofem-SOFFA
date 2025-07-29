@@ -61,6 +61,22 @@ EigenMtrx ::EigenMtrx( int n ) :
     EigMat = Eigen::SparseMatrix<double>( n, n );
 }
 
+EigenMtrx ::EigenMtrx( Eigen::SparseMatrix<double> &EigMatInput ) :
+    SparseMtrx( EigMatInput.rows(), EigMatInput.cols() ),
+    EigMat( EigMatInput )
+{
+}
+
+EigenMtrx ::EigenMtrx( const EigenMtrx &EigenMtrxInput ) :
+    SparseMtrx( EigenMtrxInput.giveNumberOfRows(), EigenMtrxInput.giveNumberOfColumns() ),
+    EigMat( EigenMtrxInput.EigMat )
+{
+}
+
+//EigenMtrx &EigenMtrx ::operator=( Eigen::SparseMatrix<double> &EigMat )
+//{
+//}
+
 int EigenMtrx ::buildInternalStructure( EngngModel *eModel, int di, const UnknownNumberingScheme &s )
 {
     IntArray loc;
@@ -69,6 +85,8 @@ int EigenMtrx ::buildInternalStructure( EngngModel *eModel, int di, const Unknow
 
     EigMat.resize( neq, neq ); // Resize the matrix
     triplets.reserve( 500*neq );
+
+    nRows = nColumns = neq;
 
 
     //// allocation map
@@ -292,18 +310,18 @@ void EigenMtrx::computeFactorization( FactorizationType factorizationType )
 }
 
 
-void EigenMtrx::printYourself() const
-{
-    // Create copy
-    Eigen::SparseMatrix<double> EigMatCopy( this->EigMat );
-    if ( this->BuiltFromTripletsAtVersion != this->version ) {
-        EigMatCopy.setFromTriplets( this->triplets.begin(), this->triplets.end() );
-    }
-
-    // create dense matrix
-    auto denseMat = Eigen::MatrixXd( EigMatCopy );
-    std::cout << denseMat << std::endl;
-}
+//void EigenMtrx::printYourself() const
+//{
+//    // Create copy
+//    Eigen::SparseMatrix<double> EigMatCopy( this->EigMat );
+//    if ( this->BuiltFromTripletsAtVersion != this->version ) {
+//        EigMatCopy.setFromTriplets( this->triplets.begin(), this->triplets.end() );
+//    }
+//
+//    // create dense matrix
+//    auto denseMat = Eigen::MatrixXd( EigMatCopy );
+//    std::cout << denseMat << std::endl;
+//}
 
 
 void EigenMtrx::times( const FloatArray &x, FloatArray &answer ) const
@@ -330,6 +348,42 @@ void EigenMtrx::createMatrixFromTriplets()
         this->EigMat.makeCompressed();
         BuiltFromTripletsAtVersion = this->version;
     }
+}
+
+void EigenMtrx::printYourself() const
+{
+     std::cout << this->EigMat << std::endl;
+}
+
+//void EigenMtrx::getBlock( int i, int j, int p, int q, EigenMtrx& BlockMatrix )
+std::unique_ptr<EigenMtrx> EigenMtrx::getBlock( int i, int j, int p, int q )
+{
+    // i and j start from 1
+    Eigen::SparseMatrix<double> subMat = this->EigMat.block(i-1,j-1, p, q );
+    EigenMtrx BlockMatrix( subMat );
+    return std::make_unique<EigenMtrx>( BlockMatrix );
+}
+
+std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensation( int i )
+{
+    // i is position were the PP block starts
+    int uuSize = i - 1;
+    int matSize = this->giveNumberOfRows();
+    int ppSize  = matSize - uuSize;
+
+    Eigen::SparseMatrix<double> UU = this->EigMat.block( 0, 0, uuSize, uuSize );
+    Eigen::SparseMatrix<double> UP = this->EigMat.block( 0, i - 1, uuSize, ppSize );   
+    Eigen::SparseMatrix<double> PU = this->EigMat.block( i - 1, 0, ppSize, uuSize );
+    Eigen::SparseMatrix<double> PP = this->EigMat.block( i - 1, i - 1, ppSize, ppSize );
+
+    // create factorization
+    Eigen::SparseLU<Eigen::SparseMatrix<double> > A_factorization( PP );
+    Eigen::SparseMatrix<double> temp = A_factorization.solve( PU ); // Solve the system
+    Eigen::SparseMatrix<double> Kcond = UU - UP * temp;
+    EigenMtrx KcondOOFEM( Kcond );
+
+    //std::cout << PP << std::endl;
+    return std::make_unique<EigenMtrx>( KcondOOFEM );
 }
 
 } // end namespace oofem
