@@ -112,6 +112,7 @@ if (USE_BOOSTPYTHON_BINDINGS AND USE_PYTHON_EXTENSION)
 endif ()
 
 set (sm_status
+	structuralsurfacems.C
     structuralms.C
     InterfaceMaterials/structuralinterfacematerialstatus.C
     deformationtheorymaterial.C
