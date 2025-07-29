@@ -322,7 +322,8 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
     // do exact linesearch including delfation
     int p = 2;
     double RHS, ResNormLS, RHSdefl, deta = 1e-6, alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
-    double Eta     = min( deta, dr.computeNorm() ); // start guess
+    //double Eta     = min( deta, dr.computeNorm() ); // start guess
+    double Eta     = dr.computeNorm(); // start guess
     FloatArray ddr = Eta * direction;
     r  = r + ddr; // Initial moification of the solution
 
@@ -356,13 +357,16 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
         }
 
         deta = RHS / kdefl;
+        if ( isnan( deta ) ) {
+            break;
+        }
         Eta += deta;
         ddr = deta * direction;
         r   = r + ddr;
     }
-
-    dr = r - rold;
+    // No update of ddX
     r  = rold;
+    OOFEM_LOG_INFO( "Eta = %.7e\n", Eta );
     return CR_DIVERGED_ITS;
 }
 
@@ -380,8 +384,8 @@ void ExactLineSearchNM ::initializeFrom( InputRecord &ir )
     LineSearchNM ::initializeFrom( ir );
 
     // Rewrite the values from LineSearchNM
-    this->max_iter     = 100;
-    this->ls_tolerance = 1e-10;
+    this->max_iter     = 20;
+    this->ls_tolerance = 1e-6;
 }
 
 } // end namespace oofem
