@@ -44,8 +44,11 @@
 #include "spatiallocalizer.h"
 #include "sm/ErrorEstimators/zzerrorestimator.h"
 #include "mmashapefunctprojection.h"
+#include "floatarrayf.h"
 
 #define _IFT_LTRSpace_Name "ltrspace"
+#define _IFT_LTRSpace_f0 "f0"
+#define _IFT_LTRSpace_prestrain "prestrain"
 
 namespace oofem {
 class FEI3dTetLin;
@@ -62,12 +65,16 @@ public HuertaErrorEstimatorInterface
 {
 protected:
     static FEI3dTetLin interpolation;
+    FloatArrayF<9> F0; // Prestrain for single GP only
+    int prestrain = 0;
 
 public:
     LTRSpace(int n, Domain * d);
     virtual ~LTRSpace() { }
 
     FEInterpolation *giveInterpolation() const override;
+
+    void initializeFrom( InputRecord &ir ) override;
 
     void computeLumpedMassMatrix(FloatMatrix &answer, TimeStep *tStep) override;
     int giveNumberOfIPForMassMtrxIntegration() override { return 4; }
@@ -102,6 +109,9 @@ public:
                                                           IntArray &controlNode, IntArray &controlDof,
                                                           HuertaErrorEstimator :: AnalysisMode aMode) override;
     void HuertaErrorEstimatorI_computeNmatrixAt(GaussPoint *gp, FloatMatrix &answer) override;
+
+    int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
+
 };
 } // end namespace oofem
 #endif // ltrspace_h

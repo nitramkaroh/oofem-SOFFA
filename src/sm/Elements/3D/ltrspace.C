@@ -44,6 +44,8 @@
 #include "mathfem.h"
 #include "fei3dtetlin.h"
 #include "classfactory.h"
+#include "floatmatrixf.h"
+#include "floatarrayf.h"
 
 #ifdef __OOFEG
  #include "oofeggraphiccontext.h"
@@ -69,6 +71,17 @@ LTRSpace :: LTRSpace(int n, Domain *aDomain) :
     numberOfGaussPoints = 1;
 }
 
+void LTRSpace ::initializeFrom( InputRecord &ir )
+{
+    Structural3DElement ::initializeFrom( ir );
+
+    IR_GIVE_OPTIONAL_FIELD( ir, this->prestrain, _IFT_LTRSpace_prestrain );
+    if ( this->prestrain ) {
+        FloatArray F0_temp;
+        IR_GIVE_OPTIONAL_FIELD( ir, F0_temp, _IFT_LTRSpace_f0 );
+        this->F0 = FloatArrayF<9>( F0_temp );
+    }   
+}
 
 Interface *
 LTRSpace :: giveInterface(InterfaceType interface)
@@ -255,6 +268,22 @@ void LTRSpace :: HuertaErrorEstimatorI_computeNmatrixAt(GaussPoint *gp, FloatMat
 {
     computeNmatrixAt(gp->giveSubPatchCoordinates(), answer);
 }
+
+int LTRSpace::giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep )
+{
+    if ( type == IST_PrestrainDeformationGradient ) {
+        if ( this->prestrain ) {
+            answer = FloatArray( this->F0 );
+            return 1;
+        } else {
+            return 0;
+        }
+       
+    } else {
+        return Structural3DElement::giveIPValue( answer, gp, type, tStep );
+    }
+}
+
 
 #ifdef __OOFEG
  #define TR_LENGHT_REDUCT 0.3333
