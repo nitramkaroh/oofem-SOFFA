@@ -32,41 +32,40 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef space3delementevaluator_h
-#define space3delementevaluator_h
+#ifndef space3dsurfaceelementevaluator_h
+#define space3dsurfaceelementevaluator_h
 
-#include "sm/Elements/structuralelementevaluator.h"
+#include "sm/Elements/structuralsurfaceelementevaluator.h"
 
 namespace oofem {
 /**
  * General purpose 3d structural element evaluator.
  */
-class Space3dStructuralElementEvaluator : public StructuralElementEvaluator
+class Space3dStructuralSurfaceElementEvaluator : public StructuralSurfaceElementEvaluator
 {
 public:
-    Space3dStructuralElementEvaluator() : StructuralElementEvaluator() { }
-    virtual ~Space3dStructuralElementEvaluator() { }
+    Space3dStructuralSurfaceElementEvaluator() :
+        StructuralSurfaceElementEvaluator() {}
+    virtual ~Space3dStructuralSurfaceElementEvaluator() {}
 
 protected:
     /**
      * Assemble interpolation matrix at given IP
      * In case of IGAElements, N is assumed to contain only nonzero interpolation functions
      */
-    void computeNMatrixAt(FloatMatrix &answer, GaussPoint *gp) override;
+    void computeNMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
     /**
      * Assembles the strain-displacement matrix of the receiver at given integration point
      * In case of IGAElements, B is assumed to contain only contribution from nonzero interpolation functions
      */
-    void computeBMatrixAt(FloatMatrix &answer, GaussPoint *gp) override;
+
+    //void computeBMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
-    double computeVolumeAround(GaussPoint *gp) override;
-    void computeStressVector(FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep) override;
-    void computeConstitutiveMatrixAt(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override;
+    double computeVolumeAround( GaussPoint *gp ) override;
 
-    void computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override;
-
-    void giveDofManDofIDMask(int inode, IntArray &answer) const {
+    void giveDofManDofIDMask( int inode, IntArray &answer ) const
+    {
         answer = { D_u, D_v, D_w };
     }
 
@@ -74,4 +73,4 @@ public:
     void initializeFrom( InputRecord &ir ) override;
 };
 } // end namespace oofem
-#endif //space3delementevaluator_h
+#endif // space3delementevaluator_h

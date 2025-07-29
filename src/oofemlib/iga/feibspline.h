@@ -195,6 +195,7 @@ public:
     std::unique_ptr<IntegrationRule> giveBoundaryEdgeIntegrationRule(int order, int boundary) const override
     { OOFEM_ERROR("Not supported."); return nullptr; }
 
+
 protected:
     /**
      * Evaluates the nonvanishing basis functions of 1d BSpline (algorithm A2.2 from NURBS book)
@@ -251,5 +252,34 @@ protected:
         e = span;
     }
 };
+
+
+class OOFEM_EXPORT BSpline2dLineInterpolation : public BSplineInterpolation
+{
+public:
+    BSpline2dLineInterpolation( int nsd ) :
+        BSplineInterpolation( nsd ){}
+    void initializeFrom( InputRecord &ir ) override {BSplineInterpolation::initializeFrom( ir );}
+    double evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+    void evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+    int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+
+    double evaldNds( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+
+    double evaldNdxGeneral( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+
+    void evald2Ndx2General( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+
+    double boundaryEvalNormal( FloatArray &answer, int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+    void computePosition( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+
+    void giveJacobianMatrixAt( FloatMatrix &jacobianMatrix, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+};
+
 } // end namespace oofem
 #endif // feibspline_h

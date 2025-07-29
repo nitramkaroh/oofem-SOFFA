@@ -261,8 +261,8 @@ void StructuralElementEvaluator :: giveInternalForcesVector(FloatArray &answer, 
 {
     Element *elem = this->giveElement();
     int ndofs = elem->computeNumberOfDofs();
-    FloatMatrix b;
-    FloatArray strain, stress, u, temp;
+    FloatMatrix b, Gmat;
+    FloatArray strain, stress, u, temp, secondOrderStress;
     IntArray irlocnum;
 
     elem->computeVectorOf(VM_Total, tStep, u);
@@ -280,12 +280,31 @@ void StructuralElementEvaluator :: giveInternalForcesVector(FloatArray &answer, 
         m->clear();
         IntegrationRule *iRule = elem->giveIntegrationRule(ir);
         for ( GaussPoint *gp: *iRule ) {
-            this->computeBMatrixAt(b, gp);
-            if ( useUpdatedGpRecord ) {
-                stress = static_cast< StructuralMaterialStatus * >( gp->giveMaterialStatus() )->giveStressVector();
-            } else {
-                this->computeStrainVector(strain, gp, tStep, u); ///@todo This part computes the B matrix again; Inefficient.
-                this->computeStressVector(stress, strain, gp, tStep);
+            StructuralMaterialStatus *matStat = static_cast<StructuralMaterialStatus *>( gp->giveMaterialStatus() );
+
+            if ( nlGeometry == 0 ) {
+                this->computeBMatrixAt(b, gp);
+                if ( useUpdatedGpRecord ) {
+                    stress = matStat->giveStressVector();
+                } else {
+                    this->computeStrainVector(strain, gp, tStep, u); ///@todo This part computes the B matrix again; Inefficient.
+                    this->computeStressVector(stress, strain, gp, tStep);
+                }
+            } else if ( nlGeometry == 1 ) { // First Piola-Kirchhoff stress
+                if ( this->hasSecondGradient ) {
+                    this->computeGMatrixAt( gp, Gmat );
+                    this->computeSecondOrderStressVector( secondOrderStress, gp, tStep );
+                }
+
+                if ( useUpdatedGpRecord == 1 ) {
+                    stress = matStat->givePVector();
+                } else {
+                    this->computeFirstPKStressVector( stress, gp, tStep );
+
+                    ///@todo This is actaully inefficient since it constructs B and twice and collects the nodal unknowns over and over.
+                }
+                this->computeBHmatrixAt( gp, b );
+
             }
 
             if ( stress.giveSize() == 0 ) {
@@ -294,7 +313,22 @@ void StructuralElementEvaluator :: giveInternalForcesVector(FloatArray &answer, 
 
             // compute nodal representation of internal forces using f = B^T*Sigma dV
             double dV = this->computeVolumeAround(gp);
-            m->plusProduct(b, stress, dV);
+
+            if ( nlGeometry == 1 ) { // First Piola-Kirchhoff stress
+                if ( stress.giveSize() == 9 ) {
+                    FloatArray stressTemp;
+                    StructuralMaterial::giveReducedVectorForm( stressTemp, stress, gp->giveMaterialMode() );
+                    m->plusProduct( b, stressTemp, dV );
+                } else {
+                    m->plusProduct( b, stress, dV );
+                }
+
+                if ( this->hasSecondGradient ) {
+                    m->plusProduct( Gmat, secondOrderStress, dV );
+                }
+            } else {
+                m->plusProduct( b, stress, dV );
+            }
         }
         // localize irule contribution into element matrix
         if ( this->giveIntegrationElementLocalCodeNumbers(irlocnum, elem, iRule) ) {
@@ -372,7 +406,7 @@ void StructuralElementEvaluator :: updateInternalState(TimeStep *tStep)
 void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, MatResponseMode rMode, TimeStep *tStep)
 {
     int numberOfIntegrationRules;
-    FloatMatrix temp, bj, d, dbj;
+    FloatMatrix temp, bj, d, dbj, dAddF, dAdF, Gmat, dAG, dAB;
     Element *elem = this->giveElement();
     StructuralCrossSection *cs = static_cast< StructuralCrossSection * >( elem->giveCrossSection() );
     int ndofs = elem->computeNumberOfDofs();
@@ -401,14 +435,56 @@ void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, M
         // loop over individual integration points
         for ( GaussPoint *gp: *iRule ) {
             double dV = this->computeVolumeAround(gp);
-            this->computeBMatrixAt(bj, gp);
-            this->computeConstitutiveMatrixAt(d, rMode, gp, tStep);
+            if ( nlGeometry == 0 ) {
+                this->computeBMatrixAt(bj, gp);
+                this->computeConstitutiveMatrixAt(d, rMode, gp, tStep);
+            } else if ( nlGeometry == 1 ) {
+                if ( this->hasSecondGradient ) { // needs to be first
+                    this->computeGMatrixAt( gp, Gmat );
+                    this->computeConstitutiveMatrix_dAddF_At( dAddF, rMode, gp, tStep ); 
+                    this->computeConstitutiveMatrix_dAdF_At( dAdF, rMode, gp, tStep ); 
+                }
+                this->computeBHmatrixAt( gp, bj );
+                this->computeConstitutiveMatrix_dPdF_At( d, rMode, gp, tStep );
+            }
 
             dbj.beProductOf(d, bj);
             if ( matStiffSymmFlag ) {
                 m->plusProductSymmUpper(bj, dbj, dV);
             } else {
                 m->plusProductUnsym(bj, dbj, dV);
+            }
+
+
+            if ( this->hasSecondGradient ) {
+
+                /////////////
+                //FloatMatrix temp2;
+                //temp2.beTProductOf( bj, dbj );
+                //temp2.printYourself();
+                /////////////
+
+                dAG.beProductOf( dAddF, Gmat ); // term with derivative wrt dF
+                m->plusProductSymmUpper( Gmat, dAG, dV );
+                /////////////
+                //FloatMatrix temp;
+                //temp.beTProductOf( Gmat, dAG );
+                //temp.printYourself();
+                /////////////
+
+                dAB.beProductOf( dAdF, bj ); // term with derivative wrt F
+                m->plusProductUnsym( Gmat, dAB, dV );
+
+                ///////////////
+                // FloatMatrix temp;
+                // temp.beTProductOf( Gmat, dAB );
+                // temp.printYourself();
+                ///////////////
+
+                FloatMatrix dAG2, dAdFt;
+                dAdFt.beTranspositionOf( dAdF );
+                dAG2.beProductOf( dAdFt, Gmat ); // term with derivative wrt F
+                m->plusProductUnsym( bj, dAG2, dV );
             }
         }
 
@@ -422,4 +498,65 @@ void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, M
         }
     } // end loop over irules
 }
+void StructuralElementEvaluator::initializeFrom( InputRecord &ir )
+{
+    nlGeometry = 0;
+    IR_GIVE_OPTIONAL_FIELD( ir, nlGeometry, _IFT_StructuralElementEvaluator_nlgeoflag );
+}
+
+void StructuralElementEvaluator::computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
+{
+    Element *elem = this->giveElement();
+    StructuralCrossSection *cs = static_cast<StructuralCrossSection *>( elem->giveCrossSection() );
+
+    FloatArray vF;
+    this->computeDeformationGradientVector( vF, gp, tStep );
+    answer = cs->giveFirstPKStresses( vF, gp, tStep );
+}
+
+void StructuralElementEvaluator::computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
+{
+    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
+    // the receiver at time step tStep.
+    // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
+
+    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    FloatArray u;
+    Element *elem = this->giveElement();
+    elem->computeVectorOf( VM_Total, tStep, u );
+
+    // Displacement gradient H = du/dX
+    FloatMatrix B;
+    this->computeBHmatrixAt( gp, B );
+    //answer.beProductOf( B, u );
+
+
+    // get local code numbers corresponding to ir
+    IntArray lc;
+    FloatArray ur;
+    this->giveIntegrationElementLocalCodeNumbers( lc, elem, gp->giveIntegrationRule() );
+    ur.resize( B.giveNumberOfColumns() );
+    for ( int i = 1; i <= lc.giveSize(); i++ ) {
+        ur.at( i ) = u.at( lc.at( i ) );
+    }
+
+    answer.beProductOf( B, ur );
+
+
+    // Deformation gradient F = H + I
+    MaterialMode matMode = gp->giveMaterialMode();
+    if ( matMode == _3dMat || matMode == _PlaneStrain ) {
+        answer.at( 1 ) += 1.0;
+        answer.at( 2 ) += 1.0;
+        answer.at( 3 ) += 1.0;
+    } else if ( matMode == _PlaneStress ) {
+        answer.at( 1 ) += 1.0;
+        answer.at( 2 ) += 1.0;
+    } else if ( matMode == _1dMat ) {
+        answer.at( 1 ) += 1.0;
+    } else {
+        OOFEM_ERROR( "MaterialMode is not supported yet (%s)", __MaterialModeToString( matMode ) );
+    }
+}
+
 } // end namespace oofem

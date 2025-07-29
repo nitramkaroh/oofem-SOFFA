@@ -494,6 +494,19 @@ public:
     //@}
 
     std :: string errorInfo(const char *func) const { return func; } ///@todo Class name?
+
+
+    virtual int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+    {
+        OOFEM_ERROR( "Not supported." );
+        return 0;
+    }
+
+    //virtual int evalNind( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+    //{
+    //    OOFEM_ERROR( "Not supported." );
+    //    return 0;
+    //}
 };
 } // end namespace oofem
 #endif // feinterpol_h

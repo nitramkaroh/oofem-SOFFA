@@ -57,6 +57,8 @@ REGISTER_Element(BsplinePlaneStressElement);
 REGISTER_Element(NURBSPlaneStressElement);
 REGISTER_Element(TSplinePlaneStressElement);
 REGISTER_Element(NURBSSpace3dElement);
+REGISTER_Element(BsplinePlaneStrainElement );
+REGISTER_Element( BsplineAxisymElement );
 
 
 BsplinePlaneStressElement :: BsplinePlaneStressElement(int n, Domain *aDomain) : IGAElement(n, aDomain), PlaneStressStructuralElementEvaluator(), interpolation(2) { }
@@ -64,7 +66,7 @@ BsplinePlaneStressElement :: BsplinePlaneStressElement(int n, Domain *aDomain) :
 
 void BsplinePlaneStressElement :: initializeFrom(InputRecord &ir)
 {
-    //PlaneStressStructuralElementEvaluator::initializeFrom(ir);
+    PlaneStressStructuralElementEvaluator::initializeFrom(ir);
     IGAElement :: initializeFrom(ir);
 }
 
@@ -86,7 +88,7 @@ NURBSPlaneStressElement :: NURBSPlaneStressElement(int n, Domain *aDomain) : IGA
 
 void NURBSPlaneStressElement :: initializeFrom(InputRecord &ir)
 {
-    //PlaneStressStructuralElementEvaluator::initializeFrom(ir);
+    PlaneStressStructuralElementEvaluator::initializeFrom(ir);
     IGAElement :: initializeFrom(ir);
 }
 
@@ -112,7 +114,7 @@ NURBSSpace3dElement :: NURBSSpace3dElement(int n, Domain *aDomain) : IGAElement(
 
 void NURBSSpace3dElement :: initializeFrom(InputRecord &ir)
 {
-    //PlaneStressStructuralElementEvaluator::initializeFrom(ir);
+    Space3dStructuralElementEvaluator::initializeFrom( ir );
     IGAElement :: initializeFrom(ir);
 }
 
@@ -125,6 +127,312 @@ int NURBSSpace3dElement :: checkConsistency()
         return 0;
     }
     return 1;
+}
+///////////////////
+// bspline plane strain
+BsplinePlaneStrainElement ::BsplinePlaneStrainElement( int n, Domain *aDomain ) :
+    IGAElement( n, aDomain ), PlaneStrainStructuralElementEvaluator(), interpolation( 2 ) {}
+
+
+void BsplinePlaneStrainElement ::initializeFrom( InputRecord &ir )
+{
+    PlaneStrainStructuralElementEvaluator::initializeFrom( ir );
+    IGAElement ::initializeFrom( ir );
+}
+
+
+int BsplinePlaneStrainElement ::checkConsistency()
+{
+    BSplineInterpolation *interpol = static_cast<BSplineInterpolation *>( this->giveInterpolation() );
+    if ( giveNumberOfDofManagers() != interpol->giveNumberOfControlPoints( 1 ) * interpol->giveNumberOfControlPoints( 2 ) ) {
+        OOFEM_WARNING( "number of control points mismatch" );
+        return 0;
+    }
+    return 1;
+}
+
+void BsplinePlaneStrainElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep )
+{
+    int numSubCells     = this->ExportIntegrationRulesArray.size();
+    int numPointsInCell = this->ExportIntegrationRulesArray[0]->giveNumberOfIntegrationPoints();
+    int numElementsInCell = ( sqrt( numPointsInCell ) - 1 ) * ( sqrt( numPointsInCell ) - 1 );
+
+    vtkPieces.resize( 1 );
+    int numCells           = numElementsInCell * numSubCells;
+    const int numCellNodes = 4; // linear line
+    int nNodes             = numPointsInCell * numSubCells;
+    //
+    vtkPieces.at( 0 ).setNumberOfCells( numCells );
+    vtkPieces.at( 0 ).setNumberOfNodes( nNodes );
+    //
+    IntArray nodes( numCellNodes );
+
+    FloatArray nodeCoords( 2 );
+    FloatMatrix Nmat;
+    IntArray irlocnum;
+    int numberOfIntegrationRules = numSubCells;
+    int iNode                    = 1;
+    // loop over individual integration rules
+    for ( int ir = 0; ir < numberOfIntegrationRules; ir++ ) {
+        auto iRule = this->ExportIntegrationRulesArray[ir].get();
+        for ( GaussPoint *gp : *iRule ) {
+            this->computeNMatrixAt( Nmat, gp );
+
+            // Get nodal coordinates to the corresponding nodes
+            FloatArray X_vert,X;
+            this->giveNodalCoordinates( X_vert );
+
+            // get positions of nonzero SFs
+            IntArray lc;
+            this->giveIntegrationElementLocalCodeNumbers( lc, this, gp->giveIntegrationRule() );
+            X.resize( Nmat.giveNumberOfColumns() );
+            for ( int i = 1; i <= lc.giveSize(); i++ ) {
+                X.at( i ) = X_vert.at( lc.at( i ) );
+            }
+
+            // Compute coordinates of the points
+            nodeCoords.beProductOf( Nmat, X );
+            //nodeCoords.printYourself();
+
+            vtkPieces.at( 0 ).setNodeCoords( iNode, nodeCoords );
+            iNode++;
+        }
+    } // end loop over irules
+    ///////////////////
+
+
+    // write connectivity
+    IntArray connectivity( 4 );
+    int offset = 0;
+    int iN, jN, kN, lN;
+    int count = 1;
+    int nElxy  = sqrt( numElementsInCell );
+    for ( int isubCell = 1; isubCell <= numSubCells; isubCell++ ) {
+        for ( int iElement = 1; iElement <= nElxy; iElement++ ) {
+            for ( int jElement = 1; jElement <= nElxy; jElement++ ) {
+                iN                   = jElement + (nElxy+1) * ( iElement - 1 );
+                jN                   = jElement + 1 + ( nElxy + 1 ) * ( iElement - 1 );
+                kN                   = ( nElxy + 1 ) * iElement + 1 + jElement;
+                lN                   = ( nElxy + 1 ) * iElement + jElement;
+                connectivity.at( 1 ) = iN + (isubCell-1) * numPointsInCell;
+                connectivity.at( 2 ) = jN + ( isubCell - 1 ) * numPointsInCell;
+                connectivity.at( 3 ) = kN + ( isubCell - 1 ) * numPointsInCell;
+                connectivity.at( 4 ) = lN + ( isubCell - 1 ) * numPointsInCell;
+                //connectivity.printYourself();
+
+                vtkPieces.at( 0 ).setConnectivity( count, connectivity );
+                offset += 4;
+                vtkPieces.at( 0 ).setOffset( count, offset );
+                vtkPieces.at( 0 ).setCellType( count, 9 );
+                count++;
+            }
+        }
+    }
+
+    //for ( int iElement = 1; iElement <= numCells; iElement++ ) {
+    //    iN                   = iElement + count;
+    //    jN                   = iElement + 1 + count;
+    //    kN                   = iElement + 1 + count;
+    //    lN                   = iElement + 1 + count;
+    //    connectivity.at( 1 ) = iN;
+    //    connectivity.at( 2 ) = jN;
+    //    connectivity.at( 3 ) = kN;
+    //    connectivity.at( 4 ) = lN;
+    //    // connectivity.printYourself();
+
+    //    vtkPieces.at( 0 ).setConnectivity( iElement, connectivity );
+    //    offset += 2;
+    //    vtkPieces.at( 0 ).setOffset( iElement, offset );
+    //    vtkPieces.at( 0 ).setCellType( iElement, 3 );
+    //    if ( iElement % numElementsInCell == 0 ) {
+    //        count++;
+    //    }
+    //}
+
+    // export the displacements
+    int n = primaryVarsToExport.giveSize();
+    vtkPieces[0].setNumberOfPrimaryVarsToExport( primaryVarsToExport, nNodes );
+    for ( int i = 1; i <= n; i++ ) {
+        UnknownType utype = (UnknownType)primaryVarsToExport.at( i );
+        if ( utype == DisplacementVector ) {
+            FloatMatrix Nmat;
+            int numberOfIntegrationRules = numSubCells;
+            int iNode                    = 1;
+            // loop over individual integration rules
+            for ( int ir = 0; ir < numberOfIntegrationRules; ir++ ) {
+                auto iRule = this->ExportIntegrationRulesArray[ir].get();
+                for ( GaussPoint *gp : *iRule ) {
+                    this->computeNMatrixAt( Nmat, gp );
+
+                    // Get nodal coordinates to the corresponding nodes
+                    FloatArray u;
+                    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
+                    elem->computeVectorOf( VM_Total, tStep, u );
+
+                    // get positions of nonzero SFs
+                    IntArray lc;
+                    FloatArray ur, uval, uval_3d( 3 );
+                    uval_3d.zero();
+                    this->giveIntegrationElementLocalCodeNumbers( lc, this, gp->giveIntegrationRule() );
+
+                    ur.resize( Nmat.giveNumberOfColumns() );
+                    for ( int i = 1; i <= lc.giveSize(); i++ ) {
+                        ur.at( i ) = u.at( lc.at( i ) );
+                    }
+                    uval.beProductOf( Nmat, ur );
+                    uval_3d.at( 1 ) = uval.at( 1 );
+                    uval_3d.at( 2 ) = uval.at( 2 );
+
+                    vtkPieces.at( 0 ).setPrimaryVarInNode( utype, iNode, uval_3d );
+                    iNode++;
+                }
+            } // end loop over irules
+        }
+    }
+}
+
+
+///////////////////
+// axisym
+BsplineAxisymElement ::BsplineAxisymElement( int n, Domain *aDomain ) :
+    IGAElement( n, aDomain ), AxisymStructuralElementEvaluator(), interpolation( 2 ) {}
+
+
+void BsplineAxisymElement ::initializeFrom( InputRecord &ir )
+{
+    AxisymStructuralElementEvaluator::initializeFrom( ir );
+    IGAElement ::initializeFrom( ir );
+}
+
+
+int BsplineAxisymElement ::checkConsistency()
+{
+    BSplineInterpolation *interpol = static_cast<BSplineInterpolation *>( this->giveInterpolation() );
+    if ( giveNumberOfDofManagers() != interpol->giveNumberOfControlPoints( 1 ) * interpol->giveNumberOfControlPoints( 2 ) ) {
+        OOFEM_WARNING( "number of control points mismatch" );
+        return 0;
+    }
+    return 1;
+}
+
+void BsplineAxisymElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep )
+{
+    int numSubCells       = this->ExportIntegrationRulesArray.size();
+    int numPointsInCell   = this->ExportIntegrationRulesArray[0]->giveNumberOfIntegrationPoints();
+    int numElementsInCell = ( sqrt( numPointsInCell ) - 1 ) * ( sqrt( numPointsInCell ) - 1 );
+
+    vtkPieces.resize( 1 );
+    int numCells           = numElementsInCell * numSubCells;
+    const int numCellNodes = 4; // linear line
+    int nNodes             = numPointsInCell * numSubCells;
+    //
+    vtkPieces.at( 0 ).setNumberOfCells( numCells );
+    vtkPieces.at( 0 ).setNumberOfNodes( nNodes );
+    //
+    IntArray nodes( numCellNodes );
+
+    FloatArray nodeCoords( 2 );
+    FloatMatrix Nmat;
+    IntArray irlocnum;
+    int numberOfIntegrationRules = numSubCells;
+    int iNode                    = 1;
+    // loop over individual integration rules
+    for ( int ir = 0; ir < numberOfIntegrationRules; ir++ ) {
+        auto iRule = this->ExportIntegrationRulesArray[ir].get();
+        for ( GaussPoint *gp : *iRule ) {
+            this->computeNMatrixAt( Nmat, gp );
+
+            // Get nodal coordinates to the corresponding nodes
+            FloatArray X_vert, X;
+            this->giveNodalCoordinates( X_vert );
+
+            // get positions of nonzero SFs
+            IntArray lc;
+            this->giveIntegrationElementLocalCodeNumbers( lc, this, gp->giveIntegrationRule() );
+            X.resize( Nmat.giveNumberOfColumns() );
+            for ( int i = 1; i <= lc.giveSize(); i++ ) {
+                X.at( i ) = X_vert.at( lc.at( i ) );
+            }
+
+            // Compute coordinates of the points
+            nodeCoords.beProductOf( Nmat, X );
+            // nodeCoords.printYourself();
+
+            vtkPieces.at( 0 ).setNodeCoords( iNode, nodeCoords );
+            iNode++;
+        }
+    } // end loop over irules
+    ///////////////////
+
+
+    // write connectivity
+    IntArray connectivity( 4 );
+    int offset = 0;
+    int iN, jN, kN, lN;
+    int count = 1;
+    int nElxy = sqrt( numElementsInCell );
+    for ( int isubCell = 1; isubCell <= numSubCells; isubCell++ ) {
+        for ( int iElement = 1; iElement <= nElxy; iElement++ ) {
+            for ( int jElement = 1; jElement <= nElxy; jElement++ ) {
+                iN                   = jElement + ( nElxy + 1 ) * ( iElement - 1 );
+                jN                   = jElement + 1 + ( nElxy + 1 ) * ( iElement - 1 );
+                kN                   = ( nElxy + 1 ) * iElement + 1 + jElement;
+                lN                   = ( nElxy + 1 ) * iElement + jElement;
+                connectivity.at( 1 ) = iN + ( isubCell - 1 ) * numPointsInCell;
+                connectivity.at( 2 ) = jN + ( isubCell - 1 ) * numPointsInCell;
+                connectivity.at( 3 ) = kN + ( isubCell - 1 ) * numPointsInCell;
+                connectivity.at( 4 ) = lN + ( isubCell - 1 ) * numPointsInCell;
+                // connectivity.printYourself();
+
+                vtkPieces.at( 0 ).setConnectivity( count, connectivity );
+                offset += 4;
+                vtkPieces.at( 0 ).setOffset( count, offset );
+                vtkPieces.at( 0 ).setCellType( count, 9 );
+                count++;
+            }
+        }
+    }
+
+    // export the displacements
+    int n = primaryVarsToExport.giveSize();
+    vtkPieces[0].setNumberOfPrimaryVarsToExport( primaryVarsToExport, nNodes );
+    for ( int i = 1; i <= n; i++ ) {
+        UnknownType utype = (UnknownType)primaryVarsToExport.at( i );
+        if ( utype == DisplacementVector ) {
+            FloatMatrix Nmat;
+            int numberOfIntegrationRules = numSubCells;
+            int iNode                    = 1;
+            // loop over individual integration rules
+            for ( int ir = 0; ir < numberOfIntegrationRules; ir++ ) {
+                auto iRule = this->ExportIntegrationRulesArray[ir].get();
+                for ( GaussPoint *gp : *iRule ) {
+                    this->computeNMatrixAt( Nmat, gp );
+
+                    // Get nodal coordinates to the corresponding nodes
+                    FloatArray u;
+                    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
+                    elem->computeVectorOf( VM_Total, tStep, u );
+
+                    // get positions of nonzero SFs
+                    IntArray lc;
+                    FloatArray ur, uval, uval_3d( 3 );
+                    uval_3d.zero();
+                    this->giveIntegrationElementLocalCodeNumbers( lc, this, gp->giveIntegrationRule() );
+
+                    ur.resize( Nmat.giveNumberOfColumns() );
+                    for ( int i = 1; i <= lc.giveSize(); i++ ) {
+                        ur.at( i ) = u.at( lc.at( i ) );
+                    }
+                    uval.beProductOf( Nmat, ur );
+                    uval_3d.at( 1 ) = uval.at( 1 );
+                    uval_3d.at( 2 ) = uval.at( 2 );
+
+                    vtkPieces.at( 0 ).setPrimaryVarInNode( utype, iNode, uval_3d );
+                    iNode++;
+                }
+            } // end loop over irules
+        }
+    }
 }
 
 // HUHU should be implemented by IGA element (it is the same for Bspline NURBS and TSpline)
@@ -856,4 +1164,6 @@ void NURBSSpace3dElement :: drawScalar(oofegGraphicContext &gc, TimeStep *tStep)
 
 
 #endif
+
+
 } // end namespace oofem

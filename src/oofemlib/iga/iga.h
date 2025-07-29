@@ -39,10 +39,12 @@
 #include "intarray.h"
 #include "feinterpol.h"
 #include "gaussintegrationrule.h"
+#include "vtkxmlexportmodule.h"
 
 ///@name Input fields for IGAElement
 //@{
 #define _IFT_IGAElement_KnotSpanParallelMode "knotspanparmode"
+#define _IFT_IGAElement_numberOfExportPoints "numexp"
 //@}
 
 namespace oofem {
@@ -80,21 +82,46 @@ public:
         knotSpan(std::move(knotSpan)) { }
     const IntArray *giveKnotSpan() override { return & this->knotSpan; }
     void setKnotSpan1(const IntArray &src) { this->knotSpan = src; }
+
+    int SetUpDummyPointsOnLine( int nPoints, MaterialMode mode );
+    int SetUpDummyPointsOnSquare( int nPoints, MaterialMode mode );
 };
 
 
 /**
  * Implements base IGAElement, supposed to be a parent class of all elements with B-spline or NURBS based interpolation.
  */
-class OOFEM_EXPORT IGAElement : public Element
+class OOFEM_EXPORT IGAElement : public Element, public VTKXMLExportModuleElementInterface
 {
 protected:
+    std::vector<std ::unique_ptr<IGAIntegrationElement> > ExportIntegrationRulesArray;
+    int numExportPoints = 2;
+
 #ifdef __PARALLEL_MODE
     IntArray knotSpanParallelMode;
 #endif
 public:
-    IGAElement(int n, Domain * aDomain) : Element(n, aDomain) { }
+    IGAElement( int n, Domain *aDomain ) :
+        Element( n, aDomain ), VTKXMLExportModuleElementInterface()
+    {}
     void initializeFrom(InputRecord &ir) override;
+
+    virtual FloatArray giveNormal( GaussPoint *gp ) const { 
+        OOFEM_ERROR( "method not implemented for this element" ); 
+        FloatArray normal;
+        return normal;
+    };
+
+    virtual Element *giveElement() { return this; };
+
+    virtual void giveNodalCoordinates( FloatArray &NodalCoordinates ) const;
+
+
+    // composite type - so we can do the postprocessing in the next function
+    Element_Geometry_Type giveGeometryType() const override { return EGT_Composite; }
+    // divide the beam into some small subelements
+    void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
+    Interface *giveInterface( InterfaceType it ) override;
 
 #ifdef __PARALLEL_MODE
     elementParallelMode giveKnotSpanParallelMode(int) const override;

@@ -57,12 +57,103 @@ protected:
      * In case of IGAElements, B is assumed to contain only contribution from nonzero interpolation functions.
      */
     void computeBMatrixAt(FloatMatrix &answer, GaussPoint *gp) override;
+    void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
+
     double computeVolumeAround(GaussPoint *gp) override;
     void computeStressVector(FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep) override;
     void computeConstitutiveMatrixAt(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override;
     void giveDofManDofIDMask(int inode, IntArray &answer) const {
         answer = {D_u, D_v};
     }
+    void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
+
+public:
+    void initializeFrom( InputRecord &ir ) override;
+
+
 }; // end of PlaneStressStructuralElementEvaluator definition
+
+
+//// Plane strain
+class PlaneStrainStructuralElementEvaluator : public StructuralElementEvaluator
+{
+public:
+    PlaneStrainStructuralElementEvaluator() :
+        StructuralElementEvaluator() {}
+
+protected:
+    /**
+     * Assemble interpolation matrix at given IP.
+     * In case of IGAElements, N is assumed to contain only nonzero interpolation functions.
+     */
+    void computeNMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
+    /**
+     * Assembles the strain-displacement matrix of the receiver at given integration point.
+     * In case of IGAElements, B is assumed to contain only contribution from nonzero interpolation functions.
+     */
+    void computeBMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
+    void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
+
+    double computeVolumeAround( GaussPoint *gp ) override;
+    void computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep ) override;
+    void computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
+    void giveDofManDofIDMask( int inode, IntArray &answer ) const
+    {
+        answer = { D_u, D_v };
+    }
+    void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
+
+public:
+    void initializeFrom( InputRecord &ir ) override;
+
+}; // end of PlaneStressStructuralElementEvaluator definition
+
+////Axisymmetrix 
+class AxisymStructuralElementEvaluator : public StructuralElementEvaluator
+{
+public:
+    AxisymStructuralElementEvaluator() :
+        StructuralElementEvaluator() {}
+
+protected:
+    /**
+     * Assemble interpolation matrix at given IP.
+     * In case of IGAElements, N is assumed to contain only nonzero interpolation functions.
+     */
+    void computeNMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
+    void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
+    double computeVolumeAround( GaussPoint *gp ) override;
+    
+    void giveDofManDofIDMask( int inode, IntArray &answer ) const
+    {
+        answer = { D_u, D_v };
+    }
+    void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
+
+    /////////////////
+    void computeBMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override
+    {
+        OOFEM_ERROR( "This element is only for large strains so far" );
+        return;
+    }
+    void computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep ) override
+    {
+        OOFEM_ERROR( "This element is only for large strains so far" );
+        return;
+    }
+
+    void computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override
+    {
+        OOFEM_ERROR( "This element is only for large strains so far" );
+        return;
+    }
+
+public:
+    void initializeFrom( InputRecord &ir ) override;
+
+}; // end of PlaneStressStructuralElementEvaluator definition
+
+
+
 } // end namespace oofem
 #endif //planestresselementevaluator_h

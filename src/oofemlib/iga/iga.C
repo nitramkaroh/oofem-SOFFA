@@ -48,114 +48,187 @@
 
 
 namespace oofem {
-void IGAElement :: initializeFrom(InputRecord &ir)
+
+int IGAIntegrationElement ::SetUpDummyPointsOnLine( int nPoints, MaterialMode mode )
 {
-    int indx = 0;
+    // FloatArray coords_xi, weights;
+    // this->giveLineCoordsAndWeights( nPoints, coords_xi, weights );
+    this->gaussPoints.resize( nPoints );
+
+    for ( int i = 1; i <= nPoints; i++ ) {
+        // this->gaussPoints[i - 1] = new GaussPoint( this, i, { coords_xi.at( i ) }, weights.at( i ), mode );
+        this->gaussPoints[i - 1] = new GaussPoint( this, i, { 0. }, 0., mode );
+    }
+
+    this->intdomain = _Line;
+    return this->giveNumberOfIntegrationPoints();
+}
+
+int IGAIntegrationElement ::SetUpDummyPointsOnSquare( int nPoints, MaterialMode mode )
+// GaussIntegrationRule :: SetUpPointsOnSquare(int nPoints_xi1, int nPoints_xi2, MaterialMode mode)
+{
+    int nPoints_xi1 = (int)floor( sqrt( double( nPoints ) ) );
+    int nPoints_xi2 = nPoints_xi1;
+    // FloatArray coords_xi1, weights1, coords_xi2, weights2;
+    // this->giveLineCoordsAndWeights( nPoints_xi1, coords_xi1, weights1 );
+    // this->giveLineCoordsAndWeights( nPoints_xi2, coords_xi2, weights2 );
+    this->gaussPoints.resize( nPoints_xi1 * nPoints_xi2 );
+    int count = 0;
+    for ( int i = 1; i <= nPoints_xi1; i++ ) {
+        for ( int j = 1; j <= nPoints_xi2; j++ ) {
+            this->gaussPoints[count] = new GaussPoint( this, count + 1, { 0., 0. },
+                0., mode );
+            count++;
+        }
+    }
+
+    this->intdomain = _Square;
+    return this->giveNumberOfIntegrationPoints();
+}
+
+void IGAElement ::initializeFrom( InputRecord &ir )
+{
+    int indx            = 0;
     numberOfGaussPoints = 1;
 #ifdef __PARALLEL_MODE
     int numberOfKnotSpans = 0;
 
 #endif
 
-    Element :: initializeFrom(ir); // read nodes , material, cross section
+    Element ::initializeFrom( ir ); // read nodes , material, cross section
     // set number of dofmanagers
     this->numberOfDofMans = dofManArray.giveSize();
-    this->giveInterpolation()->initializeFrom(ir); // read geometry
+    this->giveInterpolation()->initializeFrom( ir ); // read geometry
 
     // generate individual IntegrationElements; one for each nonzero knot span
     int nsd = this->giveNsd();
     if ( nsd == 1 ) {
-        //HUHU
+        // HUHU
+        int numberOfKnotSpansU            = this->giveInterpolation()->giveNumberOfKnotSpans( 1 );
+        const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity( 1 );
+        const FloatArray *knotValuesU     = this->giveInterpolation()->giveKnotValues( 1 );
+        FloatArray newgpcoords( 1 );
+        IntArray knotSpan( 1 );
+        int numberOfIntegrationRules = numberOfKnotSpansU;
+        integrationRulesArray.resize( numberOfIntegrationRules );
+
+        knotSpan.at( 1 ) = -1;
+        for ( int ui = 1; ui <= numberOfKnotSpansU; ui++ ) {
+            double du = knotValuesU->at( ui + 1 ) - knotValuesU->at( ui );
+            knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
+
+            integrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
+            // integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
+            auto matMode = this->giveMaterialMode();
+            // integrationRulesArray[indx]->SetUpPointsOnSquare( numberOfGaussPoints, matMode ); // HUHU _PlaneStress, rectangle
+            integrationRulesArray[indx]->SetUpPointsOnLine( numberOfGaussPoints, matMode ); // HUHU _PlaneStress, rectangle
+
+
+            // remap local subelement gp coordinates into knot span coordinates and update integration weight
+            for ( auto &gp : *integrationRulesArray[indx] ) {
+                const FloatArray &gpcoords = gp->giveNaturalCoordinates();
+
+                newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du * ( gpcoords.at( 1 ) / 2.0 + 0.5 );
+
+                gp->setNaturalCoordinates( newgpcoords );
+                gp->setWeight( gp->giveWeight() / 2.0 * du );
+            }
+            indx++;
+        }
+
     } else if ( nsd == 2 ) {
-        int numberOfKnotSpansU = this->giveInterpolation()->giveNumberOfKnotSpans(1);
-        int numberOfKnotSpansV = this->giveInterpolation()->giveNumberOfKnotSpans(2);
+        int numberOfKnotSpansU = this->giveInterpolation()->giveNumberOfKnotSpans( 1 );
+        int numberOfKnotSpansV = this->giveInterpolation()->giveNumberOfKnotSpans( 2 );
 #ifdef __PARALLEL_MODE
         numberOfKnotSpans = numberOfKnotSpansU * numberOfKnotSpansV;
 #endif
-        const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity(1);
-        const IntArray *knotMultiplicityV = this->giveInterpolation()->giveKnotMultiplicity(2);
-        const FloatArray *knotValuesU = this->giveInterpolation()->giveKnotValues(1);
-        const FloatArray *knotValuesV = this->giveInterpolation()->giveKnotValues(2);
+        const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity( 1 );
+        const IntArray *knotMultiplicityV = this->giveInterpolation()->giveKnotMultiplicity( 2 );
+        const FloatArray *knotValuesU     = this->giveInterpolation()->giveKnotValues( 1 );
+        const FloatArray *knotValuesV     = this->giveInterpolation()->giveKnotValues( 2 );
 
-        FloatArray newgpcoords(2);
-        IntArray knotSpan(2);
+        FloatArray newgpcoords( 2 );
+        IntArray knotSpan( 2 );
 
         int numberOfIntegrationRules = numberOfKnotSpansU * numberOfKnotSpansV;
         integrationRulesArray.resize( numberOfIntegrationRules );
 
-        knotSpan.at(2) = -1;
+        knotSpan.at( 2 ) = -1;
         for ( int vi = 1; vi <= numberOfKnotSpansV; vi++ ) {
-            double dv = knotValuesV->at(vi + 1) - knotValuesV->at(vi);
-            knotSpan.at(2) += knotMultiplicityV->at(vi);
+            double dv = knotValuesV->at( vi + 1 ) - knotValuesV->at( vi );
+            knotSpan.at( 2 ) += knotMultiplicityV->at( vi );
 
-            knotSpan.at(1) = -1;
+            knotSpan.at( 1 ) = -1;
             for ( int ui = 1; ui <= numberOfKnotSpansU; ui++ ) {
-                double du = knotValuesU->at(ui + 1) - knotValuesU->at(ui);
-                knotSpan.at(1) += knotMultiplicityU->at(ui);
+                double du = knotValuesU->at( ui + 1 ) - knotValuesU->at( ui );
+                knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
 
-                integrationRulesArray [ indx ] = std::make_unique<IGAIntegrationElement>(indx, this, knotSpan);
-                integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
+                integrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
+                // integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
+                auto matMode = this->giveMaterialMode();
+                integrationRulesArray[indx]->SetUpPointsOnSquare( numberOfGaussPoints, matMode ); // HUHU _PlaneStress, rectangle
+
 
                 // remap local subelement gp coordinates into knot span coordinates and update integration weight
-                for ( auto &gp: *integrationRulesArray [ indx ] ) {
+                for ( auto &gp : *integrationRulesArray[indx] ) {
                     const FloatArray &gpcoords = gp->giveNaturalCoordinates();
 
-                    newgpcoords.at(1) = knotValuesU->at(ui) + du * ( gpcoords.at(1) / 2.0 + 0.5 );
-                    newgpcoords.at(2) = knotValuesV->at(vi) + dv * ( gpcoords.at(2) / 2.0 + 0.5 );
-                    gp->setNaturalCoordinates(newgpcoords);
-                    gp->setWeight(gp->giveWeight() / 4.0 * du * dv);
+                    newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du * ( gpcoords.at( 1 ) / 2.0 + 0.5 );
+                    newgpcoords.at( 2 ) = knotValuesV->at( vi ) + dv * ( gpcoords.at( 2 ) / 2.0 + 0.5 );
+                    gp->setNaturalCoordinates( newgpcoords );
+                    gp->setWeight( gp->giveWeight() / 4.0 * du * dv );
                 }
 
                 indx++;
             }
         }
     } else if ( nsd == 3 ) {
-        int numberOfKnotSpansU = this->giveInterpolation()->giveNumberOfKnotSpans(1);
-        int numberOfKnotSpansV = this->giveInterpolation()->giveNumberOfKnotSpans(2);
-        int numberOfKnotSpansW = this->giveInterpolation()->giveNumberOfKnotSpans(3);
+        int numberOfKnotSpansU = this->giveInterpolation()->giveNumberOfKnotSpans( 1 );
+        int numberOfKnotSpansV = this->giveInterpolation()->giveNumberOfKnotSpans( 2 );
+        int numberOfKnotSpansW = this->giveInterpolation()->giveNumberOfKnotSpans( 3 );
 #ifdef __PARALLEL_MODE
         numberOfKnotSpans = numberOfKnotSpansU * numberOfKnotSpansV * numberOfKnotSpansW;
 #endif
-        const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity(1);
-        const IntArray *knotMultiplicityV = this->giveInterpolation()->giveKnotMultiplicity(2);
-        const IntArray *knotMultiplicityW = this->giveInterpolation()->giveKnotMultiplicity(3);
-        const FloatArray *knotValuesU = this->giveInterpolation()->giveKnotValues(1);
-        const FloatArray *knotValuesV = this->giveInterpolation()->giveKnotValues(2);
-        const FloatArray *knotValuesW = this->giveInterpolation()->giveKnotValues(3);
+        const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity( 1 );
+        const IntArray *knotMultiplicityV = this->giveInterpolation()->giveKnotMultiplicity( 2 );
+        const IntArray *knotMultiplicityW = this->giveInterpolation()->giveKnotMultiplicity( 3 );
+        const FloatArray *knotValuesU     = this->giveInterpolation()->giveKnotValues( 1 );
+        const FloatArray *knotValuesV     = this->giveInterpolation()->giveKnotValues( 2 );
+        const FloatArray *knotValuesW     = this->giveInterpolation()->giveKnotValues( 3 );
 
-        FloatArray newgpcoords(3);
-        IntArray knotSpan(3);
+        FloatArray newgpcoords( 3 );
+        IntArray knotSpan( 3 );
 
         int numberOfIntegrationRules = numberOfKnotSpansU * numberOfKnotSpansV * numberOfKnotSpansW;
         integrationRulesArray.resize( numberOfIntegrationRules );
 
-        knotSpan.at(3) = -1;
+        knotSpan.at( 3 ) = -1;
         for ( int wi = 1; wi <= numberOfKnotSpansW; wi++ ) {
-            double dw = knotValuesW->at(wi + 1) - knotValuesW->at(wi);
-            knotSpan.at(3) += knotMultiplicityW->at(wi);
+            double dw = knotValuesW->at( wi + 1 ) - knotValuesW->at( wi );
+            knotSpan.at( 3 ) += knotMultiplicityW->at( wi );
 
-            knotSpan.at(2) = -1;
+            knotSpan.at( 2 ) = -1;
             for ( int vi = 1; vi <= numberOfKnotSpansV; vi++ ) {
-                double dv = knotValuesV->at(vi + 1) - knotValuesV->at(vi);
-                knotSpan.at(2) += knotMultiplicityV->at(vi);
+                double dv = knotValuesV->at( vi + 1 ) - knotValuesV->at( vi );
+                knotSpan.at( 2 ) += knotMultiplicityV->at( vi );
 
-                knotSpan.at(1) = -1;
+                knotSpan.at( 1 ) = -1;
                 for ( int ui = 1; ui <= numberOfKnotSpansU; ui++ ) {
-                    double du = knotValuesU->at(ui + 1) - knotValuesU->at(ui);
-                    knotSpan.at(1) += knotMultiplicityU->at(ui);
+                    double du = knotValuesU->at( ui + 1 ) - knotValuesU->at( ui );
+                    knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
 
-                    integrationRulesArray [ indx ] = std::make_unique<IGAIntegrationElement>(indx, this, knotSpan);
-                    integrationRulesArray [ indx ]->SetUpPointsOnCube(numberOfGaussPoints, _3dMat);
+                    integrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
+                    integrationRulesArray[indx]->SetUpPointsOnCube( numberOfGaussPoints, _3dMat );
 
                     // remap local subelement gp coordinates into knot span coordinates and update integration weight
-                    for ( auto &gp: *integrationRulesArray [ indx ] ) {
+                    for ( auto &gp : *integrationRulesArray[indx] ) {
                         const FloatArray &gpcoords = gp->giveNaturalCoordinates();
 
-                        newgpcoords.at(1) = knotValuesU->at(ui) + du * ( gpcoords.at(1) / 2.0 + 0.5 );
-                        newgpcoords.at(2) = knotValuesV->at(vi) + dv * ( gpcoords.at(2) / 2.0 + 0.5 );
-                        newgpcoords.at(3) = knotValuesW->at(wi) + dw * ( gpcoords.at(3) / 2.0 + 0.5 );
-                        gp->setNaturalCoordinates(newgpcoords);
-                        gp->setWeight(gp->giveWeight() / 8.0 * du * dv * dw);
+                        newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du * ( gpcoords.at( 1 ) / 2.0 + 0.5 );
+                        newgpcoords.at( 2 ) = knotValuesV->at( vi ) + dv * ( gpcoords.at( 2 ) / 2.0 + 0.5 );
+                        newgpcoords.at( 3 ) = knotValuesW->at( wi ) + dw * ( gpcoords.at( 3 ) / 2.0 + 0.5 );
+                        gp->setNaturalCoordinates( newgpcoords );
+                        gp->setWeight( gp->giveWeight() / 8.0 * du * dv * dw );
                     }
 
                     indx++;
@@ -163,39 +236,165 @@ void IGAElement :: initializeFrom(InputRecord &ir)
             }
         }
     } else {
-        throw ValueInputException(ir, "Domain", "unsupported number of spatial dimensions");
+        throw ValueInputException( ir, "Domain", "unsupported number of spatial dimensions" );
     }
-    
+
+
+    //////////////////
+    // export integration rule
+    // generate individual export IntegrationElements; one for each nonzero knot span
+    indx = 0;
+    IR_GIVE_OPTIONAL_FIELD( ir, numExportPoints, _IFT_IGAElement_numberOfExportPoints );
+
+    if ( nsd == 1 ) {
+        // HUHU
+        int numberOfKnotSpansU            = this->giveInterpolation()->giveNumberOfKnotSpans( 1 );
+        const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity( 1 );
+        const FloatArray *knotValuesU     = this->giveInterpolation()->giveKnotValues( 1 );
+        FloatArray newgpcoords( 1 );
+        IntArray knotSpan( 1 );
+        int numberOfIntegrationRules = numberOfKnotSpansU;
+        ExportIntegrationRulesArray.resize( numberOfIntegrationRules );
+
+        knotSpan.at( 1 ) = -1;
+        for ( int ui = 1; ui <= numberOfKnotSpansU; ui++ ) {
+            double du = knotValuesU->at( ui + 1 ) - knotValuesU->at( ui );
+            knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
+
+            ExportIntegrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
+            // integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
+            auto matMode = this->giveMaterialMode();
+            ExportIntegrationRulesArray[indx]->SetUpDummyPointsOnLine( numExportPoints, matMode ); // HUHU _PlaneStress, rectangle
+
+
+            // remap local subelement gp coordinates into knot span coordinates and update integration weight
+            int count = 0;
+            for ( auto &gp : *ExportIntegrationRulesArray[indx] ) {
+                newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du / ( numExportPoints - 1 ) * count;
+                // newgpcoords.printYourself();
+                gp->setNaturalCoordinates( newgpcoords );
+                gp->setWeight( du / ( numExportPoints - 1 ) );
+                count++;
+            }
+            indx++;
+        }
+
+    } else if ( nsd == 2 ) {
+        int numberOfKnotSpansU = this->giveInterpolation()->giveNumberOfKnotSpans( 1 );
+        int numberOfKnotSpansV = this->giveInterpolation()->giveNumberOfKnotSpans( 2 );
+#ifdef __PARALLEL_MODE
+        numberOfKnotSpans = numberOfKnotSpansU * numberOfKnotSpansV;
+#endif
+        const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity( 1 );
+        const IntArray *knotMultiplicityV = this->giveInterpolation()->giveKnotMultiplicity( 2 );
+        const FloatArray *knotValuesU     = this->giveInterpolation()->giveKnotValues( 1 );
+        const FloatArray *knotValuesV     = this->giveInterpolation()->giveKnotValues( 2 );
+
+        FloatArray newgpcoords( 2 );
+        IntArray knotSpan( 2 );
+
+        int numberOfIntegrationRules = numberOfKnotSpansU * numberOfKnotSpansV;
+        ExportIntegrationRulesArray.resize( numberOfIntegrationRules );
+
+        knotSpan.at( 2 ) = -1;
+        for ( int vi = 1; vi <= numberOfKnotSpansV; vi++ ) {
+            double dv = knotValuesV->at( vi + 1 ) - knotValuesV->at( vi );
+            knotSpan.at( 2 ) += knotMultiplicityV->at( vi );
+
+            knotSpan.at( 1 ) = -1;
+            for ( int ui = 1; ui <= numberOfKnotSpansU; ui++ ) {
+                double du = knotValuesU->at( ui + 1 ) - knotValuesU->at( ui );
+                knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
+
+                ExportIntegrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
+                // integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
+                auto matMode = this->giveMaterialMode();
+                ExportIntegrationRulesArray[indx]->SetUpDummyPointsOnSquare( numExportPoints * numExportPoints, matMode ); // HUHU _PlaneStress, rectangle
+
+
+                // remap local subelement gp coordinates into knot span coordinates and update integration weight
+                int countX   = 0;
+                int countY   = 0;
+                int countTot = 0;
+                for ( auto &gp : *ExportIntegrationRulesArray[indx] ) {
+                    countX              = countTot % ( numExportPoints );
+                    countY              = std::floor( countTot / ( numExportPoints ) );
+                    newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du / ( numExportPoints - 1 ) * ( countX );
+                    newgpcoords.at( 2 ) = knotValuesV->at( vi ) + dv / ( numExportPoints - 1 ) * ( countY );
+                    // newgpcoords.printYourself();
+
+                    gp->setNaturalCoordinates( newgpcoords );
+                    // gp->setWeight( du * dv / ( numExportPoints - 1 )/ ( numExportPoints - 1 ) ); // Shouldn be needed
+                    countTot++;
+                }
+
+                indx++;
+            }
+        }
+    } else {
+        throw ValueInputException( ir, "Domain", "unsupported number of spatial dimensions" );
+    }
+
 #ifdef __PARALLEL_MODE
     // read optional knot span parallel mode
-    this->knotSpanParallelMode.resize(numberOfKnotSpans);
+    this->knotSpanParallelMode.resize( numberOfKnotSpans );
     // set Element_local as default
     for ( int i = 1; i <= numberOfKnotSpans; i++ ) {
-        knotSpanParallelMode.at(i) = Element_local;
+        knotSpanParallelMode.at( i ) = Element_local;
     }
-    IR_GIVE_OPTIONAL_FIELD(ir, knotSpanParallelMode, _IFT_IGAElement_KnotSpanParallelMode);
+    IR_GIVE_OPTIONAL_FIELD( ir, knotSpanParallelMode, _IFT_IGAElement_KnotSpanParallelMode );
 #endif
 }
 
 
 #ifdef __PARALLEL_MODE
 elementParallelMode
-IGAElement :: giveKnotSpanParallelMode(int knotSpanIndex) const
+IGAElement ::giveKnotSpanParallelMode( int knotSpanIndex ) const
 {
     elementParallelMode emode = this->giveParallelMode();
     if ( emode == Element_remote ) {
         return Element_remote;
     } else if ( emode == Element_local ) {
-        return ( elementParallelMode ) this->knotSpanParallelMode.at(knotSpanIndex + 1);
+        return (elementParallelMode)this->knotSpanParallelMode.at( knotSpanIndex + 1 );
     } else {
-        OOFEM_ERROR("Cannot determine elementParallelMode");
+        OOFEM_ERROR( "Cannot determine elementParallelMode" );
     }
 
-    return Element_local; //to make compiler happy
+    return Element_local; // to make compiler happy
 }
 
 #endif // __PARALLEL_MODE
 
+
+Interface *IGAElement ::giveInterface( InterfaceType it )
+{
+    return static_cast<VTKXMLExportModuleElementInterface *>( this );
+}
+
+
+void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep )
+{
+    OOFEM_ERROR( "Not yet implemented for this element" );
+}
+
+
+
+void IGAElement::giveNodalCoordinates( FloatArray &NodalCoordinates ) const
+{
+    NodalCoordinates.zero();
+    IntArray dofIDMask;
+    FloatArray pos_i, pos_i_cut;
+    for ( int i = 1; i <= this->giveNumberOfDofManagers(); i++ ) {
+        pos_i = this->giveNode( i )->giveCoordinates();
+        this->giveDofManDofIDMask( i, dofIDMask );
+        // take just first two coordinates
+        pos_i_cut.resize( dofIDMask.giveSize() );
+        for ( auto &dofid : dofIDMask ) {
+            pos_i_cut.at( dofid ) = pos_i.at( dofid );
+        }
+        NodalCoordinates.append( pos_i_cut );
+    }
+}
 
 // integration elements are setup in the same way as for IGAElement for now HUHU
 
@@ -260,8 +459,6 @@ void IGATSplineElement :: initializeFrom(InputRecord &ir)
         throw ValueInputException(ir, "Domain", "unsupported number of spatial dimensions");
     }
 }
-
-
 
 
 

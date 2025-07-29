@@ -1,6 +1,8 @@
 set (sm_element
     structuralelementevaluator.C
+	structuralsurfaceelementevaluator.C
     igaelements.C
+	igasurfaceelements.C
     structuralelement.C
     nlstructuralelement.C
     structural2delement.C
@@ -151,6 +153,8 @@ set (sm_element
 	SurfaceElements/linesurface.C
 	SurfaceElements/axilinesurface.C
 	SurfaceElements/lineplanestrainsurface.C
+	SurfaceElements/space3dsurfaceelementevaluator.C
+	SurfaceElements/space2dsurfaceelementevaluator.C
     )
 
 set (sm_interface_elements

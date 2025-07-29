@@ -50,6 +50,8 @@
 #define _IFT_NURBSPlaneStressElement_Name "nurbsplanestresselement"
 #define _IFT_TSplinePlaneStressElement_Name "tsplineplanestresselement"
 #define _IFT_NURBSSpace3dElement_Name "nurbs3delement"
+#define _IFT_BsplinePlaneStrainElement_Name "bsplineplanestrainelement"
+#define _IFT_BsplineAxisymElement_Name "bsplineaxisymelement"
 
 namespace oofem {
 class BsplinePlaneStressElement : public IGAElement, public PlaneStressStructuralElementEvaluator
@@ -88,6 +90,8 @@ public:
         drawIGAPatchDeformedGeometry(this, this, gc, tStep, ut);
     }
 #endif
+
+    MaterialMode giveMaterialMode() override { return _PlaneStress; }
 
 protected:
     int giveNsd() override { return 2; }
@@ -133,6 +137,8 @@ public:
 
 #endif
 
+    MaterialMode giveMaterialMode() override { return _PlaneStress; }
+
 protected:
     int giveNsd() override { return 2; }
 };
@@ -173,6 +179,8 @@ public:
     // Graphics output
     void  drawScalar(oofegGraphicContext &gc, TimeStep *tStep) override;
 #endif
+
+    MaterialMode giveMaterialMode() override { return _PlaneStress; }
 
 protected:
     int giveNsd() override { return 2; }
@@ -219,5 +227,101 @@ public:
 protected:
     int giveNsd() override { return 3; }
 };
+
+
+
+class BsplinePlaneStrainElement : public IGAElement, public PlaneStrainStructuralElementEvaluator
+{
+protected:
+    BSplineInterpolation interpolation;
+
+public:
+    BsplinePlaneStrainElement( int n, Domain *aDomain );
+
+    void initializeFrom( InputRecord &ir ) override;
+    int checkConsistency() override;
+
+    void giveCharacteristicMatrix( FloatMatrix &answer, CharType mtrx, TimeStep *tStep ) override
+    {
+        PlaneStrainStructuralElementEvaluator ::giveCharacteristicMatrix( answer, mtrx, tStep );
+    }
+    void giveCharacteristicVector( FloatArray &answer, CharType type, ValueModeType mode, TimeStep *t ) override
+    {
+        PlaneStrainStructuralElementEvaluator ::giveCharacteristicVector( answer, type, mode, t );
+    }
+
+    FEInterpolation *giveInterpolation() const override { return const_cast<BSplineInterpolation *>( &this->interpolation ); }
+    Element *giveElement() override { return this; }
+    void giveDofManDofIDMask( int inode, IntArray &answer ) const override
+    {
+        PlaneStrainStructuralElementEvaluator ::giveDofManDofIDMask( inode, answer );
+    }
+    int computeNumberOfDofs() override { return numberOfDofMans * 2; }
+    void updateInternalState( TimeStep *tStep ) override { PlaneStrainStructuralElementEvaluator ::updateInternalState( tStep ); }
+    // definition & identification
+    const char *giveInputRecordName() const override { return _IFT_BsplinePlaneStrainElement_Name; }
+    const char *giveClassName() const override { return "BsplinePlaneStrainElement"; }
+
+    void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
+
+
+#ifdef __OOFEG
+    // Graphics output
+    void drawScalar( oofegGraphicContext &gc, TimeStep *tStep ) override;
+    void drawDeformedGeometry( oofegGraphicContext &gc, TimeStep *tStep, UnknownType ut ) override
+    {
+        drawIGAPatchDeformedGeometry( this, this, gc, tStep, ut );
+    }
+#endif
+
+    MaterialMode giveMaterialMode() override { return _PlaneStrain; }
+
+protected:
+    int giveNsd() override { return 2; }
+};
+
+
+///// Axisym
+
+class BsplineAxisymElement : public IGAElement, public AxisymStructuralElementEvaluator
+{
+protected:
+    BSplineInterpolation interpolation;
+
+public:
+    BsplineAxisymElement( int n, Domain *aDomain );
+
+    void initializeFrom( InputRecord &ir ) override;
+    int checkConsistency() override;
+
+    void giveCharacteristicMatrix( FloatMatrix &answer, CharType mtrx, TimeStep *tStep ) override
+    {
+        AxisymStructuralElementEvaluator ::giveCharacteristicMatrix( answer, mtrx, tStep );
+    }
+    void giveCharacteristicVector( FloatArray &answer, CharType type, ValueModeType mode, TimeStep *t ) override
+    {
+        AxisymStructuralElementEvaluator ::giveCharacteristicVector( answer, type, mode, t );
+    }
+
+    FEInterpolation *giveInterpolation() const override { return const_cast<BSplineInterpolation *>( &this->interpolation ); }
+    Element *giveElement() override { return this; }
+    void giveDofManDofIDMask( int inode, IntArray &answer ) const override
+    {
+        AxisymStructuralElementEvaluator ::giveDofManDofIDMask( inode, answer );
+    }
+    int computeNumberOfDofs() override { return numberOfDofMans * 2; }
+    void updateInternalState( TimeStep *tStep ) override { AxisymStructuralElementEvaluator ::updateInternalState( tStep ); }
+    // definition & identification
+    const char *giveInputRecordName() const override { return _IFT_BsplineAxisymElement_Name; }
+    const char *giveClassName() const override { return "BsplineAxisymElement"; }
+
+    void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
+
+    MaterialMode giveMaterialMode() override { return _3dMat; }
+
+protected:
+    int giveNsd() override { return 2; }
+};
+
 } // end namespace oofem
 #endif //igaelements_h

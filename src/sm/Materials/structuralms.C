@@ -37,6 +37,7 @@
 #include "contextioerr.h"
 #include "sm/Elements/nlstructuralelement.h"
 #include "gausspoint.h"
+#include "oofemlib/iga/iga.h"
 
 namespace oofem {
 StructuralMaterialStatus :: StructuralMaterialStatus(GaussPoint *g) :
@@ -55,15 +56,22 @@ StructuralMaterialStatus :: StructuralMaterialStatus(GaussPoint *g) :
     if ( gp->giveIntegrationRule() == NULL ) {
         return;
     }
-    if ( NLStructuralElement * el = dynamic_cast< NLStructuralElement * >( gp->giveElement() ) ) {
+    if ( NLStructuralElement *el = dynamic_cast<NLStructuralElement *>( gp->giveElement() )) {
       if ( el->giveGeometryMode() == 1  ) { // if large def, initialize F and P
-	PVector.resize(9);
-	FVector.resize(9);
-	FVector.at(1) = FVector.at(2) = FVector.at(3) = 1.;
-	tempPVector = PVector;
-	tempFVector = FVector;
-	
+	    PVector.resize(9);
+	    FVector.resize(9);
+	    FVector.at(1) = FVector.at(2) = FVector.at(3) = 1.;
+	    tempPVector = PVector;
+	    tempFVector = FVector;
       }
+    }
+
+    if ( IGAElement *el = dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
+            PVector.resize( 9 );
+            FVector.resize( 9 );
+            FVector.at( 1 ) = FVector.at( 2 ) = FVector.at( 3 ) = 1.;
+            tempPVector                                         = PVector;
+            tempFVector                                         = FVector;
     }
 
 }

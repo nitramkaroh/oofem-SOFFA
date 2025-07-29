@@ -38,6 +38,8 @@
 #include "iga/iga.h"
 #include "matresponsemode.h"
 
+#define _IFT_StructuralElementEvaluator_nlgeoflag "nlgeo"
+
 namespace oofem {
 /**
  * This class represent a new concept on how to define elements.
@@ -56,9 +58,15 @@ namespace oofem {
 class StructuralElementEvaluator
 {
 protected:
+    bool hasSecondGradient = false;
     FloatMatrix rotationMatrix;
     /// Flag indicating if transformation matrix has been already computed
     int rotationMatrixDefined;
+
+    /// Flag indicating if geometrical nonlinearities apply.
+    int nlGeometry;
+
+    void setSecondGradient( bool setTo ) { this->hasSecondGradient = setTo; };
 
     StructuralElementEvaluator();
     virtual ~StructuralElementEvaluator() { }
@@ -111,7 +119,22 @@ protected:
      * Computes the matrix for which the unknown field is obtained, typically [N1, 0, N2, 0, ...; 0, N1, 0, N2, ...].
      */
     virtual void computeNMatrixAt(FloatMatrix &answer, GaussPoint *gp) = 0;
+
     virtual void computeBMatrixAt(FloatMatrix &answer, GaussPoint *gp) = 0;
+    
+    virtual void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
+        return;
+    }
+
+    virtual void computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
+        return;
+    }
+
+
     virtual void computeStiffnessMatrix(FloatMatrix &answer, MatResponseMode rMode, TimeStep *tStep);
     virtual double computeVolumeAround(GaussPoint *gp) { return 0.; }
     virtual void giveInternalForcesVector(FloatArray &answer, TimeStep *tStep, bool useUpdatedGpRecord = false);
@@ -132,6 +155,24 @@ protected:
      * @param tStep Time step.
      */
     virtual void computeStressVector(FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep) = 0;
+    
+    /**
+     * Computes the first Piola-Kirchhoff stress tensor on Voigt format. This method will
+     * be called if nlGeo = 1 and mode = TL. This method computes the deformation gradient F and passes
+     * it on to the crossection which then asks for the stress from the material.
+     * @note P is related to S through F*S.
+     *
+     * @param answer Computed stress vector in Voigt form.
+     * @param gp Gauss point at which the stress is evaluated.
+     * @param tStep Time step.
+     */
+    virtual void computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
+
+    virtual void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
+    };
+
     /**
      * Computes constitutive matrix of receiver.
      * @param answer Constitutive matrix.
@@ -140,6 +181,7 @@ protected:
      * @param tStep Time step.
      */
     virtual void computeConstitutiveMatrixAt(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) = 0;
+    
     /**
      * Computes large strain constitutive matrix of receiver.
      * @param answer Constitutive matrix.
@@ -147,7 +189,20 @@ protected:
      * @param gp Integration point for which constitutive matrix is computed.
      * @param tStep Time step.
      */
-    //    virtual void computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) = 0;
+    virtual void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
+    }
+
+    virtual void computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
+    }
+
+    virtual void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
+    }
 
     /**
      * Optimized version, allowing to pass element displacements as parameter.
@@ -157,6 +212,26 @@ protected:
      * and pass this vector as parameter
      */
     void computeStrainVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep, FloatArray &u);
+
+    /**
+     * Computes the deformation gradient in Voigt form at integration point ip and at time
+     * step tStep. Computes the displacement gradient and adds an identitiy tensor.
+     *
+     * @param answer Deformation gradient vector
+     * @param gp Gauss point.
+     * @param tStep Time step.
+     */
+    virtual void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
+
+    virtual void computeGradientOfDeformationGradientVector(FloatArray& answer, GaussPoint* gp, TimeStep* tStep) {
+        OOFEM_ERROR( "method not implemented for this element" );
+    }
+
+    virtual void computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
+    {
+        OOFEM_ERROR( "method not implemented for this element" );
+    }
+
 
     /*
      * Assembles the code numbers of given integration element (sub-patch)
@@ -180,6 +255,8 @@ protected:
 #ifdef __OOFEG
     friend void drawIGAPatchDeformedGeometry(Element *elem, StructuralElementEvaluator *se, oofegGraphicContext &gc, TimeStep *tStep, UnknownType);
 #endif
+public:
+    virtual void initializeFrom( InputRecord &ir );
 };
 } // end namespace oofem
 #endif //structuralelementevaluator_h
