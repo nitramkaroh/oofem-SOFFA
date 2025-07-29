@@ -33,6 +33,8 @@
  */
 
 #include "sm/Elements/nlstructuralsurfaceelement.h"
+#include "sm/Elements/Structural3DSurfaceElement.h"
+
 #include "sm/Materials/structuralms.h"
 #include "sm/CrossSections/structuralcrosssection.h"
 #include "feinterpol.h"
@@ -57,11 +59,30 @@ NLStructuralSurfaceElement::NLStructuralSurfaceElement( int n, Domain *aDomain )
 void NLStructuralSurfaceElement::computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
     auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-
     FloatArray normal = this->giveNormal( gp );
     FloatArray vF;
     this->computeDeformationGradientVector( vF, gp, tStep );
-    answer = cs->giveFirstPKSurfaceStresses( vF, normal, gp, tStep );
+
+    // Include prestrain Prestrain
+    Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 0. );
+    FloatArray vFmod;
+    this->PrestrainDeformationGradient( vF, vFmod, F0, gp, tStep );
+
+    FloatArray answerTmp = cs->giveFirstPKSurfaceStresses( vFmod, normal, gp, tStep ); // Compute stress with updated F
+    
+
+    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( cs->giveMaterial( gp ) ); // Get material
+    double J0 = mat->compute_surface_determinant( F0 ); // Compute surface jacobian
+
+    Tensor2_3d P( FloatArrayF<9>::FloatArrayF<9>( answerTmp ) ), Pmod;
+    Pmod( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0( j_3, k_3 ); // Modify the answert 
+    answer = Pmod.to_voigt_form();
+
+    // update status 
+    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
+    status->letTempFVectorBe( vF);
+    status->letTempPVectorBe( answer );
+    
 }
 
 
@@ -88,6 +109,7 @@ void NLStructuralSurfaceElement::computeDeformationGradientVector( FloatArray &a
     // Displacement gradient H = du/dX
     FloatMatrix B;
     this->computeBHmatrixAt( gp, B );
+ 
     answer.beProductOf( B, u );
 
     // Deformation gradient F = H + I

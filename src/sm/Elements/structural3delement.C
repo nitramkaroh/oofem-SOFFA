@@ -38,6 +38,7 @@
 #include "sm/CrossSections/structuralcrosssection.h"
 #include "gaussintegrationrule.h"
 #include "mathfem.h"
+#include "sm/Materials/structuralms.h"
 
 namespace oofem {
 Structural3DElement::Structural3DElement(int n, Domain *aDomain) :
@@ -268,7 +269,29 @@ Structural3DElement::computeConstitutiveMatrixAt(FloatMatrix &answer, MatRespons
 void
 Structural3DElement::computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep)
 {
-    answer = this->giveStructuralCrossSection()->giveStiffnessMatrix_dPdF_3d(rMode, gp, tStep);
+
+
+    StructuralCrossSection *cs = this->giveStructuralCrossSection();
+    auto mat = dynamic_cast<StructuralMaterial *>( cs->giveMaterial( gp ) );
+    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
+    FloatArrayF<9> vF( status->giveTempFVector() ); // Get F from status
+
+    Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+    FloatArray vFmod;
+    this->PrestrainDeformationGradient( vF, vFmod, F0, gp, tStep ); // Get the prestrain
+
+    status->letTempFVectorBe( vFmod ); // Update F in status
+
+    FloatMatrix answerTmp = cs->giveStiffnessMatrix_dPdF_3d( rMode, gp, tStep );
+
+    status->letTempFVectorBe( vF ); // get F in status to the previous state
+
+    // Modify the stiffness
+    Tensor4_3d A( FloatMatrixF<9, 9>::FloatMatrixF<9, 9>( answerTmp ) ), Amod;
+    Amod( i_3, j_3, k_3, l_3 ) = 1. / F0.compute_determinant() * F0( j_3, m_3 ) * A( i_3, m_3, k_3, n_3 ) * F0( l_3, n_3 );
+    answer  = Amod.to_voigt_form();
+
+
     if ( this->matRotation ) {
         FloatArray x, y, z;
         FloatMatrix Q;
