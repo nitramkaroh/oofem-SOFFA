@@ -192,7 +192,12 @@ namespace oofem {
     ENUM_ITEM_WITH_VALUE(IST_MacroSlipVector, 142) \
     ENUM_ITEM_WITH_VALUE(IST_TransferStress, 143) \
     ENUM_ITEM_WITH_VALUE(IST_MacroSlipGradient, 144) \
-    ENUM_ITEM_WITH_VALUE(IST_ReinfMembraneStress, 145)
+    ENUM_ITEM_WITH_VALUE(IST_ReinfMembraneStress, 145) \
+    ENUM_ITEM_WITH_VALUE(IST_PrestrainDeformationGradient, 155 ) \
+    ENUM_ITEM_WITH_VALUE(IST_GlobalDeformationGradientTensor, 156 ) \
+    ENUM_ITEM_WITH_VALUE(IST_ElementReferenceNormal, 157 ) \
+    ENUM_ITEM_WITH_VALUE(IST_AnisotropyDirection, 158 ) 
+
 
 /**
  * Type  representing the physical meaning of element or constitutive model internal variable.
