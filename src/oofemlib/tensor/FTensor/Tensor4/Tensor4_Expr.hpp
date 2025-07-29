@@ -4,11 +4,17 @@
 
 #include "Tensor4_minus_Tensor4.hpp"
 #include "Tensor4_plus_Tensor4.hpp"
+#include "Tensor4_times_Tensor1_single.hpp"
 #include "Tensor4_times_Tensor2_single.hpp"
 #include "Tensor4_times_Tensor2_double.hpp"
 #include "Tensor4_times_Tensor2_symmetric.hpp"
 #include "Tensor4_times_Tensor3_triple.hpp"
 #include "Tensor4_times_generic.hpp"
+#include "Tensor4_times_Tensor4_single.hpp"
+#include "Tensor4_times_Tensor4_double.hpp"
+#include "Tensor4_times_Tensor4_triple.hpp"
+#include "Tensor4_times_Tensor3_single.hpp"
+#include "Tensor4_times_Tensor3_double.hpp"
 
 #include "../permute.hpp"
 
@@ -107,6 +113,21 @@ namespace FTensor
               {
                 iter(ii, jj, kk, ll) += permute(*this, rhs, ii, jj, kk, ll);
               }
+      return *this;
+    }
+
+    template <class U>
+    Tensor4_Expr<Tensor4<A, Dim0, Dim1, Dim2, Dim3>, T, Dim0,
+        Dim1, Dim2, Dim3, i, j, k, l> &
+    operator=( const U &u )
+    {
+      for ( int ii = 0; ii < Dim0; ++ii )
+        for ( int jj = 0; jj < Dim1; ++jj )
+          for ( int kk = 0; kk < Dim2; ++kk )
+            for ( int ll = 0; ll < Dim3; ++ll )
+            {
+              iter( ii, jj, kk, ll ) = u;
+            }
       return *this;
     }
   };

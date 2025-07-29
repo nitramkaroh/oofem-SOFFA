@@ -12,8 +12,10 @@
 #include "Tensor3_times_Tensor1.hpp"
 #include "Tensor3_times_Tensor2.hpp"
 #include "Tensor3_times_Tensor2_symmetric.hpp"
-#include "Tensor3_times_Tensor3.hpp"
+#include "Tensor3_times_Tensor3.hpp" //handles triple contraction
 #include "Tensor3_times_generic.hpp"
+#include "Tensor3_times_Tensor3_single.hpp"
+#include "Tensor3_times_Tensor3_double.hpp"
 
 namespace FTensor
 {
