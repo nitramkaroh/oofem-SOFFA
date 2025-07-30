@@ -38,7 +38,7 @@ namespace FTensor
   {
     using TensorExpr
       = Tensor7_plus_Tensor7<A, B, T, U, Dim0_0, Dim1_0, Dim2_0, Dim3_0, Dim4_0, Dim5_0, Dim6_0,
-                             Dim0_1, Dim1_1, Dim2_1, Dim3_1, Dim4_1, Dim5_1, Dim6_1, i0, j0, k0, l0, m0, n0, o0
+                             Dim0_1, Dim1_1, Dim2_1, Dim3_1, Dim4_1, Dim5_1, Dim6_1, i0, j0, k0, l0, m0, n0, o0,
                              i1, j1, k1, l1, m1, n1, o1>;
     return Tensor7_Expr<TensorExpr, typename promote<T, U>::V, Dim0_0, Dim1_0,
                         Dim2_0, Dim3_0, Dim4_0, Dim5_0, Dim6_0, i0, j0, k0, l0, m0, n0, o0>(TensorExpr(a, b));
