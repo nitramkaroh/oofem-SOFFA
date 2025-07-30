@@ -42,6 +42,7 @@
 #include "intarray.h"
 #include "classfactory.h"
 #include "gaussintegrationrule.h"
+#include "lobattoir.h"
 #include "crosssection.h"
 
 #include "fei2dquadquad.h"
@@ -56,6 +57,7 @@ namespace oofem {
 #define _IFT_MagnetoElasticElement_F2 "f02"
 #define _IFT_MagnetoElasticElement_F3 "f03"
 #define _IFT_MagnetoElasticElement_F4 "f04"
+#define _IFT_MagnetoElasticElement_useLobatto "uselobatto"
 
 /**
  * @brief Base class for fully coupled, nonlinear thermo mechanical elements
@@ -72,6 +74,9 @@ class MagnetoElasticElement : public MPElement
 
   FloatArrayF<9> F0_1, F0_2, F0_3, F0_4; // prestrain for each GP
 
+  protected:
+  bool useLobatto = false;
+
   public:
   MagnetoElasticElement( int n, Domain *d ) :
       MPElement( n, d ) {}
@@ -80,6 +85,9 @@ class MagnetoElasticElement : public MPElement
   {
 
     MPElement::initializeFrom( ir );
+
+    IR_GIVE_OPTIONAL_FIELD( ir, useLobatto, _IFT_MagnetoElasticElement_useLobatto );
+    this->computeGaussPoints();
 
     FloatArray F1_temp( 9 ), F2_temp( 9 ), F3_temp( 9 ), F4_temp( 9 );
 
@@ -194,7 +202,7 @@ class MagnetoElasticQuad_qq : public MagnetoElasticElement
   {
     numberOfDofMans = 8;
     numberOfGaussPoints = 4;
-    this->computeGaussPoints();
+    //this->computeGaussPoints();
   }
 
   int getNumberOfSurfaceDOFs() const override { return 0; }
@@ -290,7 +298,11 @@ class MagnetoElasticQuad_qq : public MagnetoElasticElement
   {
     if ( integrationRulesArray.size() == 0 ) {
       integrationRulesArray.resize( 1 );
-      integrationRulesArray[0] = std::make_unique<GaussIntegrationRule>( 1, this );
+      if (useLobatto){
+        integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this );
+      }else{
+        integrationRulesArray[0] = std::make_unique<GaussIntegrationRule>( 1, this );
+      }
       integrationRulesArray[0]->SetUpPointsOnSquare( numberOfGaussPoints, _PlaneStrain );
     }
   }
@@ -309,7 +321,7 @@ REGISTER_Element( MagnetoElasticQuad_qq )
      * @brief 2D Magneto elatic element with quadratic interpolation of displacements and linear interpolation of magnetic potential
      *
      */
-    class MagnetoElasticQuad_ql : public MagnetoElasticElement
+class MagnetoElasticQuad_ql : public MagnetoElasticElement
 {
   protected:
   const static FEInterpolation &phiInterpol;
@@ -323,7 +335,7 @@ REGISTER_Element( MagnetoElasticQuad_qq )
   {
     numberOfDofMans = 8;
     numberOfGaussPoints = 8;
-    this->computeGaussPoints();
+    //this->computeGaussPoints();
   }
 
   int getNumberOfSurfaceDOFs() const override { return 0; }
@@ -416,7 +428,7 @@ class MagnetoElasticQuad_ll : public MagnetoElasticElement
   {
     numberOfDofMans = 4;
     numberOfGaussPoints = 4;
-    this->computeGaussPoints();
+    //this->computeGaussPoints();
   }
 
   int getNumberOfSurfaceDOFs() const override { return 0; }
