@@ -58,7 +58,7 @@
 #include "exportmodulemanager.h"
 #include "initmodulemanager.h"
 #include "monitormanager.h"
-
+#include "timestepcontroller.h"
 #ifdef __PARALLEL_MODE
  #include "parallel.h"
 #endif
@@ -276,7 +276,8 @@ protected:
     enum fMode nonLinFormulation;
     /// Error estimator. Useful for adaptivity, or simply printing errors output.
     std::unique_ptr<ErrorEstimator> defaultErrEstimator;
-
+    /// Time Step controller is responsible for collecting data from analysis and elements and select the appropriate at for next step, or step reduction in case of convergence problems
+    std::unique_ptr<TimeStepController> timeStepController;
     /// Domain rank in a group of collaborating processes (0..groupSize-1).
     int rank;
     /// Total number of collaborating processes.
@@ -402,6 +403,9 @@ public:
         contextOutputMode = COM_UserDefined;
         contextOutputStep = cStep;
     }
+
+    double giveDeltaT(){return this->timeStepController->giveDeltaT();}
+    void setDeltaT(double dT){return this->timeStepController->setDeltaT(dT);}
     /**
      * Sets domain mode to given mode.
      * @param pmode Problem mode.
@@ -447,6 +451,7 @@ public:
      * and updates previous step).
      */
     virtual void solveYourself();
+    virtual void restartYourself(TimeStep *tS){;}
     /**
      * Solves problem for given time step. Should assemble characteristic matrices and vectors
      * if necessary and solve problem using appropriate numerical method. After finishing solution,
@@ -640,12 +645,14 @@ public:
      * @param mStep Meta step.
      */
     virtual void updateAttributes(MetaStep *mStep);
-    /**
+        /**
      * Update e-model attributes attributes according to step metaStep attributes.
      * Calls updateAttributes. At the end the meta step input reader finish() service
      * is called in order to allow for unread attribute check.
      */
-    void initMetaStepAttributes(MetaStep *mStep);
+    void initMetaStepAttributes(MetaStep *mStep) {
+      this->timeStepController->initMetaStepAttributes(mStep);
+     }
     /**
      * Stores the state of model to output stream. Stores not only the receiver state,
      * but also same function is invoked for all DofManagers and Elements in associated
@@ -690,6 +697,12 @@ public:
             return currentStep.get();
         }
     }
+    virtual void adaptTimeStep(double nIter){
+      //timeStepController->adaptTimeStep(nIter);
+      ;
+    }
+
+    
     /** Returns previous time step.
      *  @param force when set to true then previous step of receiver is returned instead of master (default)
      */
@@ -701,7 +714,7 @@ public:
         }
     }
     /// Returns next time step (next to current step) of receiver.
-    virtual TimeStep *giveNextStep() { return NULL; }
+    virtual TimeStep *giveNextStep() { return this->timeStepController->giveNextStep(); }
     /** Generate new time step (and associate metastep).
      *  The advantage of this method is that the associated metasteps 
      *  are generated on the fly, which is not the case of giveNextStep method, 
@@ -737,20 +750,29 @@ public:
             return 1;
         }
     }
+
     /// Return number of meta steps.
-    int giveNumberOfMetaSteps() { return nMetaSteps; }
+    int giveNumberOfMetaSteps() { return this->timeStepController->giveNumberOfMetaSteps(); }
     /// Returns the i-th meta step.
-    MetaStep *giveMetaStep(int i);
+    MetaStep *giveMetaStep(int i) {return this->timeStepController->giveMetaStep(i);}
     /** Returns total number of steps.
      *  @param force when set to true then receiver reply is returned instead of master (default)
      */
     int giveNumberOfSteps(bool force = false) {
-        if ( master && (!force)) {
-            return master->giveNumberOfSteps();
-        } else {
-            return numberOfSteps;
-        }
+      if ( master && (!force)) {
+	return master->giveNumberOfSteps();
+      } else {
+	//return numberOfSteps;
+	return timeStepController->giveNumberOfSteps();
+      }
     }
+    /** Returns final time of the simulation
+     */
+    virtual double giveFinalTime()
+    {
+      return timeStepController->giveFinalTime();
+    }
+
     /// Returns end of time interest (time corresponding to end of time integration).
     virtual double giveEndOfTimeOfInterest() { return 0.; }
     /// Returns the time step number, when initial conditions should apply.
@@ -998,6 +1020,9 @@ public:
     void assembleVectorFromContacts(FloatArray &answer, TimeStep *tStep, CharType type, ValueModeType mode,
                                     const UnknownNumberingScheme &s, Domain *domain, FloatArray *eNorms = NULL);
 
+    /// return time at the begining of analysis
+    virtual double giveInitialTime(){return 0.;}
+
 protected:
     /**
      * Packs receiver data when rebalancing load. When rebalancing happens, the local numbering will be lost on majority of processors.
@@ -1144,6 +1169,7 @@ public:
     EngngModel *giveEngngModel() { return this; }
     virtual bool isElementActivated( int elemNum ) { return true; }
     virtual bool isElementActivated( Element *e ) { return true; }
+    TimeStepController* giveTimeStepController() { return this->timeStepController.get(); }
 
 
 #ifdef __OOFEG

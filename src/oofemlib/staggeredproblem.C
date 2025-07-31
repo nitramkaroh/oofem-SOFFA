@@ -86,20 +86,21 @@ StaggeredProblem :: instanciateYourself(DataReader &dr, InputRecord &ir, const c
     return result;
 }
 
+/*
 int
 StaggeredProblem :: instanciateDefaultMetaStep(InputRecord &ir)
 {
     if ( timeDefinedByProb ) {
-        /* just set a nonzero number of steps;
-         * needed for instanciateDefaultMetaStep to pass; overall has no effect as time stepping is deteremined by slave
-         */
-        this->numberOfSteps = 1;
+    // just set a nonzero number of steps;
+    // needed for instanciateDefaultMetaStep to pass; overall has no effect as time stepping is deteremined by slave
+    //
+    this->numberOfSteps = 1;
     }
     EngngModel :: instanciateDefaultMetaStep(ir);
     //there are no slave problems initiated so far, the overall metaStep will defined in a slave problem instantiation
     return 1;
 }
-
+*/
 int
 StaggeredProblem :: instanciateSlaveProblems()
 {

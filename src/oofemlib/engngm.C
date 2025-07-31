@@ -69,7 +69,7 @@
 #include "parallelcontext.h"
 #include "unknownnumberingscheme.h"
 #include "contact/contactmanager.h"
-
+#include "convergenceexception.h"
 
 #ifdef __PARALLEL_MODE
  #include "problemcomm.h"
@@ -91,7 +91,10 @@ namespace oofem {
 EngngModel :: EngngModel(int i, EngngModel *_master) : domainNeqs(), domainPrescribedNeqs(),
     exportModuleManager(this),
     initModuleManager(this),
-    monitorManager(this)
+    monitorManager(this),
+    timeStepController(std::make_unique<TimeStepController>(this))
+
+						       
 {
     suppressOutput = false;
 
@@ -221,12 +224,14 @@ int EngngModel :: instanciateYourself(DataReader &dr, InputRecord &ir, const cha
         exportModuleManager.initializeFrom(ir);
         initModuleManager.initializeFrom(ir);
         monitorManager.initializeFrom(ir);
+	// initialize the time step controller and its associated time reuction strategy
+	timeStepController->initializeFrom(ir);
 
-        if ( this->nMetaSteps == 0 ) {
+        if ( timeStepController->giveNumberOfMetaSteps() == 0 ) {
             inputReaderFinish = false;
-            this->instanciateDefaultMetaStep(ir);
+            timeStepController->instanciateDefaultMetaStep(ir);
         } else {
-            this->instanciateMetaSteps(dr);
+            timeStepController->instanciateMetaSteps(dr);
         }
 
         // instanciate initialization module manager
@@ -259,7 +264,8 @@ int EngngModel :: instanciateYourself(DataReader &dr, InputRecord &ir, const cha
 void
 EngngModel :: initializeFrom(InputRecord &ir)
 {
-    IR_GIVE_FIELD(ir, numberOfSteps, _IFT_EngngModel_nsteps);
+    numberOfSteps = 1;
+    IR_GIVE_OPTIONAL_FIELD(ir, numberOfSteps, _IFT_EngngModel_nsteps);
     if ( numberOfSteps <= 0 ) {
         OOFEM_ERROR("nsteps not specified, bad format");
     }
@@ -489,24 +495,28 @@ EngngModel :: forceEquationNumbering()
 }
 
 
+
+  
 void
 EngngModel :: solveYourself()
 {
-    int smstep = 1, sjstep = 1;
+    int smstep = 1;
 
     this->timer.startTimer(EngngModelTimer :: EMTT_AnalysisTimer);
-
-    if ( this->currentStep ) {
-        smstep = this->currentStep->giveMetaStepNumber();
-        sjstep = this->giveMetaStep(smstep)->giveStepRelativeNumber( this->currentStep->giveNumber() ) + 1;
+    TimeStep *timeStep = this->giveCurrentStep();
+    if ( timeStep ) {
+        smstep = timeStepController->giveMetaStepNumber();
     }
 
-    for ( int imstep = smstep; imstep <= nMetaSteps; imstep++, sjstep = 1 ) { //loop over meta steps
+    for ( int imstep = smstep; imstep <= timeStepController->giveNumberOfMetaSteps(); imstep++) {
         auto activeMStep = this->giveMetaStep(imstep);
         // update state according to new meta step
-        this->initMetaStepAttributes(activeMStep);
-
-	for ( int jstep = sjstep; jstep <= activeMStep->giveNumberOfSteps(); jstep++ ) { //loop over time steps
+	timeStepController->setCurrentMetaStepNumber(smstep-1);
+        timeStepController->initMetaStepAttributes(activeMStep);
+	double msFinalTime = activeMStep->giveFinalTime()-this->giveInitialTime();
+	//
+	do {
+	  //for ( int jstep = sjstep; jstep <= activeMStep->giveNumberOfSteps(); jstep++ ) { //loop over time steps
             this->timer.startTimer(EngngModelTimer :: EMTT_SolutionStepTimer);
             this->timer.initTimer(EngngModelTimer :: EMTT_NetComputationalStepTimer);
 
@@ -521,7 +531,37 @@ EngngModel :: solveYourself()
             OOFEM_LOG_DEBUG("Number of equations %d\n", this->giveNumberOfDomainEquations( 1, EModelDefaultEquationNumbering()) );
 
             this->initializeYourself( this->giveCurrentStep() );
-            this->solveYourselfAt( this->giveCurrentStep() );
+	    // solving the step	    
+	    auto repeat = true;
+	    auto nReductions = 0;
+	    while(repeat) {
+	      // try to solve the step, reduce time step in case of convergence issues
+              this->giveCurrentStep()->numberOfAttempts = 1+nReductions;
+	      try{
+		this->solveYourselfAt( this->giveCurrentStep());
+                auto nIter = this->giveCurrentStep()->numberOfIterations;
+		timeStepController->adaptTimeStep(nIter);
+		repeat = false;
+	      } catch(ConvergenceException &ce) {
+		if(timeStepController->giveCurrentMetaStep()->giveTimeStepReductionStrategy()->giveReductionFlag()) {
+		  timeStepController->reduceTimeStep();
+		  OOFEM_LOG_INFO("--------------------------------------------------------------------------------------\nRestarting step with new time step increment %e due to convergence problem        \n--------------------------------------------------------------------------------------\n", this->giveCurrentStep()->giveTimeIncrement());
+		  OOFEM_LOG_INFO("%s\n",ce.what());
+		  this->initStepIncrements();
+		  this->restartYourself( this->giveCurrentStep() );
+		  nReductions++;
+		  if(nReductions > activeMStep->giveNumberOfMaxTimeStepReductions())
+		    {
+		      OOFEM_ERROR("Maximum number of time step reductions has been reached.");
+		    }
+		} else {// else: do nothing, i.e., continue with the analysis
+
+		  repeat = false;
+		}
+	      }
+	    }
+
+	    //
             this->updateYourself( this->giveCurrentStep() );
 
             this->timer.stopTimer(EngngModelTimer :: EMTT_SolutionStepTimer);
@@ -545,7 +585,7 @@ EngngModel :: solveYourself()
             }
 
 #endif
-        }
+        } while( this->giveCurrentStep()->giveTargetTime() < msFinalTime );
     }
 }
 
@@ -554,15 +594,15 @@ TimeStep* EngngModel :: generateNextStep()
     int smstep = 1, sjstep = 1;
     if ( this->currentStep ) {
         smstep = this->currentStep->giveMetaStepNumber();
-        sjstep = this->giveMetaStep(smstep)->giveStepRelativeNumber( this->currentStep->giveNumber() ) + 1;
+        sjstep = timeStepController->giveMetaStep(smstep)->giveStepRelativeNumber( this->currentStep->giveNumber() ) + 1;
     }
-
+    
     // test if sjstep still valid for MetaStep
-    if (sjstep > this->giveMetaStep(smstep)->giveNumberOfSteps())
+    if (sjstep > timeStepController->giveMetaStep(smstep)->giveNumberOfSteps())
         smstep++;
-    if (smstep > nMetaSteps) return NULL; // no more metasteps
+    if (smstep > timeStepController->giveNumberOfMetaSteps()) return NULL; // no more metasteps
 
-    this->initMetaStepAttributes(this->giveMetaStep(smstep));
+    timeStepController->initMetaStepAttributes(timeStepController->giveMetaStep(smstep));
 
     this->preInitializeNextStep();
     return this->giveNextStep();
@@ -570,18 +610,9 @@ TimeStep* EngngModel :: generateNextStep()
 
 
 void
-EngngModel :: initMetaStepAttributes(MetaStep *mStep)
-{
-    // update attributes
-    this->updateAttributes(mStep); // virtual function
-    // finish data acquiring
-    mStep->giveAttributesRecord().finish();
-}
-
-void
 EngngModel :: updateAttributes(MetaStep *mStep)
 {
-    MetaStep *mStep1 = this->giveMetaStep( mStep->giveNumber() ); //this line ensures correct input file in staggered problem
+      MetaStep *mStep1 = timeStepController->giveMetaStep( mStep->giveNumber() ); //this line ensures correct input file in staggered problem
     auto &ir = mStep1->giveAttributesRecord();
 
     if ( this->giveNumericalMethod(mStep1) ) {
@@ -1881,18 +1912,6 @@ EngngModel :: initParallelContexts()
     }
 }
 
-
-MetaStep *
-EngngModel :: giveMetaStep(int i)
-{
-    if ( ( i > 0 ) && ( i <= this->nMetaSteps ) ) {
-        return &this->metaStepList[i-1];
-    } else {
-        OOFEM_ERROR("undefined metaStep (%d)", i);
-    }
-
-    return NULL;
-}
 
 void
 EngngModel :: letOutputBaseFileNameBe(const std :: string &src)
