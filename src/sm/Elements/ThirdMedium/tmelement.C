@@ -262,7 +262,7 @@ class ThirdMediumElement : public NLStructuralElement
 class ThirdMediumQuad_q : public ThirdMediumElement
 {
   protected:
-  static FEInterpolation &interpol;
+  static FEI2dQuadQuad interpol;
   const static Variable &u;
 
   public:
@@ -325,7 +325,7 @@ class ThirdMediumQuad_q : public ThirdMediumElement
   }
 };
 
-FEInterpolation &ThirdMediumQuad_q ::interpol = FEI2dQuadQuad( 1, 2 );
+FEI2dQuadQuad ThirdMediumQuad_q ::interpol( 1, 2 );
 const Variable &ThirdMediumQuad_q::u = Variable( ThirdMediumQuad_q::interpol, Variable::VariableQuantity::Displacement, Variable::VariableType::vector, 2, NULL, { 1, 2 } );
 
 #define _IFT_ThirdMediumQuad_q_Name "thirdmediumquad_q"
