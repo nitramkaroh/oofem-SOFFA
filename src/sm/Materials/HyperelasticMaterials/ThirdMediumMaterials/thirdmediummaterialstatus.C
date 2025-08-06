@@ -37,10 +37,13 @@
 
 namespace oofem {
 ThirdMediumMaterialStatus ::ThirdMediumMaterialStatus( GaussPoint *g ) :
-  StructuralMaterialStatus(g), gradFVector(), tempGradFVector()
+  StructuralMaterialStatus(g), gradFVector(), tempGradFVector(), FbarVector(), tempFbarVector()
 {
   gradFVector.resize( 27 );
-  tempGradFVector = gradFVector;   
+  tempGradFVector = gradFVector;
+  FbarVector.resize( 9 );
+  FbarVector.at(1) = FbarVector.at(2) = FbarVector.at(3) = 1.;
+  tempFbarVector = FbarVector;    
 
 }
 
@@ -50,6 +53,7 @@ void ThirdMediumMaterialStatus ::updateYourself( TimeStep *tStep )
     StructuralMaterialStatus :: updateYourself(tStep);
 
     gradFVector = tempGradFVector;
+    FbarVector = tempFbarVector;
 }
 
 
@@ -61,7 +65,19 @@ void ThirdMediumMaterialStatus ::initTempStatus()
     StructuralMaterialStatus :: initTempStatus();
 
     tempGradFVector = gradFVector;
+    tempFbarVector = FbarVector;
 
+}
+
+void ThirdMediumMaterialStatus :: copyStateVariables(const MaterialStatus &iStatus)
+{
+  StructuralMaterialStatus::copyStateVariables( iStatus );
+  
+  const ThirdMediumMaterialStatus &structStatus = static_cast<const ThirdMediumMaterialStatus &>( iStatus );
+  gradFVector = structStatus.giveGradFVector();
+  tempGradFVector = structStatus.giveTempGradFVector();
+  FbarVector = structStatus.giveFbarVector();
+  tempFbarVector = structStatus.giveTempFbarVector();
 }
 
 } // end namespace oofem

@@ -35,7 +35,7 @@
 #define termlibrary4_h
 
 #include "boundaryload.h"
-#include "termlibrary.h"
+#include "mpm/termlibrary.h"
 #include "structuralelement.h"
 
 // file containing various term definitions
@@ -106,6 +106,30 @@ class ThirdMedium_GradGrad_JacobianGradientTerm : public StructuralTerm
   protected:
   public:
   ThirdMedium_GradGrad_JacobianGradientTerm( const Variable &testField, const Variable &displacementField );
+  /**
+   * @brief Evaluates Internal forces vector, i.e. $B^TP(F, H)$
+   *
+   * @param cell
+   * @param coords
+   */
+  void evaluate( FloatArray &, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const override;
+  void evaluate_lin( FloatMatrix &answer, StructuralElement &e, GaussPoint *gp, TimeStep *tstep ) const override;
+
+  void getDimensions( Element &cell ) const override { ; }
+  void initializeCell( Element &cell ) const override { ; }
+  int computeGradientField( FloatArray &grad, FloatMatrix &B, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const;
+  int computeSecondGradientField( FloatArray &grad, FloatMatrix &B, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const;
+
+  protected:
+  void computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
+  void computeGmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
+};
+
+class ThirdMedium_GradGrad_FbarTerm : public StructuralTerm
+{
+  protected:
+  public:
+  ThirdMedium_GradGrad_FbarTerm( const Variable &testField, const Variable &displacementField );
   /**
    * @brief Evaluates Internal forces vector, i.e. $B^TP(F, H)$
    *

@@ -87,6 +87,8 @@ protected:
     /// Temporary deformation gradient in reduced form (to find balanced state)
     FloatArray tempFVector;
 
+
+
 public:
     /// Constructor. Creates new StructuralMaterialStatus with IntegrationPoint g.
     StructuralMaterialStatus(GaussPoint * g);
@@ -109,6 +111,7 @@ public:
     const FloatArray &giveCVector() const { return CVector; }
     /// Returns the const pointer to receiver's deformation gradient vector.
     const FloatArray &giveFVector() const { return FVector; }
+    
     /// Returns the const pointer to receiver's temporary strain vector.
     const FloatArray &giveTempStrainVector() const { return tempStrainVector; }
     /// Returns the const pointer to receiver's temporary stress vector.
@@ -119,6 +122,7 @@ public:
     const FloatArray &giveTempCVector() const { return tempCVector; }
     /// Returns the const pointer to receiver's temporary deformation gradient vector.
     const FloatArray &giveTempFVector() const { return tempFVector; }
+    
     /// Assigns strain vector to given vector v.
     void letStrainVectorBe(const FloatArray &v) { strainVector = v; }
     /// Assigns stressVector to given vector v.
@@ -139,6 +143,7 @@ public:
     void letTempCVectorBe(const FloatArray &v) { tempCVector = v; }
     /// Assigns tempFVector to given vector v
     void letTempFVectorBe(const FloatArray &v) { tempFVector = v; }
+
 
     const char *giveClassName() const override { return "StructuralMaterialStatus"; }
 

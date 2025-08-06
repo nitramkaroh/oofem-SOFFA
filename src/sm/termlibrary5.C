@@ -289,6 +289,124 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::computeBHmatrixAt( FloatMatrix 
   }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ThirdMedium_GradGrad_FbarTerm::ThirdMedium_GradGrad_FbarTerm( const Variable &testField, const Variable &unknownField) :
+    StructuralTerm( testField, unknownField ) {}
+
+
+int ThirdMedium_GradGrad_FbarTerm ::computeGradientField( FloatArray &vF, FloatMatrix &BH, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const
+{
+  FloatArray u;
+  //
+  cell.computeVectorOf( VM_Total, tstep, u );
+  // cell.getUnknownVector(u, this->field, VM_TotalIntrinsic, tstep);
+  this->computeBHmatrixAt( BH, this->field, this->field.interpolation, cell, lcoords, mmode );
+  vF.beProductOf( BH, u );
+  // Deformation gradient F = gradU + I
+  if ( mmode == _3dMat || mmode == _PlaneStrain ) {
+    vF.at( 1 ) += 1.0;
+    vF.at( 2 ) += 1.0;
+    vF.at( 3 ) += 1.0;
+  } else if ( mmode == _PlaneStress ) {
+    vF.at( 1 ) += 1.0;
+    vF.at( 2 ) += 1.0;
+  } else if ( mmode == _1dMat ) {
+    vF.at( 1 ) += 1.0;
+  } else {
+    OOFEM_ERROR( "MaterialMode is not supported yet (%s)", __MaterialModeToString( mmode ) );
+  }
+
+  return u.giveSize();
+}
+
+
+void ThirdMedium_GradGrad_FbarTerm ::evaluate( FloatArray &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
+{
+  // Working with both deformation gradient (F) and its gradient (gradF);
+  FloatArray vF, vFbar, GtimesT;
+  FloatMatrix BH, Bbar;
+  //
+  auto size1 = this->computeGradientField( vF, BH, cell, gp->giveNaturalCoordinates(), gp->giveMaterialMode(), tstep );
+  auto size2 = this->computeGradientField(vFbar, Bbar, cell, {0,0}, gp->giveMaterialMode(), tstep);
+  //
+  auto cs = cell.giveCrossSection();
+  auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
+  auto [vP, vPbar] = tcs->give_Fbar_FluxVectors( vF, vFbar, gp, tstep );
+  answer.beTProductOf( BH, vP );
+  GtimesT.beTProductOf( Bbar, vPbar );
+  answer.add(GtimesT);
+}
+
+
+void ThirdMedium_GradGrad_FbarTerm ::evaluate_lin( FloatMatrix &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
+{
+  FloatArray vFbar, vF; //useless since they are not passed on
+  FloatMatrix BH, Bbar; //necessary, on the other hand - base function derivatives
+  //FloatMatrix dPdF, dPdGradF, dTdF, dTdGradF; //constitutive matrices
+  FloatMatrix B_dPdF_B, B_dPdFbar_Bbar, Bbar_dPbardF_B, Bbar_dPbardFbar_Bbar; // constitutive matrices multiplied by base function derivatives
+  FloatMatrix B_dPdF, B_dPdFbar, Bbar_dPbardF, Bbar_dPbardFbar; //intermediate results
+  //
+  auto size1 = this->computeGradientField( vF, BH, cell, gp->giveNaturalCoordinates(), gp->giveMaterialMode(), tstep );
+  auto size2 = this->computeGradientField( vFbar, Bbar, cell, {0,0}, gp->giveMaterialMode(), tstep );
+  // get constitutive matrices
+  auto cs = cell.giveCrossSection();
+  auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
+  auto [dPdF, dPdFbar, dPbardF, dPbardFbar] =  tcs->give_Fbar_dFluxes_dGrads(TangentStiffness, gp, tstep );
+  // construct result
+  answer.resize(0,0);
+  B_dPdF.beTProductOf(BH, dPdF);
+  B_dPdF_B.beProductOf(B_dPdF, BH);
+  answer.add(B_dPdF_B);
+
+  B_dPdFbar.beTProductOf( BH, dPdFbar );
+  B_dPdFbar_Bbar.beProductOf( B_dPdFbar, Bbar );
+  answer.add( B_dPdFbar_Bbar );
+
+  Bbar_dPbardF.beTProductOf( Bbar, dPbardF );
+  Bbar_dPbardF_B.beProductOf( Bbar_dPbardF, BH );
+  answer.add( Bbar_dPbardF_B );
+
+  Bbar_dPbardFbar.beTProductOf( Bbar, dPbardFbar );
+  Bbar_dPbardFbar_Bbar.beProductOf( Bbar_dPbardFbar, Bbar );
+  answer.add( Bbar_dPbardFbar_Bbar );
+}
+
+void ThirdMedium_GradGrad_FbarTerm ::computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const
+{
+
+  FloatMatrix dNdx;
+  // evaluate matrix of derivatives, the member at i,j position contains value of dNi/dxj
+  interpol.evaldNdx( dNdx, coords, FEIElementGeometryWrapper( &cell ) );
+
+  if ( mmode == _3dMat ) {
+    answer.resize( 9, dNdx.giveNumberOfRows() * 3 );
+    answer.zero();
+    for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
+      answer.at( 1, 3 * i - 2 ) = dNdx.at( i, 1 ); // du/dx
+      answer.at( 2, 3 * i - 1 ) = dNdx.at( i, 2 ); // dv/dy
+      answer.at( 3, 3 * i - 0 ) = dNdx.at( i, 3 ); // dw/dz
+      answer.at( 4, 3 * i - 1 ) = dNdx.at( i, 3 ); // dv/dz
+      answer.at( 7, 3 * i - 0 ) = dNdx.at( i, 2 ); // dw/dy
+      answer.at( 5, 3 * i - 2 ) = dNdx.at( i, 3 ); // du/dz
+      answer.at( 8, 3 * i - 0 ) = dNdx.at( i, 1 ); // dw/dx
+      answer.at( 6, 3 * i - 2 ) = dNdx.at( i, 2 ); // du/dy
+      answer.at( 9, 3 * i - 1 ) = dNdx.at( i, 1 ); // dv/dx
+    }
+  } else if ( mmode == _PlaneStrain ) {
+    answer.resize( 5, dNdx.giveNumberOfRows() * 2 );
+    answer.zero();
+    for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
+      answer.at( 1, 2 * i - 1 ) = dNdx.at( i, 1 ); // du/dx -1
+      answer.at( 2, 2 * i - 0 ) = dNdx.at( i, 2 ); // dv/dy -2
+      answer.at( 4, 2 * i - 1 ) = dNdx.at( i, 2 ); // du/dy -6
+      answer.at( 5, 2 * i - 0 ) = dNdx.at( i, 1 ); // dv/dx -9
+    }
+  } else {
+    OOFEM_ERROR( "Unsupported material mode" );
+  }
+}
+
   
 
 } // end namespace oofem

@@ -34,7 +34,7 @@
 
 
 #include "termlibrary5.h"
-#include "termlibrary.h"
+#include "mpm/termlibrary.h"
 #include "element.h"
 #include "../nlstructuralelement.h"
 #include "gausspoint.h"
@@ -78,7 +78,7 @@ class ThirdMediumElement : public NLStructuralElement
   virtual void giveCharacteristicMatrix( FloatMatrix &answer, CharType type, TimeStep *tStep ) override
   {
     if ( type == TangentStiffnessMatrix ) {
-      FloatMatrix standardAnswer, gradFanswer, gradJanswer;
+      FloatMatrix standardAnswer, gradFanswer, gradJanswer, Jbaranswer;
       this->computeStiffnessMatrix( standardAnswer, TangentStiffness, tStep );
 
       //add contribution from gradient terms
@@ -92,11 +92,16 @@ class ThirdMediumElement : public NLStructuralElement
       gradJanswer.resize( udofs, udofs );
       gradJanswer.zero();
       this->integrateTerm_dw( gradJanswer, ThirdMedium_GradGrad_JacobianGradientTerm( getU(), getU() ), ir, tStep );
+      
+      Jbaranswer.resize( udofs, udofs );
+      Jbaranswer.zero();
+      this->integrateTerm_dw( Jbaranswer, ThirdMedium_GradGrad_FbarTerm( getU(), getU() ), ir, tStep );
 
       answer.clear();
       answer.add( standardAnswer );
       answer.add( gradFanswer );
       answer.add( gradJanswer );
+      answer.add( Jbaranswer );
     } else {
       NLStructuralElement::giveCharacteristicMatrix( answer, type, tStep );
     }
@@ -123,7 +128,7 @@ class ThirdMediumElement : public NLStructuralElement
   {
     if ( ( type == InternalForcesVector ) && ( mode == VM_Total ) ) {
       
-      FloatArray standardAnswer, gradFanswer, gradJanswer;
+      FloatArray standardAnswer, gradFanswer, gradJanswer, Jbaranswer;
 
       this->giveInternalForcesVector( standardAnswer, tStep );
 
@@ -137,10 +142,15 @@ class ThirdMediumElement : public NLStructuralElement
       gradJanswer.zero();
       this->integrateTerm_c( gradJanswer, ThirdMedium_GradGrad_JacobianGradientTerm( getU(), getU() ), ir, tStep );
 
+      Jbaranswer.resize( this->giveNumberOfDofs() );
+      Jbaranswer.zero();
+      this->integrateTerm_c( Jbaranswer, ThirdMedium_GradGrad_FbarTerm( getU(), getU() ), ir, tStep );
+
       answer.clear();
       answer.add( standardAnswer );
       answer.add( gradFanswer );
       answer.add( gradJanswer );
+      answer.add( Jbaranswer );
 
     } else {
       NLStructuralElement::giveCharacteristicVector( answer, type, mode, tStep );

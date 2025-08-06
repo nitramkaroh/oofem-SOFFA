@@ -71,7 +71,9 @@ protected:
     /// Temporary second deformation gradient in reduced form (to find balanced state)
     FloatArray tempGradFVector;
 
-
+    FloatArray FbarVector;
+    /// Temporary deformation gradient in reduced form (to find balanced state)
+    FloatArray tempFbarVector;
     
 public:
     /// Constructor. Creates new StructuralMaterialStatus with IntegrationPoint g.
@@ -89,8 +91,17 @@ public:
     const FloatArray &giveGradFVector() const { return gradFVector; }    
     const FloatArray &giveTempGradFVector() const { return tempGradFVector; }
 
+    /// Returns the const pointer to receiver's temporary deformation gradient vector in the centroid.
+    const FloatArray &giveFbarVector() const { return FbarVector; }
+    const FloatArray &giveTempFbarVector() const { return tempFbarVector; }
+
     /// Assigns tempGradFVector to given vector v
     void letTempGradFVectorBe( const FloatArray &v ) { tempGradFVector = v; }
+    /// Assigns tempFbarVector to given vector v
+    void letTempFbarVectorBe(const FloatArray &v) { tempFbarVector = v; }
+
+    /// Functions for MaterialStatusMapperInterface
+    void copyStateVariables(const MaterialStatus &iStatus) override;
 
     const char *giveClassName() const override { return "ThirdMediumMaterialStatus"; }
 };

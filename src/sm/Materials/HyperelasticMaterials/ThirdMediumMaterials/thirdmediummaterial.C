@@ -17,6 +17,7 @@ namespace oofem {
   {
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradFGradF, _IFT_ThirdMediumMaterial_kappaGradFGradF );
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradJGradJ, _IFT_ThirdMediumMaterial_kappaGradJGradJ );
+    IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbar, _IFT_ThirdMediumMaterial_kappaJbar );
   }
 
   ThirdMediumMaterialStatus *ThirdMediumMaterial::giveStatus( GaussPoint *gp )
@@ -55,6 +56,8 @@ ThirdMediumMaterial ::give_SecondGradient_ConstitutiveMatrix_PlaneStrain( MatRes
 {
   return kappaGradFGradF;
 }
+
+ ////////////////////////JACOBIAN////////////////////////////
 
 std::tuple<FloatArrayF<5>, FloatArrayF<8> >
 ThirdMediumMaterial ::give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep )
@@ -171,6 +174,76 @@ std::tuple<Tensor5_3d, Tensor6_3d, Tensor6_3d, Tensor7_3d> ThirdMediumMaterial::
   return std::make_tuple( d2GradJdFdF, d2GradJdFdGradF, d2GradJdGradFdF, d2GradJdGradFdGradF );
 }
 
+ ////////////////////////FBAR////////////////////////////
+ 
+std::tuple<FloatArrayF<5>, FloatArrayF<5> >
+ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<5> &vFbar, GaussPoint *gp, TimeStep *tStep )
+{
+  // these elements should give all Tensor3 components without the third dimension in them
+  //  according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
+  auto [vP, vPbar] = give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( assemble<9>( vF, { 0, 1, 2, 5, 8 } ), assemble<9>( vFbar, { 0, 1, 2, 5, 8 } ), gp, tStep );
+  //
+  return std::make_tuple( vP[{ 0, 1, 2, 5, 8 }], vPbar[{ 0, 1, 2, 5, 8 }] );
+}
+
+
+std::tuple<FloatArrayF<9>, FloatArrayF<9> >
+ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<9> &vFbar, GaussPoint *gp, TimeStep *tStep )
+{
+  Tensor2_3d P, Pbar, F( vF ), Fbar( vFbar );
+
+  auto [ J, cofF ] = F.compute_determinant_and_cofactor();
+  auto [ Jbar, cofFbar ] = Fbar.compute_determinant_and_cofactor();
+
+  P( r_3, s_3 ) = kappaJbar * (J-Jbar)*cofF(r_3, s_3);
+  Pbar( r_3, s_3 ) = -kappaJbar * (J-Jbar)*cofFbar(r_3, s_3);
+
+  // save gradients
+  ThirdMediumMaterialStatus *status = this->giveStatus( gp );
+  status->letTempFVectorBe( vF );
+  status->letTempFbarVectorBe( vFbar );
+
+  return std::make_tuple( P.to_voigt_form(), Pbar.to_voigt_form() );
+}
+
+
+std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9> >
+ThirdMediumMaterial ::give_Fbar_ConstitutiveMatrices_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  // load F and GradF
+  ThirdMediumMaterialStatus *status = this->giveStatus( gp );
+  FloatArrayF<9> vF = status->giveTempFVector();
+  FloatArrayF<9> vFbar = status->giveTempFbarVector();
+
+  Tensor2_3d F( vF ), Fbar( vFbar );
+
+  Tensor4_3d dPdF, dPdFbar, dPbardF, dPbardFbar;
+
+  auto [ J, cofF ] = F.compute_determinant_and_cofactor();
+  auto [ Jbar, cofFbar ] = Fbar.compute_determinant_and_cofactor();
+  auto Fcross = F.compute_tensor_cross_product();
+  auto Fbarcross = Fbar.compute_tensor_cross_product();
+
+  dPdF(r_3, s_3, u_3, v_3) = kappaJbar * cofF(u_3, v_3) * cofF(r_3, s_3) + kappaJbar * J * Fcross(r_3, s_3, u_3, v_3) - kappaJbar * Jbar * Fcross(r_3, s_3, u_3, v_3);
+  dPdFbar(r_3, s_3, u_3, v_3) = - kappaJbar * cofFbar(u_3, v_3) * cofF(r_3, s_3);
+  dPbardF(r_3, s_3, u_3, v_3) = - kappaJbar * cofF(u_3, v_3) * cofFbar(r_3, s_3);
+  dPbardFbar(r_3, s_3, u_3, v_3) = - kappaJbar * J * Fbarcross(r_3, s_3, u_3, v_3) + kappaJbar * cofFbar(u_3, v_3) * cofFbar(r_3, s_3) + kappaJbar * Jbar * Fbarcross(r_3, s_3, u_3, v_3);
+
+  return std::make_tuple( dPdF.to_voigt_form(), dPdFbar.to_voigt_form(), dPbardF.to_voigt_form(), dPbardFbar.to_voigt_form() );
+}
+
+std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5> >
+ThirdMediumMaterial ::give_Fbar_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  //these elements should give all Tensor3 components without the third dimension in them
+  // according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
+  auto [vdPdF_3d, vdPdFbar_3d, vdPbardF_3d, vdPbardFbar_3d] = this->give_Fbar_ConstitutiveMatrices_3d(mode, gp, tStep);
+  auto vdPdF_red = vdPdF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  auto vdPdFbar_red = vdPdFbar_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  auto vdPbardF_red = vdPbardF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  auto vdPbardFbar_red = vdPbardFbar_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  return std::make_tuple( vdPdF_red, vdPdFbar_red, vdPbardF_red, vdPbardFbar_red );
+}
 
 
 

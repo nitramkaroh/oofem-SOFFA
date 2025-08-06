@@ -34,7 +34,7 @@
 
 #pragma once
 
-#include "..\mooneyrivlincompressiblematerial.h"
+#include "HyperelasticMaterials/mooneyrivlincompressiblematerial.h"
 #include "thirdmediummaterial.h"
 #include "thirdmediummaterialstatus.h"
 #include "classfactory.h"

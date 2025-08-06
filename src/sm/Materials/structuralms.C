@@ -60,8 +60,10 @@ StructuralMaterialStatus :: StructuralMaterialStatus(GaussPoint *g) :
 	PVector.resize(9);
 	FVector.resize(9);
 	FVector.at(1) = FVector.at(2) = FVector.at(3) = 1.;
+    
 	tempPVector = PVector;
 	tempFVector = FVector;
+
 	
       }
     }
