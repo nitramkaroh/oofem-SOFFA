@@ -59,6 +59,7 @@
 #define _IFT_ThirdMediumMaterial_kappaGradFGradF "kappagradfgradf"
 #define _IFT_ThirdMediumMaterial_kappaGradJGradJ "kappagradjgradj"
 #define _IFT_ThirdMediumMaterial_kappaJbar "kappajbar"
+#define _IFT_ThirdMediumMaterial_kappaFbar "kappafbar"
 
 namespace oofem {
 
@@ -68,7 +69,7 @@ class OOFEM_EXPORT ThirdMediumMaterial
 {
 protected:
   // second gradient material parameter
-  double kappaGradFGradF = 0, kappaGradJGradJ = 0, kappaJbar = 0;
+  double kappaGradFGradF = 0, kappaGradJGradJ = 0, kappaJbar = 0, kappaFbar = 0;
 
   public:
     /**

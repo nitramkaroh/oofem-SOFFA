@@ -18,6 +18,7 @@ namespace oofem {
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradFGradF, _IFT_ThirdMediumMaterial_kappaGradFGradF );
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradJGradJ, _IFT_ThirdMediumMaterial_kappaGradJGradJ );
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbar, _IFT_ThirdMediumMaterial_kappaJbar );
+    IR_GIVE_OPTIONAL_FIELD( ir, this->kappaFbar, _IFT_ThirdMediumMaterial_kappaFbar );
   }
 
   ThirdMediumMaterialStatus *ThirdMediumMaterial::giveStatus( GaussPoint *gp )
@@ -190,20 +191,26 @@ ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_PlaneStra
 std::tuple<FloatArrayF<9>, FloatArrayF<9> >
 ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<9> &vFbar, GaussPoint *gp, TimeStep *tStep )
 {
-  Tensor2_3d P, Pbar, F( vF ), Fbar( vFbar );
+  Tensor2_3d F( vF ), Fbar( vFbar );
+
+  Tensor2_3d P_Jbar, Pbar_Jbar;
+  Tensor2_3d P_Fbar, Pbar_Fbar;
 
   auto [ J, cofF ] = F.compute_determinant_and_cofactor();
   auto [ Jbar, cofFbar ] = Fbar.compute_determinant_and_cofactor();
 
-  P( r_3, s_3 ) = kappaJbar * (J-Jbar)*cofF(r_3, s_3);
-  Pbar( r_3, s_3 ) = -kappaJbar * (J-Jbar)*cofFbar(r_3, s_3);
+  P_Jbar(r_3, s_3) = kappaJbar * (J - Jbar) * cofF(r_3, s_3);
+  Pbar_Jbar(r_3, s_3) = - kappaJbar * (J - Jbar) * cofFbar(r_3, s_3);
+
+  P_Fbar(r_3, s_3) = kappaFbar * (F(r_3, s_3) - Fbar(r_3, s_3));
+  Pbar_Fbar(r_3, s_3) = - kappaFbar * (F(r_3, s_3) - Fbar(r_3, s_3));
 
   // save gradients
   ThirdMediumMaterialStatus *status = this->giveStatus( gp );
   status->letTempFVectorBe( vF );
   status->letTempFbarVectorBe( vFbar );
 
-  return std::make_tuple( P.to_voigt_form(), Pbar.to_voigt_form() );
+  return std::make_tuple( P_Jbar.to_voigt_form() + P_Fbar.to_voigt_form(), Pbar_Jbar.to_voigt_form() + Pbar_Fbar.to_voigt_form() );
 }
 
 
@@ -215,21 +222,27 @@ ThirdMediumMaterial ::give_Fbar_ConstitutiveMatrices_3d( MatResponseMode mode, G
   FloatArrayF<9> vF = status->giveTempFVector();
   FloatArrayF<9> vFbar = status->giveTempFbarVector();
 
-  Tensor2_3d F( vF ), Fbar( vFbar );
+  Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. ), F( vF ), Fbar( vFbar );
 
-  Tensor4_3d dPdF, dPdFbar, dPbardF, dPbardFbar;
+  Tensor4_3d dPdF_Jbar, dPdFbar_Jbar, dPbardF_Jbar, dPbardFbar_Jbar;
+  Tensor4_3d dPdF_Fbar, dPdFbar_Fbar, dPbardF_Fbar, dPbardFbar_Fbar;
 
   auto [ J, cofF ] = F.compute_determinant_and_cofactor();
   auto [ Jbar, cofFbar ] = Fbar.compute_determinant_and_cofactor();
   auto Fcross = F.compute_tensor_cross_product();
   auto Fbarcross = Fbar.compute_tensor_cross_product();
 
-  dPdF(r_3, s_3, u_3, v_3) = kappaJbar * cofF(u_3, v_3) * cofF(r_3, s_3) + kappaJbar * J * Fcross(r_3, s_3, u_3, v_3) - kappaJbar * Jbar * Fcross(r_3, s_3, u_3, v_3);
-  dPdFbar(r_3, s_3, u_3, v_3) = - kappaJbar * cofFbar(u_3, v_3) * cofF(r_3, s_3);
-  dPbardF(r_3, s_3, u_3, v_3) = - kappaJbar * cofF(u_3, v_3) * cofFbar(r_3, s_3);
-  dPbardFbar(r_3, s_3, u_3, v_3) = - kappaJbar * J * Fbarcross(r_3, s_3, u_3, v_3) + kappaJbar * cofFbar(u_3, v_3) * cofFbar(r_3, s_3) + kappaJbar * Jbar * Fbarcross(r_3, s_3, u_3, v_3);
+  dPdF_Jbar(r_3, s_3, u_3, v_3) = kappaJbar * (cofF(u_3, v_3) * cofF(r_3, s_3) + (J - Jbar) * Fcross(r_3, s_3, u_3, v_3));
+  dPdFbar_Jbar(r_3, s_3, u_3, v_3) = - kappaJbar * cofFbar(u_3, v_3) * cofF(r_3, s_3);
+  dPbardF_Jbar(r_3, s_3, u_3, v_3) = - kappaJbar * cofF(u_3, v_3) * cofFbar(r_3, s_3);
+  dPbardFbar_Jbar(r_3, s_3, u_3, v_3) = kappaJbar * (cofFbar(u_3, v_3) * cofFbar(r_3, s_3) - (J - Jbar) * Fbarcross(r_3, s_3, u_3, v_3));
 
-  return std::make_tuple( dPdF.to_voigt_form(), dPdFbar.to_voigt_form(), dPbardF.to_voigt_form(), dPbardFbar.to_voigt_form() );
+  dPdF_Fbar(r_3, s_3, u_3, v_3) = kappaFbar * delta(r_3, u_3) * delta(s_3, v_3);
+  dPdFbar_Fbar(r_3, s_3, u_3, v_3) = - kappaFbar * delta(r_3, u_3) * delta(s_3, v_3);
+  dPbardF_Fbar(r_3, s_3, u_3, v_3) = - kappaFbar * delta(r_3, u_3) * delta(s_3, v_3);
+  dPbardFbar_Fbar(r_3, s_3, u_3, v_3) = kappaFbar * delta(r_3, u_3) * delta(s_3, v_3);
+
+  return std::make_tuple( dPdF_Jbar.to_voigt_form() + dPdF_Fbar.to_voigt_form(), dPdFbar_Jbar.to_voigt_form() + dPdFbar_Fbar.to_voigt_form(), dPbardF_Jbar.to_voigt_form() + dPbardF_Fbar.to_voigt_form(), dPbardFbar_Jbar.to_voigt_form() + dPbardFbar_Fbar.to_voigt_form() );
 }
 
 std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5> >
