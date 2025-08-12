@@ -69,14 +69,14 @@ ThirdMediumCrossSection ::give_SecondGradient_ConstitutiveMatrix_PlaneStrain( Ma
 
 //////////////////////////////////////JACOBIAN_GRADIENT//////////////////////////////////////////////////////////////
 std::tuple<FloatArray, FloatArray>
-ThirdMediumCrossSection::give_JacobianGradient_FluxVectors( const FloatArray &vF, const FloatArray &vGradF, GaussPoint *gp, TimeStep *tStep ) const
+ThirdMediumCrossSection::give_FirstSecondGradient_FluxVectors( const FloatArray &vF, const FloatArray &vGradF, GaussPoint *gp, TimeStep *tStep ) const
 {
   MaterialMode mode = gp->giveMaterialMode();
 
   if ( mode == _3dMat ) {
-    return this->give_JacobianGradient_FluxVectors_3d( vF, vGradF, gp, tStep );
+    return this->give_FirstSecondGradient_FluxVectors_3d( vF, vGradF, gp, tStep );
   } else if ( mode == _PlaneStrain ) {
-    return this->give_JacobianGradient_FluxVectors_PlaneStrain( vF, vGradF, gp, tStep );
+    return this->give_FirstSecondGradient_FluxVectors_PlaneStrain( vF, vGradF, gp, tStep );
   } else {
     OOFEM_ERROR( "unsupported mode" );
   }
@@ -84,28 +84,28 @@ ThirdMediumCrossSection::give_JacobianGradient_FluxVectors( const FloatArray &vF
 
 
 std::tuple<FloatArrayF<9>, FloatArrayF<27> >
-ThirdMediumCrossSection ::give_JacobianGradient_FluxVectors_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep ) const
+ThirdMediumCrossSection ::give_FirstSecondGradient_FluxVectors_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep ) const
 {
   auto mat = dynamic_cast<ThirdMediumMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_3d( vF, vGradF, gp, tStep );
+  return mat->give_FirstSecondGradient_FirstPKStressVector_SecondOrderStressVector_3d( vF, vGradF, gp, tStep );
 }
 
 
 std::tuple<FloatArrayF<5>, FloatArrayF<8> >
-ThirdMediumCrossSection ::give_JacobianGradient_FluxVectors_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep ) const
+ThirdMediumCrossSection ::give_FirstSecondGradient_FluxVectors_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep ) const
 {
   auto mat = dynamic_cast<ThirdMediumMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
+  return mat->give_FirstSecondGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
 }
 
 
-std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> ThirdMediumCrossSection ::give_JacobianGradient_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep )
+std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> ThirdMediumCrossSection ::give_FirstSecondGradient_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep )
 {
   MaterialMode mode = gp->giveMaterialMode();
   if ( mode == _3dMat ) {
-    return this->give_JacobianGradient_ConstitutiveMatrices_3d( rmode, gp, tStep );
+    return this->give_FirstSecondGradient_ConstitutiveMatrices_3d( rmode, gp, tStep );
   } else if ( mode == _PlaneStrain ) {
-    return this->give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( rmode, gp, tStep );
+    return this->give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( rmode, gp, tStep );
   } else {
     OOFEM_ERROR( "unsupported mode" );
   }
@@ -113,18 +113,18 @@ std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> ThirdMediumCrossS
 
 
 std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 27>, FloatMatrixF<27, 9>, FloatMatrixF<27, 27> >
-ThirdMediumCrossSection ::give_JacobianGradient_ConstitutiveMatrices_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
+ThirdMediumCrossSection ::give_FirstSecondGradient_ConstitutiveMatrices_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
 {
   auto mat = dynamic_cast<ThirdMediumMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_JacobianGradient_ConstitutiveMatrices_3d( rMode, gp, tStep );
+  return mat->give_FirstSecondGradient_ConstitutiveMatrices_3d( rMode, gp, tStep );
 }
 
 
 std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> >
-ThirdMediumCrossSection ::give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
+ThirdMediumCrossSection ::give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
 {
   auto mat = dynamic_cast<ThirdMediumMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( rMode, gp, tStep );
+  return mat->give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( rMode, gp, tStep );
 }
 
 //////////////////////////////////////FBAR//////////////////////////////////////////////////////////////
@@ -134,7 +134,7 @@ ThirdMediumCrossSection::give_Fbar_FluxVectors( const FloatArray &vF, const Floa
   MaterialMode mode = gp->giveMaterialMode();
 
   if ( mode == _3dMat ) {
-    return this->give_JacobianGradient_FluxVectors_3d( vF, vFbar, gp, tStep );
+    return this->give_Fbar_FluxVectors_3d( vF, vFbar, gp, tStep );
   } else if ( mode == _PlaneStrain ) {
     return this->give_Fbar_FluxVectors_PlaneStrain( vF, vFbar, gp, tStep );
   } else {

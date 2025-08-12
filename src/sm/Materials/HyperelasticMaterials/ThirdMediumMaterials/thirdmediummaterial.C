@@ -61,7 +61,80 @@ ThirdMediumMaterial ::give_SecondGradient_ConstitutiveMatrix_PlaneStrain( MatRes
   return kappaGradFGradF;
 }
 
- ////////////////////////JACOBIAN////////////////////////////
+ ////////////////////////FIRST AND SECOND GRADIENTS TOGETHER////////////////////////////
+
+std::tuple<FloatArrayF<5>, FloatArrayF<8> >
+ThirdMediumMaterial::give_FirstSecondGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep )
+{
+  FloatArrayF<5> vP_ans;
+  FloatArrayF<8> vT_ans;
+  
+  if (kappaGradJGradJ != 0.0){
+    auto [vP_gradJ, vT_gradJ] = this->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain(vF,vGradF,gp,tStep);
+    vP_ans += vP_gradJ;
+    vT_ans += vT_gradJ;
+  }
+
+  return std::make_tuple(vP_ans, vT_ans);
+  
+}
+
+std::tuple<FloatArrayF<9>, FloatArrayF<27> >
+ThirdMediumMaterial::give_FirstSecondGradient_FirstPKStressVector_SecondOrderStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep )
+{
+  FloatArrayF<9> vP_ans;
+  FloatArrayF<27> vT_ans;
+
+  if ( kappaGradJGradJ != 0.0 ) {
+    auto [vP_gradJ, vT_gradJ] = this->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_3d( vF, vGradF, gp, tStep );
+    vP_ans += vP_gradJ;
+    vT_ans += vT_gradJ;
+  }
+
+  return std::make_tuple( vP_ans, vT_ans );
+}
+
+std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 27>, FloatMatrixF<27, 9>, FloatMatrixF<27, 27> >
+ThirdMediumMaterial::give_FirstSecondGradient_ConstitutiveMatrices_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  FloatMatrixF<9, 9> vdPdF_ans;
+  FloatMatrixF<9, 27> vdPdGradF_ans;
+  FloatMatrixF<27, 9> vdTdF_ans;
+  FloatMatrixF<27, 27> vdTdGradF_ans;
+
+  if ( kappaGradJGradJ != 0.0 ) {
+    auto [vdPdF_gradJ, vdPdGradF_gradJ, vdTdF_gradJ, vdTdGradF_gradJ] = this->give_JacobianGradient_ConstitutiveMatrices_3d( mode, gp, tStep );
+    vdPdF_ans += vdPdF_gradJ;
+    vdPdGradF_ans += vdPdGradF_gradJ;
+    vdTdF_ans += vdTdF_gradJ;
+    vdTdGradF_ans += vdTdGradF_gradJ;
+  }
+
+  return std::make_tuple( vdPdF_ans, vdPdGradF_ans, vdTdF_ans, vdTdGradF_ans );
+}
+
+std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> >
+ThirdMediumMaterial::give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  FloatMatrixF<5, 5> vdPdF_ans;
+  FloatMatrixF<5, 8> vdPdGradF_ans;
+  FloatMatrixF<8, 5> vdTdF_ans;
+  FloatMatrixF<8, 8> vdTdGradF_ans;
+
+  if ( kappaGradJGradJ != 0.0 ) {
+    auto [vdPdF_gradJ, vdPdGradF_gradJ, vdTdF_gradJ, vdTdGradF_gradJ] = this->give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( mode, gp, tStep );
+    vdPdF_ans += vdPdF_gradJ;
+    vdPdGradF_ans += vdPdGradF_gradJ;
+    vdTdF_ans += vdTdF_gradJ;
+    vdTdGradF_ans += vdTdGradF_gradJ;
+  }
+
+  return std::make_tuple( vdPdF_ans, vdPdGradF_ans, vdTdF_ans, vdTdGradF_ans );
+}
+
+
+
+////////////////////////JACOBIAN GRADIENT///////////////////////////////////////////////
 
 std::tuple<FloatArrayF<5>, FloatArrayF<8> >
 ThirdMediumMaterial ::give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep )

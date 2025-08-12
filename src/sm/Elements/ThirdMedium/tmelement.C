@@ -77,30 +77,30 @@ class ThirdMediumElement : public NLStructuralElement
   virtual void giveCharacteristicMatrix( FloatMatrix &answer, CharType type, TimeStep *tStep ) override
   {
     if ( type == TangentStiffnessMatrix ) {
-      FloatMatrix standardAnswer, gradFanswer, gradJanswer, Jbaranswer;
+      FloatMatrix standardAnswer, secondGradAnswer, firstSecondGradAnswer, FbarAnswer;
       this->computeStiffnessMatrix( standardAnswer, TangentStiffness, tStep );
 
       //add contribution from gradient terms
       int udofs = this->giveNumberOfDofs();
       IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
 
-      gradFanswer.resize( udofs, udofs );
-      gradFanswer.zero();
-      this->integrateTerm_dw( gradFanswer, ThirdMedium_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
+      secondGradAnswer.resize( udofs, udofs );
+      secondGradAnswer.zero();
+      this->integrateTerm_dw( secondGradAnswer, ThirdMedium_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
 
-      gradJanswer.resize( udofs, udofs );
-      gradJanswer.zero();
-      this->integrateTerm_dw( gradJanswer, ThirdMedium_GradGrad_JacobianGradientTerm( getU(), getU() ), ir, tStep );
+      firstSecondGradAnswer.resize( udofs, udofs );
+      firstSecondGradAnswer.zero();
+      this->integrateTerm_dw( firstSecondGradAnswer, ThirdMedium_GradGrad_FirstSecondGradientTerm( getU(), getU() ), ir, tStep );
       
-      Jbaranswer.resize( udofs, udofs );
-      Jbaranswer.zero();
-      this->integrateTerm_dw( Jbaranswer, ThirdMedium_GradGrad_FbarTerm( getU(), getU() ), ir, tStep );
+      FbarAnswer.resize( udofs, udofs );
+      FbarAnswer.zero();
+      this->integrateTerm_dw( FbarAnswer, ThirdMedium_Grad_FbarTerm( getU(), getU() ), ir, tStep );
 
       answer.clear();
       answer.add( standardAnswer );
-      answer.add( gradFanswer );
-      answer.add( gradJanswer );
-      answer.add( Jbaranswer );
+      answer.add( secondGradAnswer );
+      answer.add( firstSecondGradAnswer );
+      answer.add( FbarAnswer );
     } else {
       NLStructuralElement::giveCharacteristicMatrix( answer, type, tStep );
     }
@@ -127,29 +127,29 @@ class ThirdMediumElement : public NLStructuralElement
   {
     if ( ( type == InternalForcesVector ) && ( mode == VM_Total ) ) {
       
-      FloatArray standardAnswer, gradFanswer, gradJanswer, Jbaranswer;
+      FloatArray standardAnswer, firstGradAnswer, firstSecondGradAnswer, FbarAnswer;
 
       this->giveInternalForcesVector( standardAnswer, tStep );
 
       IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
       
-      gradFanswer.resize( this->giveNumberOfDofs() );
-      gradFanswer.zero();
-      this->integrateTerm_c( gradFanswer, ThirdMedium_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
+      firstGradAnswer.resize( this->giveNumberOfDofs() );
+      firstGradAnswer.zero();
+      this->integrateTerm_c( firstGradAnswer, ThirdMedium_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
 
-      gradJanswer.resize( this->giveNumberOfDofs() );
-      gradJanswer.zero();
-      this->integrateTerm_c( gradJanswer, ThirdMedium_GradGrad_JacobianGradientTerm( getU(), getU() ), ir, tStep );
+      firstSecondGradAnswer.resize( this->giveNumberOfDofs() );
+      firstSecondGradAnswer.zero();
+      this->integrateTerm_c( firstSecondGradAnswer, ThirdMedium_GradGrad_FirstSecondGradientTerm( getU(), getU() ), ir, tStep );
 
-      Jbaranswer.resize( this->giveNumberOfDofs() );
-      Jbaranswer.zero();
-      this->integrateTerm_c( Jbaranswer, ThirdMedium_GradGrad_FbarTerm( getU(), getU() ), ir, tStep );
+      FbarAnswer.resize( this->giveNumberOfDofs() );
+      FbarAnswer.zero();
+      this->integrateTerm_c( FbarAnswer, ThirdMedium_Grad_FbarTerm( getU(), getU() ), ir, tStep );
 
       answer.clear();
       answer.add( standardAnswer );
-      answer.add( gradFanswer );
-      answer.add( gradJanswer );
-      answer.add( Jbaranswer );
+      answer.add( firstGradAnswer );
+      answer.add( firstSecondGradAnswer );
+      answer.add( FbarAnswer );
 
     } else {
       NLStructuralElement::giveCharacteristicVector( answer, type, mode, tStep );

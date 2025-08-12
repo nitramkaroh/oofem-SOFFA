@@ -71,7 +71,7 @@ class StructuralTerm
 
 
 /**
- * @brief A Linear momentum balance equation term ($B^T\P(F, H)$)
+ * @brief Evaluates terms dependent on gradF
  *
  */
 class ThirdMedium_GradGrad_SecondGradientTerm : public StructuralTerm
@@ -97,14 +97,14 @@ class ThirdMedium_GradGrad_SecondGradientTerm : public StructuralTerm
 };
 
 /**
- * @brief A Linear momentum balance equation term ($B^T\P(F, H)$)
+ * @brief Evaluates terms dependent on both F and gradF
  *
  */
-class ThirdMedium_GradGrad_JacobianGradientTerm : public StructuralTerm
+class ThirdMedium_GradGrad_FirstSecondGradientTerm : public StructuralTerm
 {
   protected:
   public:
-  ThirdMedium_GradGrad_JacobianGradientTerm( const Variable &testField, const Variable &displacementField );
+      ThirdMedium_GradGrad_FirstSecondGradientTerm( const Variable &testField, const Variable &displacementField );
   /**
    * @brief Evaluates Internal forces vector, i.e. $B^TP(F, H)$
    *
@@ -124,11 +124,15 @@ class ThirdMedium_GradGrad_JacobianGradientTerm : public StructuralTerm
   void computeGmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
 };
 
-class ThirdMedium_GradGrad_FbarTerm : public StructuralTerm
+/**
+ * @brief Evaluates term dependent on F and Fbar (= F at cell center)
+ *
+ */
+class ThirdMedium_Grad_FbarTerm : public StructuralTerm
 {
   protected:
   public:
-  ThirdMedium_GradGrad_FbarTerm( const Variable &testField, const Variable &displacementField );
+      ThirdMedium_Grad_FbarTerm( const Variable &testField, const Variable &displacementField );
   /**
    * @brief Evaluates Internal forces vector, i.e. $B^TP(F, H)$
    *

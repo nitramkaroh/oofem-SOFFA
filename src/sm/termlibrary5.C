@@ -133,11 +133,11 @@ void ThirdMedium_GradGrad_SecondGradientTerm ::computeGmatrixAt( FloatMatrix &an
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ThirdMedium_GradGrad_JacobianGradientTerm::ThirdMedium_GradGrad_JacobianGradientTerm( const Variable &testField, const Variable &unknownField) :
+ThirdMedium_GradGrad_FirstSecondGradientTerm::ThirdMedium_GradGrad_FirstSecondGradientTerm( const Variable &testField, const Variable &unknownField ) :
     StructuralTerm( testField, unknownField ) {}
 
 
-int ThirdMedium_GradGrad_JacobianGradientTerm ::computeGradientField( FloatArray &vF, FloatMatrix &BH, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const
+int ThirdMedium_GradGrad_FirstSecondGradientTerm ::computeGradientField( FloatArray &vF, FloatMatrix &BH, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const
 {
   FloatArray u;
   //
@@ -162,7 +162,7 @@ int ThirdMedium_GradGrad_JacobianGradientTerm ::computeGradientField( FloatArray
   return u.giveSize();
 }
 
-int ThirdMedium_GradGrad_JacobianGradientTerm ::computeSecondGradientField( FloatArray &vGradF, FloatMatrix &G, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const
+int ThirdMedium_GradGrad_FirstSecondGradientTerm ::computeSecondGradientField( FloatArray &vGradF, FloatMatrix &G, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const
 {
   FloatArray u;
   //
@@ -175,7 +175,7 @@ int ThirdMedium_GradGrad_JacobianGradientTerm ::computeSecondGradientField( Floa
 }
 
 
-void ThirdMedium_GradGrad_JacobianGradientTerm ::evaluate( FloatArray &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
+void ThirdMedium_GradGrad_FirstSecondGradientTerm ::evaluate( FloatArray &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
 {
   // Working with both deformation gradient (F) and its gradient (gradF);
   FloatArray vF, vGradF, GtimesT;
@@ -186,14 +186,14 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::evaluate( FloatArray &answer, S
   //
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
-  auto [vP, vT] = tcs->give_JacobianGradient_FluxVectors( vF, vGradF, gp, tstep );
+  auto [vP, vT] = tcs->give_FirstSecondGradient_FluxVectors( vF, vGradF, gp, tstep );
   answer.beTProductOf( BH, vP );
   GtimesT.beTProductOf( G, vT );
   answer.add(GtimesT);
 }
 
 
-void ThirdMedium_GradGrad_JacobianGradientTerm ::evaluate_lin( FloatMatrix &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
+void ThirdMedium_GradGrad_FirstSecondGradientTerm ::evaluate_lin( FloatMatrix &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
 {
   FloatArray vGradF, vF; //useless since they are not passed on
   FloatMatrix BH, G; //necessary, on the other hand - base function derivatives
@@ -206,7 +206,7 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::evaluate_lin( FloatMatrix &answ
   // get constitutive matrices
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
-  auto [dPdF, dPdGradF, dTdF, dTdGradF] =  tcs->give_JacobianGradient_dFluxes_dGrads(TangentStiffness, gp, tstep );
+  auto [dPdF, dPdGradF, dTdF, dTdGradF] =  tcs->give_FirstSecondGradient_dFluxes_dGrads(TangentStiffness, gp, tstep );
   // construct result
   answer.resize(0,0);
   B_dPdF.beTProductOf(BH, dPdF);
@@ -227,7 +227,7 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::evaluate_lin( FloatMatrix &answ
 }
 
 
-void ThirdMedium_GradGrad_JacobianGradientTerm ::computeGmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const
+void ThirdMedium_GradGrad_FirstSecondGradientTerm ::computeGmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const
 {
 
   FloatMatrix d2Ndx2;
@@ -254,7 +254,7 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::computeGmatrixAt( FloatMatrix &
   }
 }
 
-void ThirdMedium_GradGrad_JacobianGradientTerm ::computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const
+void ThirdMedium_GradGrad_FirstSecondGradientTerm ::computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const
 {
 
   FloatMatrix dNdx;
@@ -291,11 +291,11 @@ void ThirdMedium_GradGrad_JacobianGradientTerm ::computeBHmatrixAt( FloatMatrix 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ThirdMedium_GradGrad_FbarTerm::ThirdMedium_GradGrad_FbarTerm( const Variable &testField, const Variable &unknownField) :
+ThirdMedium_Grad_FbarTerm::ThirdMedium_Grad_FbarTerm( const Variable &testField, const Variable &unknownField ) :
     StructuralTerm( testField, unknownField ) {}
 
 
-int ThirdMedium_GradGrad_FbarTerm ::computeGradientField( FloatArray &vF, FloatMatrix &BH, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const
+int ThirdMedium_Grad_FbarTerm ::computeGradientField( FloatArray &vF, FloatMatrix &BH, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const
 {
   FloatArray u;
   //
@@ -321,7 +321,7 @@ int ThirdMedium_GradGrad_FbarTerm ::computeGradientField( FloatArray &vF, FloatM
 }
 
 
-void ThirdMedium_GradGrad_FbarTerm ::evaluate( FloatArray &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
+void ThirdMedium_Grad_FbarTerm ::evaluate( FloatArray &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
 {
   // Working with both deformation gradient (F) and its gradient (gradF);
   FloatArray vF, vFbar, GtimesT;
@@ -339,7 +339,7 @@ void ThirdMedium_GradGrad_FbarTerm ::evaluate( FloatArray &answer, StructuralEle
 }
 
 
-void ThirdMedium_GradGrad_FbarTerm ::evaluate_lin( FloatMatrix &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
+void ThirdMedium_Grad_FbarTerm ::evaluate_lin( FloatMatrix &answer, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const
 {
   FloatArray vFbar, vF; //useless since they are not passed on
   FloatMatrix BH, Bbar; //necessary, on the other hand - base function derivatives
@@ -372,7 +372,7 @@ void ThirdMedium_GradGrad_FbarTerm ::evaluate_lin( FloatMatrix &answer, Structur
   answer.add( Bbar_dPbardFbar_Bbar );
 }
 
-void ThirdMedium_GradGrad_FbarTerm ::computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const
+void ThirdMedium_Grad_FbarTerm ::computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const
 {
 
   FloatMatrix dNdx;
