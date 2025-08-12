@@ -362,8 +362,8 @@ class ThirdMediumQuad_l : public ThirdMediumElement
   ThirdMediumQuad_l( int n, Domain *d ) :
       ThirdMediumElement( n, d )
   {
-    numberOfDofMans = 8;
-    numberOfGaussPoints = 8;
+    numberOfDofMans = 4;
+    numberOfGaussPoints = 4;
     this->computeGaussPoints();
   }
 

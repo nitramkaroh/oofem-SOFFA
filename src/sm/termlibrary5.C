@@ -79,6 +79,9 @@ void ThirdMedium_GradGrad_SecondGradientTerm ::evaluate( FloatArray &answer, Str
 
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *> (cs);
+  if ( tcs == nullptr ) {
+    OOFEM_ERROR( "Third medium terms require third medium cross sections." );
+  }
   auto vFlux = tcs->give_SecondGradient_FluxVector(vGrad, gp, tstep);
   //  for(auto& [B,Flux] : std::zip (vB, vFlux)) {
   FloatArray BF;
@@ -96,6 +99,9 @@ void ThirdMedium_GradGrad_SecondGradientTerm ::evaluate_lin( FloatMatrix &answer
   //
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
+  if ( tcs == nullptr ) {
+    OOFEM_ERROR( "Third medium terms require third medium cross sections." );
+  }
   tcs->give_SecondGradient_dFlux_dGrad(dFdG, TangentStiffness,gp, tstep);
   FloatMatrix BD;
   //
@@ -186,6 +192,9 @@ void ThirdMedium_GradGrad_FirstSecondGradientTerm ::evaluate( FloatArray &answer
   //
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
+  if ( tcs == nullptr ) {
+    OOFEM_ERROR( "Third medium terms require third medium cross sections." );
+  }
   auto [vP, vT] = tcs->give_FirstSecondGradient_FluxVectors( vF, vGradF, gp, tstep );
   answer.beTProductOf( BH, vP );
   GtimesT.beTProductOf( G, vT );
@@ -206,6 +215,9 @@ void ThirdMedium_GradGrad_FirstSecondGradientTerm ::evaluate_lin( FloatMatrix &a
   // get constitutive matrices
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
+  if ( tcs == nullptr ) {
+    OOFEM_ERROR( "Third medium terms require third medium cross sections." );
+  }
   auto [dPdF, dPdGradF, dTdF, dTdGradF] =  tcs->give_FirstSecondGradient_dFluxes_dGrads(TangentStiffness, gp, tstep );
   // construct result
   answer.resize(0,0);
@@ -332,6 +344,9 @@ void ThirdMedium_Grad_FbarTerm ::evaluate( FloatArray &answer, StructuralElement
   //
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
+  if ( tcs == nullptr ) {
+    OOFEM_ERROR( "Third medium terms require third medium cross sections." );
+  }
   auto [vP, vPbar] = tcs->give_Fbar_FluxVectors( vF, vFbar, gp, tstep );
   answer.beTProductOf( BH, vP );
   GtimesT.beTProductOf( Bbar, vPbar );
@@ -352,6 +367,12 @@ void ThirdMedium_Grad_FbarTerm ::evaluate_lin( FloatMatrix &answer, StructuralEl
   // get constitutive matrices
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
+  if ( tcs == nullptr ) {
+    OOFEM_ERROR( "Third medium terms require third medium cross sections." );
+  }
+  if (tcs == nullptr){
+    OOFEM_ERROR("Third medium terms require third medium cross sections.");
+  }
   auto [dPdF, dPdFbar, dPbardF, dPbardFbar] =  tcs->give_Fbar_dFluxes_dGrads(TangentStiffness, gp, tstep );
   // construct result
   answer.resize(0,0);
