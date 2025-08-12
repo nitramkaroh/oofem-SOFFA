@@ -31,11 +31,10 @@
  *  License along with this library; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-#ifndef termlibrary4_h
-#define termlibrary4_h
+#pragma once
 
 #include "boundaryload.h"
-#include "mpm/termlibrary.h"
+#include "variable.h"
 #include "structuralelement.h"
 
 // file containing various term definitions
@@ -150,4 +149,3 @@ class ThirdMedium_GradGrad_FbarTerm : public StructuralTerm
 };
 
 } // end namespace oofem
-#endif // termlibrary4_h

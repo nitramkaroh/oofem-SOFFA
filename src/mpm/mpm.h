@@ -50,6 +50,7 @@
 #include "feinterpol.h"
 #include "intarray.h"
 #include "classfactory.h"
+#include "variable.h"
 
 
 namespace oofem {
@@ -62,58 +63,6 @@ class MPElement;
  * Interpolation should identify (or even introduce) cell nodes needed (quadratic element, linear interpolation), variable should assign to these nodes DOFs.
  * interpolation.getCellNodes(cell)
  */
-
-/**
- * @brief Class representing unknown field (or test feld) in a weak psolution.
- * The variable has its interpolation, type (scalar, vector), size.
- * When test (dual) field, it keeps reference to its primary (unknown) variable.
- * @todo The history parameter dermines how many time steps to remember. 
- */
-class Variable {
-    public:
-    enum VariableType {
-        scalar,
-        vector
-    };
-
-    enum VariableQuantity {
-        Displacement,
-        Velocity,
-        Temperature,
-        Pressure,
-        VolumeFraction,
-	MagneticPotential
-    };
-
-    const FEInterpolation& interpolation;  
-    Variable* dualVar; //? or just bool?
-    VariableType type;
-    VariableQuantity q;
-    int size;
-    IntArray dofIDs;
-
-    Variable (const FEInterpolation& i, Variable::VariableQuantity q, Variable::VariableType t, int size, Variable* dual = NULL, std :: initializer_list< int > dofIDs={}) : 
-        interpolation(i), 
-        dualVar(dual), 
-        q(q), 
-        dofIDs(dofIDs) {
-        this->type = t;
-        this->size = size;
-    }
-    Variable (const FEInterpolation& i, Variable::VariableQuantity q, Variable::VariableType t, int size, IntArray& dofIDs, Variable* dual = NULL) : 
-        interpolation(i), 
-        dualVar(dual), 
-        q(q), 
-        dofIDs(dofIDs) {
-        this->type = t;
-        this->size = size;
-    }
-
-
-    /// Returns DodIF mask in node; need generalization (which dofMan)
-    const IntArray& getDofManDofIDs () const {return this->dofIDs;}
-};
-
 
 /**
  * @brief Class representing a weak form expression to be evaluated (integrated).
