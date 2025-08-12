@@ -45,6 +45,7 @@
 #include "sm/CrossSections/structuralcrosssection.h"
 
 #include "fei2dquadquad.h"
+#include "fei2dquadlin.h"
 #include "mathfem.h"
 #include "floatarrayf.h"
 #include "lobattoir.h"
@@ -65,7 +66,7 @@ class ThirdMediumElement : public NLStructuralElement
 
   public:
   ThirdMediumElement( int n, Domain *d ) :
-          NLStructuralElement( n, d )
+      NLStructuralElement( n, d )
   {
     cellGeometryWrapper == NULL;
   }
@@ -77,36 +78,41 @@ class ThirdMediumElement : public NLStructuralElement
   virtual void giveCharacteristicMatrix( FloatMatrix &answer, CharType type, TimeStep *tStep ) override
   {
     if ( type == TangentStiffnessMatrix ) {
+      answer.clear();
       FloatMatrix standardAnswer, secondGradAnswer, firstSecondGradAnswer, FbarAnswer;
-      this->computeStiffnessMatrix( standardAnswer, TangentStiffness, tStep );
-
-      //add contribution from gradient terms
       int udofs = this->giveNumberOfDofs();
       IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
 
-      secondGradAnswer.resize( udofs, udofs );
-      secondGradAnswer.zero();
-      this->integrateTerm_dw( secondGradAnswer, ThirdMedium_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
+      //standard answer
+      this->computeStiffnessMatrix( standardAnswer, TangentStiffness, tStep );
+      answer.add( standardAnswer );
 
-      firstSecondGradAnswer.resize( udofs, udofs );
-      firstSecondGradAnswer.zero();
-      this->integrateTerm_dw( firstSecondGradAnswer, ThirdMedium_GradGrad_FirstSecondGradientTerm( getU(), getU() ), ir, tStep );
-      
+      //terms using Fbar
       FbarAnswer.resize( udofs, udofs );
       FbarAnswer.zero();
       this->integrateTerm_dw( FbarAnswer, ThirdMedium_Grad_FbarTerm( getU(), getU() ), ir, tStep );
-
-      answer.clear();
-      answer.add( standardAnswer );
-      answer.add( secondGradAnswer );
-      answer.add( firstSecondGradAnswer );
       answer.add( FbarAnswer );
+
+      //gradient terms
+      if ( this->giveInterpolation()->giveInterpolationOrder() > 1 ) {
+        secondGradAnswer.resize( udofs, udofs );
+        secondGradAnswer.zero();
+        this->integrateTerm_dw( secondGradAnswer, ThirdMedium_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
+
+        firstSecondGradAnswer.resize( udofs, udofs );
+        firstSecondGradAnswer.zero();
+        this->integrateTerm_dw( firstSecondGradAnswer, ThirdMedium_GradGrad_FirstSecondGradientTerm( getU(), getU() ), ir, tStep );
+
+        answer.add( secondGradAnswer );
+        answer.add( firstSecondGradAnswer );
+      }
+
     } else {
       NLStructuralElement::giveCharacteristicMatrix( answer, type, tStep );
     }
   }
 
-  virtual void computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp,TimeStep *tStep ) override 
+  virtual void computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override
   {
     OOFEM_ERROR( "Small strain unsupported" );
   }
@@ -118,39 +124,41 @@ class ThirdMediumElement : public NLStructuralElement
       answer = this->giveStructuralCrossSection()->giveStiffnessMatrix_dPdF_PlaneStrain( rMode, gp, tStep );
     } else if ( mmode == _3dMat ) {
       answer = this->giveStructuralCrossSection()->giveStiffnessMatrix_3d( rMode, gp, tStep );
-    } else{
-      OOFEM_ERROR("Unsupported material mode");
+    } else {
+      OOFEM_ERROR( "Unsupported material mode" );
     }
   }
 
   virtual void giveCharacteristicVector( FloatArray &answer, CharType type, ValueModeType mode, TimeStep *tStep ) override
   {
     if ( ( type == InternalForcesVector ) && ( mode == VM_Total ) ) {
-      
+      answer.clear();
       FloatArray standardAnswer, firstGradAnswer, firstSecondGradAnswer, FbarAnswer;
-
-      this->giveInternalForcesVector( standardAnswer, tStep );
-
       IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
-      
-      firstGradAnswer.resize( this->giveNumberOfDofs() );
-      firstGradAnswer.zero();
-      this->integrateTerm_c( firstGradAnswer, ThirdMedium_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
 
-      firstSecondGradAnswer.resize( this->giveNumberOfDofs() );
-      firstSecondGradAnswer.zero();
-      this->integrateTerm_c( firstSecondGradAnswer, ThirdMedium_GradGrad_FirstSecondGradientTerm( getU(), getU() ), ir, tStep );
+      //standard answer
+      this->giveInternalForcesVector( standardAnswer, tStep );
+      answer.add( standardAnswer );
 
+      //Fbar answer
       FbarAnswer.resize( this->giveNumberOfDofs() );
       FbarAnswer.zero();
       this->integrateTerm_c( FbarAnswer, ThirdMedium_Grad_FbarTerm( getU(), getU() ), ir, tStep );
-
-      answer.clear();
-      answer.add( standardAnswer );
-      answer.add( firstGradAnswer );
-      answer.add( firstSecondGradAnswer );
       answer.add( FbarAnswer );
 
+      // gradient answers
+      if ( this->giveInterpolation()->giveInterpolationOrder() > 1 ) {
+        firstGradAnswer.resize( this->giveNumberOfDofs() );
+        firstGradAnswer.zero();
+        this->integrateTerm_c( firstGradAnswer, ThirdMedium_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
+        answer.add( firstGradAnswer );
+
+        firstSecondGradAnswer.resize( this->giveNumberOfDofs() );
+        firstSecondGradAnswer.zero();
+        this->integrateTerm_c( firstSecondGradAnswer, ThirdMedium_GradGrad_FirstSecondGradientTerm( getU(), getU() ), ir, tStep );
+        answer.add( firstSecondGradAnswer );
+      }
+      
     } else {
       NLStructuralElement::giveCharacteristicVector( answer, type, mode, tStep );
     }
@@ -158,7 +166,7 @@ class ThirdMediumElement : public NLStructuralElement
 
   virtual void computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep ) override
   {
-    OOFEM_ERROR("Small strain unsupported");
+    OOFEM_ERROR( "Small strain unsupported" );
   }
 
   virtual void computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int lowerIndx = 1, int upperIndx = ALL_STRAINS ) override
@@ -196,7 +204,7 @@ class ThirdMediumElement : public NLStructuralElement
   {
     FloatMatrix dNdx;
     MaterialMode mmode = gp->giveMaterialMode();
-    FEInterpolation* interpol = this->giveInterpolation();
+    FEInterpolation *interpol = this->giveInterpolation();
     // evaluate matrix of derivatives, the member at i,j position contains value of dNi/dxj
     interpol->evaldNdx( dNdx, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper( this ) );
 
@@ -251,7 +259,7 @@ class ThirdMediumElement : public NLStructuralElement
     }
   }
 
-  FEICellGeometry * giveCellGeometryWrapper()
+  FEICellGeometry *giveCellGeometryWrapper()
   {
     if ( !cellGeometryWrapper ) {
       cellGeometryWrapper = new FEIElementGeometryWrapper( this );
@@ -259,7 +267,6 @@ class ThirdMediumElement : public NLStructuralElement
 
     return cellGeometryWrapper;
   }
-
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -276,32 +283,32 @@ class ThirdMediumQuad_q : public ThirdMediumElement
 
   public:
   ThirdMediumQuad_q( int n, Domain *d ) :
-          ThirdMediumElement( n, d )
+      ThirdMediumElement( n, d )
   {
     numberOfDofMans = 8;
     numberOfGaussPoints = 8;
     this->computeGaussPoints();
   }
 
-  //int getNumberOfSurfaceDOFs() const override { return 0; }
-  //int getNumberOfEdgeDOFs() const override { return 0; }
-  //void getSurfaceLocalCodeNumbers( oofem::IntArray &, oofem::Variable::VariableQuantity ) const override { ; }
+  // int getNumberOfSurfaceDOFs() const override { return 0; }
+  // int getNumberOfEdgeDOFs() const override { return 0; }
+  // void getSurfaceLocalCodeNumbers( oofem::IntArray &, oofem::Variable::VariableQuantity ) const override { ; }
 
-  //void getDofManLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q, int num ) const override
+  // void getDofManLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q, int num ) const override
   //{
-  //  /* dof ordering: u1 v1 u2 v2 u3 v3 u4 v4 u5 v5 u6 v6 */
-  //  if ( q == Variable::VariableQuantity::Displacement ) {
-  //    // answer={1,2,3 4,5,6,7,8,9,10,11,12,13,14,15,16};
-  //    int o = ( num - 1 ) * 2 + 1;
-  //    answer = { o, o + 1 };
-  //  }
-  //}
+  //   /* dof ordering: u1 v1 u2 v2 u3 v3 u4 v4 u5 v5 u6 v6 */
+  //   if ( q == Variable::VariableQuantity::Displacement ) {
+  //     // answer={1,2,3 4,5,6,7,8,9,10,11,12,13,14,15,16};
+  //     int o = ( num - 1 ) * 2 + 1;
+  //     answer = { o, o + 1 };
+  //   }
+  // }
   /*void getInternalDofManLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q, int num ) const override
   {
     answer = {};
   }*/
 
-  virtual FEInterpolation* giveInterpolation() const override { return &interpol; }
+  virtual FEInterpolation *giveInterpolation() const override { return &interpol; }
 
   void giveDofManDofIDMask( int inode, IntArray &answer ) const override
   {
@@ -312,13 +319,13 @@ class ThirdMediumQuad_q : public ThirdMediumElement
   const char *giveInputRecordName() const override { return "ThirdMediumQuad_q"; }
   const char *giveClassName() const override { return "ThirdMediumQuad_q"; }
 
-  //const FEInterpolation &getGeometryInterpolation() const override { return this->interpol; }
+  // const FEInterpolation &getGeometryInterpolation() const override { return this->interpol; }
 
   Element_Geometry_Type giveGeometryType() const override
   {
     return EGT_quad_2;
   }
-  //void getEdgeLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q ) const override {}
+  // void getEdgeLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q ) const override {}
 
 
   private:
@@ -340,5 +347,81 @@ const Variable &ThirdMediumQuad_q::u = Variable( ThirdMediumQuad_q::interpol, Va
 #define _IFT_ThirdMediumQuad_q_Name "thirdmediumquad_q"
 REGISTER_Element( ThirdMediumQuad_q )
 
-} //namespace oofem
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief 2D 3M elastic element with linear interpolation of displacements
+ *
+ */
+class ThirdMediumQuad_l : public ThirdMediumElement
+{
+  protected:
+  static FEI2dQuadLin interpol;
+  const static Variable &u;
 
+  public:
+  ThirdMediumQuad_l( int n, Domain *d ) :
+      ThirdMediumElement( n, d )
+  {
+    numberOfDofMans = 8;
+    numberOfGaussPoints = 8;
+    this->computeGaussPoints();
+  }
+
+  // int getNumberOfSurfaceDOFs() const override { return 0; }
+  // int getNumberOfEdgeDOFs() const override { return 0; }
+  // void getSurfaceLocalCodeNumbers( oofem::IntArray &, oofem::Variable::VariableQuantity ) const override { ; }
+
+  // void getDofManLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q, int num ) const override
+  //{
+  //   /* dof ordering: u1 v1 u2 v2 u3 v3 u4 v4 u5 v5 u6 v6 */
+  //   if ( q == Variable::VariableQuantity::Displacement ) {
+  //     // answer={1,2,3 4,5,6,7,8,9,10,11,12,13,14,15,16};
+  //     int o = ( num - 1 ) * 2 + 1;
+  //     answer = { o, o + 1 };
+  //   }
+  // }
+  /*void getInternalDofManLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q, int num ) const override
+  {
+    answer = {};
+  }*/
+
+  virtual FEInterpolation *giveInterpolation() const override { return &interpol; }
+
+  void giveDofManDofIDMask( int inode, IntArray &answer ) const override
+  {
+
+    answer = { 1, 2 };
+  }
+  int giveNumberOfDofs() override { return 8; }
+  const char *giveInputRecordName() const override { return "ThirdMediumQuad_l"; }
+  const char *giveClassName() const override { return "ThirdMediumQuad_l"; }
+
+  // const FEInterpolation &getGeometryInterpolation() const override { return this->interpol; }
+
+  Element_Geometry_Type giveGeometryType() const override
+  {
+    return EGT_quad_1;
+  }
+  // void getEdgeLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q ) const override {}
+
+
+  private:
+  virtual int giveNumberOfDofs() const override { return 8; }
+  virtual const Variable &getU() const override { return u; }
+  void computeGaussPoints() override
+  {
+    if ( integrationRulesArray.size() == 0 ) {
+      integrationRulesArray.resize( 1 );
+      integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this );
+      integrationRulesArray[0]->SetUpPointsOnSquare( numberOfGaussPoints, _PlaneStrain );
+    }
+  }
+};
+
+FEI2dQuadLin ThirdMediumQuad_l ::interpol( 1, 2 );
+const Variable &ThirdMediumQuad_l::u = Variable( ThirdMediumQuad_l::interpol, Variable::VariableQuantity::Displacement, Variable::VariableType::vector, 2, NULL, { 1, 2 } );
+
+#define _IFT_ThirdMediumQuad_l_Name "thirdmediumquad_l"
+REGISTER_Element( ThirdMediumQuad_l )
+
+} // namespace oofem
