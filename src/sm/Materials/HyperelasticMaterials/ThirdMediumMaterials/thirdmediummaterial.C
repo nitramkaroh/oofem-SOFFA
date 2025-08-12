@@ -19,6 +19,7 @@ namespace oofem {
   {
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradFGradF, _IFT_ThirdMediumMaterial_kappaGradFGradF );
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradJGradJ, _IFT_ThirdMediumMaterial_kappaGradJGradJ );
+    IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradRGradR, _IFT_ThirdMediumMaterial_kappaGradRGradR );
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbar, _IFT_ThirdMediumMaterial_kappaJbar );
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbarVol, _IFT_ThirdMediumMaterial_kappaJbarVol );
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaFbar, _IFT_ThirdMediumMaterial_kappaFbar );
@@ -74,6 +75,11 @@ ThirdMediumMaterial::give_FirstSecondGradient_FirstPKStressVector_SecondOrderStr
     vP_ans += vP_gradJ;
     vT_ans += vT_gradJ;
   }
+  if (kappaGradRGradR != 0.0){
+    auto [vP_gradR, vT_gradR] = this->give_RotationGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
+    vP_ans += vP_gradR;
+    vT_ans += vT_gradR;
+  }
 
   return std::make_tuple(vP_ans, vT_ans);
   
@@ -89,6 +95,9 @@ ThirdMediumMaterial::give_FirstSecondGradient_FirstPKStressVector_SecondOrderStr
     auto [vP_gradJ, vT_gradJ] = this->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_3d( vF, vGradF, gp, tStep );
     vP_ans += vP_gradJ;
     vT_ans += vT_gradJ;
+  }
+  if (kappaGradRGradR != 0.0 ){
+    OOFEM_ERROR("gradRgradR regularization unsupported outside of Plane Strain formulations.");
   }
 
   return std::make_tuple( vP_ans, vT_ans );
@@ -109,6 +118,9 @@ ThirdMediumMaterial::give_FirstSecondGradient_ConstitutiveMatrices_3d( MatRespon
     vdTdF_ans += vdTdF_gradJ;
     vdTdGradF_ans += vdTdGradF_gradJ;
   }
+  if ( kappaGradRGradR != 0.0 ) {
+    OOFEM_ERROR( "gradRgradR regularization unsupported outside of Plane Strain formulations." );
+  }
 
   return std::make_tuple( vdPdF_ans, vdPdGradF_ans, vdTdF_ans, vdTdGradF_ans );
 }
@@ -127,6 +139,13 @@ ThirdMediumMaterial::give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( 
     vdPdGradF_ans += vdPdGradF_gradJ;
     vdTdF_ans += vdTdF_gradJ;
     vdTdGradF_ans += vdTdGradF_gradJ;
+  }
+  if ( kappaGradRGradR != 0.0 ) {
+    auto [vdPdF_gradR, vdPdGradF_gradR, vdTdF_gradR, vdTdGradF_gradR] = this->give_RotationGradient_ConstitutiveMatrices_PlaneStrain( mode, gp, tStep );
+    vdPdF_ans += vdPdF_gradR;
+    vdPdGradF_ans += vdPdGradF_gradR;
+    vdTdF_ans += vdTdF_gradR;
+    vdTdGradF_ans += vdTdGradF_gradR;
   }
 
   return std::make_tuple( vdPdF_ans, vdPdGradF_ans, vdTdF_ans, vdTdGradF_ans );
@@ -345,6 +364,175 @@ ThirdMediumMaterial ::give_Fbar_ConstitutiveMatrices_PlaneStrain( MatResponseMod
   auto vdPbardF_red = vdPbardF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
   auto vdPbardFbar_red = vdPbardFbar_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
   return std::make_tuple( vdPdF_red, vdPdFbar_red, vdPbardF_red, vdPbardFbar_red );
+}
+
+////////////////////////////////// ROTATION GRADIENTS ///////////////////////////////////////////////////////////////////////////////////////
+
+std::tuple<FloatArrayF<5>, FloatArrayF<8> >
+ThirdMediumMaterial ::give_RotationGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep )
+{
+  // get tensors
+  FloatArrayF<9> vF_3d = assemble<9>( vF, { 0, 1, 2, 5, 8 } );
+  FloatArrayF<27> vGradF_3d = assemble<27>( vGradF, { 0, 1, 5, 8, 9, 10, 14, 17 } );
+  Tensor2_3d F( vF_3d ), P;
+  Tensor3_3d gradF( vGradF_3d ), T;
+
+  auto gradPhi = compute_gradPhi_PlaneStrain( F, gradF );
+  auto [dGradPhidF, dGradPhidGradF] = compute_gradPhi_derivatives_PlaneStrain( F, gradF );
+
+  P( i_3, j_3 ) = kappaGradRGradR * 2 * gradPhi( m_3 ) * dGradPhidF( m_3, i_3, j_3 );
+  T( i_3, j_3, k_3 ) = kappaGradRGradR * 2 * gradPhi( m_3 ) * dGradPhidGradF( m_3, i_3, j_3, k_3 );
+
+  // save gradients
+  ThirdMediumMaterialStatus *status = static_cast<ThirdMediumMaterialStatus *>( this->giveStatus( gp ) );
+  status->letTempFVectorBe( vF_3d );
+  status->letTempGradFVectorBe( vGradF_3d );
+
+  // output
+  auto vP_3d = P.to_voigt_form();
+  auto vT_3d = T.to_voigt_form_27();
+  return std::make_tuple( vP_3d[{ 0, 1, 2, 5, 8 }], vT_3d[{ 0, 1, 5, 8, 9, 10, 14, 17 }] );
+}
+
+
+std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> >
+ThirdMediumMaterial ::give_RotationGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  // load F and GradF
+  ThirdMediumMaterialStatus *status = static_cast<ThirdMediumMaterialStatus *>( this->giveStatus( gp ) );
+  FloatArrayF<9> vF_3d = status->giveTempFVector();
+  FloatArrayF<27> vGradF_3d = status->giveTempGradFVector();
+
+  // get tensors
+  Tensor2_3d F( vF_3d );
+  Tensor3_3d gradF( vGradF_3d );
+  Tensor4_3d D_FF;
+  Tensor5_3d C_FG;
+  Tensor6_3d C_GG;
+
+  auto gradPhi = compute_gradPhi_PlaneStrain( F, gradF );
+  auto [dGradPhidF, dGradPhidGradF] = compute_gradPhi_derivatives_PlaneStrain( F, gradF );
+  auto [d2GradPhidFdF, d2GradPhidFdGradF, d2GradPhidGradFdGradF] = compute_gradPhi_secondDerivatives_PlaneStrain( F, gradF );
+
+  D_FF( i_3, j_3, r_3, s_3 ) = kappaGradRGradR * 2 * dGradPhidF( m_3, r_3, s_3 ) * dGradPhidF( m_3, i_3, j_3 ) + kappaGradRGradR * 2 * gradPhi( m_3 ) * d2GradPhidFdF( m_3, i_3, j_3, r_3, s_3 );
+  C_FG( i_3, j_3, r_3, s_3, t_3 ) = kappaGradRGradR * 2 * dGradPhidGradF( m_3, r_3, s_3, t_3 ) * dGradPhidF( m_3, i_3, j_3 ) + kappaGradRGradR * 2 * gradPhi( m_3 ) * d2GradPhidFdGradF( m_3, i_3, j_3, r_3, s_3, t_3 );
+  C_GG( i_3, j_3, k_3, r_3, s_3, t_3 ) = kappaGradRGradR * 2 * dGradPhidGradF( m_3, r_3, s_3, t_3 ) * dGradPhidGradF( m_3, i_3, j_3, k_3 ) + kappaGradRGradR * 2 * gradPhi( m_3 ) * d2GradPhidGradFdGradF( m_3, i_3, j_3, k_3, r_3, s_3, t_3 );
+
+  // output
+  auto vD_FF_3d = D_FF.to_voigt_form();
+  FloatMatrix vC_FG_3d( C_FG.to_voigt_form_9x27() ), vC_GF_3d;
+  vC_GF_3d.beTranspositionOf( vC_FG_3d );
+  auto vC_GG_3d = C_GG.to_voigt_form();
+
+  auto vD_FF = vD_FF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  auto vC_FG = ( (FloatMatrixF<9, 27>)vC_FG_3d ).operator()( { 0, 1, 2, 5, 8 }, { 0, 1, 5, 8, 9, 10, 14, 17 } );
+  auto vC_GF = ( (FloatMatrixF<27, 9>)vC_GF_3d ).operator()( { 0, 1, 5, 8, 9, 10, 14, 17 }, { 0, 1, 2, 5, 8 } );
+  auto vC_GG = vC_GG_3d( { 0, 1, 5, 8, 9, 10, 14, 17 }, { 0, 1, 5, 8, 9, 10, 14, 17 } );
+  return std::make_tuple( vD_FF, vC_FG, vC_GF, vC_GG );
+}
+
+
+Tensor1_3d
+ThirdMediumMaterial::compute_gradPhi_PlaneStrain( const Tensor2_3d &F, const Tensor3_3d &gradF ) const
+{
+  Tensor1_3d gradPhi;
+
+  auto Z = compute_Z_fraction_PlaneStrain( F );
+  auto dZdF = compute_Z_fraction_derivative_PlaneStrain( F );
+
+  gradPhi( m_3 ) = ( 1. / ( Z * Z + 1 ) ) * dZdF( p_3, q_3 ) * gradF( p_3, q_3, m_3 );
+
+  return gradPhi;
+}
+
+std::tuple<Tensor3_3d, Tensor4_3d>
+ThirdMediumMaterial::compute_gradPhi_derivatives_PlaneStrain( const Tensor2_3d &F, const Tensor3_3d &gradF ) const
+{
+  Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+  Tensor3_3d dGradPhidF;
+  Tensor4_3d dGradPhidGradF;
+
+  auto Z = compute_Z_fraction_PlaneStrain( F );
+  auto dZdF = compute_Z_fraction_derivative_PlaneStrain( F );
+  auto d2ZdFdF = compute_Z_fraction_secondDerivative_PlaneStrain( F );
+
+  dGradPhidF( m_3, i_3, j_3 ) = ( -2. * Z / ( Z * Z + 1. ) * ( Z * Z + 1. ) ) * dZdF( i_3, j_3 ) * dZdF( p_3, q_3 ) * gradF( p_3, q_3, m_3 ) + ( 1. / ( Z * Z + 1 ) ) * d2ZdFdF( p_3, q_3, i_3, j_3 ) * gradF( p_3, q_3, m_3 );
+  dGradPhidGradF( m_3, i_3, j_3, k_3 ) = ( 1. / ( Z * Z + 1 ) ) * dZdF( i_3, j_3 ) * delta( m_3, k_3 );
+
+  return std::make_tuple( dGradPhidF, dGradPhidGradF );
+}
+
+std::tuple<Tensor5_3d, Tensor6_3d, Tensor7_3d>
+ThirdMediumMaterial::compute_gradPhi_secondDerivatives_PlaneStrain( const Tensor2_3d &F, const Tensor3_3d &gradF ) const
+{
+  Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+  Tensor5_3d d2GradPhidFdF;
+  Tensor6_3d d2GradPhidFdGradF;
+  Tensor7_3d d2GradPhidGradFdGradF;
+
+  auto Z = compute_Z_fraction_PlaneStrain( F );
+  auto dZdF = compute_Z_fraction_derivative_PlaneStrain( F );
+  auto d2ZdFdF = compute_Z_fraction_secondDerivative_PlaneStrain( F );
+  auto d3ZdFdFdF = compute_Z_fraction_thirdDerivative_PlaneStrain( F );
+
+  d2GradPhidFdF( m_3, i_3, j_3, r_3, s_3 ) = ( 8. * Z * Z / ( ( Z * Z + 1. ) * ( Z * Z + 1. ) * ( Z * Z + 1. ) ) ) * dZdF( r_3, s_3 ) * dZdF( i_3, j_3 ) * dZdF( p_3, q_3 ) * gradF( p_3, q_3, m_3 )
+      - ( 2. / ( ( Z * Z + 1. ) * ( Z * Z + 1. ) ) ) * dZdF( r_3, s_3 ) * dZdF( i_3, j_3 ) * dZdF( p_3, q_3 ) * gradF( p_3, q_3, m_3 )
+      - ( 2. * Z / ( ( Z * Z + 1. ) * ( Z * Z + 1. ) ) ) * ( d2ZdFdF( i_3, j_3, r_3, s_3 ) * dZdF( p_3, q_3 ) * gradF( p_3, q_3, m_3 ) )
+      - ( 2. * Z / ( ( Z * Z + 1. ) * ( Z * Z + 1. ) ) ) * dZdF( i_3, j_3 ) * d2ZdFdF( p_3, q_3, r_3, s_3 ) * gradF( p_3, q_3, m_3 )
+      - ( 2. * Z / ( ( Z * Z + 1. ) * ( Z * Z + 1. ) ) ) * dZdF( r_3, s_3 ) * d2ZdFdF( p_3, q_3, i_3, j_3 ) * gradF( p_3, q_3, m_3 )
+      + ( 1. / ( Z * Z + 1 ) ) * d3ZdFdFdF( p_3, q_3, i_3, j_3, r_3, s_3 ) * gradF( p_3, q_3, m_3 );
+
+  d2GradPhidFdGradF( m_3, i_3, j_3, r_3, s_3, t_3 ) = -( 2. * Z / ( ( Z * Z + 1. ) * ( Z * Z + 1. ) ) ) * dZdF( i_3, j_3 ) * ( dZdF( r_3, s_3 ) * delta( m_3, t_3 ) )
+      + ( 1. / ( Z * Z + 1 ) ) * d2ZdFdF( r_3, s_3, i_3, j_3 ) * delta( m_3, t_3 );
+
+
+  d2GradPhidGradFdGradF( m_3, i_3, j_3, k_3, r_3, s_3, t_3 ) = 0.;
+
+  return std::make_tuple( d2GradPhidFdF, d2GradPhidFdGradF, d2GradPhidGradFdGradF );
+}
+
+double
+ThirdMediumMaterial::compute_Z_fraction_PlaneStrain( const Tensor2_3d &F ) const
+{
+  return ( F( 0, 1 ) - F( 1, 0 ) ) / ( F( 0, 0 ) + F( 1, 1 ) );
+}
+
+Tensor2_3d
+ThirdMediumMaterial::compute_Z_fraction_derivative_PlaneStrain( const Tensor2_3d &F ) const
+{
+  Tensor2_3d dZdF, delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+
+  dZdF( p_3, q_3 ) = -( F( 0, 1 ) - F( 1, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) )
+      + ( delta( p_3, 0 ) * delta( q_3, 1 ) - delta( p_3, 1 ) * delta( q_3, 0 ) ) / ( F( 0, 0 ) + F( 1, 1 ) );
+
+  return dZdF;
+}
+
+Tensor4_3d
+ThirdMediumMaterial::compute_Z_fraction_secondDerivative_PlaneStrain( const Tensor2_3d &F ) const
+{
+  Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+  Tensor4_3d d2ZdFdF;
+
+  d2ZdFdF( p_3, q_3, i_3, j_3 ) = -( delta( i_3, 0 ) * delta( j_3, 1 ) - delta( i_3, 1 ) * delta( j_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) )
+      + 2. * ( F( 0, 1 ) - F( 1, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) )
+      - ( delta( p_3, 0 ) * delta( q_3, 1 ) - delta( p_3, 1 ) * delta( q_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) );
+
+  return d2ZdFdF;
+}
+
+Tensor6_3d
+ThirdMediumMaterial::compute_Z_fraction_thirdDerivative_PlaneStrain( const Tensor2_3d &F ) const
+{
+  Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+  Tensor6_3d d3ZdFdFdF;
+
+  d3ZdFdFdF( p_3, q_3, i_3, j_3, r_3, s_3 ) = 2. * ( delta( i_3, 0 ) * delta( j_3, 1 ) - delta( i_3, 1 ) * delta( j_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( r_3, 0 ) * delta( s_3, 0 ) + delta( r_3, 1 ) * delta( s_3, 1 ) )
+      + 2. * ( delta( r_3, 0 ) * delta( s_3, 1 ) - delta( r_3, 1 ) * delta( s_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) )
+      - 6. * ( F( 0, 1 ) - F( 1, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( p_3, 0 ) * delta( q_3, 0 ) + delta( p_3, 1 ) * delta( q_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) ) * ( delta( r_3, 0 ) * delta( s_3, 0 ) + delta( r_3, 1 ) * delta( s_3, 1 ) )
+      + 2. * ( delta( p_3, 0 ) * delta( q_3, 1 ) - delta( p_3, 1 ) * delta( q_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( r_3, 0 ) * delta( s_3, 0 ) + delta( r_3, 1 ) * delta( s_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) );
+
+  return d3ZdFdFdF;
 }
 
 
