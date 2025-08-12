@@ -295,13 +295,13 @@ ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( const
   auto [ J, cofF ] = F.compute_determinant_and_cofactor();
   auto [ Jbar, cofFbar ] = Fbar.compute_determinant_and_cofactor();
 
-  if ( J < 0 || std::isnan(J)) {
+  /*if ( J < 0 || std::isnan(J)) {
     OOFEM_ERROR("J =%e in the element %i and in the Gauss point %i.", J, gp->giveElement()->giveNumber(), gp->giveNumber());
   }
 
   if ( Jbar < 0 || std::isnan(Jbar)) {
     OOFEM_ERROR("Jbar =%e in the element %i and in the Gauss point %i.", Jbar, gp->giveElement()->giveNumber(), gp->giveNumber());
-  }
+  }*/
 
   P_Jbar(r_3, s_3) = kappaJbar * (J - Jbar) * cofF(r_3, s_3);
   Pbar_Jbar(r_3, s_3) = - kappaJbar * (J - Jbar) * cofFbar(r_3, s_3);
