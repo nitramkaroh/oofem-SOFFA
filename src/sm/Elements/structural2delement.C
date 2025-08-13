@@ -37,6 +37,7 @@
 #include "gausspoint.h"
 #include "sm/CrossSections/structuralcrosssection.h"
 #include "gaussintegrationrule.h"
+#include "lobattoir.h"
 #include "mathfem.h"
 
 namespace oofem {
@@ -60,6 +61,7 @@ Structural2DElement::initializeFrom(InputRecord &ir)
 {
     NLStructuralElement::initializeFrom(ir);
     matRotation = ir.hasField(_IFT_Structural2DElement_materialCoordinateSystem); //|| this->elemLocalCS.isNotEmpty();
+    lobatto = ir.hasField(_IFT_Structural2DElement_lobatto);
 }
 
 
@@ -129,9 +131,13 @@ Structural2DElement::computeGaussPoints()
     // Sets up the integration rule array which contains all the Gauss points
     // Default: create one integration rule
     if ( integrationRulesArray.size() == 0 ) {
-        integrationRulesArray.resize(1);
+      integrationRulesArray.resize( 1 );
+      if (lobatto) {
+        integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this, 1, 3, false );
+      } else {
         integrationRulesArray [ 0 ] = std::make_unique< GaussIntegrationRule >(1, this, 1, 3);
-        this->giveCrossSection()->setupIntegrationPoints(* integrationRulesArray [ 0 ], this->numberOfGaussPoints, this);
+      }
+      this->giveCrossSection()->setupIntegrationPoints( *integrationRulesArray[0], this->numberOfGaussPoints, this );
     }
 }
 
