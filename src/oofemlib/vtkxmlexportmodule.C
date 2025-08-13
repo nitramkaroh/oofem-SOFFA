@@ -242,6 +242,8 @@ VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
 
     // Finalize the output:
     std::string fname = giveOutputFileName(tStep);
+    fname = fname.substr( fname.find_last_of( '/' ) == std::string::npos ? 0 : fname.find_last_of( '/' ) + 1 );
+
 #ifdef __VTK_MODULE
 
  #if 0
@@ -307,7 +309,9 @@ VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
             if ( tstep_substeps_out_flag ) {
                 subStep << "." << tStep->giveSubStepNumber();
             }
-            pvdEntry << "<DataSet timestep=\"" << tStep->giveTargetTime() * this->timeScale << subStep.str() << "\" group=\"\" part=\"" << i << "\" file=\"" << this->emodel->giveOutputBaseFileName() << fext << ".vtu\"/>";
+            std::string baseFname = this->emodel->giveOutputBaseFileName();
+            baseFname = baseFname.substr( baseFname.find_last_of( '/' ) == std::string::npos ? 0 : baseFname.find_last_of( '/' ) + 1 );
+            pvdEntry << "<DataSet timestep=\"" << tStep->giveTargetTime() * this->timeScale << subStep.str() << "\" group=\"\" part=\"" << i << "\" file=\"" << baseFname << fext << ".vtu\"/>";
             this->pvdBuffer.push_back(pvdEntry.str() );
         }
 
