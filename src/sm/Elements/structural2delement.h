@@ -39,7 +39,7 @@
 #include "feinterpol2d.h"
 
 #define _IFT_Structural2DElement_materialCoordinateSystem "matcs" ///< [optional] Support for material directions based on element orientation.
-#define _IFT_Structural2DElement_lobatto "lobatto" ///< [optional] Support for material directions based on element orientation.
+#define _IFT_Structural2DElement_lobatto "lobatto"
 
 namespace oofem {
 /**

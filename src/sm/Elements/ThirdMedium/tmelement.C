@@ -271,6 +271,9 @@ class ThirdMediumElement : public NLStructuralElement
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define _IFT_ThirdMediumQuad_q_lobatto "lobatto"
+
+
 /**
  * @brief 2D 3M elastic element with quadratic interpolation of displacements
  *
@@ -280,6 +283,7 @@ class ThirdMediumQuad_q : public ThirdMediumElement
   protected:
   static FEI2dQuadQuad interpol;
   const static Variable &u;
+  bool lobatto = false;
 
   public:
   ThirdMediumQuad_q( int n, Domain *d ) :
@@ -290,23 +294,11 @@ class ThirdMediumQuad_q : public ThirdMediumElement
     this->computeGaussPoints();
   }
 
-  // int getNumberOfSurfaceDOFs() const override { return 0; }
-  // int getNumberOfEdgeDOFs() const override { return 0; }
-  // void getSurfaceLocalCodeNumbers( oofem::IntArray &, oofem::Variable::VariableQuantity ) const override { ; }
-
-  // void getDofManLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q, int num ) const override
-  //{
-  //   /* dof ordering: u1 v1 u2 v2 u3 v3 u4 v4 u5 v5 u6 v6 */
-  //   if ( q == Variable::VariableQuantity::Displacement ) {
-  //     // answer={1,2,3 4,5,6,7,8,9,10,11,12,13,14,15,16};
-  //     int o = ( num - 1 ) * 2 + 1;
-  //     answer = { o, o + 1 };
-  //   }
-  // }
-  /*void getInternalDofManLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q, int num ) const override
+  virtual void initializeFrom( InputRecord &ir ) override
   {
-    answer = {};
-  }*/
+    ThirdMediumElement::initializeFrom( ir );
+    lobatto = ir.hasField( _IFT_ThirdMediumQuad_q_lobatto );
+  }
 
   virtual FEInterpolation *giveInterpolation() const override { return &interpol; }
 
@@ -335,7 +327,11 @@ class ThirdMediumQuad_q : public ThirdMediumElement
   {
     if ( integrationRulesArray.size() == 0 ) {
       integrationRulesArray.resize( 1 );
-      integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this );
+      if (lobatto) {
+        integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this );
+      } else{
+        integrationRulesArray[0] = std::make_unique<GaussIntegrationRule>( 1, this );
+      }
       integrationRulesArray[0]->SetUpPointsOnSquare( numberOfGaussPoints, _PlaneStrain );
     }
   }
@@ -348,6 +344,9 @@ const Variable &ThirdMediumQuad_q::u = Variable( ThirdMediumQuad_q::interpol, Va
 REGISTER_Element( ThirdMediumQuad_q )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define _IFT_ThirdMediumQuad_l_lobatto "lobatto"
+
 /**
  * @brief 2D 3M elastic element with linear interpolation of displacements
  *
@@ -357,6 +356,7 @@ class ThirdMediumQuad_l : public ThirdMediumElement
   protected:
   static FEI2dQuadLin interpol;
   const static Variable &u;
+  bool lobatto = false;
 
   public:
   ThirdMediumQuad_l( int n, Domain *d ) :
@@ -367,23 +367,11 @@ class ThirdMediumQuad_l : public ThirdMediumElement
     this->computeGaussPoints();
   }
 
-  // int getNumberOfSurfaceDOFs() const override { return 0; }
-  // int getNumberOfEdgeDOFs() const override { return 0; }
-  // void getSurfaceLocalCodeNumbers( oofem::IntArray &, oofem::Variable::VariableQuantity ) const override { ; }
-
-  // void getDofManLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q, int num ) const override
-  //{
-  //   /* dof ordering: u1 v1 u2 v2 u3 v3 u4 v4 u5 v5 u6 v6 */
-  //   if ( q == Variable::VariableQuantity::Displacement ) {
-  //     // answer={1,2,3 4,5,6,7,8,9,10,11,12,13,14,15,16};
-  //     int o = ( num - 1 ) * 2 + 1;
-  //     answer = { o, o + 1 };
-  //   }
-  // }
-  /*void getInternalDofManLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q, int num ) const override
+  virtual void initializeFrom( InputRecord &ir ) override
   {
-    answer = {};
-  }*/
+    ThirdMediumElement::initializeFrom( ir );
+    lobatto = ir.hasField( _IFT_ThirdMediumQuad_l_lobatto );
+  }
 
   virtual FEInterpolation *giveInterpolation() const override { return &interpol; }
 
@@ -412,7 +400,11 @@ class ThirdMediumQuad_l : public ThirdMediumElement
   {
     if ( integrationRulesArray.size() == 0 ) {
       integrationRulesArray.resize( 1 );
-      integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this );
+      if ( lobatto ) {
+        integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this );
+      } else {
+        integrationRulesArray[0] = std::make_unique<GaussIntegrationRule>( 1, this );
+      }
       integrationRulesArray[0]->SetUpPointsOnSquare( numberOfGaussPoints, _PlaneStrain );
     }
   }
