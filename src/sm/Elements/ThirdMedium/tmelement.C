@@ -291,7 +291,7 @@ class ThirdMediumQuad_q : public ThirdMediumElement
   {
     numberOfDofMans = 8;
     numberOfGaussPoints = 8;
-    this->computeGaussPoints();
+    //this->computeGaussPoints();
   }
 
   virtual void initializeFrom( InputRecord &ir ) override
@@ -364,7 +364,7 @@ class ThirdMediumQuad_l : public ThirdMediumElement
   {
     numberOfDofMans = 4;
     numberOfGaussPoints = 4;
-    this->computeGaussPoints();
+    //this->computeGaussPoints();
   }
 
   virtual void initializeFrom( InputRecord &ir ) override
