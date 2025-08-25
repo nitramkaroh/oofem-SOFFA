@@ -60,7 +60,7 @@ if (MSVC)
     # C4800 Conversion from int to bool performance warning (we should probably be using bool in most of these places though).
     # C4127 Conditional expression is constant: Most of these uses are intentional (debugging code etc.)
     # C4267 size_t to int conversion. Most of these are indices, but many places can be replaced by a for-each loop as well.
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W4 -wd4786 -wd4100 -wd4996 -wd4706 -wd4512 -wd4251 -wd4800")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W4 -wd4786 -wd4100 -wd4996 -wd4706 -wd4512 -wd4251 -wd4800 /MP")
 else ()
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC")
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -fPIC")
