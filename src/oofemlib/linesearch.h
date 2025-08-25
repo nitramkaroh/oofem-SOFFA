@@ -55,8 +55,9 @@ class TimeStep;
 
 enum LineSearchType {
     LST_Default = 1,
-    LST_Exact   = 2,
-    LST_Exact_Adaptive   = 3
+    LST_Quadratic = 2,
+    LST_Exact   = 3,
+    LST_Exact_Adaptive   = 4
 };
 
 /**
@@ -109,6 +110,21 @@ protected:
     void search(int istep, FloatArray &prod, FloatArray &eta, double amp, double maxeta, double mineta, int &status);
 };
 
+
+class OOFEM_EXPORT QuadraticLineSearchNM : public LineSearchNM
+{
+protected:
+
+public:
+    /// Constructor
+    QuadraticLineSearchNM( Domain *d, EngngModel *m );
+
+    ConvergedReason solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &RT, IntArray &eqnmask, TimeStep *tStep, SparseMtrx &k);
+    ConvergedReason solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &R, FloatArray *R0,
+        IntArray &eqnmask, double lambda, double &etaValue, LS_status &status, TimeStep *tStep, SparseMtrx &k ) override;
+
+    const char *giveClassName() const { return "QuadraticLineSearchNM"; }
+};
 
 
 class OOFEM_EXPORT ExactLineSearchNM : public LineSearchNM

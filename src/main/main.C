@@ -70,6 +70,11 @@
  #include "oofeggraphiccontext.h"
 #endif
 
+
+#ifdef __ENABLE_FP_EXCEPTIONS
+ #include <fenv.h>      // feenableexcept
+#endif
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -125,6 +130,10 @@ void exception_handler() {
 
 int main(int argc, char *argv[])
 {
+#ifdef __ENABLE_FP_EXCEPTIONS
+   // Trap invalid op, divide-by-zero, and overflow -> raises SIGFPE that GDB will catch
+  feenableexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW);
+#endif
     // Stack trace on uncaught exceptions;
     std::set_terminate( exception_handler );
 

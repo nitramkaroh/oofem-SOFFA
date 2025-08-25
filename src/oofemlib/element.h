@@ -1070,6 +1070,11 @@ public:
 #endif
 
     /**
+       Calculates safe load factor for the element based, e.g., on the positivity of Jacobian as proposed by discretization-aware load stepping method
+    */
+    virtual double computeSafeLoadFactor(TimeStep *tStep){return 1;}
+    
+    /**
      * @return Receivers globally unique number (label).
      */
     int giveLabel() const { return globalNumber; }

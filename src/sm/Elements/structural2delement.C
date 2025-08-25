@@ -39,7 +39,9 @@
 #include "gaussintegrationrule.h"
 #include "lobattoir.h"
 #include "mathfem.h"
-
+/*#include "structuralms.h"
+#include "tensor/tensor2.h"
+*/
 namespace oofem {
 Structural2DElement::Structural2DElement(int n, Domain *aDomain) :
     NLStructuralElement(n, aDomain),
@@ -549,7 +551,29 @@ PlaneStrainElement::computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatRe
 }
 
 
+double
+PlaneStrainElement :: computeSafeLoadFactor(TimeStep *tStep)
+{
+  /*
+  if(nlGeometry == 1) {
+    for ( auto &gp : * this->giveDefaultIntegrationRulePtr() ) {
+      StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveMaterial()->giveStatus(gp) );
+      FloatArrayF< 9 >vF(status->giveTempFVector() );
+      FloatArrayF< 9 >vFo(status->giveFVector() );
+      Tensor2_3d F(vF), Fo(vFo), dF;
+      dF(i_3, j_3) = F(i_3, j_3) - Fo(i_3, j_3);
+      auto [ J, cofF ] = dF.compute_determinant_and_cofactor();
+      auto [ Jo, cofFo ] = Fo.compute_determinant_and_cofactor();
+      return -Jo / (J + cofFo(i_3, j_3) * dF(i_3, j_3)); 
+    }
+  } else {
+    return 1;
+  }
+  */
+  return 1.;
 
+}
+  
 
 // Axisymmetry
 

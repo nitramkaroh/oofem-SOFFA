@@ -1022,6 +1022,9 @@ public:
     void assembleExtrapolatedForces(FloatArray &answer, TimeStep *tStep, CharType type, Domain *domain);
 
     void assemblePrescribedExtrapolatedForces(FloatArray &answer, TimeStep *tStep, CharType type, Domain *domain);
+
+    // This fuction computes the minimal safe load factor from all the elements
+    double computeElementSafeLoadFactor( TimeStep *tStep, Domain *domain);
     
 
     void assembleVectorFromContacts(FloatArray &answer, TimeStep *tStep, CharType type, ValueModeType mode,

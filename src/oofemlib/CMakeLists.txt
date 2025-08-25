@@ -126,6 +126,10 @@ if (USE_PARDISO_ORG)
   list (APPEND core_nm pardisoprojectorgsolver.C)
 endif ()
 
+if (USE_EIGEN)
+  list (APPEND core_nm eigensolver.C)
+  list (APPEND core_nm eigenmtrx.C)
+endif ()
 
 set (core_fields
     fieldmanager.C

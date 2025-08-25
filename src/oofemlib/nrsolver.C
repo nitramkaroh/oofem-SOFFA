@@ -315,7 +315,7 @@ NRSolver ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
     //
     // update solution
     //
-    if ( this->lsFlag && ( nite > 0 ) ) { // Why not nite == 0 ?
+    if ( this->lsFlag ) { // Why not nite == 0 ?
       // line search
       LineSearchNM ::LS_status LSstatus;
       double eta;
@@ -327,40 +327,40 @@ NRSolver ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
         ddX.times( this->constrainedNRalpha );
       }
       // this->giveConstrainedNRSolver()->solve(X, & ddX, this->forceErrVec, this->forceErrVecOld, status, tStep);
-    }
+    } else {
 
-    // Check for maximum LS step
-    /*        double alphaMax = this->giveMaximumLineSearchStep( ddX, tStep );
-    std::cout << alphaMax << std::endl;
+      // Check for maximum LS step
+      /*        double alphaMax = this->giveMaximumLineSearchStep( ddX, tStep );
+		std::cout << alphaMax << std::endl;
+		
+		if ( alphaMax < 1. && alphaMax > 0. ) {
+		ddX.times( 0.9 * alphaMax );
+		}
+      */
 
-    if ( alphaMax < 1. && alphaMax > 0. ) {
-      ddX.times( 0.9 * alphaMax );
-    }
-    */
 
+      /////////////////////////////////////////
 
-    /////////////////////////////////////////
-
-    double maxInc = 0.0;
-    for ( double inc : ddX ) {
-      if ( fabs( inc ) > maxInc ) {
-        maxInc = fabs( inc );
+      double maxInc = 0.0;
+      for ( double inc : ddX ) {
+	if ( fabs( inc ) > maxInc ) {
+	  maxInc = fabs( inc );
+	}
       }
-    }
 
-    if ( maxInc > maxIncAllowed ) {
-      if ( engngModel->giveProblemScale() == macroScale ) {
-        printf( "Restricting increment. maxInc: %e\n", maxInc );
+      if ( maxInc > maxIncAllowed ) {
+	if ( engngModel->giveProblemScale() == macroScale ) {
+	  printf( "Restricting increment. maxInc: %e\n", maxInc );
+	}
+	ddX.times( maxIncAllowed / maxInc );
       }
-      ddX.times( maxIncAllowed / maxInc );
+
+      /////////////////////////////////////////
+
+
+      X.add( ddX );
+      dX.add( ddX );
     }
-
-    /////////////////////////////////////////
-
-
-    X.add( ddX );
-    dX.add( ddX );
-
     if ( solutionDependentExternalForcesFlag ) {
       engngModel->updateComponent( tStep, ExternalRhs, domain );
       RT = R;
@@ -438,6 +438,9 @@ NRSolver ::giveLineSearchSolver()
     switch ( this->LsType ) {
     case LST_Default:
       linesearchSolver = std ::make_unique<LineSearchNM>( domain, engngModel );
+      break;
+    case LST_Quadratic:
+      linesearchSolver = std ::make_unique<QuadraticLineSearchNM>( domain, engngModel );
       break;
     case LST_Exact:
     case LST_Exact_Adaptive:

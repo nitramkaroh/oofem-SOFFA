@@ -135,6 +135,7 @@ option (USE_PETSC "Enable PETSc support (specify PETSC_DIR and/or PETSC_ARCH if 
 option (USE_SLEPC "Enable SLEPc support" OFF)
 option (USE_LAPACK "Use LAPACK" OFF)
 option (USE_SUPERLU_MT "Use SUPERLU_MT" OFF)
+OPTION (USE_EIGEN "Use EIGEN" OFF)
 # Other external libraries
 option (USE_TRIANGLE "Compile with Triangle bindings" OFF)
 option (USE_VTK "Enable VTK (for exporting binary VTU-files)" OFF)
@@ -158,15 +159,28 @@ if (USE_PARALLEL)
     set (USE_MPI ON)
 endif ()
 
+
 # Enable coverage testing
 if (CMAKE_COMPILER_IS_GNUCC)
     option(ENABLE_COVERAGE "Enable coverage reporting for gcc/clang" FALSE)
-
     if (ENABLE_COVERAGE)
         add_compile_options(--coverage -O0)
         list (APPEND EXT_LIBS --coverage)
-    endif()
+    endif ()
 endif ()
+
+
+# Enable coverage testing
+if (CMAKE_COMPILER_IS_GNUCC)
+    option(ENABLE_FP_EXCEPTIONS "Enable FP Exceptions for gcc/clang" FALSE)
+    if(ENABLE_FP_EXCEPTIONS)
+        include(CheckCXXCompilerFlag)
+    	check_cxx_compiler_flag("-fnon-call-exceptions" HAS_NON_CALL_EXC)
+	add_definitions (-D__ENABLE_FP_EXCEPTIONS)
+    endif ()
+endif ()
+
+
 
 #######################################################################
 ######################## Internal libraries ###########################
@@ -285,18 +299,11 @@ endif ()
 #######################################################################
 ######################## External libraries ###########################
 #######################################################################
-
-#if (USE_BOOST) 
-#    set (CMAKE_LIBRARY_DIR ${BOOST_DIR})
-#    find_package (BOOST REQUIRED)
-#    list (APPEND EXT_LIBS ${BOOST_LIBRARIES})
-#    if (BOOST_DIR)
-#    	include_directories ("${BOOST_DIR}")
-#    	list (APPEND MODULE_LIST "BOOST")
-#     endif ()
-# 
-#    add_definitions (-D__BOOST_MODULE)
-#endif ()
+if (USE_EIGEN)
+    add_definitions(-D_USE_EIGEN)
+    find_package(Eigen3 REQUIRED NO_MODULE)
+    link_libraries(Eigen3::Eigen)
+endif()
 
 if (USE_LAPACK)
     set (CMAKE_LIBRARY_DIR ${LAPACK_DIR})
@@ -812,6 +819,8 @@ if (USE_OOFEG)
     install(TARGETS oofeg DESTINATION bin)
     add_dependencies(oofeg version)
 endif ()
+
+
 
 if (BUILD_EXTRA_BENCHMARKS)
     find_package(benchmark REQUIRED)

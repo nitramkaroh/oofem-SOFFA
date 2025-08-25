@@ -82,7 +82,6 @@ LineSearchNM :: solve(FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &
 
     s0 = ( -1.0 ) * g.dotProduct(dr);
     if ( s0 >= 0.0 ) {
-        //printf ("\nLineSearchNM::solve starting inner product uphill, val=%e",s0);
         OOFEM_LOG_DEBUG("LS: product uphill, eta=%e\n", 1.0);
         r.add(dr);
         tStep->incrementStateCounter();        // update solution state counter
@@ -94,7 +93,6 @@ LineSearchNM :: solve(FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &
 
     // keep original total displacement r
     rb = r;
-
     eta.resize(this->max_iter + 1);
     prod.resize(this->max_iter + 1);
     // prepare starting product ratios and step lengths
@@ -195,7 +193,7 @@ LineSearchNM :: search(int istep, FloatArray &prod, FloatArray &eta, double amp,
             continue;
         }
 
-        if ( eta.at(i) >= etaneg ) {
+        if ( eta.at(i) > etaneg ) {
             continue;
         }
 
@@ -209,7 +207,7 @@ LineSearchNM :: search(int istep, FloatArray &prod, FloatArray &eta, double amp,
         // closest to ineg (but with smaller s-l)
         int ipos = 1;
         for ( int i = 1; i <= istep; i++ ) {
-            if ( prod.at(i) <= 0.0 ) {
+            if ( prod.at(i) < 0.0 ) {
                 continue;
             }
 
@@ -306,6 +304,77 @@ LineSearchNM :: initializeFrom(InputRecord &ir)
 ///////////////////////////////////////////////////////
 // ExactLineSearchNM
 ///////////////////////////////////////////////////////
+QuadraticLineSearchNM :: QuadraticLineSearchNM( Domain *d, EngngModel *m ) :
+    LineSearchNM( d, m )
+{
+
+}
+
+ConvergedReason
+QuadraticLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &RT, IntArray &eqnmask, TimeStep *tStep, SparseMtrx &k )
+{
+    double eta;
+    // Normalize the direction
+    auto rhs0 = RT - F ;
+    //    
+    auto rn = r; // keep r in case we modify it
+    r  = r + dr; // Initial moification of the solution
+    // updating F
+    engngModel->updateComponent( tStep, InternalRhs, domain );
+    auto rhs1 = RT - F;
+    //
+    auto etaElement = engngModel->computeElementSafeLoadFactor(tStep, domain);
+    //    
+    auto R0 = rhs0.dotProduct( dr );
+    auto R1 = rhs1.dotProduct( dr );
+    //
+    auto alpha = R0/R1;
+    if(!std::isnan(alpha)) {
+      if(fabs(1./alpha) > ls_tolerance ) {
+	if (alpha < 0) {
+	  eta = 0.5 * alpha + sqrt(0.5 * alpha * 0.5 * alpha - alpha);
+	} else {
+	  eta = 0.5 * alpha;
+	}
+	//
+	eta = std::min(eta, etaElement);
+      } else {
+	eta = std::min(1., etaElement);
+      }
+
+    } else {
+      eta = 0.1;//0.1;//1.e-10;
+      r = rn + eta * dr;
+      engngModel->updateComponent( tStep, InternalRhs, domain );
+    }
+   
+
+    //
+    
+    //    engngModel->updateComponent( tStep, NonLinearLhs, domain );
+    //
+    //r = rn;
+    OOFEM_LOG_INFO( "Line Search parameter Eta = %.7e\n", eta );
+    return CR_CONVERGED;
+}
+
+
+  ConvergedReason
+QuadraticLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &R, FloatArray *R0,
+    IntArray &eqnmask, double lambda, double &etaValue, LS_status &status, TimeStep *tStep, SparseMtrx &k )
+{
+    FloatArray RT( R );
+    RT.times(lambda);
+    if ( R0 ) RT += *R0;
+    return this->solve( r, dr, F, RT, eqnmask, tStep, k );
+}
+
+  
+
+  
+///////////////////////////////////////////////////////
+// ExactLineSearchNM
+///////////////////////////////////////////////////////
 ExactLineSearchNM ::ExactLineSearchNM( Domain *d, EngngModel *m ) :
     LineSearchNM( d, m )
 {
@@ -321,13 +390,13 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
 
     // do exact linesearch including delfation
     int p = 2;
-    double RHS, ResNormLS, RHSdefl, deta = 1e-6, alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
+    double RHS, RHSdefl, deta = 1e-6, alph_defl = 1., gamma, dx_normSq, kdefl;
     //double Eta     = min( deta, dr.computeNorm() ); // start guess
     double Eta     = dr.computeNorm(); // start guess
     FloatArray ddr = Eta * direction;
     r  = r + ddr; // Initial moification of the solution
 
-    for ( size_t niteLS = 0; niteLS < this->max_iter; niteLS++ ) { // inner Newton loop to find local minimum in the direction
+    for ( auto niteLS = 0; niteLS < this->max_iter; niteLS++ ) { // inner Newton loop to find local minimum in the direction
         engngModel->updateComponent( tStep, InternalRhs, domain );
         rhs = RT - F;
         RHS     = rhs.dotProduct( direction );

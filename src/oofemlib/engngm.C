@@ -1618,6 +1618,29 @@ EngngModel :: assemblePrescribedExtrapolatedForces(FloatArray &answer, TimeStep 
     this->timer.pauseTimer(EngngModelTimer :: EMTT_NetComputationalStepTimer);
 }
 
+
+
+double
+EngngModel :: computeElementSafeLoadFactor( TimeStep *tStep, Domain *domain)
+//
+// for each element in domain
+// and assembling every contribution to answer
+//
+{
+  /*
+    double safeLoadFactor = 1;
+    for ( int i = 1; i <= domain->giveNumberOfElements(); i++ ) {
+      auto sf = domain->giveElement(i)->computeSafeLoadFactor(tStep);
+      safeLoadFactor = std::min(safeLoadFactor, sf);
+    }
+    return safeLoadFactor;
+  */
+  return 1;
+}
+
+
+
+
 void
 EngngModel :: assembleVectorFromContacts(FloatArray &answer, TimeStep *tStep, CharType type, ValueModeType mode,
                                     const UnknownNumberingScheme &s, Domain *domain, FloatArray *eNorms)
