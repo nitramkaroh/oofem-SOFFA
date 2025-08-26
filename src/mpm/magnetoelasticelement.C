@@ -32,6 +32,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#pragma once
 
 #include "mpm.h"
 #include "termlibrary4.h"
@@ -135,7 +136,12 @@ class MagnetoElasticElement : public MPElement
       answer.resize( udofs + phidofs, udofs + phidofs );
       answer.zero();
       this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_Term( getU(), getU(), getPhi() ), ir, tStep );
-    } else if ( type == MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad ) {
+    } else if ( type == MagnetoElasticity_GradGrad_Fbar_dFluxdGrad ) {
+      int udofs = this->giveNumberOfUDofs();
+      answer.resize( udofs, udofs );
+      answer.zero();
+      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_FbarTerm( getU(), getU() ), ir, tStep );
+    } else if ( type == MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad || type == MagnetoElasticity_GradGrad_FirstSecondGradient_dFluxdGrad ) {
       answer.resize(this->giveNumberOfUDofs(),this->giveNumberOfUDofs());
     } else {
       OOFEM_ERROR( "Unknown characteristic matrix type" );
@@ -149,7 +155,11 @@ class MagnetoElasticElement : public MPElement
       answer.resize( this->giveNumberOfUDofs() + this->giveNumberOfPhiDofs() );
       answer.zero();
       this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_Term( getU(), getU(), getPhi() ), ir, tStep );
-    } else if ( type == MagnetoElasticity_GradGrad_SecondGradient_Flux ) {
+    } else if ( type == MagnetoElasticity_GradGrad_Fbar_Flux ) {
+      answer.resize( this->giveNumberOfUDofs() );
+      answer.zero();
+      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_FbarTerm( getU(), getU() ), ir, tStep );
+    } else if ( type == MagnetoElasticity_GradGrad_SecondGradient_Flux || type == MagnetoElasticity_GradGrad_FirstSecondGradient_Flux ) {
       answer.resize( this->giveNumberOfUDofs() );
     } else if ( type == ExternalForcesVector ) {
       ;
@@ -243,16 +253,11 @@ class MagnetoElasticQuad_qq : public MagnetoElasticElement
       answer.resize( udofs, udofs );
       answer.zero();
       this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
-    } else if ( type == MagnetoElasticity_GradGrad_JacobianGradient_dFluxdGrad ) {
+    } else if ( type == MagnetoElasticity_GradGrad_FirstSecondGradient_dFluxdGrad ) {
       int udofs = this->giveNumberOfUDofs();
       answer.resize( udofs, udofs );
       answer.zero();
-      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_JacobianGradientTerm( getU(), getU() ), ir, tStep );
-    } else if ( type == MagnetoElasticity_GradGrad_RotationGradient_dFluxdGrad ) {
-      int udofs = this->giveNumberOfUDofs();
-      answer.resize( udofs, udofs );
-      answer.zero();
-      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_RotationGradientTerm( getU(), getU() ), ir, tStep );
+      this->integrateTerm_dw( answer, MagnetoElasticity_GradGrad_FirstSecondGradientTerm( getU(), getU() ), ir, tStep );
     } else {
       MagnetoElasticElement::giveCharacteristicMatrix(answer, type, tStep);
     }
@@ -265,16 +270,11 @@ class MagnetoElasticQuad_qq : public MagnetoElasticElement
       answer.resize( this->giveNumberOfUDofs() );
       answer.zero();
       this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
-    } else if ( type == MagnetoElasticity_GradGrad_JacobianGradient_Flux ) {
+    } else if ( type == MagnetoElasticity_GradGrad_FirstSecondGradient_Flux ) {
       answer.resize( this->giveNumberOfUDofs() );
       answer.zero();
-      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_JacobianGradientTerm( getU(), getU() ), ir, tStep );
-    } else if ( type == MagnetoElasticity_GradGrad_RotationGradient_Flux ) {
-      answer.resize( this->giveNumberOfUDofs() );
-      answer.zero();
-      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_RotationGradientTerm( getU(), getU() ), ir, tStep );
-    } else
-    {
+      this->integrateTerm_c( answer, MagnetoElasticity_GradGrad_FirstSecondGradientTerm( getU(), getU() ), ir, tStep );
+    } else {
       MagnetoElasticElement::giveCharacteristicVector(answer,type,mode,tStep);
     }
   }

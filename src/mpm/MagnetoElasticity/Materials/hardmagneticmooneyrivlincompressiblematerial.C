@@ -316,6 +316,8 @@ void HardMagneticMooneyRivlinCompressibleMaterial::initializeFrom( InputRecord &
   IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradFGradF, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaGradFGradF );
   IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradJGradJ, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaGradJGradJ );
   IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradRGradR, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaGradRGradR );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaFbar, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaFbar );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbar, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaJbar );
 
   std::string pullBackTypeString; // default
   IR_GIVE_OPTIONAL_FIELD( ir, pullBackTypeString, _IFT_HardMagneticMooneyRivlinCompressibleMaterial_PullBackType );
@@ -441,6 +443,95 @@ HardMagneticMooneyRivlinCompressibleMaterial :: give_SecondGradient_Constitutive
 {
   return kappaGradFGradF;
 }
+
+////////////////////////FIRST AND SECOND GRADIENTS TOGETHER////////////////////////////
+
+std::tuple<FloatArrayF<5>, FloatArrayF<8> >
+HardMagneticMooneyRivlinCompressibleMaterial::give_FirstSecondGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep )
+{
+  FloatArrayF<5> vP_ans;
+  FloatArrayF<8> vT_ans;
+
+  if ( kappaGradJGradJ != 0.0 ) {
+    auto [vP_gradJ, vT_gradJ] = this->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
+    vP_ans += vP_gradJ;
+    vT_ans += vT_gradJ;
+  }
+  if ( kappaGradRGradR != 0.0 ) {
+    auto [vP_gradR, vT_gradR] = this->give_RotationGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
+    vP_ans += vP_gradR;
+    vT_ans += vT_gradR;
+  }
+
+  return std::make_tuple( vP_ans, vT_ans );
+}
+
+std::tuple<FloatArrayF<9>, FloatArrayF<27> >
+HardMagneticMooneyRivlinCompressibleMaterial::give_FirstSecondGradient_FirstPKStressVector_SecondOrderStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep )
+{
+  FloatArrayF<9> vP_ans;
+  FloatArrayF<27> vT_ans;
+
+  if ( kappaGradJGradJ != 0.0 ) {
+    auto [vP_gradJ, vT_gradJ] = this->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_3d( vF, vGradF, gp, tStep );
+    vP_ans += vP_gradJ;
+    vT_ans += vT_gradJ;
+  }
+  if ( kappaGradRGradR != 0.0 ) {
+    OOFEM_ERROR( "gradRgradR regularization unsupported outside of Plane Strain formulations." );
+  }
+
+  return std::make_tuple( vP_ans, vT_ans );
+}
+
+std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 27>, FloatMatrixF<27, 9>, FloatMatrixF<27, 27> >
+HardMagneticMooneyRivlinCompressibleMaterial::give_FirstSecondGradient_ConstitutiveMatrices_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  FloatMatrixF<9, 9> vdPdF_ans;
+  FloatMatrixF<9, 27> vdPdGradF_ans;
+  FloatMatrixF<27, 9> vdTdF_ans;
+  FloatMatrixF<27, 27> vdTdGradF_ans;
+
+  if ( kappaGradJGradJ != 0.0 ) {
+    auto [vdPdF_gradJ, vdPdGradF_gradJ, vdTdF_gradJ, vdTdGradF_gradJ] = this->give_JacobianGradient_ConstitutiveMatrices_3d( mode, gp, tStep );
+    vdPdF_ans += vdPdF_gradJ;
+    vdPdGradF_ans += vdPdGradF_gradJ;
+    vdTdF_ans += vdTdF_gradJ;
+    vdTdGradF_ans += vdTdGradF_gradJ;
+  }
+  if ( kappaGradRGradR != 0.0 ) {
+    OOFEM_ERROR( "gradRgradR regularization unsupported outside of Plane Strain formulations." );
+  }
+
+  return std::make_tuple( vdPdF_ans, vdPdGradF_ans, vdTdF_ans, vdTdGradF_ans );
+}
+
+std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> >
+HardMagneticMooneyRivlinCompressibleMaterial::give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  FloatMatrixF<5, 5> vdPdF_ans;
+  FloatMatrixF<5, 8> vdPdGradF_ans;
+  FloatMatrixF<8, 5> vdTdF_ans;
+  FloatMatrixF<8, 8> vdTdGradF_ans;
+
+  if ( kappaGradJGradJ != 0.0 ) {
+    auto [vdPdF_gradJ, vdPdGradF_gradJ, vdTdF_gradJ, vdTdGradF_gradJ] = this->give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( mode, gp, tStep );
+    vdPdF_ans += vdPdF_gradJ;
+    vdPdGradF_ans += vdPdGradF_gradJ;
+    vdTdF_ans += vdTdF_gradJ;
+    vdTdGradF_ans += vdTdGradF_gradJ;
+  }
+  if ( kappaGradRGradR != 0.0 ) {
+    auto [vdPdF_gradR, vdPdGradF_gradR, vdTdF_gradR, vdTdGradF_gradR] = this->give_RotationGradient_ConstitutiveMatrices_PlaneStrain( mode, gp, tStep );
+    vdPdF_ans += vdPdF_gradR;
+    vdPdGradF_ans += vdPdGradF_gradR;
+    vdTdF_ans += vdTdF_gradR;
+    vdTdGradF_ans += vdTdGradF_gradR;
+  }
+
+  return std::make_tuple( vdPdF_ans, vdPdGradF_ans, vdTdF_ans, vdTdGradF_ans );
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////// JacobianGradient /////////////////////////////////////////////////
 
@@ -724,6 +815,88 @@ Tensor6_3d HardMagneticMooneyRivlinCompressibleMaterial::compute_Z_fraction_thir
   return d3ZdFdFdF;
 }
 
+
+////////////////////////FBAR////////////////////////////
+
+std::tuple<FloatArrayF<5>, FloatArrayF<5> >
+HardMagneticMooneyRivlinCompressibleMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<5> &vFbar, GaussPoint *gp, TimeStep *tStep )
+{
+  // these elements should give all Tensor3 components without the third dimension in them
+  //  according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
+  auto [vP, vPbar] = give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( assemble<9>( vF, { 0, 1, 2, 5, 8 } ), assemble<9>( vFbar, { 0, 1, 2, 5, 8 } ), gp, tStep );
+  //
+  return std::make_tuple( vP[{ 0, 1, 2, 5, 8 }], vPbar[{ 0, 1, 2, 5, 8 }] );
+}
+
+
+std::tuple<FloatArrayF<9>, FloatArrayF<9> >
+HardMagneticMooneyRivlinCompressibleMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<9> &vFbar, GaussPoint *gp, TimeStep *tStep )
+{
+  Tensor2_3d F( vF ), Fbar( vFbar );
+
+  Tensor2_3d P, Pbar;
+
+  auto [J, cofF] = F.compute_determinant_and_cofactor();
+  auto [Jbar, cofFbar] = Fbar.compute_determinant_and_cofactor();
+
+  if ( kappaJbar != 0.0 ) {
+    P( r_3, s_3 ) += kappaJbar * ( J - Jbar ) * cofF( r_3, s_3 );
+    Pbar( r_3, s_3 ) += -kappaJbar * ( J - Jbar ) * cofFbar( r_3, s_3 );
+  }
+  if ( kappaFbar != 0.0 ) {
+    P( r_3, s_3 ) += kappaFbar * ( F( r_3, s_3 ) - Fbar( r_3, s_3 ) );
+    Pbar( r_3, s_3 ) += -kappaFbar * ( F( r_3, s_3 ) - Fbar( r_3, s_3 ) );
+  }
+  // save gradients
+  MagnetoElasticMaterialStatus *status = static_cast<MagnetoElasticMaterialStatus *>( this->giveStatus( gp ) );
+  status->letTempFVectorBe( vF );
+  status->letTempFbarVectorBe( vFbar );
+
+  return std::make_tuple( P.to_voigt_form() , Pbar.to_voigt_form() );
+}
+
+std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9> >
+HardMagneticMooneyRivlinCompressibleMaterial ::give_Fbar_ConstitutiveMatrices_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  // load F and GradF
+  MagnetoElasticMaterialStatus *status = static_cast<MagnetoElasticMaterialStatus *>( this->giveStatus( gp ) );
+  FloatArrayF<9> vF = status->giveTempFVector();
+  FloatArrayF<9> vFbar = status->giveTempFbarVector();
+
+  Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. ), F( vF ), Fbar( vFbar );
+
+  Tensor4_3d dPdF, dPdFbar, dPbardF, dPbardFbar;
+
+  auto [J, cofF] = F.compute_determinant_and_cofactor();
+  auto [Jbar, cofFbar] = Fbar.compute_determinant_and_cofactor();
+  auto Fcross = F.compute_tensor_cross_product();
+  auto Fbarcross = Fbar.compute_tensor_cross_product();
+
+  if ( kappaJbar != 0.0 ) {
+    dPdF( r_3, s_3, u_3, v_3 ) += kappaJbar * ( cofF( u_3, v_3 ) * cofF( r_3, s_3 ) + ( J - Jbar ) * Fcross( r_3, s_3, u_3, v_3 ) );
+    dPdFbar( r_3, s_3, u_3, v_3 ) += -kappaJbar * cofFbar( u_3, v_3 ) * cofF( r_3, s_3 );
+    dPbardF( r_3, s_3, u_3, v_3 ) += -kappaJbar * cofF( u_3, v_3 ) * cofFbar( r_3, s_3 );
+    dPbardFbar( r_3, s_3, u_3, v_3 ) += kappaJbar * ( cofFbar( u_3, v_3 ) * cofFbar( r_3, s_3 ) - ( J - Jbar ) * Fbarcross( r_3, s_3, u_3, v_3 ) );
+  }
+  if ( kappaFbar != 0.0 ) {
+    dPdF( r_3, s_3, u_3, v_3 ) += kappaFbar * delta( r_3, u_3 ) * delta( s_3, v_3 );
+    dPdFbar( r_3, s_3, u_3, v_3 ) += -kappaFbar * delta( r_3, u_3 ) * delta( s_3, v_3 );
+    dPbardF( r_3, s_3, u_3, v_3 ) += -kappaFbar * delta( r_3, u_3 ) * delta( s_3, v_3 );
+    dPbardFbar( r_3, s_3, u_3, v_3 ) += kappaFbar * delta( r_3, u_3 ) * delta( s_3, v_3 );
+  }
+  return std::make_tuple( dPdF.to_voigt_form(), dPdFbar.to_voigt_form(), dPbardF.to_voigt_form(), dPbardFbar.to_voigt_form() );
+}
+
+std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5> >
+HardMagneticMooneyRivlinCompressibleMaterial ::give_Fbar_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  auto [vdPdF_3d, vdPdFbar_3d, vdPbardF_3d, vdPbardFbar_3d] = this->give_Fbar_ConstitutiveMatrices_3d( mode, gp, tStep );
+  auto vdPdF_red = vdPdF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  auto vdPdFbar_red = vdPdFbar_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  auto vdPbardF_red = vdPbardF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  auto vdPbardFbar_red = vdPbardFbar_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
+  return std::make_tuple( vdPdF_red, vdPdFbar_red, vdPbardF_red, vdPbardFbar_red );
+}
 
 
 

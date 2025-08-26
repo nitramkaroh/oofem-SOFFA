@@ -103,11 +103,11 @@ protected:
  * @brief 
  *
  */
-class MagnetoElasticity_GradGrad_JacobianGradientTerm : public Term
+class MagnetoElasticity_GradGrad_FirstSecondGradientTerm : public Term
 {
 
   public:
-  MagnetoElasticity_GradGrad_JacobianGradientTerm( const Variable &testField, const Variable &displacementField );
+  MagnetoElasticity_GradGrad_FirstSecondGradientTerm( const Variable &testField, const Variable &displacementField );
   /**
    * @brief Evaluates Internal forces vector, i.e. $B^TP(F, H)$
    *
@@ -126,17 +126,16 @@ class MagnetoElasticity_GradGrad_JacobianGradientTerm : public Term
   void computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
   void computeGmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
 };
-
 
 /**
- * @brief
+ * @brief Evaluates term dependent on F and Fbar (= F at cell center)
  *
  */
-class MagnetoElasticity_GradGrad_RotationGradientTerm : public Term
+class MagnetoElasticity_GradGrad_FbarTerm : public Term
 {
-
+  protected:
   public:
-  MagnetoElasticity_GradGrad_RotationGradientTerm( const Variable &testField, const Variable &displacementField);
+  MagnetoElasticity_GradGrad_FbarTerm( const Variable &testField, const Variable &displacementField );
   /**
    * @brief Evaluates Internal forces vector, i.e. $B^TP(F, H)$
    *
@@ -149,16 +148,11 @@ class MagnetoElasticity_GradGrad_RotationGradientTerm : public Term
   void getDimensions( Element &cell ) const override { ; }
   void initializeCell( Element &cell ) const override { ; }
   int computeGradientField( FloatArray &grad, FloatMatrix &B, MPElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const;
-  int computeSecondGradientField( FloatArray &grad, FloatMatrix &B, MPElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const;
-
+  
   protected:
   void computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
-  void computeGmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
+
 };
-
-
-  
-
 
 } // end namespace oofem
 #endif // termlibrary4_h

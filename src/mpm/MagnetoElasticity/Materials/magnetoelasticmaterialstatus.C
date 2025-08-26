@@ -38,15 +38,18 @@
 
 namespace oofem {
 MagnetoElasticMaterialStatus :: MagnetoElasticMaterialStatus(GaussPoint *g) :
-  MaterialStatus(g), FVector(), tempFVector(), HVector(), tempHVector(), gradFVector(), tempGradFVector()
+  MaterialStatus(g), FVector(), tempFVector(), HVector(), tempHVector(), gradFVector(), tempGradFVector(), FbarVector(), tempFbarVector()
 {
     PVector.resize(9);
     FVector.resize(9);
     FVector.at(1) = FVector.at(2) = FVector.at(3) = 1.;
     gradFVector.resize(27);
+    FbarVector.resize( 9 );
+    FbarVector.at( 1 ) = FbarVector.at( 2 ) = FbarVector.at( 3 ) = 1.;
     tempPVector = PVector;
     tempFVector = FVector;
     tempGradFVector = gradFVector;
+    tempFbarVector = FbarVector;
     
     HVector.resize(3);
     BVector.resize(3);
@@ -58,44 +61,6 @@ MagnetoElasticMaterialStatus :: MagnetoElasticMaterialStatus(GaussPoint *g) :
 
 }
 
-  /*
-void StructuralMaterialStatus :: printOutputAt(FILE *File, TimeStep *tStep) const
-// Prints the strains and stresses on the data file.
-{
-    FloatArray helpVec;
-
-    MaterialStatus :: printOutputAt(File, tStep);
-    NLStructuralElement * el = static_cast< NLStructuralElement * >( gp->giveElement());
-    if ( el->giveGeometryMode() == 1) {
-      fprintf(File, "  F ");
-      StructuralMaterial :: giveFullVectorFormF( helpVec, FVector, gp->giveMaterialMode() );
-      for ( auto &var : helpVec ) {
-        fprintf( File, " %+.4e", var );
-      }
-
-      fprintf(File, "\n  P");
-      StructuralMaterial :: giveFullVectorForm( helpVec, PVector, gp->giveMaterialMode() );
-      for ( auto &var : helpVec ) {
-        fprintf( File, " %+.4e", var );
-      }
-    } else {
-      fprintf(File, "  strains ");
-      StructuralMaterial :: giveFullSymVectorForm( helpVec, strainVector, gp->giveMaterialMode() );
-      for ( auto &var : helpVec ) {
-        fprintf( File, " %+.4e", var );
-      }
-      
-      fprintf(File, "\n              stresses");
-      StructuralMaterial :: giveFullSymVectorForm( helpVec, stressVector, gp->giveMaterialMode() );
-      
-      for ( auto &var : helpVec ) {
-        fprintf( File, " %+.4e", var );
-      }
-    }
-    fprintf(File, "\n");
-}
-  */
-
 void MagnetoElasticMaterialStatus :: updateYourself(TimeStep *tStep)
 // Performs end-of-step updates.
 {
@@ -104,6 +69,7 @@ void MagnetoElasticMaterialStatus :: updateYourself(TimeStep *tStep)
     PVector = tempPVector;
     FVector = tempFVector;
     gradFVector = tempGradFVector;
+    FbarVector = tempFbarVector;
     HVector = tempHVector;
     BVector = tempBVector;
 }
@@ -119,6 +85,7 @@ void MagnetoElasticMaterialStatus :: initTempStatus()
     tempPVector = PVector;
     tempFVector = FVector;
     tempGradFVector = gradFVector;
+    tempFbarVector = FbarVector;
 
     tempHVector = HVector;
     tempBVector = BVector;

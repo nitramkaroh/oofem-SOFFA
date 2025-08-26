@@ -743,56 +743,55 @@ MELhsAssembler :: MELhsAssembler(double alpha, double deltaT) :
 
 void MELhsAssembler :: matrixFromElement(FloatMatrix &answer, Element &el, TimeStep *tStep) const
 {
-  FloatMatrix contrib, gradContrib, jacobianGradContrib, rotationGradContrib;
-    IntArray loc, locu, locphi;
-    MPElement *e = dynamic_cast<MPElement*>(&el);
-    int ndofs = e->giveNumberOfDofs();
-    answer.resize(ndofs, ndofs);
-    answer.zero();
-    
-    e->getLocalCodeNumbers (locu, Variable::VariableQuantity::Displacement);
-    loc = locu;
-    e->getLocalCodeNumbers (locphi, Variable::VariableQuantity::MagneticPotential);
-    loc.followedBy(locphi);
-    //
-    e->giveCharacteristicMatrix(contrib, MagnetoElasticity_GradGrad_dFluxdGrad, tStep);
-    answer.assemble(contrib, loc, loc);
-    //
-    e->giveCharacteristicMatrix(gradContrib, MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad, tStep);
-    answer.assemble(gradContrib, locu, locu);
-    //
-    e->giveCharacteristicMatrix( jacobianGradContrib, MagnetoElasticity_GradGrad_JacobianGradient_dFluxdGrad, tStep );
-    answer.assemble( jacobianGradContrib, locu, locu );
-    //
-    e->giveCharacteristicMatrix( rotationGradContrib, MagnetoElasticity_GradGrad_RotationGradient_dFluxdGrad, tStep );
-    answer.assemble( rotationGradContrib, locu, locu );
-    
+  FloatMatrix contrib, gradContrib, firstSecondGradContrib, fbarContrib;
+  IntArray loc, locu, locphi;
+  MPElement *e = dynamic_cast<MPElement *>( &el );
+  int ndofs = e->giveNumberOfDofs();
+  answer.resize( ndofs, ndofs );
+  answer.zero();
+
+  e->getLocalCodeNumbers( locu, Variable::VariableQuantity::Displacement );
+  loc = locu;
+  e->getLocalCodeNumbers( locphi, Variable::VariableQuantity::MagneticPotential );
+  loc.followedBy( locphi );
+  //
+  e->giveCharacteristicMatrix( contrib, MagnetoElasticity_GradGrad_dFluxdGrad, tStep );
+  answer.assemble( contrib, loc, loc );
+  //
+  e->giveCharacteristicMatrix( gradContrib, MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad, tStep );
+  answer.assemble( gradContrib, locu, locu );
+  //
+  e->giveCharacteristicMatrix( firstSecondGradContrib, MagnetoElasticity_GradGrad_FirstSecondGradient_dFluxdGrad, tStep );
+  answer.assemble( firstSecondGradContrib, locu, locu );
+  //
+  e->giveCharacteristicMatrix( fbarContrib, MagnetoElasticity_GradGrad_Fbar_dFluxdGrad, tStep );
+  answer.assemble( fbarContrib, locu, locu );
 }
   
 
 void MEResidualAssembler :: vectorFromElement(FloatArray &vec, Element &element, TimeStep *tStep, ValueModeType mode) const
 {
-  FloatArray contrib, gradContrib, jacobianGradContrib, rotationGradContrib;
+  FloatArray contrib, gradContrib, firstSecondGradContrib, fbarContrib;
   IntArray loc, locu, locphi;
-  MPElement *e = dynamic_cast<MPElement*>(&element);
+  MPElement *e = dynamic_cast<MPElement *>( &element );
   int ndofs = e->giveNumberOfDofs();
-  vec.resize(ndofs);
+  vec.resize( ndofs );
   vec.zero();
   //
-  e->getLocalCodeNumbers (loc, Variable::VariableQuantity::Displacement);
+  e->getLocalCodeNumbers( loc, Variable::VariableQuantity::Displacement );
   locu = loc;
-  e->getLocalCodeNumbers (locphi, Variable::VariableQuantity::MagneticPotential);
-  loc.followedBy(locphi);
+  e->getLocalCodeNumbers( locphi, Variable::VariableQuantity::MagneticPotential );
+  loc.followedBy( locphi );
   //
-  e->giveCharacteristicVector(contrib, MagnetoElasticity_GradGrad_Flux, mode, tStep);
-  e->giveCharacteristicVector(gradContrib, MagnetoElasticity_GradGrad_SecondGradient_Flux, mode, tStep);
-  e->giveCharacteristicVector(jacobianGradContrib, MagnetoElasticity_GradGrad_JacobianGradient_Flux, mode, tStep);
-  e->giveCharacteristicVector(rotationGradContrib, MagnetoElasticity_GradGrad_RotationGradient_Flux, mode, tStep);
+  e->giveCharacteristicVector( contrib, MagnetoElasticity_GradGrad_Flux, mode, tStep );
+  e->giveCharacteristicVector( gradContrib, MagnetoElasticity_GradGrad_SecondGradient_Flux, mode, tStep );
+  e->giveCharacteristicVector( firstSecondGradContrib, MagnetoElasticity_GradGrad_FirstSecondGradient_Flux, mode, tStep );
+  e->giveCharacteristicVector( fbarContrib, MagnetoElasticity_GradGrad_Fbar_Flux, mode, tStep );
   //
-  vec.assemble(contrib, loc);
-  vec.assemble(gradContrib, locu);   
-  vec.assemble(jacobianGradContrib, locu);   
-  vec.assemble(rotationGradContrib, locu);   
+  vec.assemble( contrib, loc );
+  vec.assemble( gradContrib, locu );
+  vec.assemble( firstSecondGradContrib, locu );
+  vec.assemble( fbarContrib, locu );
 }
 
 

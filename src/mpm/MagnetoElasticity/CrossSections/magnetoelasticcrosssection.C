@@ -231,14 +231,14 @@ MagnetoElasticCrossSection :: give_SecondGradient_ConstitutiveMatrix_PlaneStrain
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 std::tuple<FloatArray, FloatArray>
-MagnetoElasticCrossSection::give_JacobianGradient_FluxVectors( const FloatArray &vF, const FloatArray &vGradF, GaussPoint *gp, TimeStep *tStep ) const
+MagnetoElasticCrossSection::give_FirstSecondGradient_FluxVectors( const FloatArray &vF, const FloatArray &vGradF, GaussPoint *gp, TimeStep *tStep ) const
 {
   MaterialMode mode = gp->giveMaterialMode();
 
   if ( mode == _3dMat ) {
-    return this->give_JacobianGradient_FluxVectors_3d( vF, vGradF, gp, tStep );
+    return this->give_FirstSecondGradient_FluxVectors_3d( vF, vGradF, gp, tStep );
   } else if ( mode == _PlaneStrain ) {
-    return this->give_JacobianGradient_FluxVectors_PlaneStrain( vF, vGradF, gp, tStep );
+    return this->give_FirstSecondGradient_FluxVectors_PlaneStrain( vF, vGradF, gp, tStep );
   } else {
     OOFEM_ERROR( "unsupported mode" );
   }
@@ -246,28 +246,28 @@ MagnetoElasticCrossSection::give_JacobianGradient_FluxVectors( const FloatArray 
 
 
 std::tuple<FloatArrayF<9>, FloatArrayF<27>>
-MagnetoElasticCrossSection ::give_JacobianGradient_FluxVectors_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep ) const
+MagnetoElasticCrossSection ::give_FirstSecondGradient_FluxVectors_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep ) const
 {
   auto mat = dynamic_cast<MagnetoElasticMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_3d( vF, vGradF, gp, tStep );
+  return mat->give_FirstSecondGradient_FirstPKStressVector_SecondOrderStressVector_3d( vF, vGradF, gp, tStep );
 }
 
 
 std::tuple<FloatArrayF<5>, FloatArrayF<8> >
-MagnetoElasticCrossSection ::give_JacobianGradient_FluxVectors_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep ) const
+MagnetoElasticCrossSection ::give_FirstSecondGradient_FluxVectors_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep ) const
 {
   auto mat = dynamic_cast<MagnetoElasticMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
+  return mat->give_FirstSecondGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
 }
 
 
-std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> MagnetoElasticCrossSection::give_JacobianGradient_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep )
+std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> MagnetoElasticCrossSection::give_FirstSecondGradient_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep )
 {
   MaterialMode mode = gp->giveMaterialMode();
   if ( mode == _3dMat ) {
-    return this->give_JacobianGradient_ConstitutiveMatrices_3d( rmode, gp, tStep );
+    return this->give_FirstSecondGradient_ConstitutiveMatrices_3d( rmode, gp, tStep );
   } else if ( mode == _PlaneStrain ) {
-    return this->give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( rmode, gp, tStep );
+    return this->give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( rmode, gp, tStep );
   } else {
     OOFEM_ERROR( "unsupported mode" );
 
@@ -276,59 +276,80 @@ std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> MagnetoElasticCro
 
 
 std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 27>, FloatMatrixF<27, 9>, FloatMatrixF<27, 27> >
-MagnetoElasticCrossSection ::give_JacobianGradient_ConstitutiveMatrices_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
+MagnetoElasticCrossSection ::give_FirstSecondGradient_ConstitutiveMatrices_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
 {
   auto mat = dynamic_cast<MagnetoElasticMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_JacobianGradient_ConstitutiveMatrices_3d ( rMode, gp, tStep );
+  return mat->give_FirstSecondGradient_ConstitutiveMatrices_3d( rMode, gp, tStep );
 }
 
 
 std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> >
-MagnetoElasticCrossSection ::give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
+MagnetoElasticCrossSection ::give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
 {
   auto mat = dynamic_cast<MagnetoElasticMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( rMode, gp, tStep );
+  return mat->give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( rMode, gp, tStep );
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////FBAR//////////////////////////////////////////////////////////////
 std::tuple<FloatArray, FloatArray>
-MagnetoElasticCrossSection::give_RotationGradient_FluxVectors( const FloatArray &vF, const FloatArray &vGradF, GaussPoint *gp, TimeStep *tStep ) const
+MagnetoElasticCrossSection::give_Fbar_FluxVectors( const FloatArray &vF, const FloatArray &vFbar, GaussPoint *gp, TimeStep *tStep ) const
 {
   MaterialMode mode = gp->giveMaterialMode();
 
- if ( mode == _PlaneStrain ) {
-    return this->give_RotationGradient_FluxVectors_PlaneStrain( vF, vGradF, gp, tStep );
-  } else {
-    OOFEM_ERROR( "unsupported mode" );
-  }
-}
-
-std::tuple<FloatArrayF<5>, FloatArrayF<8> >
-MagnetoElasticCrossSection ::give_RotationGradient_FluxVectors_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep ) const
-{
-  auto mat = dynamic_cast<MagnetoElasticMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_RotationGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
-}
-
-
-std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> MagnetoElasticCrossSection::give_RotationGradient_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep )
-{
-  MaterialMode mode = gp->giveMaterialMode();
-  if ( mode == _PlaneStrain ) {
-    return this->give_RotationGradient_ConstitutiveMatrices_PlaneStrain( rmode, gp, tStep );
+  if ( mode == _3dMat ) {
+    return this->give_Fbar_FluxVectors_3d( vF, vFbar, gp, tStep );
+  } else if ( mode == _PlaneStrain ) {
+    return this->give_Fbar_FluxVectors_PlaneStrain( vF, vFbar, gp, tStep );
   } else {
     OOFEM_ERROR( "unsupported mode" );
   }
 }
 
 
-std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> >
-MagnetoElasticCrossSection ::give_RotationGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
+std::tuple<FloatArrayF<9>, FloatArrayF<9> >
+MagnetoElasticCrossSection ::give_Fbar_FluxVectors_3d( const FloatArrayF<9> &vF, const FloatArrayF<9> &vFbar, GaussPoint *gp, TimeStep *tStep ) const
 {
   auto mat = dynamic_cast<MagnetoElasticMaterial *>( this->giveMaterial( gp ) );
-  return mat->give_RotationGradient_ConstitutiveMatrices_PlaneStrain( rMode, gp, tStep );
+  return mat->give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( vF, vFbar, gp, tStep );
 }
 
+
+std::tuple<FloatArrayF<5>, FloatArrayF<5> >
+MagnetoElasticCrossSection ::give_Fbar_FluxVectors_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<5> &vFbar, GaussPoint *gp, TimeStep *tStep ) const
+{
+  auto mat = dynamic_cast<MagnetoElasticMaterial *>( this->giveMaterial( gp ) );
+  return mat->give_Fbar_FirstPKStressVector_FPKbarStressVector_PlaneStrain( vF, vFbar, gp, tStep );
+}
+
+
+std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix>
+MagnetoElasticCrossSection ::give_Fbar_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep )
+{
+  MaterialMode mode = gp->giveMaterialMode();
+  if ( mode == _3dMat ) {
+    return this->give_Fbar_ConstitutiveMatrices_3d( rmode, gp, tStep );
+  } else if ( mode == _PlaneStrain ) {
+    return this->give_Fbar_ConstitutiveMatrices_PlaneStrain( rmode, gp, tStep );
+  } else {
+    OOFEM_ERROR( "unsupported mode" );
+  }
+}
+
+
+std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9> >
+MagnetoElasticCrossSection ::give_Fbar_ConstitutiveMatrices_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
+{
+  auto mat = dynamic_cast<MagnetoElasticMaterial *>( this->giveMaterial( gp ) );
+  return mat->give_Fbar_ConstitutiveMatrices_3d( rMode, gp, tStep );
+}
+
+
+std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5> >
+MagnetoElasticCrossSection ::give_Fbar_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
+{
+  auto mat = dynamic_cast<MagnetoElasticMaterial *>( this->giveMaterial( gp ) );
+  return mat->give_Fbar_ConstitutiveMatrices_PlaneStrain( rMode, gp, tStep );
+}
 
 
 

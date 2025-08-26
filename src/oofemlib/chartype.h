@@ -138,10 +138,10 @@ namespace oofem {
     ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_dFluxdGrad, 312) \
     ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_SecondGradient_Flux, 313)	     \
     ENUM_ITEM_WITH_VALUE(MagnetoElasticity_GradGrad_SecondGradient_dFluxdGrad, 314) \
-    ENUM_ITEM_WITH_VALUE( MagnetoElasticity_GradGrad_JacobianGradient_Flux, 315 )       \
-    ENUM_ITEM_WITH_VALUE( MagnetoElasticity_GradGrad_JacobianGradient_dFluxdGrad, 316 ) \
-    ENUM_ITEM_WITH_VALUE( MagnetoElasticity_GradGrad_RotationGradient_Flux, 317 )       \
-    ENUM_ITEM_WITH_VALUE( MagnetoElasticity_GradGrad_RotationGradient_dFluxdGrad, 318 ) \
+    ENUM_ITEM_WITH_VALUE( MagnetoElasticity_GradGrad_FirstSecondGradient_Flux, 315 )       \
+    ENUM_ITEM_WITH_VALUE( MagnetoElasticity_GradGrad_FirstSecondGradient_dFluxdGrad, 316 ) \
+    ENUM_ITEM_WITH_VALUE( MagnetoElasticity_GradGrad_Fbar_Flux, 317 )       \
+    ENUM_ITEM_WITH_VALUE( MagnetoElasticity_GradGrad_Fbar_dFluxdGrad, 318 ) \
 
     
 

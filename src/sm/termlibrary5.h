@@ -145,11 +145,9 @@ class ThirdMedium_Grad_FbarTerm : public StructuralTerm
   void getDimensions( Element &cell ) const override { ; }
   void initializeCell( Element &cell ) const override { ; }
   int computeGradientField( FloatArray &grad, FloatMatrix &B, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const;
-  int computeSecondGradientField( FloatArray &grad, FloatMatrix &B, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const;
-
+  
   protected:
   void computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
-  void computeGmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
 };
 
 } // end namespace oofem
