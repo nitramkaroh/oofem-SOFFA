@@ -340,7 +340,9 @@ void ThirdMedium_Grad_FbarTerm ::evaluate( FloatArray &answer, StructuralElement
   FloatMatrix BH, Bbar;
   //
   auto size1 = this->computeGradientField( vF, BH, cell, gp->giveNaturalCoordinates(), gp->giveMaterialMode(), tstep );
-  auto size2 = this->computeGradientField(vFbar, Bbar, cell, {0,0}, gp->giveMaterialMode(), tstep);
+  FloatArray zeroCoords(gp->giveNaturalCoordinates());
+  zeroCoords.times(0.0);
+  auto size2 = this->computeGradientField(vFbar, Bbar, cell, zeroCoords, gp->giveMaterialMode(), tstep);
   //
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );
