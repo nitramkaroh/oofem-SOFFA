@@ -701,7 +701,7 @@ public:
       if ( master && (!force)) {
             return master->giveCurrentStep();
         } else {
-            return currentStep.get();
+            return timeStepController->giveCurrentStep();
         }
     }
     virtual void adaptTimeStep(double nIter){
@@ -717,7 +717,7 @@ public:
         if ( master && (!force)) {
             return master->givePreviousStep();
         } else {
-            return previousStep.get();
+            return timeStepController->givePreviousStep();
         }
     }
     /// Returns next time step (next to current step) of receiver.

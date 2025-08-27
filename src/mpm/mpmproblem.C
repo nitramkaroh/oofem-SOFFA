@@ -323,18 +323,24 @@ MPMProblem :: giveDiscreteTime(int iStep)
 }
 
 
-TimeStep *MPMProblem :: giveNextStep()
+TimeStep *MPMProblem ::giveNextStep()
 {
+  if ( this->timeStepController != nullptr ) {
+    //added to survive time step control. Unsure if the else will ever be triggered. -OF
+    return timeStepController->giveNextStep();
+  } else {
+
     if ( !currentStep ) {
-        // first step -> generate initial step
-        currentStep = std::make_unique<TimeStep>( *giveSolutionStepWhenIcApply() );
+      // first step -> generate initial step
+      currentStep = std::make_unique<TimeStep>( *giveSolutionStepWhenIcApply() );
     }
 
-    double dt = this->giveDeltaT(currentStep->giveNumber()+1);
-    previousStep = std :: move(currentStep);
-    currentStep = std::make_unique<TimeStep>(*previousStep, dt);
-    currentStep->setIntrinsicTime(previousStep->giveTargetTime() + alpha * dt);
+    double dt = this->giveDeltaT( currentStep->giveNumber() + 1 );
+    previousStep = std ::move( currentStep );
+    currentStep = std::make_unique<TimeStep>( *previousStep, dt );
+    currentStep->setIntrinsicTime( previousStep->giveTargetTime() + alpha * dt );
     return currentStep.get();
+  }
 }
 
 

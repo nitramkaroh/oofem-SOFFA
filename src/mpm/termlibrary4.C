@@ -559,7 +559,8 @@ int MagnetoElasticity_GradGrad_FbarTerm ::computeGradientField( FloatArray &vF, 
 {
   FloatArray u;
   //
-  cell.computeVectorOf( VM_Total, tstep, u );
+  //cell.computeVectorOf( VM_Total, tstep, u );
+  cell.getUnknownVector( u, this->field, VM_TotalIntrinsic, tstep );
   // cell.getUnknownVector(u, this->field, VM_TotalIntrinsic, tstep);
   this->computeBHmatrixAt( BH, this->field, this->field.interpolation, cell, lcoords, mmode );
   vF.beProductOf( BH, u );
@@ -584,7 +585,7 @@ int MagnetoElasticity_GradGrad_FbarTerm ::computeGradientField( FloatArray &vF, 
 void MagnetoElasticity_GradGrad_FbarTerm ::evaluate( FloatArray &answer, MPElement &cell, GaussPoint *gp, TimeStep *tstep ) const
 {
   // Working with both deformation gradient (F) and its gradient (gradF);
-  FloatArray vF, vFbar, GtimesT;
+  FloatArray vF, vFbar, BbarTimesPbar;
   FloatMatrix BH, Bbar;
   //
   auto size1 = this->computeGradientField( vF, BH, cell, gp->giveNaturalCoordinates(), gp->giveMaterialMode(), tstep );
@@ -598,8 +599,8 @@ void MagnetoElasticity_GradGrad_FbarTerm ::evaluate( FloatArray &answer, MPEleme
   }
   auto [vP, vPbar] = mcs->give_Fbar_FluxVectors( vF, vFbar, gp, tstep );
   answer.beTProductOf( BH, vP );
-  GtimesT.beTProductOf( Bbar, vPbar );
-  answer.add( GtimesT );
+  BbarTimesPbar.beTProductOf( Bbar, vPbar );
+  answer.add( BbarTimesPbar );
 }
 
 
