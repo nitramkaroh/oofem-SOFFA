@@ -365,7 +365,9 @@ void ThirdMedium_Grad_FbarTerm ::evaluate_lin( FloatMatrix &answer, StructuralEl
   FloatMatrix B_dPdF, B_dPdFbar, Bbar_dPbardF, Bbar_dPbardFbar; //intermediate results
   //
   auto size1 = this->computeGradientField( vF, BH, cell, gp->giveNaturalCoordinates(), gp->giveMaterialMode(), tstep );
-  auto size2 = this->computeGradientField( vFbar, Bbar, cell, {0,0}, gp->giveMaterialMode(), tstep );
+  FloatArray zeroCoords(gp->giveNaturalCoordinates());
+  zeroCoords.times(0.0);
+  auto size2 = this->computeGradientField( vFbar, Bbar, cell, zeroCoords, gp->giveMaterialMode(), tstep );
   // get constitutive matrices
   auto cs = cell.giveCrossSection();
   auto tcs = dynamic_cast<ThirdMediumCrossSection *>( cs );

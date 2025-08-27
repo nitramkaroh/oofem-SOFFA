@@ -125,7 +125,7 @@ class ThirdMediumElement : public NLStructuralElement
     if ( mmode == _PlaneStrain ) {
       answer = this->giveStructuralCrossSection()->giveStiffnessMatrix_dPdF_PlaneStrain( rMode, gp, tStep );
     } else if ( mmode == _3dMat ) {
-      answer = this->giveStructuralCrossSection()->giveStiffnessMatrix_3d( rMode, gp, tStep );
+      answer = this->giveStructuralCrossSection()->giveStiffnessMatrix_dPdF_3d( rMode, gp, tStep );
     } else {
       OOFEM_ERROR( "Unsupported material mode" );
     }
