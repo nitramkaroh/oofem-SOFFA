@@ -57,6 +57,8 @@
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c1 "c1"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_c2 "c2"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_PullBackType "pullbacktype"
+#define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_Eisole "e_isole"
+#define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_nuisole "nu_isole"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaGradFGradF "kappagradfgradf"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaGradJGradJ "kappagradjgradj"
 #define _IFT_HardMagneticMooneyRivlinCompressibleMaterial_kappaGradRGradR "kappagradrgradr"
@@ -87,8 +89,8 @@ protected:
   double C1;
   double C2;
   double mu_0 = 1.25663706143e-6;
+  double mu_isole = 0., lambda_isole = 0.;
   int m_ltf = 0, hload_ltf = 0;
-  int pb = 1;
   // second gradient material parameter
   double kappaGradFGradF = 0., kappaGradJGradJ = 0., kappaGradRGradR = 0., kappaFbar = 0., kappaJbar = 0.;
 
