@@ -197,6 +197,13 @@ NRSolver :: initializeFrom(InputRecord &ir)
         }
     }
 
+
+    broydenFlag = ir.hasField(_IFT_NRSolver_broyden);
+
+
+
+    
+
 }
 
 
@@ -261,6 +268,14 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
         applyConstraintsToStiffness(k);
     }
 
+    // Prepare Broyden over frozen K
+    BroydenUpdater broyden;
+    if ( broydenFlag ) {
+      broyden.reset(&k, this->linSolver.get());
+    }
+    //
+    
+
     nite = 0;
     for ( nite = 0; ; ++nite ) {
         // Compute the residual
@@ -289,7 +304,7 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
             break;
         }
 
-        if ( nite > 0 || !mCalcStiffBeforeRes ) {
+        if ( !broydenFlag && (nite > 0 || !mCalcStiffBeforeRes) ) {
             if ( ( NR_Mode == nrsolverFullNRM ) || ( ( NR_Mode == nrsolverAccelNRM ) && ( nite % MANRMSteps == 0 ) ) ) {
                 engngModel->updateComponent(tStep, NonLinearLhs, domain);
                 applyConstraintsToStiffness(k);
@@ -301,16 +316,18 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
             R.zero();
             ddX = rhs;
         } else {
-            //            if ( engngModel->giveProblemScale() == macroScale ) {
-            //              k.writeToFile("k.txt");
-            //            }
-
-            linSolver->solve(k, rhs, ddX);
-        }
-
-        //
-        // update solution
-        //
+	  if ( broydenFlag ) {
+	    FloatArray test;
+	    broyden.computeStep(rhs, ddX); // Eq. (158) internally; iter 0 → chord
+	    linSolver->solve(k, rhs, test);
+	  } else {
+	    // Standard Newton step
+	    linSolver->solve(k, rhs, ddX);
+	  }
+	}
+	  //
+	  // update solution
+	  //
         if ( this->lsFlag && ( nite > 0 ) ) { // Why not nite == 0 ?
             // line search
             LineSearchNM :: LS_status LSstatus;
@@ -347,6 +364,12 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
 
         X.add(ddX);
         dX.add(ddX);
+
+	// Update Broyden history with actually applied increment and new residual
+	if ( broydenFlag ) {
+	  broyden.updateHistory(ddX, rhs);
+	}
+	
 
         if ( solutionDependentExternalForcesFlag ) {
             engngModel->updateComponent(tStep, ExternalRhs, domain);
@@ -762,7 +785,7 @@ NRSolver :: checkConvergence(FloatArray &RT, FloatArray &F, FloatArray &rhs,  Fl
                     forceErr = sqrt( dg_forceErr.at(dg) );
                 }
 
-                if ( forceErr > rtolf.at(1) * NRSOLVER_MAX_REL_ERROR_BOUND ) {
+                if ( std::isnan( forceErr ) || (forceErr > rtolf.at(1) * NRSOLVER_MAX_REL_ERROR_BOUND) ) {
                     errorOutOfRange = true;
                 }
                 if ( forceErr > rtolf.at(1) ) {
@@ -794,7 +817,7 @@ NRSolver :: checkConvergence(FloatArray &RT, FloatArray &F, FloatArray &rhs,  Fl
                     //zeroDNorm = true;
                     dispErr = sqrt( dg_dispErr.at(dg) );
                 }
-                if ( dispErr  > rtold.at(1) * NRSOLVER_MAX_REL_ERROR_BOUND ) {
+                if ( std::isnan( dispErr ) ||  (dispErr  > rtold.at(1) * NRSOLVER_MAX_REL_ERROR_BOUND) ) {
                     errorOutOfRange = true;
                 }
                 if ( dispErr > rtold.at(1) ) {
@@ -837,7 +860,7 @@ NRSolver :: checkConvergence(FloatArray &RT, FloatArray &F, FloatArray &rhs,  Fl
             } else {
                 forceErr = sqrt(forceErr);   // absolute norm as last resort
             }
-            if ( fabs(forceErr) > rtolf.at(1) * NRSOLVER_MAX_REL_ERROR_BOUND ) {
+            if ( std::isnan( forceErr ) || (fabs(forceErr) > rtolf.at(1) * NRSOLVER_MAX_REL_ERROR_BOUND) ) {
                 errorOutOfRange = true;
             }
             if ( fabs(forceErr) > rtolf.at(1) ) {
@@ -862,7 +885,7 @@ NRSolver :: checkConvergence(FloatArray &RT, FloatArray &F, FloatArray &rhs,  Fl
             } else {
                 dispErr = sqrt(dXdX);
             }
-            if ( fabs(dispErr)  > rtold.at(1) * NRSOLVER_MAX_REL_ERROR_BOUND ) {
+            if ( std::isnan( dispErr ) || (fabs(dispErr)  > rtold.at(1) * NRSOLVER_MAX_REL_ERROR_BOUND) ) {
                 errorOutOfRange = true;
             }
             if ( fabs(dispErr)  > rtold.at(1) ) {
@@ -881,4 +904,17 @@ NRSolver :: checkConvergence(FloatArray &RT, FloatArray &F, FloatArray &rhs,  Fl
 
     return answer;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+  
 } // end namespace oofem

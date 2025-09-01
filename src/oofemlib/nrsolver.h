@@ -48,7 +48,7 @@
 
 #include <memory>
 #include <map>
-
+#include <cmath>
 ///@name Input fields for NRSolver
 //@{
 #define _IFT_NRSolver_Name "nrsolver"
@@ -71,6 +71,7 @@
 #define _IFT_NRSolver_forceScale "forcescale"
 #define _IFT_NRSolver_forceScaleDofs "forcescaledofs"
 #define _IFT_NRSolver_solutionDependentExternalForces "soldepextforces"
+#define _IFT_NRSolver_broyden "broyden"
 //@}
 
 namespace oofem {
@@ -164,6 +165,11 @@ protected:
     std :: map< int, double >dg_forceScale;
 
     double maxIncAllowed;
+
+
+    /// using broyden method
+    bool broydenFlag = false;
+    
 public:
     NRSolver(Domain *d, EngngModel *m);
     virtual ~NRSolver();
@@ -213,5 +219,83 @@ protected:
     bool checkConvergence(FloatArray &RT, FloatArray &F, FloatArray &rhs, FloatArray &ddX, FloatArray &X,
                           double RRT, const FloatArray &internalForcesEBENorm, int nite, bool &errorOutOfRange);
 };
+
+
+
+// Forward declarations are optional if nrsolver.h already includes these.
+// class SparseMtrx;
+// class SparseLinearSystemNM;
+// class FloatArray;
+
+// ---------------------------------------------------------------------
+// BroydenUpdater — rank-1 (good) Broyden over a frozen K factorization
+// ---------------------------------------------------------------------
+class BroydenUpdater {
+public:
+    BroydenUpdater() = default;
+
+    void reset(SparseMtrx *K_in, SparseLinearSystemNM *solver_in) {
+        K = K_in;
+        solver = solver_in;
+        havePrev = false;
+        ddXn.resize(0);
+        rn.resize(0);
+    }
+
+
+
+  
+  // dd_out = K^{-1} r_k − K^{-1}Δr + Δd_prev * ( (Δd_prev^T K^{-1} r_k)/(Δd_prev^T K^{-1}Δr) )
+  // Uses one new solve: kr = K^{-1} r_k.
+  void computeStep(const FloatArray &rhs, FloatArray &dd_out) {
+    // kr = K^{-1} rhs
+    FloatArray rhs_copy = rhs;   // <- make it non-const for solver API
+    FloatArray ikr, ikdr;
+    solver->solve(*K, rhs_copy, ikr);
+    //  
+    if (!havePrev) { dd_out = ikr; return; }
+
+    auto dr = rhs - rn;
+    auto dd = ikr - ddXn;
+    //
+    solver->solve(*K, dr, ikdr);
+    ikdr.add(dd);
+    //
+    const double denom = dd.dotProduct(ikdr);
+    const double numer = dd.dotProduct(ikr);
+    //
+    const double tol  = 1e-14 * sqrt(dd.computeSquaredNorm());
+
+    dd_out = ikr;
+    if (std::abs(denom) > tol) {
+      dd_out.add(-numer/denom, ikdr);
+    }
+  }
+  
+  // Update with actually applied increment and the new residual (after X += ddX)
+  void updateHistory(const FloatArray &ddX, const FloatArray &r) {
+    ddXn = ddX;
+    rn = r;
+    havePrev = true;
+  }
+
+  void clear() {
+    havePrev = false;
+    ddXn.resize(0);
+    rn.resize(0);
+  }
+
+private:
+    SparseMtrx            *K       = nullptr; // frozen stiffness (assembled & factorized externally)
+    SparseLinearSystemNM  *solver  = nullptr; // linear system interface
+
+    bool        havePrev = false;
+    FloatArray  ddXn;  // d_n
+    FloatArray  rn;  //   r_n
+};
+
+ 
 } // end namespace oofem
+
 #endif // nrsolver_h
+

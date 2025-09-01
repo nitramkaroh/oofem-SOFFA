@@ -19,6 +19,7 @@ set (sm_material
     ConcreteMaterials/idm1.C 
     ConcreteMaterials/idmnl1.C 
     ConcreteMaterials/idmgrad.C
+    ConcreteMaterials/variationalbaseddamage.C
     ConcreteMaterials/mazarsmodel.C 
     ConcreteMaterials/mazarsmodelnl.C
     ConcreteMaterials/mplasticmaterial2.C
