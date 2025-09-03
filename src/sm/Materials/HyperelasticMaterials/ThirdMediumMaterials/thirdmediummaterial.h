@@ -62,6 +62,8 @@
 #define _IFT_ThirdMediumMaterial_kappaJbar "kappajbar"
 #define _IFT_ThirdMediumMaterial_kappaJbarVol "kappajbarvol"
 #define _IFT_ThirdMediumMaterial_kappaFbar "kappafbar"
+#define _IFT_ThirdMediumMaterial_eLinear "e_lin"
+#define _IFT_ThirdMediumMaterial_nuLinear "nu_lin"
 
 namespace oofem {
 
@@ -70,8 +72,13 @@ class GaussPoint;
 class OOFEM_EXPORT ThirdMediumMaterial
 {
 protected:
-  // second gradient material parameter
+  // material parameters
   double kappaGradFGradF = 0, kappaGradJGradJ = 0, kappaGradRGradR = 0, kappaJbar = 0, kappaJbarVol = 0, kappaFbar = 0;
+
+  //elastic tangents
+  double E = 0., nu = 0.;
+  FloatMatrixF<6, 6> linearElasticTangent;
+  FloatMatrixF<4, 4> linearElasticTangentPlaneStrain;
 
   public:
     /**
@@ -105,6 +112,12 @@ protected:
     virtual std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9> > give_Fbar_ConstitutiveMatrices_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep );
     virtual std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5> > give_Fbar_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep );
 
+    ////////////////////////LINEAR ELASTICITY////////////////////////////
+    virtual FloatArrayF<4> give_LinearElasticity_RealStressVector_PlaneStrain( const FloatArrayF<4> &eps, GaussPoint *gp, TimeStep *tStep );
+    virtual FloatArrayF<6> give_LinearElasticity_RealStressVector_3d( const FloatArrayF<6> &eps, GaussPoint *gp, TimeStep *tStep );
+    virtual FloatMatrixF<6, 6> give_LinearElasticity_ConstitutiveMatrix_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep );
+    virtual FloatMatrixF<4, 4> give_LinearElasticity_ConstitutiveMatrix_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep );
+
  private:
      
     // Jacobian
@@ -130,6 +143,9 @@ protected:
     Tensor1_3d compute_gradPhi_PlaneStrain( const Tensor2_3d &F, const Tensor3_3d &gradF ) const;
     std::tuple<Tensor3_3d, Tensor4_3d> compute_gradPhi_derivatives_PlaneStrain( const Tensor2_3d &F, const Tensor3_3d &gradF ) const;
     std::tuple<Tensor5_3d, Tensor6_3d, Tensor7_3d> compute_gradPhi_secondDerivatives_PlaneStrain( const Tensor2_3d &F, const Tensor3_3d &gradF ) const;
+
+    //for linear elasticity
+    void initTangents();
 
 };
 } // end namespace oofem

@@ -23,6 +23,11 @@ namespace oofem {
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbar, _IFT_ThirdMediumMaterial_kappaJbar );
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbarVol, _IFT_ThirdMediumMaterial_kappaJbarVol );
     IR_GIVE_OPTIONAL_FIELD( ir, this->kappaFbar, _IFT_ThirdMediumMaterial_kappaFbar );
+    
+    IR_GIVE_OPTIONAL_FIELD( ir, this->E, _IFT_ThirdMediumMaterial_eLinear );
+    IR_GIVE_OPTIONAL_FIELD( ir, this->nu, _IFT_ThirdMediumMaterial_nuLinear );
+    this->initTangents();
+
   }
 
   ThirdMediumMaterialStatus *ThirdMediumMaterial::giveStatus( GaussPoint *gp )
@@ -533,6 +538,69 @@ ThirdMediumMaterial::compute_Z_fraction_thirdDerivative_PlaneStrain( const Tenso
       + 2. * ( delta( p_3, 0 ) * delta( q_3, 1 ) - delta( p_3, 1 ) * delta( q_3, 0 ) ) / ( ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) * ( F( 0, 0 ) + F( 1, 1 ) ) ) * ( delta( r_3, 0 ) * delta( s_3, 0 ) + delta( r_3, 1 ) * delta( s_3, 1 ) ) * ( delta( i_3, 0 ) * delta( j_3, 0 ) + delta( i_3, 1 ) * delta( j_3, 1 ) );
 
   return d3ZdFdFdF;
+}
+
+////////////////////////////////// LINEAR ELASTICITY ///////////////////////////////////////////////////////////////////////////////////////
+
+FloatArrayF<4>
+ThirdMediumMaterial::give_LinearElasticity_RealStressVector_PlaneStrain( const FloatArrayF<4> &eps, GaussPoint *gp, TimeStep *tStep )
+{
+  auto vS = this->give_LinearElasticity_RealStressVector_3d( assemble<6>( eps, { 0, 1, 2, 5 } ), gp, tStep );
+  return vS[{ 0, 1, 2, 5 }];
+}
+
+FloatArrayF<6>
+ThirdMediumMaterial::give_LinearElasticity_RealStressVector_3d( const FloatArrayF<6> &eps, GaussPoint *gp, TimeStep *tStep )
+{
+  auto status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
+
+  auto d = this->give_LinearElasticity_ConstitutiveMatrix_3d( TangentStiffness, gp, tStep );
+
+  FloatArrayF<6> sig;
+  sig = dot( d, eps );
+  // update gp
+  status->letTempStrainVectorBe( eps );
+  status->letTempStressVectorBe( sig );
+  return sig;
+}
+
+FloatMatrixF<4,4>
+ThirdMediumMaterial::give_LinearElasticity_ConstitutiveMatrix_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  return linearElasticTangentPlaneStrain;
+}
+
+FloatMatrixF<6, 6>
+ThirdMediumMaterial::give_LinearElasticity_ConstitutiveMatrix_3d( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
+{
+  return linearElasticTangent;
+}
+
+void
+ThirdMediumMaterial ::initTangents()
+{
+  double G = E / ( 2.0 * ( 1. + nu ) );
+  double K = E / ( 3.0 * ( 1. - 2. * nu ) );
+  this->linearElasticTangent = 2 * G * I_dev6 + K * I6_I6;
+  
+  linearElasticTangentPlaneStrain = {
+    linearElasticTangent( 0, 0 ),
+    linearElasticTangent( 1, 0 ),
+    linearElasticTangent( 2, 0 ),
+    linearElasticTangent( 3, 0 ),
+    linearElasticTangent( 0, 1 ),
+    linearElasticTangent( 1, 1 ),
+    linearElasticTangent( 2, 1 ),
+    linearElasticTangent( 3, 1 ),
+    linearElasticTangent( 0, 2 ),
+    linearElasticTangent( 1, 2 ),
+    linearElasticTangent( 2, 2 ),
+    linearElasticTangent( 3, 2 ),
+    linearElasticTangent( 0, 3 ),
+    linearElasticTangent( 1, 3 ),
+    linearElasticTangent( 2, 3 ),
+    linearElasticTangent( 3, 3 ),
+  };
 }
 
 

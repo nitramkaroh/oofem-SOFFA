@@ -60,7 +60,7 @@ ConstantStiffnessHyperElasticMaterial::giveFirstPKStressVector_3d( const FloatAr
 
     // compute the first Piola-Kirchhoff
     P( i_3, j_3 ) = this->compute_dVolumetricEnergy_dF( F )( i_3, j_3 )
-      + lambda * delta( i_3, m_3 ) * ( F( k_3, k_3 ) - 3. ) * cofF( m_3, j_3 ) + mu * ( F( i_3, m_3 ) + F( m_3, i_3 ) - 2. * delta( i_3, m_3 ) ) * cofF( m_3, j_3 );
+      + lambda * delta( i_3, m_3 ) * ( F( p_3, p_3 ) - 3. ) * cofF( m_3, j_3 ) + mu * ( F( i_3, m_3 ) + F( m_3, i_3 ) - 2. * delta( i_3, m_3 ) ) * cofF( m_3, j_3 );
 
       
     auto vP = P.to_voigt_form();
@@ -88,11 +88,45 @@ ConstantStiffnessHyperElasticMaterial::give3dMaterialStiffnessMatrix_dPdF( MatRe
 
     A( i_3, j_3, k_3, l_3 ) = this->compute_d2VolumetricEnergy_dF2( F )( i_3, j_3, k_3, l_3 )
       + lambda * delta( i_3, m_3 ) * delta( k_3, l_3 ) * cofF( m_3, j_3 ) + mu * ( delta( i_3, k_3 ) * delta( m_3, l_3 ) + delta( i_3, l_3 ) * delta( m_3, k_3 ) ) * cofF( m_3, j_3 )
-      + lambda * delta( i_3, m_3 ) * ( F( k_3, k_3 ) - 3. ) * Fcross( m_3, j_3, k_3, l_3 ) + mu * ( F( i_3, m_3 ) + F( m_3, i_3 ) - 2. * delta( i_3, m_3 ) ) * Fcross( m_3, j_3, k_3, l_3 );
+      + lambda * delta( i_3, m_3 ) * ( F( p_3, p_3 ) - 3. ) * Fcross( m_3, j_3, k_3, l_3 ) + mu * ( F( i_3, m_3 ) + F( m_3, i_3 ) - 2. * delta( i_3, m_3 ) ) * Fcross( m_3, j_3, k_3, l_3 );
     
-    return A.to_voigt_form();
+    auto vAnum = this->compute3dMaterialStiffnessMatrix_dPdF_numeric(vF, gp, tStep, 1.e-6);
+    auto vA = A.to_voigt_form();
+    auto vAdiff = vA - vAnum;
+
+    FloatMatrix vA_fm(vA), vAdiff_fm(vAdiff), vAnum_fm(vAnum); 
+    FloatArray vF_fm(vF);
+
+    //return A.to_voigt_form();
+    return vAnum;
 }
 
+FloatMatrixF<9, 9> ConstantStiffnessHyperElasticMaterial::compute3dMaterialStiffnessMatrix_dPdF_numeric( FloatArrayF<9> vF, GaussPoint *gp, TimeStep *tStep, double perturb ) const
+{
+  FloatMatrixF<9, 9> answer;
+  FloatArrayF<9> vF_forward, vF_back, vP_forward, vP_back;
+
+  for ( int ii = 1; ii <= 9; ii++ ) {
+
+    vF_forward = vF;
+    vF_forward.at( ii ) = vF_forward.at( ii ) + perturb;
+    vF_back = vF;
+    vF_back.at( ii ) = vF_back.at( ii ) - perturb;
+
+    vP_forward = this->giveFirstPKStressVector_3d( vF_forward, gp, tStep );
+    vP_back = this->giveFirstPKStressVector_3d( vF_back, gp, tStep );
+
+    for ( int jj = 1; jj <= 9; jj++ ) {
+      answer.at( jj, ii ) = (vP_forward.at(jj) - vP_back.at(jj))/(2.*perturb);
+    }
+  }
+
+  //fix status which was broken by the stress computations
+  StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
+  status->letTempFVectorBe( vF );
+
+  return answer;
+}
 
 
 
@@ -101,7 +135,6 @@ ConstantStiffnessHyperElasticMaterial::CreateStatus( GaussPoint *gp ) const
 {
     return new StructuralMaterialStatus(gp);
 }
-
 
 void ConstantStiffnessHyperElasticMaterial::initializeFrom( InputRecord &ir )
 {

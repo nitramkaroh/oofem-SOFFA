@@ -80,5 +80,9 @@ public:
 
     const char *giveInputRecordName() const override { return _IFT_ConstantStiffnessHyperElasticMaterial_Name; }
     const char *giveClassName() const override { return "ConstantStiffnessHyperElasticMaterial"; }
+
+private:
+
+    FloatMatrixF<9,9> compute3dMaterialStiffnessMatrix_dPdF_numeric(FloatArrayF<9> vF, GaussPoint *gp, TimeStep *tStep, double perturb) const;
 };
 } // end namespace oofem

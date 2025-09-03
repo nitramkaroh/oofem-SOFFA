@@ -70,7 +70,7 @@ public:
     FloatArrayF<27> give_SecondGradient_FluxVector_3d( const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep ) const;
     FloatArrayF<8> give_SecondGradient_FluxVector_PlaneStrain( const FloatArrayF<8> &vG, GaussPoint *gp, TimeStep *tStep ) const;
 
-    void give_SecondGradient_dFlux_dGrad( FloatMatrix &answer, MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep );
+    void give_SecondGradient_dFlux_dGrad( FloatMatrix &answer, MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep ) const;
     FloatMatrixF<1, 1> give_SecondGradient_ConstitutiveMatrix_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
     FloatMatrixF<1, 1> give_SecondGradient_ConstitutiveMatrix_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
 
@@ -79,7 +79,7 @@ public:
     std::tuple<FloatArrayF<9>, FloatArrayF<27> > give_FirstSecondGradient_FluxVectors_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vGradF, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatArrayF<5>, FloatArrayF<8> > give_FirstSecondGradient_FluxVectors_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep ) const;
 
-    std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> give_FirstSecondGradient_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep );
+    std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> give_FirstSecondGradient_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 27>, FloatMatrixF<27, 9>, FloatMatrixF<27, 27> > give_FirstSecondGradient_ConstitutiveMatrices_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> > give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
 
@@ -88,10 +88,18 @@ public:
     std::tuple<FloatArrayF<9>, FloatArrayF<9> > give_Fbar_FluxVectors_3d( const FloatArrayF<9> &vF, const FloatArrayF<9> &vFbar, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatArrayF<5>, FloatArrayF<5> > give_Fbar_FluxVectors_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<5> &vFbar, GaussPoint *gp, TimeStep *tStep ) const;
 
-    std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> give_Fbar_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep );
+    std::tuple<FloatMatrix, FloatMatrix, FloatMatrix, FloatMatrix> give_Fbar_dFluxes_dGrads( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9> > give_Fbar_ConstitutiveMatrices_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5> > give_Fbar_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
 
+    //terms with linear elasticity handling
+    FloatArray give_LinearElasticity_FluxVector( const FloatArray &eps, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatArrayF<6> give_LinearElasticity_FluxVector_3d( const FloatArrayF<6> &eps, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatArrayF<4> give_LinearElasticity_FluxVector_PlaneStrain( const FloatArrayF<4> &eps, GaussPoint *gp, TimeStep *tStep ) const;
+
+    FloatMatrix give_LinearElasticity_dFlux_dGrad( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatMatrixF<6, 6> give_LinearElasticity_ConstitutiveMatrix_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatMatrixF<4, 4> give_LinearElasticity_ConstitutiveMatrix_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
 
 };
 } // end namespace oofem
