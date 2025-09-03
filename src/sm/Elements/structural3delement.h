@@ -39,6 +39,7 @@
 
 
 #define _IFT_Structural3DElement_materialCoordinateSystem "matcs" ///< [optional] Support for material directions based on element orientation.
+#define _IFT_Structural3DElement_lobatto "lobatto"
 
 namespace oofem {
 class GaussPoint;
@@ -55,7 +56,7 @@ class IntArray;
 class Structural3DElement : public NLStructuralElement
 {
 protected:
-    bool matRotation;
+    bool matRotation, lobatto;
 
 public:
     /**

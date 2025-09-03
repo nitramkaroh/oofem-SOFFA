@@ -37,12 +37,13 @@
 #include "gausspoint.h"
 #include "sm/CrossSections/structuralcrosssection.h"
 #include "gaussintegrationrule.h"
+#include "lobattoir.h"
 #include "mathfem.h"
 
 namespace oofem {
 Structural3DElement::Structural3DElement(int n, Domain *aDomain) :
     NLStructuralElement(n, aDomain),
-    matRotation(false)
+    matRotation(false), lobatto(false)
 {}
 
 
@@ -51,6 +52,7 @@ Structural3DElement::initializeFrom(InputRecord &ir)
 {
     NLStructuralElement::initializeFrom(ir);
     this->matRotation = ir.hasField(_IFT_Structural3DElement_materialCoordinateSystem);
+    this->lobatto = ir.hasField(_IFT_Structural3DElement_lobatto);
 }
 
 
@@ -383,10 +385,14 @@ void Structural3DElement::computeGaussPoints()
 {
     if ( integrationRulesArray.size() == 0 ) {
         integrationRulesArray.resize(1);
-        integrationRulesArray [ 0 ] = std::make_unique< GaussIntegrationRule >(1, this, 1, 6);
-        this->giveCrossSection()->setupIntegrationPoints(* integrationRulesArray [ 0 ], numberOfGaussPoints, this);
-    }
+      if ( lobatto ) {
+        integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this, 1, 6, false );
+      }else
+        integrationRulesArray[0] = std::make_unique<GaussIntegrationRule>( 1, this, 1, 6 );
+      }  
+      this->giveCrossSection()->setupIntegrationPoints(* integrationRulesArray [ 0 ], numberOfGaussPoints, this);
 }
+
 
 
 
