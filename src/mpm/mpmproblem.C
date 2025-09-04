@@ -362,7 +362,9 @@ TimeStep *MPMProblem :: giveSolutionStepWhenIcApply(bool force)
 
 void MPMProblem :: solveYourselfAt(TimeStep *tStep)
 {
-    OOFEM_LOG_INFO( "\nSolving [step number %5d, time %e]\n", tStep->giveNumber(), tStep->giveTargetTime() );
+    //OOFEM_LOG_INFO( "\nSolving [step number %5d, time %e]\n", tStep->giveNumber(), tStep->giveTargetTime() );
+    OOFEM_LOG_INFO( "\nSolving Metastep %d,  Step %d. From time %e -> %e -> to time %e\n", tStep->giveMetaStepNumber(), tStep->giveNumber(), tStep->giveIntrinsicTime() - tStep->giveTimeIncrement(), tStep->giveTimeIncrement(), tStep->giveIntrinsicTime() );
+    
     
     Domain *d = this->giveDomain(1);
     int neq = this->giveNumberOfDomainEquations( 1, EModelDefaultEquationNumbering() );
