@@ -849,7 +849,8 @@ void EngngModel ::assemble( SparseMtrx &answer, TimeStep *tStep, const MatrixAss
 #pragma omp parallel for shared( answer ) private( mat, R, loc )
 #endif
   // for ( auto &bc : domain->giveBcs() ) { //problems with OPENMP
-  for ( size_t i = 0; i < domain->giveBcs().size(); i++ ) {
+  //for ( size_t i = 0; i < domain->giveBcs().size(); i++ ) { //still problems with OPENMP
+  for ( int i = 0; i < domain->giveBcs().size(); i++ ) {
     auto &bc = domain->giveBcs()[i];
     auto abc = dynamic_cast<ActiveBoundaryCondition *>( bc.get() );
     if ( abc ) {
@@ -1006,7 +1007,8 @@ void EngngModel ::assemble( SparseMtrx &answer, TimeStep *tStep, const MatrixAss
 #pragma omp parallel for shared( answer ) private( mat, R, r_loc, c_loc )
 #endif
   // for ( auto &gbc : domain->giveBcs() ) { //problems with OPENMP
-  for ( size_t i = 0; i < domain->giveBcs().size(); i++ ) {
+  //for ( size_t i = 0; i < domain->giveBcs().size(); i++ ) { //still problems with OPENMP
+  for ( int i = 0; i < domain->giveBcs().size(); i++ ) { 
     auto &gbc = domain->giveBcs()[i];
     ActiveBoundaryCondition *bc = dynamic_cast<ActiveBoundaryCondition *>( gbc.get() );
     if ( bc != NULL ) {
