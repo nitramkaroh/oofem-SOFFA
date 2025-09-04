@@ -354,7 +354,7 @@ QuadraticLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, Flo
     //    engngModel->updateComponent( tStep, NonLinearLhs, domain );
     //
     //r = rn;
-    OOFEM_LOG_INFO( "Line Search parameter Eta = %.7e\n", eta );
+    OOFEM_LOG_INFO( "Line Search Eta = %.7e | ", eta );
     return CR_CONVERGED;
 }
 

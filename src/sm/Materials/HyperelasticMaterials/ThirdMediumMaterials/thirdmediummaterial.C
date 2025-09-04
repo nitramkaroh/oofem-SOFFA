@@ -15,31 +15,30 @@
 
 namespace oofem {
 
-  void ThirdMediumMaterial::initializeFrom(InputRecord& ir)
-  {
-    IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradFGradF, _IFT_ThirdMediumMaterial_kappaGradFGradF );
-    IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradJGradJ, _IFT_ThirdMediumMaterial_kappaGradJGradJ );
-    IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradRGradR, _IFT_ThirdMediumMaterial_kappaGradRGradR );
-    IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbar, _IFT_ThirdMediumMaterial_kappaJbar );
-    IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbarVol, _IFT_ThirdMediumMaterial_kappaJbarVol );
-    IR_GIVE_OPTIONAL_FIELD( ir, this->kappaFbar, _IFT_ThirdMediumMaterial_kappaFbar );
-    
-    IR_GIVE_OPTIONAL_FIELD( ir, this->E, _IFT_ThirdMediumMaterial_eLinear );
-    IR_GIVE_OPTIONAL_FIELD( ir, this->nu, _IFT_ThirdMediumMaterial_nuLinear );
-    this->initTangents();
+void ThirdMediumMaterial::initializeFrom( InputRecord &ir )
+{
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradFGradF, _IFT_ThirdMediumMaterial_kappaGradFGradF );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradJGradJ, _IFT_ThirdMediumMaterial_kappaGradJGradJ );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaGradRGradR, _IFT_ThirdMediumMaterial_kappaGradRGradR );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaJbar, _IFT_ThirdMediumMaterial_kappaJbar );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaFbar, _IFT_ThirdMediumMaterial_kappaFbar );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->kappaFskewBar, _IFT_ThirdMediumMaterial_kappaFskewBar );
 
-  }
+  IR_GIVE_OPTIONAL_FIELD( ir, this->E, _IFT_ThirdMediumMaterial_eLinear );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->nu, _IFT_ThirdMediumMaterial_nuLinear );
+  this->initTangents();
+}
 
-  ThirdMediumMaterialStatus *ThirdMediumMaterial::giveStatus( GaussPoint *gp )
-  {
-    //this is a terrible hack but every ThirdMediumMaterial will always be also a descendant of Material, so it should work
-    Material* material = dynamic_cast<Material *> (this);
-    return dynamic_cast<ThirdMediumMaterialStatus*> (material->giveStatus(gp));
-  }
+ThirdMediumMaterialStatus *ThirdMediumMaterial::giveStatus( GaussPoint *gp )
+{
+  // this is a terrible hack but every ThirdMediumMaterial will always be also a descendant of Material, so it should work
+  Material *material = dynamic_cast<Material *>( this );
+  return dynamic_cast<ThirdMediumMaterialStatus *>( material->giveStatus( gp ) );
+}
 
-  ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 
- FloatArrayF<8>
+FloatArrayF<8>
 ThirdMediumMaterial ::give_SecondGradient_FirstPKStressVector_PlaneStrain( const FloatArrayF<8> &vG, GaussPoint *gp, TimeStep *tStep )
 {
   auto vT = kappaGradFGradF * vG;
@@ -67,27 +66,26 @@ ThirdMediumMaterial ::give_SecondGradient_ConstitutiveMatrix_PlaneStrain( MatRes
   return kappaGradFGradF;
 }
 
- ////////////////////////FIRST AND SECOND GRADIENTS TOGETHER////////////////////////////
+////////////////////////FIRST AND SECOND GRADIENTS TOGETHER////////////////////////////
 
 std::tuple<FloatArrayF<5>, FloatArrayF<8> >
 ThirdMediumMaterial::give_FirstSecondGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<8> &vGradF, GaussPoint *gp, TimeStep *tStep )
 {
   FloatArrayF<5> vP_ans;
   FloatArrayF<8> vT_ans;
-  
-  if (kappaGradJGradJ != 0.0){
-    auto [vP_gradJ, vT_gradJ] = this->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain(vF,vGradF,gp,tStep);
+
+  if ( kappaGradJGradJ != 0.0 ) {
+    auto [vP_gradJ, vT_gradJ] = this->give_JacobianGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
     vP_ans += vP_gradJ;
     vT_ans += vT_gradJ;
   }
-  if (kappaGradRGradR != 0.0){
+  if ( kappaGradRGradR != 0.0 ) {
     auto [vP_gradR, vT_gradR] = this->give_RotationGradient_FirstPKStressVector_SecondOrderStressVector_PlaneStrain( vF, vGradF, gp, tStep );
     vP_ans += vP_gradR;
     vT_ans += vT_gradR;
   }
 
-  return std::make_tuple(vP_ans, vT_ans);
-  
+  return std::make_tuple( vP_ans, vT_ans );
 }
 
 std::tuple<FloatArrayF<9>, FloatArrayF<27> >
@@ -101,8 +99,8 @@ ThirdMediumMaterial::give_FirstSecondGradient_FirstPKStressVector_SecondOrderStr
     vP_ans += vP_gradJ;
     vT_ans += vT_gradJ;
   }
-  if (kappaGradRGradR != 0.0 ){
-    OOFEM_ERROR("gradRgradR regularization unsupported outside of Plane Strain formulations.");
+  if ( kappaGradRGradR != 0.0 ) {
+    OOFEM_ERROR( "gradRgradR regularization unsupported outside of Plane Strain formulations." );
   }
 
   return std::make_tuple( vP_ans, vT_ans );
@@ -155,7 +153,6 @@ ThirdMediumMaterial::give_FirstSecondGradient_ConstitutiveMatrices_PlaneStrain( 
 
   return std::make_tuple( vdPdF_ans, vdPdGradF_ans, vdTdF_ans, vdTdGradF_ans );
 }
-
 
 
 ////////////////////////JACOBIAN GRADIENT///////////////////////////////////////////////
@@ -224,9 +221,9 @@ ThirdMediumMaterial ::give_JacobianGradient_ConstitutiveMatrices_3d( MatResponse
 std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 8>, FloatMatrixF<8, 5>, FloatMatrixF<8, 8> >
 ThirdMediumMaterial ::give_JacobianGradient_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
 {
-  //these elements should give all Tensor3 components without the third dimension in them
-  // according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
-  auto [vD_FF_3d, vC_FG_3d, vC_GF_3d, vC_GG_3d] = this->give_JacobianGradient_ConstitutiveMatrices_3d(mode, gp, tStep);
+  // these elements should give all Tensor3 components without the third dimension in them
+  //  according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
+  auto [vD_FF_3d, vC_FG_3d, vC_GF_3d, vC_GG_3d] = this->give_JacobianGradient_ConstitutiveMatrices_3d( mode, gp, tStep );
   auto vD_FF_red = vD_FF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
   auto vC_FG_red = vC_FG_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 5, 8, 9, 10, 14, 17 } );
   auto vC_GF_red = vC_GF_3d( { 0, 1, 5, 8, 9, 10, 14, 17 }, { 0, 1, 2, 5, 8 } );
@@ -275,8 +272,8 @@ std::tuple<Tensor5_3d, Tensor6_3d, Tensor6_3d, Tensor7_3d> ThirdMediumMaterial::
   return std::make_tuple( d2GradJdFdF, d2GradJdFdGradF, d2GradJdGradFdF, d2GradJdGradFdGradF );
 }
 
- ////////////////////////FBAR////////////////////////////
- 
+////////////////////////FBAR////////////////////////////
+
 std::tuple<FloatArrayF<5>, FloatArrayF<5> >
 ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<5> &vFbar, GaussPoint *gp, TimeStep *tStep )
 {
@@ -293,35 +290,32 @@ ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( const
 {
   Tensor2_3d F( vF ), Fbar( vFbar );
 
-  Tensor2_3d P_Jbar, Pbar_Jbar;
-  Tensor2_3d Pbar_JbarVol;
-  Tensor2_3d P_Fbar, Pbar_Fbar;
+  Tensor2_3d P, Pbar;
 
-  auto [ J, cofF ] = F.compute_determinant_and_cofactor();
-  auto [ Jbar, cofFbar ] = Fbar.compute_determinant_and_cofactor();
+  auto [J, cofF] = F.compute_determinant_and_cofactor();
+  auto [Jbar, cofFbar] = Fbar.compute_determinant_and_cofactor();
 
-  /*if ( J < 0 || std::isnan(J)) {
-    OOFEM_ERROR("J =%e in the element %i and in the Gauss point %i.", J, gp->giveElement()->giveNumber(), gp->giveNumber());
+  if ( kappaJbar != 0.0 ) {
+    P( r_3, s_3 ) += kappaJbar * ( J - Jbar ) * cofF( r_3, s_3 );
+    Pbar( r_3, s_3 ) += -kappaJbar * ( J - Jbar ) * cofFbar( r_3, s_3 );
   }
 
-  if ( Jbar < 0 || std::isnan(Jbar)) {
-    OOFEM_ERROR("Jbar =%e in the element %i and in the Gauss point %i.", Jbar, gp->giveElement()->giveNumber(), gp->giveNumber());
-  }*/
+  if ( kappaFbar != 0.0 ) {
+    P( r_3, s_3 ) += kappaFbar * ( F( r_3, s_3 ) - Fbar( r_3, s_3 ) );
+    Pbar( r_3, s_3 ) += -kappaFbar * ( F( r_3, s_3 ) - Fbar( r_3, s_3 ) );
+  }
 
-  P_Jbar(r_3, s_3) = kappaJbar * (J - Jbar) * cofF(r_3, s_3);
-  Pbar_Jbar(r_3, s_3) = - kappaJbar * (J - Jbar) * cofFbar(r_3, s_3);
-
-  Pbar_JbarVol(r_3, s_3) = (( kappaJbarVol * log(Jbar)) / Jbar )* cofFbar(r_3, s_3);
-
-  P_Fbar(r_3, s_3) = kappaFbar * (F(r_3, s_3) - Fbar(r_3, s_3));
-  Pbar_Fbar(r_3, s_3) = - kappaFbar * (F(r_3, s_3) - Fbar(r_3, s_3));
+  if ( kappaFskewBar != 0.0 ) {
+    P( r_3, s_3 ) += 0.5 * kappaFskewBar * ( F( r_3, s_3 ) - F( s_3, r_3 ) - Fbar( r_3, s_3 ) + Fbar( s_3, r_3 ) );
+    Pbar( r_3, s_3 ) += -0.5 * kappaFskewBar * ( F( r_3, s_3 ) - F( s_3, r_3 ) - Fbar( r_3, s_3 ) + Fbar( s_3, r_3 ) );
+  }
 
   // save gradients
   ThirdMediumMaterialStatus *status = this->giveStatus( gp );
   status->letTempFVectorBe( vF );
   status->letTempFbarVectorBe( vFbar );
 
-  return std::make_tuple( P_Jbar.to_voigt_form() + P_Fbar.to_voigt_form(), Pbar_Jbar.to_voigt_form() + Pbar_JbarVol.to_voigt_form() + Pbar_Fbar.to_voigt_form() );
+  return std::make_tuple( P.to_voigt_form(), Pbar.to_voigt_form() );
 }
 
 std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9> >
@@ -334,36 +328,44 @@ ThirdMediumMaterial ::give_Fbar_ConstitutiveMatrices_3d( MatResponseMode mode, G
 
   Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. ), F( vF ), Fbar( vFbar );
 
-  Tensor4_3d dPdF_Jbar, dPdFbar_Jbar, dPbardF_Jbar, dPbardFbar_Jbar;
-  Tensor4_3d dPbardFbar_JbarVol;
-  Tensor4_3d dPdF_Fbar, dPdFbar_Fbar, dPbardF_Fbar, dPbardFbar_Fbar;
-
-  auto [ J, cofF ] = F.compute_determinant_and_cofactor();
-  auto [ Jbar, cofFbar ] = Fbar.compute_determinant_and_cofactor();
+  Tensor4_3d dPdF, dPdFbar, dPbardF, dPbardFbar;
+  
+  auto [J, cofF] = F.compute_determinant_and_cofactor();
+  auto [Jbar, cofFbar] = Fbar.compute_determinant_and_cofactor();
   auto Fcross = F.compute_tensor_cross_product();
   auto Fbarcross = Fbar.compute_tensor_cross_product();
 
-  dPdF_Jbar(r_3, s_3, u_3, v_3) = kappaJbar * (cofF(u_3, v_3) * cofF(r_3, s_3) + (J - Jbar) * Fcross(r_3, s_3, u_3, v_3));
-  dPdFbar_Jbar(r_3, s_3, u_3, v_3) = - kappaJbar * cofFbar(u_3, v_3) * cofF(r_3, s_3);
-  dPbardF_Jbar(r_3, s_3, u_3, v_3) = - kappaJbar * cofF(u_3, v_3) * cofFbar(r_3, s_3);
-  dPbardFbar_Jbar(r_3, s_3, u_3, v_3) = kappaJbar * (cofFbar(u_3, v_3) * cofFbar(r_3, s_3) - (J - Jbar) * Fbarcross(r_3, s_3, u_3, v_3));
+  if ( kappaJbar != 0.0 ) {
+    dPdF( r_3, s_3, u_3, v_3 ) += kappaJbar * ( cofF( u_3, v_3 ) * cofF( r_3, s_3 ) + ( J - Jbar ) * Fcross( r_3, s_3, u_3, v_3 ) );
+    dPdFbar( r_3, s_3, u_3, v_3 ) += -kappaJbar * cofFbar( u_3, v_3 ) * cofF( r_3, s_3 );
+    dPbardF( r_3, s_3, u_3, v_3 ) += -kappaJbar * cofF( u_3, v_3 ) * cofFbar( r_3, s_3 );
+    dPbardFbar( r_3, s_3, u_3, v_3 ) += kappaJbar * ( cofFbar( u_3, v_3 ) * cofFbar( r_3, s_3 ) - ( J - Jbar ) * Fbarcross( r_3, s_3, u_3, v_3 ) );
+  }
 
-  dPbardFbar_JbarVol(r_3, s_3, u_3, v_3) = (kappaJbarVol/Jbar) * (log(Jbar) * Fbarcross(r_3, s_3, u_3, v_3) + ((1 - log(Jbar)) / Jbar) * cofFbar(r_3, s_3) * cofFbar(u_3, v_3));
+  if ( kappaFbar != 0.0 ) {
+    dPdF( r_3, s_3, u_3, v_3 ) += kappaFbar * delta( r_3, u_3 ) * delta( s_3, v_3 );
+    dPdFbar( r_3, s_3, u_3, v_3 ) += -kappaFbar * delta( r_3, u_3 ) * delta( s_3, v_3 );
+    dPbardF( r_3, s_3, u_3, v_3 ) += -kappaFbar * delta( r_3, u_3 ) * delta( s_3, v_3 );
+    dPbardFbar( r_3, s_3, u_3, v_3 ) += kappaFbar * delta( r_3, u_3 ) * delta( s_3, v_3 );
+  }
 
-  dPdF_Fbar(r_3, s_3, u_3, v_3) = kappaFbar * delta(r_3, u_3) * delta(s_3, v_3);
-  dPdFbar_Fbar(r_3, s_3, u_3, v_3) = - kappaFbar * delta(r_3, u_3) * delta(s_3, v_3);
-  dPbardF_Fbar(r_3, s_3, u_3, v_3) = - kappaFbar * delta(r_3, u_3) * delta(s_3, v_3);
-  dPbardFbar_Fbar(r_3, s_3, u_3, v_3) = kappaFbar * delta(r_3, u_3) * delta(s_3, v_3);
+  if ( kappaFskewBar != 0.0 ) {
+    dPdF( r_3, s_3, u_3, v_3 ) += 0.5* kappaFskewBar * (delta( r_3, u_3 ) * delta( s_3, v_3 ) - delta(r_3, v_3) * delta(s_3, u_3));
+    dPdFbar( r_3, s_3, u_3, v_3 ) += -0.5 * kappaFskewBar * ( delta( r_3, u_3 ) * delta( s_3, v_3 ) - delta( r_3, v_3 ) * delta( s_3, u_3 ) );
+    dPbardF( r_3, s_3, u_3, v_3 ) += -0.5 * kappaFskewBar * ( delta( r_3, u_3 ) * delta( s_3, v_3 ) - delta( r_3, v_3 ) * delta( s_3, u_3 ) );
+    dPbardFbar( r_3, s_3, u_3, v_3 ) += 0.5 * kappaFskewBar * ( delta( r_3, u_3 ) * delta( s_3, v_3 ) - delta( r_3, v_3 ) * delta( s_3, u_3 ) );
+  }
 
-  return std::make_tuple( dPdF_Jbar.to_voigt_form() + dPdF_Fbar.to_voigt_form(), dPdFbar_Jbar.to_voigt_form() + dPdFbar_Fbar.to_voigt_form(), dPbardF_Jbar.to_voigt_form() + dPbardF_Fbar.to_voigt_form(), dPbardFbar_Jbar.to_voigt_form() + dPbardFbar_JbarVol.to_voigt_form() + dPbardFbar_Fbar.to_voigt_form() );
+
+  return std::make_tuple( dPdF.to_voigt_form(), dPdFbar.to_voigt_form(), dPbardF.to_voigt_form(), dPbardFbar.to_voigt_form());
 }
 
 std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5> >
 ThirdMediumMaterial ::give_Fbar_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
 {
-  //these elements should give all Tensor3 components without the third dimension in them
-  // according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
-  auto [vdPdF_3d, vdPdFbar_3d, vdPbardF_3d, vdPbardFbar_3d] = this->give_Fbar_ConstitutiveMatrices_3d(mode, gp, tStep);
+  // these elements should give all Tensor3 components without the third dimension in them
+  //  according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
+  auto [vdPdF_3d, vdPdFbar_3d, vdPbardF_3d, vdPbardFbar_3d] = this->give_Fbar_ConstitutiveMatrices_3d( mode, gp, tStep );
   auto vdPdF_red = vdPdF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
   auto vdPdFbar_red = vdPdFbar_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
   auto vdPbardF_red = vdPbardF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
@@ -564,7 +566,7 @@ ThirdMediumMaterial::give_LinearElasticity_RealStressVector_3d( const FloatArray
   return sig;
 }
 
-FloatMatrixF<4,4>
+FloatMatrixF<4, 4>
 ThirdMediumMaterial::give_LinearElasticity_ConstitutiveMatrix_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
 {
   return linearElasticTangentPlaneStrain;
@@ -576,13 +578,12 @@ ThirdMediumMaterial::give_LinearElasticity_ConstitutiveMatrix_3d( MatResponseMod
   return linearElasticTangent;
 }
 
-void
-ThirdMediumMaterial ::initTangents()
+void ThirdMediumMaterial ::initTangents()
 {
   double G = E / ( 2.0 * ( 1. + nu ) );
   double K = E / ( 3.0 * ( 1. - 2. * nu ) );
   this->linearElasticTangent = 2 * G * I_dev6 + K * I6_I6;
-  
+
   linearElasticTangentPlaneStrain = {
     linearElasticTangent( 0, 0 ),
     linearElasticTangent( 1, 0 ),
@@ -604,6 +605,4 @@ ThirdMediumMaterial ::initTangents()
 }
 
 
-
 } // end namespace oofem
-

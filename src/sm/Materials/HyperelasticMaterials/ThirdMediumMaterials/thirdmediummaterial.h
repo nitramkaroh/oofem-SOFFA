@@ -60,8 +60,8 @@
 #define _IFT_ThirdMediumMaterial_kappaGradJGradJ "kappagradjgradj"
 #define _IFT_ThirdMediumMaterial_kappaGradRGradR "kappagradrgradr"
 #define _IFT_ThirdMediumMaterial_kappaJbar "kappajbar"
-#define _IFT_ThirdMediumMaterial_kappaJbarVol "kappajbarvol"
 #define _IFT_ThirdMediumMaterial_kappaFbar "kappafbar"
+#define _IFT_ThirdMediumMaterial_kappaFskewBar "kappafskewbar"
 #define _IFT_ThirdMediumMaterial_eLinear "e_lin"
 #define _IFT_ThirdMediumMaterial_nuLinear "nu_lin"
 
@@ -73,7 +73,7 @@ class OOFEM_EXPORT ThirdMediumMaterial
 {
 protected:
   // material parameters
-  double kappaGradFGradF = 0, kappaGradJGradJ = 0, kappaGradRGradR = 0, kappaJbar = 0, kappaJbarVol = 0, kappaFbar = 0;
+  double kappaGradFGradF = 0, kappaGradJGradJ = 0, kappaGradRGradR = 0, kappaJbar = 0, kappaFbar = 0, kappaFskewBar = 0;
 
   //elastic tangents
   double E = 0., nu = 0.;
