@@ -126,7 +126,8 @@
         "timestepcontroller.C": "cpp",
         "simplecrosssection.C": "cpp",
         "nlstructuralelement.C": "cpp",
-        "fei3dwedgelin.C": "cpp"
+        "fei3dwedgelin.C": "cpp",
+        "linesearch.C": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

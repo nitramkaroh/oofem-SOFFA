@@ -331,21 +331,25 @@ QuadraticLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, Flo
     auto alpha = R0/R1;
     if(!std::isnan(alpha)) {
       if(fabs(1./alpha) > ls_tolerance ) {
-	if (alpha < 0) {
-	  eta = 0.5 * alpha + sqrt(0.5 * alpha * 0.5 * alpha - alpha);
-	} else {
-	  eta = 0.5 * alpha;
-	}
-	//
-	eta = std::min(eta, etaElement);
+      if (alpha < 0) {
+      eta = 0.5 * alpha + sqrt(0.5 * alpha * 0.5 * alpha - alpha);
       } else {
-	eta = std::min(1., etaElement);
+      eta = 0.5 * alpha;
+      }
+      //
+      eta = std::min(eta, etaElement);
+      } else {
+      eta = std::min(1., etaElement);
       }
 
+      eta = std::max(eta, minEta);
     } else {
       eta = 0.1;//0.1;//1.e-10;
       r = rn + eta * dr;
       engngModel->updateComponent( tStep, InternalRhs, domain );
+      if(std::isnan(F.computeNorm())) {
+      eta = 1.e-2;
+      }
     }
    
 
