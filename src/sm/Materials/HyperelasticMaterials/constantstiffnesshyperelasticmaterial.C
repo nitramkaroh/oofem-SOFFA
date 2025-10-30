@@ -44,7 +44,7 @@ namespace oofem {
 REGISTER_Material( ConstantStiffnessHyperElasticMaterial );
 
 ConstantStiffnessHyperElasticMaterial::ConstantStiffnessHyperElasticMaterial( int n, Domain *d ) :
-    StructuralMaterial( n, d ), BaseHyperElasticMaterial()
+    StructuralMaterial( n, d ), BaseHyperElasticMaterial(), De()
 { }
 
 FloatArrayF< 9 >
@@ -56,11 +56,10 @@ ConstantStiffnessHyperElasticMaterial::giveFirstPKStressVector_3d( const FloatAr
     Tensor2_3d F(vF), P;
 
     Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
 
     // compute the first Piola-Kirchhoff
     P( i_3, j_3 ) = this->compute_dVolumetricEnergy_dF( F )( i_3, j_3 )
-      + lambda * delta( i_3, m_3 ) * ( F( p_3, p_3 ) - 3. ) * cofF( m_3, j_3 ) + mu * ( F( i_3, m_3 ) + F( m_3, i_3 ) - 2. * delta( i_3, m_3 ) ) * cofF( m_3, j_3 );
+        + De( i_3, j_3, k_3, l_3 ) * ( F( k_3, l_3 ) - delta( k_3, l_3 ) );
 
       
     auto vP = P.to_voigt_form();
@@ -82,52 +81,10 @@ ConstantStiffnessHyperElasticMaterial::give3dMaterialStiffnessMatrix_dPdF( MatRe
     Tensor2_3d F(vF);
     Tensor4_3d A;
 
-    Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
-    auto [J, cofF] = F.compute_determinant_and_cofactor();
-    auto Fcross = F.compute_tensor_cross_product();
+    A( i_3, j_3, k_3, l_3 ) = this->compute_d2VolumetricEnergy_dF2( F )( i_3, j_3, k_3, l_3 ) + De( i_3, j_3, k_3, l_3 );
 
-    A( i_3, j_3, k_3, l_3 ) = this->compute_d2VolumetricEnergy_dF2( F )( i_3, j_3, k_3, l_3 )
-      + lambda * delta( i_3, m_3 ) * delta( k_3, l_3 ) * cofF( m_3, j_3 ) + mu * ( delta( i_3, k_3 ) * delta( m_3, l_3 ) + delta( i_3, l_3 ) * delta( m_3, k_3 ) ) * cofF( m_3, j_3 )
-      + lambda * delta( i_3, m_3 ) * ( F( p_3, p_3 ) - 3. ) * Fcross( m_3, j_3, k_3, l_3 ) + mu * ( F( i_3, m_3 ) + F( m_3, i_3 ) - 2. * delta( i_3, m_3 ) ) * Fcross( m_3, j_3, k_3, l_3 );
-    
-    auto vAnum = this->compute3dMaterialStiffnessMatrix_dPdF_numeric(vF, gp, tStep, 1.e-6);
-    auto vA = A.to_voigt_form();
-    auto vAdiff = vA - vAnum;
-
-    FloatMatrix vA_fm(vA), vAdiff_fm(vAdiff), vAnum_fm(vAnum); 
-    FloatArray vF_fm(vF);
-
-    //return A.to_voigt_form();
-    return vAnum;
+    return A.to_voigt_form();
 }
-
-FloatMatrixF<9, 9> ConstantStiffnessHyperElasticMaterial::compute3dMaterialStiffnessMatrix_dPdF_numeric( FloatArrayF<9> vF, GaussPoint *gp, TimeStep *tStep, double perturb ) const
-{
-  FloatMatrixF<9, 9> answer;
-  FloatArrayF<9> vF_forward, vF_back, vP_forward, vP_back;
-
-  for ( int ii = 1; ii <= 9; ii++ ) {
-
-    vF_forward = vF;
-    vF_forward.at( ii ) = vF_forward.at( ii ) + perturb;
-    vF_back = vF;
-    vF_back.at( ii ) = vF_back.at( ii ) - perturb;
-
-    vP_forward = this->giveFirstPKStressVector_3d( vF_forward, gp, tStep );
-    vP_back = this->giveFirstPKStressVector_3d( vF_back, gp, tStep );
-
-    for ( int jj = 1; jj <= 9; jj++ ) {
-      answer.at( jj, ii ) = (vP_forward.at(jj) - vP_back.at(jj))/(2.*perturb);
-    }
-  }
-
-  //fix status which was broken by the stress computations
-  StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
-  status->letTempFVectorBe( vF );
-
-  return answer;
-}
-
 
 
 MaterialStatus *
@@ -144,7 +101,16 @@ void ConstantStiffnessHyperElasticMaterial::initializeFrom( InputRecord &ir )
     IR_GIVE_FIELD( ir, E, _IFT_ConstantStiffnessHyperElasticMaterial_E );
     IR_GIVE_FIELD( ir, nu, _IFT_ConstantStiffnessHyperElasticMaterial_nu );
 
-    this->lambda = E * nu / ( ( 1. + nu ) * ( 1. - 2. * nu ) );
-    this->mu = E / ( 2. * ( 1. + nu ) );
+    double lambda = E * nu / ( ( 1. + nu ) * ( 1. - 2. * nu ) );
+    double mu = E / ( 2. * ( 1. + nu ) );
+
+    this->computeStiffnessTensor(lambda, mu);
 }
+
+void ConstantStiffnessHyperElasticMaterial::computeStiffnessTensor( double lambda, double mu )
+{
+  Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
+  De( i_3, j_3, k_3, l_3 ) = lambda * delta( i_3, j_3 ) * delta( k_3, l_3 ) + mu * ( delta( i_3, k_3 ) * delta( j_3, l_3 ) + delta( i_3, l_3 ) * delta( j_3, k_3 ) );
+}
+
 } // end namespace oofem

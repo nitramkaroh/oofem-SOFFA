@@ -42,8 +42,8 @@
 ///@name Input fields for MooneyRivlinMaterial
 //@{
 #define _IFT_ConstantStiffnessHyperElasticMaterial_Name "constantstiffnesshyperelasticmat"
-#define _IFT_ConstantStiffnessHyperElasticMaterial_E "e"
-#define _IFT_ConstantStiffnessHyperElasticMaterial_nu "nu"
+#define _IFT_ConstantStiffnessHyperElasticMaterial_E "elin"
+#define _IFT_ConstantStiffnessHyperElasticMaterial_nu "nulin"
 //@}
 
 namespace oofem {
@@ -58,8 +58,7 @@ class ConstantStiffnessHyperElasticMaterial : public StructuralMaterial, public 
 {
 protected:
     // Material parameters
-    double lambda;
-    double mu;
+    Tensor4_3d De;
 
 
 public:
@@ -83,6 +82,6 @@ public:
 
 private:
 
-    FloatMatrixF<9,9> compute3dMaterialStiffnessMatrix_dPdF_numeric(FloatArrayF<9> vF, GaussPoint *gp, TimeStep *tStep, double perturb) const;
+    void computeStiffnessTensor(double lambda, double mu);
 };
 } // end namespace oofem
