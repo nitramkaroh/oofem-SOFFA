@@ -150,31 +150,4 @@ class ThirdMedium_Grad_FbarTerm : public StructuralTerm
   void computeBHmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
 };
 
-/**
- * @brief Evaluates term simulating a linear elastic response (i.e. formulated in eps and sigma).
- *
- */
-class ThirdMedium_Grad_LinearElasticTerm : public StructuralTerm
-{
-  protected:
-  public:
-      ThirdMedium_Grad_LinearElasticTerm( const Variable &testField, const Variable &displacementField );
-  /**
-   * @brief Evaluates Internal forces vector, i.e. $B^Tsigma(eps)$
-   *
-   * @param cell
-   * @param coords
-   */
-  void evaluate( FloatArray &, StructuralElement &cell, GaussPoint *gp, TimeStep *tstep ) const override;
-  void evaluate_lin( FloatMatrix &answer, StructuralElement &e, GaussPoint *gp, TimeStep *tstep ) const override;
-
-  void getDimensions( Element &cell ) const override { ; }
-  void initializeCell( Element &cell ) const override { ; }
-  int computeDeformationField( FloatArray &grad, FloatMatrix &B, StructuralElement &cell, const FloatArray &lcoords, MaterialMode mmode, TimeStep *tstep ) const;
-
-  protected:
-  void computeBmatrixAt( FloatMatrix &answer, const Variable &v, const FEInterpolation &interpol, const Element &cell, const FloatArray &coords, const MaterialMode mmode ) const;
-};
-
-
 } // end namespace oofem

@@ -92,14 +92,6 @@ public:
     std::tuple<FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9>, FloatMatrixF<9, 9> > give_Fbar_ConstitutiveMatrices_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
     std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5> > give_Fbar_ConstitutiveMatrices_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
 
-    //terms with linear elasticity handling
-    FloatArray give_LinearElasticity_FluxVector( const FloatArray &eps, GaussPoint *gp, TimeStep *tStep ) const;
-    FloatArrayF<6> give_LinearElasticity_FluxVector_3d( const FloatArrayF<6> &eps, GaussPoint *gp, TimeStep *tStep ) const;
-    FloatArrayF<4> give_LinearElasticity_FluxVector_PlaneStrain( const FloatArrayF<4> &eps, GaussPoint *gp, TimeStep *tStep ) const;
-
-    FloatMatrix give_LinearElasticity_dFlux_dGrad( MatResponseMode rmode, GaussPoint *gp, TimeStep *tStep ) const;
-    FloatMatrixF<6, 6> give_LinearElasticity_ConstitutiveMatrix_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
-    FloatMatrixF<4, 4> give_LinearElasticity_ConstitutiveMatrix_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
 
 };
 } // end namespace oofem

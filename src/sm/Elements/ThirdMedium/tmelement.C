@@ -81,7 +81,7 @@ class ThirdMediumElement : public NLStructuralElement
   {
     if ( type == TangentStiffnessMatrix ) {
       answer.clear();
-      FloatMatrix standardAnswer, secondGradAnswer, firstSecondGradAnswer, FbarAnswer, leAnswer;
+      FloatMatrix standardAnswer, secondGradAnswer, firstSecondGradAnswer, FbarAnswer;
       int udofs = this->giveNumberOfDofs();
       IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
 
@@ -94,12 +94,6 @@ class ThirdMediumElement : public NLStructuralElement
       FbarAnswer.zero();
       this->integrateTerm_dw( FbarAnswer, ThirdMedium_Grad_FbarTerm( getU(), getU() ), ir, tStep );
       answer.add( FbarAnswer );
-
-      // linear elastic term
-      leAnswer.resize( udofs, udofs );
-      leAnswer.zero();
-      this->integrateTerm_dw( leAnswer, ThirdMedium_Grad_LinearElasticTerm( getU(), getU() ), ir, tStep );
-      answer.add( leAnswer );
 
       //gradient terms
       if ( this->giveInterpolation()->giveInterpolationOrder() > 1 ) {
@@ -141,7 +135,7 @@ class ThirdMediumElement : public NLStructuralElement
   {
     if ( ( type == InternalForcesVector ) && ( mode == VM_Total ) ) {
       answer.clear();
-      FloatArray standardAnswer, firstGradAnswer, firstSecondGradAnswer, FbarAnswer, leAnswer;
+      FloatArray standardAnswer, firstGradAnswer, firstSecondGradAnswer, FbarAnswer;
       IntegrationRule *ir = this->giveDefaultIntegrationRulePtr();
 
       //standard answer
@@ -153,12 +147,6 @@ class ThirdMediumElement : public NLStructuralElement
       FbarAnswer.zero();
       this->integrateTerm_c( FbarAnswer, ThirdMedium_Grad_FbarTerm( getU(), getU() ), ir, tStep );
       answer.add( FbarAnswer );
-
-      //linear elastic answer
-      leAnswer.resize( this->giveNumberOfDofs() );
-      leAnswer.zero();
-      this->integrateTerm_c( leAnswer, ThirdMedium_Grad_LinearElasticTerm( getU(), getU() ), ir, tStep );
-      answer.add( leAnswer );
 
       // gradient answers
       if ( this->giveInterpolation()->giveInterpolationOrder() > 1 ) {
