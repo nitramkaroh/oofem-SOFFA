@@ -48,6 +48,7 @@
 #define _IFT_MetaStep_finalT "finalt"
 #define _IFT_MetaStep_deltaT "deltat"
 #define _IFT_MetaStep_prescribedTimes "prescribedtimes"
+#define _IFT_MetaStep_requiredTimes "requiredtimes"
 #define _IFT_MetaStep_dtFunction "dtfunction" ///< Function that determines size of time step.
 
 #define _IFT_MetaStep_timeReductionStrategyType "treductiontype"
@@ -89,6 +90,8 @@ protected:
     int number;
     /// Specified times where the problem is solved    
     FloatArray prescribedTimes;
+    /// Times at which the problem will ALWAYS be solved regardless of reduction strategy
+    FloatArray requiredTimes;
     /// Associated time function for time step increment.
     int dtFunction = 0;
     /// Specified times where the problem is solved merge with prescribedTimes
