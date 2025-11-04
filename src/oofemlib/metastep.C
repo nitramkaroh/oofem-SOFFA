@@ -39,14 +39,16 @@ namespace oofem {
 MetaStep :: MetaStep(int n, EngngModel *e) :
     eModel(e),
     numberOfSteps(0),
-    number(n)
+    number(n),
+    requiredTimes()
 {}
 
 MetaStep :: MetaStep(int n, EngngModel *e, int nsteps, InputRecord &attrib) :
     eModel(e),
     numberOfSteps(nsteps),
     attributes(attrib.clone()),
-    number(n)
+    number( n ),
+    requiredTimes()
 {}
 
 
@@ -76,20 +78,21 @@ MetaStep :: initializeFrom(InputRecord &ir)
       if ( ir.hasField(_IFT_MetaStep_dtFunction) ) {
         IR_GIVE_FIELD(ir, this->dtFunction, _IFT_MetaStep_dtFunction);
       } else if ( ir.hasField(_IFT_MetaStep_prescribedTimes) ) {
-	IR_GIVE_OPTIONAL_FIELD(ir, prescribedTimes, _IFT_MetaStep_prescribedTimes);
-	if ( prescribedTimes.giveSize() > 0 ) {
-	  numberOfSteps = prescribedTimes.giveSize();
-	  finalTime = prescribedTimes.at(numberOfSteps);
-	} 
+        IR_GIVE_OPTIONAL_FIELD( ir, prescribedTimes, _IFT_MetaStep_prescribedTimes );
+        if ( prescribedTimes.giveSize() > 0 ) {
+          numberOfSteps = prescribedTimes.giveSize();
+          finalTime = prescribedTimes.at( numberOfSteps );
+        } 
       } else {
-	//@todo: how to get dt
-	finalTime = numberOfSteps * deltaT;
+        //@todo: how to get dt
+        finalTime = numberOfSteps * deltaT;
       }
     }
-  } 
+  }
+  requiredTimes.clear();
+  IR_GIVE_OPTIONAL_FIELD( ir, requiredTimes, _IFT_MetaStep_requiredTimes );
 
-
-    this->attributes = ir.clone();
+  this->attributes = ir.clone();
 }
 
 int
@@ -175,6 +178,14 @@ MetaStep :: adaptTimeStep(int niter, double targetTime)
     dT = dtmin;    
   }
 
+  //check not to overshoot any required time
+  for(int ii = 0; ii < requiredTimes.giveSize(); ii++){
+    if (targetTime < requiredTimes(ii) && targetTime + dT > requiredTimes(ii)){
+      dT = requiredTimes(ii) - targetTime;
+    }
+  }
+
+  //check not to overshoot the final time
   if( targetTime + dT > this->finalTime ) {
     dT = finalTime - targetTime;
   }
