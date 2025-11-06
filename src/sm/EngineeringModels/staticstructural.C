@@ -397,7 +397,10 @@ double StaticStructural :: giveUnknownComponent(ValueModeType mode, TimeStep *tS
         // evaluate the residual of momentum balance for specific unknown
         int eq = dof->__giveEquationNumber();
         if (eq && internalForces.isNotEmpty()) {
-            double ans = loadLevel*referenceForces.at(eq)-internalForces.at(eq);
+            double ans = -internalForces.at(eq);
+            if ( referenceForces.isNotEmpty() ) {
+                ans += loadLevel * referenceForces.at( eq );
+            }
             if (externalForces.isNotEmpty()) {
                 ans += externalForces.at(eq);
             }
