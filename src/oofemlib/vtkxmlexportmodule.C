@@ -46,6 +46,7 @@
 #include "classfactory.h"
 #include "crosssection.h"
 #include "unknownnumberingscheme.h"
+#include "EngineeringModels\structengngmodel.h"
 
 #include "xfem/xfemmanager.h"
 #include "xfem/enrichmentitem.h"
@@ -499,7 +500,7 @@ VTKXMLExportModule::giveDataHeaders(std::string &pointHeader, std::string &cellH
 
     for ( int i = 1; i <= primaryVarsToExport.giveSize(); i++ ) {
         UnknownType type = ( UnknownType ) primaryVarsToExport.at(i);
-        if ( type == DisplacementVector || type == EigenVector || type == VelocityVector || type == DirectorField || type == MacroSlipVector || type == ResidualForce ) {
+        if ( type == DisplacementVector || type == EigenVector || type == VelocityVector || type == DirectorField || type == MacroSlipVector || type == ResidualForce || type == ReactionForce ) {
             vectors += __UnknownTypeToString(type);
             vectors.append(" ");
         } else if ( type == FluxVector || type == PressureVector || type == Temperature || type == Humidity || type == DeplanationFunction || type == MagneticPotential) {
@@ -728,10 +729,12 @@ VTKXMLExportModule::writePrimaryVars(ExportRegion &vtkPiece)
         this->writeVTKPointData(name, varArray);
 
 #else
+
+
         this->fileStream << " <DataArray type=\"Float64\" Name=\"" << name << "\" NumberOfComponents=\"" << ncomponents << "\" format=\"ascii\"> ";
         for ( int inode = 1; inode <= numNodes; inode++ ) {
-            FloatArray &valueArray = vtkPiece.givePrimaryVarInNode(type, inode);
-            this->writeVTKPointData(valueArray);
+          FloatArray &valueArray = vtkPiece.givePrimaryVarInNode( type, inode );
+          this->writeVTKPointData( valueArray );
         }
         this->fileStream << "</DataArray>\n";
 

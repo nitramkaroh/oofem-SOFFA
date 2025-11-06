@@ -46,6 +46,7 @@
 #include "classfactory.h"
 #include "crosssection.h"
 #include "unknownnumberingscheme.h"
+#include "EngineeringModels\structengngmodel.h"
 
 #include <string>
 #include <sstream>
@@ -380,16 +381,84 @@ VTKBaseExportModule::exportPrimaryVars(ExportRegion &vtkPiece, Set &region, IntA
     //const IntArray& mapG2L = vtkPiece.getMapG2L();
     const IntArray& mapL2G = vtkPiece.getMapL2G();
 
-    vtkPiece.setNumberOfPrimaryVarsToExport(primaryVarsToExport, mapL2G.giveSize() );
+    vtkPiece.setNumberOfPrimaryVarsToExport( primaryVarsToExport, mapL2G.giveSize() );
     for ( int i = 1, n = primaryVarsToExport.giveSize(); i <= n; i++ ) {
-        UnknownType type = ( UnknownType ) primaryVarsToExport.at(i);
+      UnknownType type = (UnknownType)primaryVarsToExport.at( i );
+
+      if ( type != ReactionForce ) {
 
         for ( int inode = 1; inode <= mapL2G.giveSize(); inode++ ) {
-            DofManager *dman = d->giveNode(mapL2G.at(inode) );
+          DofManager *dman = d->giveNode( mapL2G.at( inode ) );
 
-            this->getNodalVariableFromPrimaryField(valueArray, dman, tStep, type, region, smoother);
-            vtkPiece.setPrimaryVarInNode(type, inode, std::move(valueArray) );
+          this->getNodalVariableFromPrimaryField( valueArray, dman, tStep, type, region, smoother );
+          vtkPiece.setPrimaryVarInNode( type, inode, std::move( valueArray ) );
         }
+
+      } else {
+
+        // build DofIDMask
+        IntArray dofIDMask( 3 );
+        int ndofs = 3; //this has to be hardcoded, otherwise ParaView does not understand
+
+        // reaction forces are different, they are not in every node, when they are not present, we export 0.0
+        FloatArray reactions;
+        IntArray dofManMap, dofidMap, eqnMap;
+
+#ifdef __SM_MODULE
+        StructuralEngngModel *strEngMod = dynamic_cast<StructuralEngngModel *>( emodel );
+        if ( strEngMod ) {
+          strEngMod->buildReactionTable( dofManMap, dofidMap, eqnMap, tStep, 1 );
+          strEngMod->computeReaction( reactions, tStep, 1 );
+        } else
+#endif
+        {
+          OOFEM_ERROR( "Cannot export reaction forces - only implemented for structural problems." );
+        }
+
+        for ( int i = 1; i <= d->giveNumberOfDofManagers(); i++ ) {
+          if ( mapL2G.contains(i) ) {
+            //we are doing output for this node
+            int inode = mapL2G.findFirstIndexOf( i );
+
+            //dof manager
+            DofManager *dofMan = d->giveDofManager( i );
+
+            //dof id mask
+            dofIDMask = {
+              (int)Undef, (int)Undef, (int)Undef
+            };
+            for ( Dof *dof : *dofMan ) {
+              DofIDItem id = dof->giveDofID();
+              if ( id == D_u ) {
+                dofIDMask.at( 1 ) = id;
+              } else if ( id == D_v ) {
+                dofIDMask.at( 2 ) = id;
+              } else if ( id == D_w ) {
+                dofIDMask.at( 3 ) = id;
+              }
+            }
+
+            // values, zeros by default
+            FloatArray valueArray;
+            valueArray.resize( ndofs );
+            if ( dofManMap.contains( i ) ) {
+              //there is a reaction force in this dofman
+              for ( Dof * dof : *dofMan) {
+                int num = dof->giveEquationNumber( EModelDefaultPrescribedEquationNumbering() );
+
+                if ( eqnMap.contains( num ) ) {
+                  //there is value of reaction, now we just have to place it at the correct spot in the value array
+                  int dofPos = dofIDMask.findFirstIndexOf( dof->giveDofID() );
+                  if (dofPos > 0){
+                    valueArray.at( dofPos ) = reactions.at( num );
+                  }
+                }
+              }
+            }
+            vtkPiece.setPrimaryVarInNode( type, inode, std::move( valueArray ) );
+          }
+        }
+      }
     }
 }
 
