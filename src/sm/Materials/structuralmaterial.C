@@ -47,6 +47,7 @@
 #include "engngm.h"
 #include "fieldmanager.h"
 #include "dynamicinputrecord.h"
+#include "tensor\tensor2.h"
 
 namespace oofem {
 std::array< std::array< int, 3 >, 3 >StructuralMaterial::vIindex = {
@@ -2139,6 +2140,14 @@ StructuralMaterial::giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStat
     } else if ( type == IST_FirstPKStressTensor ) {
         answer = status->givePVector();
         return 1;
+    } else if ( type == IST_CauchyStressTensor ) {
+      FloatArrayF<9> vP = status->givePVector();
+      FloatArrayF<9> vF = status->giveFVector();
+      Tensor2_3d P(vP), F(vF), Sigma;
+      auto J = F.compute_determinant();
+      Sigma(i_3, j_3) = 1./J * P(i_3, k_3) * F(j_3, k_3);
+      answer = Sigma.to_voigt_form();
+      return 1;
     } else if ( type == IST_EigenStrainTensor ) {
         FloatArray eigenstrain;
         StructuralElement *selem = dynamic_cast< StructuralElement * >( gp->giveElement() );
