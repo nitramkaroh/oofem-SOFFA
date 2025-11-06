@@ -50,9 +50,10 @@ namespace oofem {
     ENUM_ITEM_WITH_VALUE(DirectorField, 15) /* Vector field */ \
     ENUM_ITEM_WITH_VALUE(DeplanationFunction, 16)          \
     ENUM_ITEM_WITH_VALUE(MacroSlipVector, 17) \
-    ENUM_ITEM_WITH_VALUE(ResidualForce, 18)
+    ENUM_ITEM_WITH_VALUE(ResidualForce, 18) \
+    ENUM_ITEM_WITH_VALUE(ReactionForce, 19)
 /**
- * Type representing particular unknown (its physical meaning).
+ * Type representing particular unknown (its physical meaning). 
  */
 enum UnknownType {
     UnknownType_DEF
