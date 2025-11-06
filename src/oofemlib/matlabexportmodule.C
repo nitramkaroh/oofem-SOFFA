@@ -594,7 +594,7 @@ MatlabExportModule :: doOutputReactionForces(TimeStep *tStep,    FILE *FID)
     {
         OOFEM_ERROR("Cannot export reaction forces - only implemented for structural problems.");
     }
-
+    
     // Set the nodes and elements to export based on sets
     if ( this->reactionForcesNodeSet > 0 ) {
         Set *set = domain->giveSet( this->reactionForcesNodeSet );
@@ -643,10 +643,9 @@ MatlabExportModule :: doOutputReactionForces(TimeStep *tStep,    FILE *FID)
 
             for ( Dof *dof: *dofMan ) {
                 int num = dof->giveEquationNumber( EModelDefaultPrescribedEquationNumbering() );
-                int pos = eqnMap.findFirstIndexOf( num );
                 dofIDs.followedBy(dof->giveDofID());
-                if ( pos > 0 ) {
-                    fprintf(FID, "%.16e ", reactions.at(pos));
+                if ( eqnMap.contains( num ) ) {
+                    fprintf(FID, "%.16e ", reactions.at(num));
                 } else {
                     fprintf( FID, "%.16e ", 0.0 ); // if not prescibed output zero
                 }
