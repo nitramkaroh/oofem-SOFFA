@@ -2141,8 +2141,14 @@ StructuralMaterial::giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStat
         answer = status->givePVector();
         return 1;
     } else if ( type == IST_CauchyStressTensor ) {
-      FloatArrayF<9> vP = status->givePVector();
-      FloatArrayF<9> vF = status->giveFVector();
+      FloatArray vvP = status->givePVector();
+      FloatArray vvF = status->giveFVector();
+      if (vvF.giveSize() != 9 || vvP.giveSize() != 9){
+        //probably not a nonlinear geometry, return zero size array (similarly to what is returned for F and P above)
+        answer.resize(0);
+        return 1;
+      }
+      FloatArrayF<9> vP(vvP), vF(vvF);
       Tensor2_3d P(vP), F(vF), Sigma;
       auto J = F.compute_determinant();
       Sigma(i_3, j_3) = 1./J * P(i_3, k_3) * F(j_3, k_3);
