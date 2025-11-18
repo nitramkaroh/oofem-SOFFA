@@ -39,6 +39,7 @@
 
 #include "sparsemtrx.h"
 #include "intarray.h"
+#include <Eigen/Dense>
 
 #include <Eigen/Sparse>
 
@@ -75,7 +76,6 @@ public:
         for ( auto &Di : this->m_diag ) {
             if ( Di < minEig ) minEig = Di;
             if ( Di < 0 ) {
-	      OOFEM_WARNING("Negative value on the diagonal of D matrix! Changing sign.");
                 if ( update ) Di *= ( -1. );
                 answ = true;
                 numNegEigs++;
@@ -96,10 +96,10 @@ enum FactorizationType {
     FT_LDLT
 };
 
-
-  
 class OOFEM_EXPORT EigenMtrx : public SparseMtrx
 {
+    
+
 protected:
     Eigen::SparseMatrix<double> EigMat;
 
@@ -116,11 +116,23 @@ protected:
     Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int> > QR_factorization; 
     SimplicialLDLTderived<Eigen::SparseMatrix<double> > LDLT_factorization; 
 
+    //bool factorized = false;
+
+    //template <typename Derived>
+    //Eigen::SparseSolverBase<Derived> factorization;
+
+
 public:
     /** Constructor. Before any operation an internal profile must be built.
      * @see buildInternalStructure
      */
-    EigenMtrx( int n=0 );
+    EigenMtrx( int n=0);
+
+    EigenMtrx( Eigen::SparseMatrix<double>& EigMat );
+
+    EigenMtrx( const EigenMtrx &EigenMtrxInput );
+
+    //EigenMtrx &operator= ( Eigen::SparseMatrix<double> & EigMat );
 
     /// Destructor
     virtual ~EigenMtrx() {}
@@ -137,18 +149,29 @@ public:
     void zero() override;
     double &at( int i, int j ) override;
     double at( int i, int j ) const override;
-    /*void toFloatMatrix( FloatMatrix &answer ) const override;
-    void printYourself() const override;*/
+    /*void toFloatMatrix( FloatMatrix &answer ) const override;*/
+    //void printYourself() const override;
     const char *giveClassName() const override { return "EigenMtrx"; }
     SparseMtrxType giveType() const override { return SMT_EigenMtrx; }
     bool isAsymmetric() const override { return true; }
 
-    Eigen::SparseMatrix<double> giveMatrix();
+    Eigen::SparseMatrix<double>& giveMatrix();
+
+    //template <typename Derived>
+    //std::shared_ptr<Eigen::SparseSolverBase<Derived> > giveFactorization( FactorizationType factorizationType );
 
     template <typename Derived>
     Eigen::SparseSolverBase<Derived>& giveFactorization( FactorizationType Factorization );
 
-        SimplicialLDLTderived<Eigen::SparseMatrix<double> >& giveLDLTFactorization();
+
+    //template <typename Derived>
+    //void setFactorization( FactorizationType factorizationType, Eigen::SparseSolverBase<Derived> factorization );
+
+    //void setLDLTFactorization(Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> >& factorization );
+
+    //std::shared_ptr<SimplicialLDLTderived<Eigen::SparseMatrix<double> > > giveLDLTFactorization();
+    //    SimplicialLDLTderived<Eigen::SparseMatrix<double> >& EigenMtrx::giveLDLTFactorization();
+    SimplicialLDLTderived<Eigen::SparseMatrix<double> >& giveLDLTFactorization();
 
     void computeFactorization( FactorizationType factorizationType );
     
@@ -158,10 +181,13 @@ public:
 
     void createMatrixFromTriplets();
 
+    void printYourself() const override;
 
-
-
+    ///////////
+    //void getBlock( int i, int j, int p, int q, EigenMtrx &BlockMatrix );
+    std::unique_ptr<EigenMtrx> getBlock( int i, int j, int p, int q );
+    std::unique_ptr<EigenMtrx> doStaticCondensation( int i );
+    ///////////
 };
 } // end namespace oofem
 #endif // eigenmtrx_h
-

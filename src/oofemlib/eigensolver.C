@@ -102,19 +102,19 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
 
     } else if ( this->method.compare("QR" ) == 0 ) {
 
-        Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int> > A_factorization( A_eig );
-        x_eig = A_factorization.solve( b_eig ); // Solve the system
-    }else if ( this->method.compare("LDLT_Dcontrol" ) == 0 ) {
+      Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int> > A_factorization( A_eig );
+      x_eig = A_factorization.solve( b_eig ); // Solve the system
+    } else if ( this->method.compare( "LDLT_Dcontrol" ) == 0 ) {
 
-        SimplicialLDLTderived<Eigen::SparseMatrix<double> > A_factorization( A_eig );
-	double minEig;
-	const bool update = true;
-	int numNegEigs;
-	A_factorization.updateD(minEig, update, numNegEigs);
-        x_eig = A_factorization.solve( b_eig ); // Solve the system
+      SimplicialLDLTderived<Eigen::SparseMatrix<double> > A_factorization( A_eig );
+      double minEig;
+      const bool update = true;
+      int numNegEigs;
+      A_factorization.updateD( minEig, update, numNegEigs );
+      x_eig = A_factorization.solve( b_eig ); // Solve the system
 
     } else {
-      OOFEM_ERROR("Unknown solver type");
+      OOFEM_ERROR( "Unknown solver type" );
     }
 
     // Copy/move values to FloatArray x
