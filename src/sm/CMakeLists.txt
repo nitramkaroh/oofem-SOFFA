@@ -96,6 +96,7 @@ set (sm_unsorted
     Contact/celnode2node.C
     Contact/ActiveBc/node2nodepenaltycontact.C
     Contact/ActiveBc/node2nodelagrangianmultipliercontact.C
+    Contact/ContactElement/trcontactelement.C
     )
 
 set (sm_parallel
