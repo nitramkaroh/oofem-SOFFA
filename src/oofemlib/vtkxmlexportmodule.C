@@ -46,7 +46,7 @@
 #include "classfactory.h"
 #include "crosssection.h"
 #include "unknownnumberingscheme.h"
-#include "EngineeringModels\structengngmodel.h"
+#include "EngineeringModels/structengngmodel.h"
 
 #include "xfem/xfemmanager.h"
 #include "xfem/enrichmentitem.h"

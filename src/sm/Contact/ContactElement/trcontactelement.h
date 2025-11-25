@@ -39,6 +39,7 @@
 
 #define _IFT_TrContactElement_Name "trcontactelement"
 #define _IFT_TrContactElement_normalPenalty "normalpenalty"
+#define _IFT_TrContactElement_cheatFactor "cheatfactor"
 
 namespace oofem {
 class FEI2dTrLin;
@@ -93,6 +94,7 @@ protected:
     bool   xiInitialized = false;
 
 private:
+    double cheatFactor_ = 0.05;
       // ---- material parameters (were d(1..4) in MATLAB) ----
     double normalPenalty_;     // d(1)
     double tangentialPenalty_; // d(2)

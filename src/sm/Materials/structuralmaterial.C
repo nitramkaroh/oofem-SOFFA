@@ -47,7 +47,7 @@
 #include "engngm.h"
 #include "fieldmanager.h"
 #include "dynamicinputrecord.h"
-#include "tensor\tensor2.h"
+#include "tensor/tensor2.h"
 
 namespace oofem {
 std::array< std::array< int, 3 >, 3 >StructuralMaterial::vIindex = {

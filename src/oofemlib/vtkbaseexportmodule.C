@@ -46,7 +46,7 @@
 #include "classfactory.h"
 #include "crosssection.h"
 #include "unknownnumberingscheme.h"
-#include "EngineeringModels\structengngmodel.h"
+#include "EngineeringModels/structengngmodel.h"
 
 #include <string>
 #include <sstream>

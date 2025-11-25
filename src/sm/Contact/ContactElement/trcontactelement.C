@@ -68,6 +68,7 @@ TrContactElement :: initializeFrom(InputRecord &ir)
 {
     TrPlaneStrain::initializeFrom(ir);
     IR_GIVE_FIELD(ir, normalPenalty_, _IFT_TrContactElement_normalPenalty);
+    IR_GIVE_FIELD( ir, cheatFactor_, _IFT_TrContactElement_cheatFactor );
     this->tangentialPenalty_ = 0;
     this->muStick_ = 0;           
     this->muSlide_ = 0;
@@ -339,7 +340,7 @@ TrContactElement::computeContactState(ContactState &cs,
     cs.xi = this->project(xupd);
 
     // Projection outside the element -> no contact
-    if (std::abs(cs.xi) > 1.005) {
+    if (std::abs(cs.xi) > 1. + cheatFactor_) {
         cs.active = false;
         return;
     }
