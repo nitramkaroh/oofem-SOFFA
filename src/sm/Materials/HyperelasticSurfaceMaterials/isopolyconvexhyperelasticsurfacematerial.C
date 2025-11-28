@@ -65,7 +65,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3
     StructuralSurfaceMaterialStatus *status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
     FloatArrayF<9> indent            = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
     FloatArrayF<9> indent3d          = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d F, Fcurrent( vF ), P, Pfull, S, Identity3d( indent3d ), Identity( indent ), Pgamma1, Pgamma2, Palpha1, Palpha2, Pdelta;
+    Tensor2_3d F, Fcurrent( vF ), P, Pfull, S, Identity3d( indent3d ), Identity( indent ), Pgamma1, Pgamma2, Palpha1, Palpha2, Pdelta, Pnh, Pnh2, dJdF;
     Tensor2_3d IdentityUD( indent );
 
     FloatArrayF<3> UDn( normal );
@@ -93,24 +93,57 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3
     //F( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
     F( i_3, j_3 ) = Fcurrent( i_3, j_3 );
 
-    double gamma_t1, alpha_t1, omega_t1;
+    double gamma_t1, alpha_t1, omega_t1, lambda_t, mu_t;
     if(this->gamma_ltf == 0) {
         gamma_t1 = this->gamma1;
         alpha_t1 = this->alpha1;
         omega_t1 = this->omega1;
+        lambda_t = this->lambda;
+        mu_t     = this->mu;
     } else {
         gamma_t1 = this->gaminit + this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         alpha_t1 = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         omega_t1 = this->omega1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        lambda_t = this->lambda * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        mu_t = this->mu * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
     //alpha_t1 = this->alpha1; // Alpha not increased gradually
     //gamma_t1 = this->gamma1; // Gamma not increased gradually
 
     // compute the first Piola-Kirchhoff
-    Pgamma1( i_3, j_3 ) = gamma_t1 * this->compute_surface_cofactor( F, IdentityUD )( i_3, j_3 ); 
+    dJdF( i_3, j_3 )    = this->compute_surface_cofactor( F, IdentityUD )( i_3, j_3 );
+    Pgamma1( i_3, j_3 ) = gamma_t1 * dJdF( i_3, j_3 ); 
     Palpha1( i_3, j_3 ) =  alpha_t1 * this->compute_surface_d_normF_dF( F )( i_3, j_3 ) ;
 
-    P( i_3, j_3 ) = Pgamma1( i_3, j_3 ) + Palpha1( i_3, j_3 ) ;
+    double J        = this->compute_surface_determinant( F );
+    double logJ      = log( J );
+    Pnh( i_3, j_3 )  = dJdF( i_3, j_3 ) / J * ( lambda_t * logJ - mu_t ) + mu_t * F( i_3, j_3 ); // Neo-Hookean part
+    //Pnh2( i_3, j_3 )  = ( dJdF( i_3, j_3 ) * lambda_t * logJ ) / J + mu_t * F( i_3, j_3 ) - mu_t*dJdF( i_3, j_3 ) / J; // Neo-Hookean part
+    //Pnh2( i_3, j_3 )  = lambda_t * logJ / J * dJdF( i_3, j_3 ) + mu_t * F( i_3, j_3 ) - mu_t * dJdF( i_3, j_3 ) / J; // Neo-Hookean part
+    //Pnh2( i_3, j_3 ) = lambda_t * logJ / J * dJdF( i_3, j_3 ) + mu_t * ( F( i_3, j_3 ) - dJdF( i_3, j_3 ) / J );
+
+    //Tensor2_3d dP;
+    //dP( i_3, j_3 ) = Pnh( i_3, j_3 ) - Pnh2( i_3, j_3 );
+    //double ndp     = sqrt( dP( i_3, j_3 ) * dP( i_3, j_3 ) );
+
+    //if ( ndp > 1e-12 ) {
+
+    //    OOFEM_WARNING( "not same! ndp = ", ndp );
+    //}
+
+        
+
+    /////////////////////////////
+    //// stress free in ref configuration
+    //Pgamma1( i_3, j_3 ) = gamma_t1 * ( this->compute_surface_cofactor( F, IdentityUD )( i_3, j_3 ) - this->compute_surface_cofactor( IdentityUD, IdentityUD )( i_3, j_3 ) ); 
+    //Palpha1( i_3, j_3 ) = alpha_t1 * ( this->compute_surface_d_normF_dF( F )( i_3, j_3 ) - this->compute_surface_d_normF_dF( IdentityUD )( i_3, j_3 ) );
+
+    //Tensor2_3d FminI; // second option for stress free ref. config. 
+    //FminI( i_3, j_3 )   = F( i_3, j_3 ) - IdentityUD( i_3, j_3 );
+    //Palpha1( i_3, j_3 ) = alpha_t1 * this->compute_surface_d_normF_dF( FminI )( i_3, j_3 );
+    ///////////////////////////////
+
+    P( i_3, j_3 ) = Pgamma1( i_3, j_3 ) + Palpha1( i_3, j_3 ) + Pnh( i_3, j_3 );
     
     //double J0     = this->compute_surface_determinant( F0 );
     //Pfull( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0( j_3, k_3 ); 
@@ -156,6 +189,8 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressBending(
     return P2;
 }
 
+
+
 FloatMatrixF<9, 9>
 IsotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 // returns the 9x9 tangent stiffness matrix - dP/dF
@@ -183,7 +218,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMa
 
     //// prestrain
     // FloatArray vF0_temp;
-    Tensor2_3d Fcurrent( vF ), F;
+    Tensor2_3d Fcurrent( vF ), F, dJdF;
     // Tensor2_3d F0( indent );
     // if ( gp->giveElement()->giveIPValue( vF0_temp, gp, IST_PrestrainDeformationGradient, tStep ) ) {
     //     FloatArrayF<9> vF0( vF0_temp );
@@ -193,22 +228,47 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMa
     F( i_3, j_3 ) = Fcurrent( i_3, j_3 );
 
     // Tensor2_3d F( vF );
-    Tensor4_3d A, Afull;
-    double gamma_t1, alpha_t1, omega_t1;
+    Tensor4_3d A, Afull, Anh;
+    double gamma_t1, alpha_t1, omega_t1, lambda_t, mu_t;
     //
     if ( this->gamma_ltf == 0 ) {
         gamma_t1 = this->gamma1;
         alpha_t1 = this->alpha1;
         omega_t1 = this->omega1;
+        lambda_t = this->lambda;
+        mu_t     = this->mu;
     } else {
         gamma_t1 = this->gaminit + this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         alpha_t1 = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
         omega_t1 = this->omega1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        lambda_t = this->lambda * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        mu_t     = this->mu * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
     // alpha_t1 = this->alpha1; // Alpha not increased gradually
     // gamma_t1 = this->gamma1; // Gamma not increased gradually
 
-    A( i_3, j_3, k_3, l_3 ) = gamma_t1 * this->compute_surface_dCof_dF( F, IdentityUD )( i_3, j_3, k_3, l_3 ) + alpha_t1 * this->compute_surface_d2_normF_dF2( F, IdentityUD )( i_3, j_3, k_3, l_3 );
+    // // stressed reference configuration
+    Tensor4_3d d2JdFdF;
+    d2JdFdF( i_3, j_3, k_3, l_3 ) = this->compute_surface_dCof_dF( F, IdentityUD )( i_3, j_3, k_3, l_3 );
+   
+    // neo-Hookean part
+    double J        = this->compute_surface_determinant( F );
+    double logJ               = log( J );
+    dJdF( i_3, j_3 )          = this->compute_surface_cofactor( F, IdentityUD )( i_3, j_3 );
+    
+    Anh( i_3, j_3, k_3, l_3 ) = lambda_t*( logJ / J * d2JdFdF( i_3, j_3, k_3, l_3 ) + (1-logJ) / J / J * dJdF( i_3, j_3 ) * dJdF( k_3, l_3 ) ) + 
+        mu_t * ( Identity3d( i_3, k_3 ) * IdentityUD( j_3, l_3 ) - 1 / J * d2JdFdF( i_3, j_3, k_3, l_3 ) + 1/ J / J * dJdF( i_3, j_3 ) * dJdF( k_3, l_3 ) ); // Neo-Hookean part
+
+    // all together
+    A( i_3, j_3, k_3, l_3 ) = gamma_t1 * d2JdFdF( i_3, j_3, k_3, l_3 ) + alpha_t1 * this->compute_surface_d2_normF_dF2( F, IdentityUD )( i_3, j_3, k_3, l_3 )+ 
+                                Anh( i_3, j_3, k_3, l_3 );
+
+
+    /////////////////// stress-free ref. configuration
+    //Tensor2_3d FminI; // second option for stress free ref. config.
+    //FminI( i_3, j_3 )   = F( i_3, j_3 ) - IdentityUD( i_3, j_3 );
+    //A( i_3, j_3, k_3, l_3 ) = gamma_t1 * this->compute_surface_dCof_dF( F, IdentityUD )( i_3, j_3, k_3, l_3 ) + alpha_t1 * this->compute_surface_d2_normF_dF2( FminI, IdentityUD )( i_3, j_3, k_3, l_3 );
+    ////////////////////
 
     ///////////////////////////////////////
     // Get the second order part 
@@ -283,7 +343,8 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveSecondOrderSurfaceStressVect
     FloatArrayF<3> UDn( normal );
     Tensor1_3d Nt( UDn ); // normal tensor
     // if it is IGA element
-    if ( dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
+    auto iga_el = dynamic_cast<IGAElement *>( gp->giveElement() );
+    if ( iga_el ) {
         IdentityUD( i_3, j_3 ) = Identity3d( i_3, j_3 ) - Nt( i_3 ) * Nt( j_3 );
     }
 
@@ -294,6 +355,12 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveSecondOrderSurfaceStressVect
     } else {
         omega_t1 = this->omega1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
+    if ( abs( omega_t1 ) > 1e-8 ) { // check if the interpolation is spline and at least quadratic
+        int intOrd = iga_el->giveInterpolation()->giveInterpolationOrder();
+        if ( !iga_el || iga_el->giveInterpolation()->giveInterpolationOrder() <= 1) {
+            OOFEM_ERROR( "For second order surface elements the interpolation must be C1" );
+        }
+    } 
 
     // construct some useful objects
     Tensor2_3d F( vF ); // deformation gradient
@@ -307,10 +374,17 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveSecondOrderSurfaceStressVect
     K( j_3, k_3 ) =  - n_def( i_3 ) * G( i_3, j_3, k_3 ) ; // Deformed curvature in referential frame
     K0( j_3, k_3 ) = - Nt( i_3 ) * gradIt( i_3, j_3, k_3 ); // gradient of undeformed normal
 
+
+    ///////////////////
+    //double trK = K( l_3, l_3 );
+    //Tensor2_3d C;
+    //C( k_3, l_3 ) = F( j_3, k_3 ) * F( j_3, l_3 );
+    //////////////////
+
     // compute the second order tensor conjugate to K
     Tensor2_3d MK;
-    //MK( i_3, j_3 ) = omega_t1 * ( K( l_3, l_3 ) - K0( k_3, k_3 ) ) * IdentityUD( i_3, j_3 );
-    MK( i_3, j_3 ) = omega_t1 * ( K( l_3, l_3 ) ) * IdentityUD( i_3, j_3 );
+    MK( i_3, j_3 ) = omega_t1 * ( K( l_3, l_3 ) - K0( k_3, k_3 ) ) * IdentityUD( i_3, j_3 );
+    //MK( i_3, j_3 ) = omega_t1 * ( K( l_3, l_3 ) ) * IdentityUD( i_3, j_3 );
 
     // obtain the third order tensor from Mk conjugarte to grad. F
     A( i_3, j_3, k_3 ) = -n_def( i_3 ) * MK( j_3, k_3 ); 
@@ -322,6 +396,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveSecondOrderSurfaceStressVect
     status->letTempGVectorBe( vG );
     status->letTempdIVectorBe( gradI );
     status->letTempMVectorBe( MK.to_voigt_form() );
+    status->letTempKVectorBe( K.to_voigt_form() );
 
     return vA;
 }
@@ -450,6 +525,8 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord
     IR_GIVE_OPTIONAL_FIELD( ir, gamma_ltf, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF );
     IR_GIVE_OPTIONAL_FIELD( ir, gaminit, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gaminit );
     IR_GIVE_OPTIONAL_FIELD( ir, omega1, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_omega1 );
+    IR_GIVE_OPTIONAL_FIELD( ir, lambda, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_lambda );
+    IR_GIVE_OPTIONAL_FIELD( ir, mu, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_mu );
 
     // In case of old input fiule with only one alpha parameter
     double alphaTemp, gammaTemp;
@@ -783,6 +860,497 @@ Tensor5_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::computeTangentMixedNu
     }
 
     return tangent;
+}
+
+
+/////////////////////////////////////
+// Actual curvature model
+
+
+REGISTER_Material( IsotropicPolyconvexHyperelasticSurfaceMaterial2 );
+
+IsotropicPolyconvexHyperelasticSurfaceMaterial2::IsotropicPolyconvexHyperelasticSurfaceMaterial2( int n, Domain *d ) :
+    IsotropicPolyconvexHyperelasticSurfaceMaterial( n, d )
+{
+}
+
+FloatArrayF<9>
+IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+// returns 9 components of the first piola kirchhoff stress corresponding to the given deformation gradinet
+{
+    StructuralSurfaceMaterialStatus *status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
+    FloatArrayF<9> indent                   = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
+    FloatArrayF<9> indent3d                 = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d F, Fcurrent( vF ), P, Pfull, S, Identity3d( indent3d ), Identity( indent ), Pgamma1, Pgamma2, Palpha1, Palpha2, Pdelta, Pnh, Pnh2, dJdF;
+    Tensor2_3d IdentityUD( indent );
+
+    FloatArrayF<3> UDn( normal );
+    Tensor1_3d Nt( UDn );
+    // if it is IGA element
+    if ( dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
+        IdentityUD( i_3, j_3 ) = Identity3d( i_3, j_3 ) - Nt( i_3 ) * Nt( j_3 );
+    }
+
+    // get element normal in the original undeformed configuration to contruct surface identity
+    FloatArray UDnormal;
+    if ( gp->giveElement()->giveIPValue( UDnormal, gp, IST_ElementReferenceNormal, tStep ) ) {
+        FloatArrayF<3> UDn( UDnormal );
+        Tensor1_3d UDnormalT( UDn );
+        IdentityUD( i_3, j_3 ) = Identity3d( i_3, j_3 ) - UDnormalT( i_3 ) * UDnormalT( j_3 );
+    }
+
+    F( i_3, j_3 ) = Fcurrent( i_3, j_3 );
+
+    double gamma_t1, omega_t1;
+    if ( this->gamma_ltf == 0 ) {
+        gamma_t1 = this->gamma1;
+        omega_t1 = this->omega1;
+    } else {
+        gamma_t1 = this->gaminit + this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        omega_t1 = this->omega1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    }
+
+    if ( this->fixGamma) {
+        gamma_t1 = this->gamma1; // omega_t1 not increased gradually
+    }  
+    if ( this->fixOmega ) {
+        omega_t1 = this->omega1; // omega_t1 not increased gradually
+    }
+    
+
+    // construct some useful objects
+    FloatArrayF<27> vG( status->giveTempGVector() );
+    FloatArrayF<27> dI( status->giveTempdIVector() );
+    FloatArrayF<9> vM( status->giveTempMVector() );
+
+    Tensor2_3d MK( vM ); // second order stress conjugate to kappa
+    Tensor3_3d G( vG ), gradIt( dI ); // grad. F and grad. of surface identity
+
+    Tensor2_3d Finv  = this->compute_surface_pseudoinverse( F, IdentityUD ); // compute pseudoinverse
+    Tensor2_3d B;
+    B( j_3, m_3 )    = Finv( j_3, k_3 ) * Finv( m_3, k_3 );
+    Tensor1_3d n_def = compute_surface_deformed_normal( F, Nt ); // compute deformed normal
+    double J         = this->compute_surface_determinant( F );
+
+    // Compute curvature measures
+    Tensor2_3d K, K0, b, b0; // gradient of deformed normal nad bending strain
+    K( j_3, k_3 ) = -n_def( i_3 ) * G( i_3, j_3, k_3 ); // Deformed curvature in referential frame
+    b( j_3, l_3 ) = -Finv( k_3, j_3 ) * K( k_3, m_3 ) * Finv( m_3, l_3 );
+    double H      = 0.5 * b( j_3, j_3 );
+
+    double H0;
+    if ( this->use_H0 == 1 ) {
+        K0( j_3, k_3 ) = -Nt( i_3 ) * gradIt( i_3, j_3, k_3 ); // gradient of undeformed normal
+        b0( j_3, l_3 ) = -K0( j_3, l_3 );
+        H0             = 0.5 * b0( j_3, j_3 );
+    } else if ( this->use_H0 == 2 ) {
+        H0 = this->H0_val; 
+    } else {
+        H0 = 0.;
+    }
+
+    // Compute dedF
+    Tensor2_3d dedF1, dedF2, dedF;
+    double e          = J * ( gamma_t1 + 0.5 * omega_t1 * ( H - H0 ) * ( H - H0 ) ); 
+    dedF1( i_3, j_3 ) = e * Finv( j_3, i_3 );
+    dedF2( i_3, l_3 ) = J * omega_t1 * ( H - H0 ) * Finv( j_3, i_3 ) * K( j_3, k_3 ) * B( k_3, l_3 );
+    dedF( i_3, j_3 ) = dedF1( i_3, j_3 ) + dedF2( i_3, j_3 );
+
+    // Compute curvature part 
+    Tensor2_3d P2 = this->giveFirstPKSurfaceStressBending( F, IdentityUD, Nt, G, MK );
+
+    Pfull( i_3, j_3 ) = dedF( i_3, j_3 ) + P2( i_3, j_3 );
+
+    // compute Cauchy stress vector
+    S( i_3, j_3 ) = ( 1 / this->compute_surface_determinant( F ) ) * Pfull( i_3, k_3 ) * F( j_3, k_3 );
+
+    auto vP = Pfull.to_voigt_form();
+    auto vS = S.to_voigt_form();
+    // update gp
+    status->letTempFVectorBe( vF );
+    status->letTempPVectorBe( vP );
+    status->letTempCVectorBe( vS );
+
+    return vP;
+}
+
+
+FloatArrayF<27>
+IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveSecondOrderSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+// returns 27 components of the second order stress conjugate to gradient of F
+{
+    // create identities
+    FloatArrayF<9> indent   = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
+    FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d Identity3d( indent3d );
+    Tensor2_3d IdentityUD( indent );
+
+    FloatArrayF<3> UDn( normal );
+    Tensor1_3d Nt( UDn ); // normal tensor
+    // if it is IGA element
+    auto iga_el = dynamic_cast<IGAElement *>( gp->giveElement() );
+    if ( iga_el ) {
+        IdentityUD( i_3, j_3 ) = Identity3d( i_3, j_3 ) - Nt( i_3 ) * Nt( j_3 );
+    }
+
+    // Get material parameter
+    double omega_t1;
+    if ( this->gamma_ltf == 0 ) {
+        omega_t1 = this->omega1;
+    } else {
+        omega_t1 = this->omega1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    }
+
+    if ( this->fixOmega ) {
+        omega_t1 = this->omega1; // omega_t1 not increased gradually
+    }
+
+    if ( abs( omega_t1 ) > 1e-8 ) { // check if the interpolation is spline and at least quadratic
+        int intOrd = iga_el->giveInterpolation()->giveInterpolationOrder();
+        if ( !iga_el || iga_el->giveInterpolation()->giveInterpolationOrder() <= 1 ) {
+            OOFEM_ERROR( "For second order surface elements the interpolation must be C1" );
+        }
+    }
+
+    // construct some useful objects
+    Tensor2_3d F( vF ); // deformation gradient
+    Tensor2_3d Finv  = this->compute_surface_pseudoinverse( F, IdentityUD ); // compute pseudoinverse
+    Tensor2_3d B;
+    B( j_3, m_3 )    = Finv( j_3, k_3 ) * Finv( m_3, k_3 );
+    Tensor1_3d n_def = compute_surface_deformed_normal( F, Nt ); // compute deformed normal
+    Tensor3_3d A, G( vG ), gradIt( gradI );
+    double J = this->compute_surface_determinant( F );
+
+    // Compute curvature measures
+    // formulation based on Dort or Tomassetti using bending strain
+    Tensor2_3d K, K0, b, b0; // gradient of deformed normal nad bending strain
+    K( j_3, k_3 ) = -n_def( i_3 ) * G( i_3, j_3, k_3 ); // Deformed curvature in referential frame
+    b( j_3, l_3 ) = -Finv( k_3, j_3 ) * K( k_3, m_3 ) * Finv( m_3, l_3 );
+    double H      = 0.5 * b( j_3, j_3 );
+
+    double H0;
+    if ( this->use_H0 == 1 ) {
+        K0( j_3, k_3 ) = -Nt( i_3 ) * gradIt( i_3, j_3, k_3 ); // gradient of undeformed normal
+        b0( j_3, l_3 ) = -K0( j_3, l_3 );
+        H0             = 0.5 * b0( j_3, j_3 );
+    } else if ( this->use_H0 == 2 ) {
+        H0 = this->H0_val;
+    } else {
+        H0 = 0.;
+    }
+
+    // compute the second order tensor conjugate to K, MK = dedK
+    Tensor2_3d MK;
+    MK( i_3, j_3 ) = -0.5 * omega_t1 * J * ( H - H0) * B( i_3, j_3 );
+
+    // obtain the third order tensor from Mk conjugarte to grad. F
+    A( i_3, j_3, k_3 ) = -n_def( i_3 ) * MK( j_3, k_3 );
+    auto vA            = A.to_voigt_form_27();
+
+    // Save object to status, note that this function needs to be called before the standar surface PK stress is evaluated
+    StructuralSurfaceMaterialStatus *status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
+    status->letTempFVectorBe( vF );
+    status->letTempGVectorBe( vG );
+    status->letTempdIVectorBe( gradI );
+    status->letTempMVectorBe( MK.to_voigt_form() );
+    status->letTempKVectorBe( K.to_voigt_form() );
+
+    return vA;
+}
+
+FloatMatrixF<9, 9>
+IsotropicPolyconvexHyperelasticSurfaceMaterial2::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+// returns the 9x9 tangent stiffness matrix - dP/dF
+{
+    StructuralSurfaceMaterialStatus *status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
+    FloatArrayF<9> vF( status->giveTempFVector() );
+    FloatArrayF<9> indent   = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
+    FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d IdentityUD( indent ), Identity3d( indent3d );
+
+    FloatArrayF<3> UDn( normal );
+    Tensor1_3d Nt( UDn );
+    // if it is IGA element
+    if ( dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
+        IdentityUD( i_3, j_3 ) = Identity3d( i_3, j_3 ) - Nt( i_3 ) * Nt( j_3 );
+    }
+
+    // get element normal in the original undeformed configuration
+    FloatArray UDnormal;
+    if ( gp->giveElement()->giveIPValue( UDnormal, gp, IST_ElementReferenceNormal, tStep ) ) {
+        FloatArrayF<3> UDn( UDnormal );
+        Tensor1_3d UDnormalT( UDn );
+        IdentityUD( i_3, j_3 ) = Identity3d( i_3, j_3 ) - UDnormalT( i_3 ) * UDnormalT( j_3 );
+    }
+
+    Tensor2_3d F( vF );
+
+    // Tensor2_3d F( vF );
+    Tensor4_3d A, Afull, Anh;
+    double gamma_t1, omega_t1;
+    //
+    if ( this->gamma_ltf == 0 ) {
+        gamma_t1 = this->gamma1;
+        omega_t1 = this->omega1;
+    } else {
+        gamma_t1 = this->gaminit + this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        omega_t1 = this->omega1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    }
+    if ( this->fixGamma ) {
+        gamma_t1 = this->gamma1; // omega_t1 not increased gradually
+    }
+    if ( this->fixOmega ) {
+        omega_t1 = this->omega1; // omega_t1 not increased gradually
+    }
+
+
+    // construct some useful objects
+    Tensor2_3d Finv  = this->compute_surface_pseudoinverse( F, IdentityUD ); // compute pseudoinverse
+    double J         = this->compute_surface_determinant( F );
+    Tensor1_3d n_def = compute_surface_deformed_normal( F, Nt ); // compute deformed normal
+    Tensor2_3d B;
+    B( j_3, m_3 ) = Finv( j_3, k_3 ) * Finv( m_3, k_3 );
+
+    FloatArrayF<27> vG( status->giveTempGVector() );
+    FloatArrayF<9> vM( status->giveTempMVector() );
+    FloatArrayF<27> dI( status->giveTempdIVector() );
+    FloatMatrixF<9, 9> vdAK( status->giveTempD2eDK2_Matrix() ); // second gradient
+
+    Tensor3_3d G( vG ), gradIt( dI ); // Gradient of F 
+    Tensor2_3d Mk( vM ); // Second order stress conjugate to bending strain
+    Tensor4_3d d2e_dKdK( vdAK );
+
+    Tensor2_3d K, K0, b, b0; // gradient of deformed normal nad bending strain
+    K( j_3, k_3 ) = -n_def( i_3 ) * G( i_3, j_3, k_3 ); // Deformed curvature in referential frame
+    b( j_3, l_3 ) = -Finv( k_3, j_3 ) * K( k_3, m_3 ) * Finv( m_3, l_3 );
+    double H      = 0.5 * b( j_3, j_3 );
+
+    double H0;
+    if ( this->use_H0 == 1 ) {
+        K0( j_3, k_3 ) = -Nt( i_3 ) * gradIt( i_3, j_3, k_3 ); // gradient of undeformed normal
+        b0( j_3, l_3 ) = -K0( j_3, l_3 );
+        H0             = 0.5 * b0( j_3, j_3 );
+    } else if ( this->use_H0 == 2 ) {
+        H0 = this->H0_val;
+    } else {
+        H0 = 0.;
+    }
+
+    double e = J * ( gamma_t1 + 0.5 * omega_t1 * ( H - H0 ) * ( H - H0 ) ); 
+
+    // compuite dedF
+    Tensor2_3d dHdF;
+    dHdF( i_3, l_3 ) = Finv( j_3, i_3 ) * K( j_3, k_3 ) * B( k_3, l_3 );
+
+    Tensor2_3d dedF1, dedF2, dedF;
+    dedF1( i_3, j_3 ) = e * Finv( j_3, i_3 );
+    dedF2( i_3, l_3 ) = J * omega_t1 * ( H - H0 ) * dHdF( i_3, l_3 );
+    dedF( i_3, j_3 )  = dedF1( i_3, j_3 ) + dedF2( i_3, j_3 );
+
+    // compute stiffnesses
+    // Compute d2e_dFdF
+    Tensor4_3d d2H_dFdF, d2e_dFdF;
+    d2H_dFdF( a_3, b_3, c_3, d_3 ) = ( -Finv( o_3, c_3 ) * Finv( d_3, a_3 ) + B( o_3, d_3 ) * n_def( a_3 ) * n_def( c_3 ) ) * K( o_3, p_3 ) *B( p_3, b_3 )+
+         Finv( o_3, a_3 )* K( o_3, p_3 )* ( -Finv( p_3, c_3 ) * B( b_3, d_3 ) - B( p_3, d_3 ) *Finv( b_3,c_3 ) ) ;
+
+    d2e_dFdF( a_3, b_3, c_3, d_3 ) = Finv( b_3, a_3 ) * dedF( c_3, d_3 ) + 
+        e*( -Finv( b_3, c_3 ) * Finv( d_3, a_3 ) + B( b_3, d_3 ) * n_def( a_3 ) * n_def( c_3 ) ) +
+        J * omega_t1 * dHdF( a_3, b_3 ) * dHdF( c_3, d_3 ) + 
+        J * omega_t1 * ( H - H0 ) * dHdF( a_3, b_3 ) * Finv( d_3, c_3 ) + 
+        J * omega_t1 * ( H - H0 ) * d2H_dFdF( a_3, b_3, c_3, d_3 );
+
+    // Compute d2e_dFdK and d2e_dKdF
+    Tensor4_3d d2e_dKdF, d2e_dFdK;
+    d2e_dKdF( a_3, b_3, c_3, d_3 ) = -0.5 * J * omega_t1 * ( H - H0 ) * B( a_3, b_3 ) * Finv( d_3, c_3 ) + 
+        0.5 * J * omega_t1 * ( H - H0 ) * ( Finv( a_3, c_3 ) * B( b_3, d_3 ) + B( a_3, d_3 ) * Finv( b_3, c_3 ) ) - 
+        0.5 * J * omega_t1 * B( a_3, b_3 ) * dHdF( c_3, d_3 ); 
+
+    d2e_dFdK( a_3, b_3, c_3, d_3 ) = d2e_dKdF( c_3, d_3, a_3, b_3 );
+
+    //// Compute d2e_dKdK (This could be loaded)
+    //Tensor4_3d d2e_dKdK;
+    //d2e_dKdK( a_3, b_3, c_3, d_3 ) = 0.25 * J * omega_t1 * B( a_3, b_3 ) * B( c_3, d_3 ); 
+
+    // compute tensor T 
+    Tensor4_3d T;
+    T( i_3, j_3, p_3, q_3 ) = ( n_def( p_3 ) * Finv( q_3, k_3 ) ) * G( k_3, i_3, j_3 );
+
+    // compute dTdF
+    Tensor6_3d dTdF;
+    dTdF( i_3, j_3, k_3, l_3, m_3, n_3 ) = ( -Finv( l_3, m_3 ) * Finv( n_3, a_3 ) + B( l_3, n_3 ) * n_def( a_3 ) * n_def( m_3 ) ) * (G( a_3, i_3, j_3 ) * n_def( k_3 )) -
+        (Finv( l_3, a_3 )*Finv( n_3, k_3 ))*(G( a_3, i_3, j_3 )*n_def( m_3 ));
+
+    Afull( k_3, l_3, m_3, n_3 ) = d2e_dFdF( k_3, l_3, m_3, n_3 ) + d2e_dFdK( k_3, l_3, o_3, p_3 ) * T( o_3, p_3, m_3, n_3 ) + 
+        ( d2e_dKdF( i_3, j_3, m_3, n_3 ) + d2e_dKdK( i_3, j_3, o_3, p_3 ) * T( o_3, p_3, m_3, n_3 ) ) * T( i_3, j_3, k_3, l_3 )  + 
+        Mk( i_3, j_3 ) * dTdF( i_3, j_3, k_3, l_3, m_3, n_3 );
+
+
+    return Afull.to_voigt_form();
+}
+
+
+FloatMatrixF<27, 27>
+IsotropicPolyconvexHyperelasticSurfaceMaterial2::give3dSurfaceMaterialStiffnessMatrix_dAddF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+// returns the 27x27 second order tangent stiffness matrix - dA/ddF (derivative of second order stress wrt to gradient of F)
+{
+    // load objects from status
+    StructuralSurfaceMaterialStatus *status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
+    FloatArrayF<9> vF( status->giveTempFVector() );
+    FloatArrayF<27> vG( status->giveTempGVector() ); // second gradient
+
+    // create identities
+    FloatArrayF<9> indent   = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
+    FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d IdentityUD( indent ), Identity3d( indent3d );
+
+    // if it is IGA element
+    FloatArrayF<3> UDn( normal );
+    Tensor1_3d Nt( UDn );
+    if ( dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
+        IdentityUD( i_3, j_3 ) = Identity3d( i_3, j_3 ) - Nt( i_3 ) * Nt( j_3 );
+    }
+
+    // Get material parameter
+    double omega_t1;
+    if ( this->gamma_ltf == 0 ) {
+        omega_t1 = this->omega1;
+    } else {
+        omega_t1 = this->omega1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    }
+
+    if ( this->fixOmega ) {
+        omega_t1 = this->omega1; // omega_t1 not increased gradually
+    }
+
+    Tensor2_3d F( vF );
+    Tensor2_3d Finv  = this->compute_surface_pseudoinverse( F, IdentityUD ); // compute pseudoinverse
+    double J         = this->compute_surface_determinant( F );
+    Tensor2_3d B;
+    B( j_3, m_3 ) = Finv( j_3, k_3 ) * Finv( m_3, k_3 );
+
+
+    // stiffnes conjugate to MK
+    Tensor4_3d d2e_dKdK;
+    d2e_dKdK( a_3, b_3, c_3, d_3 ) = 0.25 * J * omega_t1 * B( a_3, b_3 ) * B( c_3, d_3 ); 
+
+    // compute deformed normal
+    Tensor1_3d n_def = compute_surface_deformed_normal( F, Nt ); // compute deformed normal
+
+    // Compute second order stiffness
+    Tensor6_3d dA;
+    // created in a stupid way by contraction
+    //dA( i_3, j_3, k_3, l_3, m_3, n_3 ) = ( ( n_def( i_3 ) * n_def( l_3 ) ) * Identity3d( j_3, s_3 ) ) * d2e_dKdK( s_3, k_3, m_3, n_3 );
+    dA( i_3, j_3, k_3, l_3, m_3, n_3 ) = ( n_def( i_3 ) * n_def( l_3 ) ) * d2e_dKdK( j_3, k_3, m_3, n_3 );
+    /////////////////////
+
+    status->lettempD2eDK2_MatrixBe( d2e_dKdK.to_voigt_form() );
+    return dA.to_voigt_form();
+}
+
+
+FloatMatrixF<27, 9>
+IsotropicPolyconvexHyperelasticSurfaceMaterial2::give3dSurfaceMaterialStiffnessMatrix_dAdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+// returns the 27x9 mixed tangent stiffness matrix - dA/dF (derivative of second order stress wrt to F)
+{
+    // load objects from status
+    StructuralSurfaceMaterialStatus *status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
+    FloatArrayF<9> vF( status->giveTempFVector() );
+    FloatArrayF<9> vM( status->giveTempMVector() ); // second order stress conjugate to curvature tensor from Silhous
+    FloatArrayF<27> vG( status->giveTempGVector() ); // second gradient
+    FloatMatrixF<9, 9> vdAK( status->giveTempD2eDK2_Matrix() ); // second gradient
+    FloatArrayF<27> dI( status->giveTempdIVector() );
+
+    // create identities
+    FloatArrayF<9> indent   = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
+    FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d IdentityUD( indent ), Identity3d( indent3d );
+
+    // if it is IGA element
+    FloatArrayF<3> UDn( normal );
+    Tensor1_3d Nt( UDn );
+    if ( dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
+        IdentityUD( i_3, j_3 ) = Identity3d( i_3, j_3 ) - Nt( i_3 ) * Nt( j_3 );
+    }
+
+    // Get material parameter
+    double gamma_t1, omega_t1;
+    //
+    if ( this->gamma_ltf == 0 ) {
+        gamma_t1 = this->gamma1;
+        omega_t1 = this->omega1;
+    } else {
+        gamma_t1 = this->gaminit + this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+        omega_t1 = this->omega1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    }
+    if ( this->fixGamma ) {
+        gamma_t1 = this->gamma1; // omega_t1 not increased gradually
+    }
+    if ( this->fixOmega ) {
+        omega_t1 = this->omega1; // omega_t1 not increased gradually
+    }
+
+
+    Tensor3_3d G( vG ), gradIt( dI ); // Gradient of F
+    Tensor2_3d Mk( vM ); // Second order stress conjugate to bending strain
+    Tensor2_3d F( vF ); // get second order stress tensor and F
+    Tensor4_3d dAK( vdAK );
+
+    double J         = this->compute_surface_determinant( F );
+    Tensor2_3d Finv  = this->compute_surface_pseudoinverse( F, IdentityUD ); // compute pseudoinverse
+    Tensor1_3d n_def = compute_surface_deformed_normal( F, Nt ); // compute deformed normal
+    Tensor2_3d B;
+    B( j_3, m_3 ) = Finv( j_3, k_3 ) * Finv( m_3, k_3 );
+
+    Tensor2_3d K, K0, b, b0; // gradient of deformed normal nad bending strain
+    K( j_3, k_3 )  = -n_def( i_3 ) * G( i_3, j_3, k_3 ); // Deformed curvature in referential frame
+    b( j_3, l_3 )  = -Finv( k_3, j_3 ) * K( k_3, m_3 ) * Finv( m_3, l_3 );
+    double H       = 0.5 * b( j_3, j_3 );
+
+    double H0;
+    if ( this->use_H0 == 1 ) {
+        K0( j_3, k_3 ) = -Nt( i_3 ) * gradIt( i_3, j_3, k_3 ); // gradient of undeformed normal
+        b0( j_3, l_3 ) = -K0( j_3, l_3 );
+        H0             = 0.5 * b0( j_3, j_3 );
+    } else if ( this->use_H0 == 2 ) {
+        H0 = this->H0_val;
+    } else {
+        H0 = 0.;
+    }
+    
+
+    double e = J * ( gamma_t1 + 0.5 * omega_t1 * ( H - H0 ) * ( H - H0 ) ); 
+    
+    Tensor2_3d dHdF;
+    dHdF( i_3, l_3 ) = Finv( j_3, i_3 ) * K( j_3, k_3 ) * B( k_3, l_3 );
+
+    // compute tensor T
+    Tensor4_3d T;
+    T( i_3, j_3, p_3, q_3 ) = ( n_def( p_3 ) * Finv( q_3, k_3 ) ) * G( k_3, i_3, j_3 );
+
+    // Compute d2e_dKdF
+    Tensor4_3d d2e_dKdF;
+    d2e_dKdF( a_3, b_3, c_3, d_3 ) = -0.5 * J * omega_t1 * ( H - H0 ) * B( a_3, b_3 ) * Finv( d_3, c_3 ) + 
+        0.5 * J * omega_t1 * ( H - H0 ) * ( Finv( a_3, c_3 ) * B( b_3, d_3 ) + B( a_3, d_3 ) * Finv( b_3, c_3 ) ) -
+        0.5 * J * omega_t1 * B( a_3, b_3 ) * dHdF( c_3, d_3 ); 
+
+
+    Tensor5_3d dA;
+    dA( i_3, j_3, k_3, a_3, b_3 ) = ( Mk( j_3, k_3 ) * n_def( a_3 ) ) * Finv( b_3, i_3 ) - 
+        ( d2e_dKdF( j_3, k_3, a_3, b_3 ) + dAK( j_3, k_3, o_3, p_3 ) * T( o_3, p_3, a_3, b_3 ) ) * n_def( i_3 );
+
+    return dA.to_voigt_form_27x9();
+}
+
+
+
+void IsotropicPolyconvexHyperelasticSurfaceMaterial2::initializeFrom( InputRecord &ir )
+{
+    IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( ir );
+
+    IR_GIVE_OPTIONAL_FIELD( ir, use_H0, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_use_H0 );
+    IR_GIVE_OPTIONAL_FIELD( ir, H0_val, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_H0 );
+    IR_GIVE_OPTIONAL_FIELD( ir, fixGamma, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_FixGamma );
+    IR_GIVE_OPTIONAL_FIELD( ir, fixOmega, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_FixOmega );
 }
 
 } // end namespace oofem

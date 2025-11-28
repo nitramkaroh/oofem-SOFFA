@@ -52,8 +52,19 @@
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF "gamma_ltf"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gaminit "gaminit"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_omega1 "omega1"
-
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_lambda "lambda"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_mu "mu"
 //@}
+
+///@name Input fields for SurfaceTensionMaterial2
+//@{
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_Name "surfacetensionmat2"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_use_H0 "useh0"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_H0 "h0"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_FixGamma "fixgamma"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_FixOmega "fixomega"
+
+    //@}
 
 namespace oofem {
 /**
@@ -69,6 +80,7 @@ protected:
     double alpha1, alpha2; 
     double delta; 
     double omega1; // For second order stress tensor
+    double lambda = 0., mu = 0.; // Neo-Hookean model
 
 
 public:
@@ -111,6 +123,42 @@ public:
 
     Tensor3_3d dndFnum( double EPSILON, const Tensor2_3d &F, const Tensor1_3d &normal ) const;
     Tensor4_3d dFinvdFnum( double EPSILON, const Tensor2_3d &F, const Tensor2_3d &IdentityUD ) const;
+
+};
+
+// Material with energy depending on the actual curvature
+// e = Js (gamma + 0.5 omega (tr b - H0)^2), where b is the actual curvature
+
+class IsotropicPolyconvexHyperelasticSurfaceMaterial2 : public IsotropicPolyconvexHyperelasticSurfaceMaterial
+{
+protected:
+    // use_H0:
+    // 0: H0 = 0
+    // 1: the undeformed curvature is used
+    // 2: the supplied H0 is used, if H0 is not provided, 0 is used 
+    int use_H0 = 0;
+    double H0_val  = 0.;
+
+    bool fixGamma = false;
+    bool fixOmega = false;
+
+
+public:
+    IsotropicPolyconvexHyperelasticSurfaceMaterial2( int n, Domain *d );
+
+    void initializeFrom( InputRecord &ir ) override;
+
+    
+    FloatArrayF<9> giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
+    FloatArrayF<27> giveSecondOrderSurfaceStressVector_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
+
+    FloatMatrixF<9, 9> give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
+    FloatMatrixF<27, 27> give3dSurfaceMaterialStiffnessMatrix_dAddF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
+    FloatMatrixF<27, 9> give3dSurfaceMaterialStiffnessMatrix_dAdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
+
+
+    const char *giveInputRecordName() const override { return _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_Name; }
+    const char *giveClassName() const override { return "IsotropicPolyconvexHyperelasticSurfaceMaterial2"; }
 
 };
 } // end namespace oofem

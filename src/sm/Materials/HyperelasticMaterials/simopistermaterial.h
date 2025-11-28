@@ -45,6 +45,7 @@
 //@{
 #define _IFT_SimoPisterMaterial_Name "simopistermat"
 #define _IFT_SimoPisterMaterial_g "g"
+#define _IFT_SimoPisterMaterial_bulkLTF "bulk_ltf"
 //@}
 
 namespace oofem {
@@ -71,6 +72,7 @@ class SimoPisterMaterial : public StructuralMaterial, public BaseHyperElasticMat
 {
 protected:
     double G = 0.; ///< Shear modulus.
+    int bulk_ltf = 0;
 
 public:
     SimoPisterMaterial(int n, Domain *d);

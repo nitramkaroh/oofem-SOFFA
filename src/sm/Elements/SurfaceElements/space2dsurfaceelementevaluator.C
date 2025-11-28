@@ -47,6 +47,7 @@
 #include "mathfem.h"
 #include "iga/iga.h"
 #include "iga/feibspline.h"
+#include "sm/Materials/structuralsurfacems.h"
 
 namespace oofem {
 void Space2dStructuralSurfaceElementEvaluator ::computeNMatrixAt( FloatMatrix &answer, GaussPoint *gp )
@@ -184,6 +185,66 @@ int Space2dStructuralSurfaceElementEvaluator ::giveIntegrationElementLocalCodeNu
     }
 }
 
+void Space2dStructuralSurfaceElementEvaluator::computeReferenceCurvature( FloatArray &RefCurvature, TimeStep *tStep, FloatArray &lcoords, int RuleIndex )
+{
+    double xiAns = lcoords.at( 1 );
+    // average curvature by linear interpolation of thge value at GPs
+    FloatArray KvecR, KvecL;
+    double xiR, xiL;
+
+    Element *elem                = this->giveElement();
+    int numberOfIntegrationRules = elem->giveNumberOfIntegrationRules();
+ 
+    //auto interp = static_cast<BSplineInterpolation *>( elem->giveInterpolation() );
+    //int RuleIndex    = interp->giveStartIndex( xiAns, 0 );
+
+    // loop over individual integration rules
+    //for ( int ir = 0; ir < numberOfIntegrationRules; ir++ ) {
+        //IntegrationRule *iRule = elem->giveIntegrationRule( ir );
+
+        IntegrationRule *iRule = elem->giveIntegrationRule( RuleIndex );
+        int nIP                = iRule->giveNumberOfIntegrationPoints();
+        // for ( GaussPoint *gp : *iRule ) {
+        for ( int i = 0; i < nIP ; i++){
+            GaussPoint * gp = iRule->getIntegrationPoint( i );
+            FloatArray gpCoords = gp->giveNaturalCoordinates();
+            double dxi   = gpCoords.at( 1 ) - xiAns;
+
+            if ( nIP == 1 ) {
+                StructuralSurfaceMaterialStatus *matStat = static_cast<StructuralSurfaceMaterialStatus *>( gp->giveMaterialStatus() );
+                RefCurvature                             = matStat->giveTempKVector();
+                break;
+            }
+
+            if ( dxi > 0. || i == nIP -1) { // GP befor lcoords found
+            //if ( dxi > 0.  ) { // GP befor lcoords found
+                StructuralSurfaceMaterialStatus *matStat = static_cast<StructuralSurfaceMaterialStatus *>( gp->giveMaterialStatus() );
+                FloatArray Kvec = matStat->giveTempKVector();
+                GaussPoint *gp2;
+                if (i > 0) { // not the first gp, get back to the previous GP
+                    KvecR = Kvec;
+                    xiR   = gpCoords.at( 1 );
+                    gp2  = iRule->getIntegrationPoint( i - 1 );
+                    xiL  = gp2->giveNaturalCoordinates().at( 1 );
+                    StructuralSurfaceMaterialStatus *matStat2 = static_cast<StructuralSurfaceMaterialStatus *>( gp2->giveMaterialStatus() );
+                    KvecL = matStat2->giveTempKVector(); 
+                } else { // The first GP, go to the next one
+                    KvecL = Kvec;
+                    xiL = gpCoords.at( 1 );
+                    gp2 = iRule->getIntegrationPoint( i + 1 );
+                    xiR  = gp2->giveNaturalCoordinates().at( 1 );
+                    StructuralSurfaceMaterialStatus *matStat2 = static_cast<StructuralSurfaceMaterialStatus *>( gp2->giveMaterialStatus() );
+                    KvecR = matStat2->giveTempKVector(); 
+                }
+
+                RefCurvature = ( xiAns - xiL ) / ( xiR - xiL ) * ( KvecR - KvecL ) + KvecL;
+                break;
+            }
+
+        } // end loop over irules
+    //}
+}
+
 
 //int Space2dStructuralSurfaceElementEvaluator ::giveIntegrationElementLocalCodeNumbers( IntArray &answer, Element *elem,
 //    FloatArray &lcoords )
@@ -309,10 +370,10 @@ void AxisymSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp, FloatMatr
     n.beColumnOf( nmatT, 1 );
 
 
-    //// Get nodal coordinates
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-    FloatArray nodesCoords;
-    elem->giveNodalCoordinates( nodesCoords );
+    ////// Get nodal coordinates
+    //IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
+    //FloatArray nodesCoords;
+    //elem->giveNodalCoordinates( nodesCoords );
 
     //// also works
     //double r = 0., x;

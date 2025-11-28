@@ -38,6 +38,7 @@
 #include "sm/CrossSections/simplesurfacecrosssection.h"
 #include "sm/Materials/structuralmaterial.h"
 #include "sm/Materials/structuralms.h"
+
 #include "floatarray.h"
 #include "floatmatrix.h"
 #include "domain.h"
@@ -118,6 +119,15 @@ void StructuralSurfaceElementEvaluator::computeDeformationGradientVector( FloatA
     IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
     elem->computeVectorOf( VM_Total, tStep, u );
 
+
+    ////////////////////////
+    //// to test curvature
+    //u.at( 3 ) = -0.1;
+    //u.at( 4 ) = -0.2;
+    /////////////////////////
+
+
+
     ///////////////////////////
     // // Alternative approach
     //FloatArray nodesCoords;
@@ -140,6 +150,8 @@ void StructuralSurfaceElementEvaluator::computeDeformationGradientVector( FloatA
         ur.at( i ) = u.at( lc.at( i ) );
         //xr.at( i ) = xDef.at( lc.at( i ) );
     }
+
+
 
     answer.beProductOf( B, ur );
 
@@ -176,6 +188,12 @@ void StructuralSurfaceElementEvaluator::computeGradientOfDeformationGradientVect
     elem->giveNodalCoordinates( nodesCoords );
 
     // deformed coordinates
+    ////////////////////////
+    //// to test curvature
+    //u.at( 3 ) = -0.1;
+    //u.at( 4 ) = -0.2;
+    ///////////////////////
+
     FloatArray xDef = nodesCoords + u;
 
     // Displacement gradient H = du/dX
@@ -193,6 +211,8 @@ void StructuralSurfaceElementEvaluator::computeGradientOfDeformationGradientVect
 
     answer.beProductOf( G, xr );
 }
+
+
 
 void StructuralSurfaceElementEvaluator::computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {

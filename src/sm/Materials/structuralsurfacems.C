@@ -43,7 +43,7 @@
 
 namespace oofem {
 StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g ) :
-    StructuralMaterialStatus( g ), MVector(), tempMVector(), GVector(), tempGVector(), dIVector(), tempdIVector(), D2eDK2_Matrix(), tempD2eDK2_Matrix()
+    StructuralMaterialStatus( g ), MVector(), tempMVector(), KVector(), tempKVector(), GVector(), tempGVector(), dIVector(), tempdIVector(), D2eDK2_Matrix(), tempD2eDK2_Matrix()
 {
     FVector.resize( 9 );
     FVector.at( 1 ) = FVector.at( 2 ) = 1.; // True only if coordinate system with outward z is used
@@ -69,6 +69,9 @@ StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g
     MVector.resize( 9 );
     tempMVector = MVector;
 
+    KVector.resize( 9 );
+    tempKVector = KVector;
+
     GVector.resize( 27 );
     tempGVector = GVector;
 
@@ -85,6 +88,7 @@ void StructuralSurfaceMaterialStatus ::updateYourself( TimeStep *tStep )
 {
     StructuralMaterialStatus ::updateYourself( tStep );
     MVector      = tempMVector;
+    KVector       = tempKVector;
     GVector = tempGVector;
     dIVector    = tempdIVector;
     D2eDK2_Matrix = tempD2eDK2_Matrix;
@@ -100,6 +104,7 @@ void StructuralSurfaceMaterialStatus ::initTempStatus()
 
     // reset temp vars.
     tempMVector = MVector;
+    tempKVector       = KVector;
     tempGVector = GVector;
     tempdIVector = dIVector;
     tempD2eDK2_Matrix = D2eDK2_Matrix;
@@ -114,6 +119,9 @@ void StructuralSurfaceMaterialStatus ::copyStateVariables( const MaterialStatus 
 
     MVector     = structStatus.giveMVector();
     tempMVector = structStatus.giveTempMVector();
+
+    KVector     = structStatus.giveKVector();
+    tempKVector = structStatus.giveTempKVector();
 
     GVector     = structStatus.giveGVector();
     tempGVector = structStatus.giveTempGVector();

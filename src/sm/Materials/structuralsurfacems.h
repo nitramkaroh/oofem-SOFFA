@@ -56,6 +56,9 @@ protected:
     FloatArray MVector; // Second order stress conjugate to Curvature tensor viewed from ref. cofnig (see Silhous)
     FloatArray tempMVector;
 
+    FloatArray KVector; // Reference curvature tensor
+    FloatArray tempKVector;
+
     FloatArray dIVector; // gradient of reference identity
     FloatArray tempdIVector;
 
@@ -72,6 +75,8 @@ public:
 
     const FloatArray &giveMVector() const { return MVector; }
     const FloatArray &giveTempMVector() const { return tempMVector; }
+    const FloatArray &giveKVector() const { return KVector; }
+    const FloatArray &giveTempKVector() const { return tempKVector; }
     const FloatArray &giveGVector() const { return GVector; }
     const FloatArray &giveTempGVector() const { return tempGVector; }
     const FloatArray &givedIVector() const { return dIVector; }
@@ -81,6 +86,8 @@ public:
 
     void letMVectorBe( const FloatArray &v ) { MVector = v; }
     void letTempMVectorBe( const FloatArray &v ) { tempMVector = v; }
+    void letKVectorBe( const FloatArray &v ) { KVector = v; }
+    void letTempKVectorBe( const FloatArray &v ) { tempKVector = v; }
     void letGVectorBe( const FloatArray &v ) { GVector = v; }
     void letTempGVectorBe( const FloatArray &v ) { tempGVector = v; }
     void letdIVectorBe( const FloatArray &v ) { dIVector = v; }

@@ -108,6 +108,11 @@ protected:
 
     void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
+    virtual void computeReferenceCurvature( FloatArray &RefCurvature, TimeStep *tStep, FloatArray &coords, int RuleIndex )
+    {
+        OOFEM_ERROR( "Not implemented for this element" );
+    };
+
     void computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
 public:

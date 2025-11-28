@@ -47,6 +47,7 @@
 #include "mathfem.h"
 #include "iga/iga.h"
 #include "classfactory.h"
+#include "sm/Materials/HyperelasticSurfaceMaterials/isopolyconvexhyperelasticsurfacematerial.h"
 
 namespace oofem {
 REGISTER_Element( BsplinePlaneStrainSurfaceElement );
@@ -343,8 +344,43 @@ void BsplineAxisymSurfaceElement ::giveCompositeExportData( std::vector<VTKPiece
                     iNode++;
                 }
             } // end loop over irules
+        } 
+    }
+
+    //// export the pseudo curvatures
+    // for now hardcoded
+    InternalStateType isttype;
+    ////////
+    //IntArray internalVarsToExportTemp(1);
+    //internalVarsToExportTemp.at( 1 ) = 11;
+    //internalVarsToExport.at( 1 ) = 11;
+    ////////
+    int n2 = internalVarsToExport.giveSize();
+    vtkPieces[0].setNumberOfInternalVarsToExport( internalVarsToExport, nNodes );
+    //int n2 = internalVarsToExportTemp.giveSize();
+    //vtkPieces[0].setNumberOfInternalVarsToExport( internalVarsToExportTemp, nNodes );
+    for ( int i = 1; i <= n2; i++ ) {
+        isttype = (InternalStateType)internalVarsToExport.at( i );
+        //isttype   = (InternalStateType)internalVarsToExportTemp.at( i );
+        int iNode = 1;
+        for ( int ir = 0; ir < numberOfIntegrationRules; ir++ ) {
+            auto iRule = this->ExportIntegrationRulesArray[ir].get();
+            for ( GaussPoint *gp : *iRule ) {
+                if ( isttype == IST_CurvatureTensor ) {
+                    FloatArray lcoords = gp->giveNaturalCoordinates();
+                    FloatArray refCurvature;
+                    this->computeReferenceCurvature( refCurvature, tStep, lcoords, ir );
+                    //refCurvature.printYourself();
+                    vtkPieces[0].setInternalVarInNode( isttype, iNode, refCurvature );
+                    iNode++;
+                } else {
+                    fprintf( stderr, "VTKXMLExportModule::exportIntVars: unsupported variable type %s\n", __InternalStateTypeToString( isttype ) );
+                }
+            }
+
         }
     }
+
 }
 
 } // end namespace oofem

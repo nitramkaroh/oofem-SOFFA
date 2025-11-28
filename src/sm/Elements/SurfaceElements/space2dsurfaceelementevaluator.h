@@ -75,6 +75,9 @@ public:
 
     int giveIntegrationElementLocalCodeNumbers( IntArray &answer, Element *elem, IntegrationRule *ie ) override;
 
+    void computeReferenceCurvature( FloatArray &RefCurvature, TimeStep *tStep, FloatArray &lcoords, int RuleIndex ) override;
+
+
     //int giveIntegrationElementLocalCodeNumbers( IntArray &answer, Element *elem, FloatArray &lcoords );
 
 
