@@ -81,7 +81,8 @@ void
 Q4Axisymm :: initializeFrom(InputRecord &ir)
 {
     numberOfGaussPoints = 4;
-    StructuralElement :: initializeFrom(ir);
+    NLStructuralElement ::initializeFrom( ir );
+    //StructuralElement :: initializeFrom(ir);
 
     numberOfFiAndShGaussPoints = 1;
     ///@todo only works for 1 //JB
