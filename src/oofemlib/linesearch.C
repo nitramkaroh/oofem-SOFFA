@@ -319,11 +319,17 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
     FloatArray direction = dr, rold = r, rhs, Ku( r.giveSize() ), dx_Defl, rhsDefl;
     direction.normalize();
 
+    // if residuum is small enough already
+    if ( fabs( ( RT - F ).dotProduct( direction ) ) < this->ls_tolerance ) {
+        return CR_CONVERGED;
+    }
+
     // do exact linesearch including delfation
     int p = 2;
     double RHS, ResNormLS, RHSdefl, deta = 1e-6, alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
     //double Eta     = min( deta, dr.computeNorm() ); // start guess
     double Eta     = dr.computeNorm(); // start guess
+    double Eta0    = Eta;
     FloatArray ddr = Eta * direction;
     r  = r + ddr; // Initial moification of the solution
 
@@ -343,8 +349,10 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
         if ( fabs( RHSdefl ) < this->ls_tolerance ) {
             dr = r - rold;
             r = rold;
-            OOFEM_LOG_INFO( "Eta = %.7e\n", Eta );
+            OOFEM_LOG_INFO( "Eta = %.7e\n", Eta/Eta0 );
             return CR_CONVERGED;
+        } else if ( isnan( RHSdefl )) {
+            break;
         }
 
         engngModel->updateComponent( tStep, NonLinearLhs, domain );
