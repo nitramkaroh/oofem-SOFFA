@@ -78,9 +78,6 @@
 #include "fracturemanager.h"
 #include "contact/contactmanager.h"
 #include "contact/contactdefinition.h"
-#include "feinterpol.h"
-#include "../mpm/mpm.h"
-#include "timestepreductionstrategy.h"
 
 
 namespace oofem {
@@ -515,83 +512,6 @@ std::unique_ptr<LoadBalancer> ClassFactory :: createLoadBalancer(const char *nam
 bool ClassFactory :: registerLoadBalancer(const char *name, std::unique_ptr<LoadBalancer> ( *creator )( Domain * ) )
 {
     return cf_store(loadBalancerList, name, creator);
-}
-
-
-std::unique_ptr<TimeStepReductionStrategy> ClassFactory :: createTimeStepReductionStrategy(const char *name, int number)
-{
-  return cf_create<TimeStepReductionStrategy>(timeStepReductionStrategyList, name, number);
-}
-
-bool ClassFactory :: registerTimeStepReductionStrategy(const char *name, std::unique_ptr<TimeStepReductionStrategy> ( *creator )(int ) )
-{
-  return cf_store(timeStepReductionStrategyList, name,creator);
-}
-
-  
-
-std::unique_ptr<Term> ClassFactory :: createTerm(const char *name)
-{
-    return cf_create<Term>(termList, name);
-    
-}
-
-bool ClassFactory :: registerTerm(const char *name, std::unique_ptr<Term> ( *creator )() )
-{
-    return cf_store(termList, name, creator);
-}
-
-std::unique_ptr<Field> ClassFactory :: createField(const char *name)
-{
-    return cf_create<Field>(fieldList, name);
-}
-
-bool ClassFactory :: registerField(const char *name, std::unique_ptr<Field> ( *creator )() )
-{
-    return cf_store(fieldList, name, creator);
-}
-
-std::map<std::string,std::list<std::string>> ClassFactory :: getRegisteredNames () {
-    std::map<std::string,std::list<std::string>> ret=std::map<std::string,std::list<std::string>>();
-    #define N(a,b) { auto& l=ret[#a]; for(const auto& kv: b) l.push_back(kv.first); };
-    #define E(a,b) { auto& l=ret[#a]; for(const auto& kv: b) l.push_back(std::to_string((int)kv.first)); };
-       E(SparseMtrx,sparseMtrxList);
-       E(SparseLinSolver,sparseLinSolList);
-       E(ErrorEstimator,errEstList);
-       E(NodalRecoveryModel,nodalRecoveryModelList);
-       N(Element,elemList);
-       E(Dof,dofList);
-       N(DofManager,dofmanList);
-       N(BoundaryCondition,bcList);
-       N(CrossSection,csList);
-       N(Material,matList);
-       N(EngngModel,engngList);
-       N(Function,funcList);
-       N(NonlocalBarrier,nlbList);
-       N(ExportModule,exportList);
-       N(Monitor,monitorList);
-       N(SparseNonLinearSystemNM,nonlinList);
-       N(InitModule,initList);
-       N(TopologyDescription,topologyList);
-       N(EnrichmentItem,enrichFuncList);
-       N(EnrichmentFront,enrichmentFrontList);
-       N(PropagationLaw,propagationLawList);
-       N(Geometry,geometryList);
-       N(XfemManager,xManList);
-       N(FailureCriteria,failureCriteriaList);
-       N(FailureCrititeriaStatus,failureCriteriaStatusList);
-       N(ContactManager,contactManList);
-       N(ContactDefinition,contactDefList);
-       E(GeneratlizedEigenValueSolver,generalizedEigenValueSolverList);
-       E(MaterialMappingAlgorithm,materialMappingList);
-       E(MesherInterface,mesherInterfaceList);
-       N(LoadBalancerMonitor,loadMonitorList);
-       N(LoadBalancer,loadBalancerList);
-       N(Term,termList);
-       N(Field,fieldList);
-    #undef E
-    #undef N
-    return ret;
 }
 
 } // End namespace oofem

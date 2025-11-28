@@ -157,8 +157,9 @@ public:
     double giveUnknownComponent(ValueModeType type, TimeStep *tStep, Domain *d, Dof *dof) override;
     void initializeFrom(InputRecord &ir) override;
     TimeStep *giveSolutionStepWhenIcApply(bool force = false) override;
-    NumericalMethod *giveNumericalMethod(MetaStep *mStep) override;
     TimeStep *giveNextStep() override;
+    NumericalMethod *giveNumericalMethod(MetaStep *mStep) override;
+
     double giveLoadLevel() override { return cumulatedLoadLevel + loadLevel; }
 
     void saveContext(DataStream &stream, ContextMode mode) override;
@@ -200,8 +201,6 @@ protected:
 
     void packMigratingData(TimeStep *tStep) override;
     void unpackMigratingData(TimeStep *tStep) override;
-    double giveInitialTime() override {return 1;}
-
 };
 } // end namespace oofem
 #endif // nlinearstatic_h
