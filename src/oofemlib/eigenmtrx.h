@@ -187,6 +187,7 @@ public:
     //void getBlock( int i, int j, int p, int q, EigenMtrx &BlockMatrix );
     std::unique_ptr<EigenMtrx> getBlock( int i, int j, int p, int q );
     std::unique_ptr<EigenMtrx> doStaticCondensation( int i );
+    std::unique_ptr<EigenMtrx> doStaticCondensationLagrange( int i );
     ///////////
 };
 } // end namespace oofem

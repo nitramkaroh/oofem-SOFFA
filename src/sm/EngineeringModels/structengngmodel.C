@@ -281,18 +281,22 @@ StructuralEngngModel :: updateInternalState(TimeStep *tStep)
 #ifdef _OPENMP
 #pragma omp parallel for 
 #endif
-            for ( auto &dman : domain->giveDofManagers() ) {
-                this->updateDofUnknownsDictionary(dman.get(), tStep);
+            for ( int i = 1; i <= domain->giveNumberOfDofManagers(); i++){
+                this->updateDofUnknownsDictionary( domain->giveDofManager( i ), tStep );
+            //for ( auto &dman : domain->giveDofManagers() ) {
+                //this->updateDofUnknownsDictionary(dman.get(), tStep);
             }
         }
         
 #ifdef _OPENMP
 #pragma omp parallel for 
 #endif
-        for ( auto &bc : domain->giveBcs() ) {
+        for ( int i = 1; i <= domain->giveNumberOfBoundaryConditions(); i++ ) {
+        //for ( auto &bc : domain->giveBcs() ) {
             ActiveBoundaryCondition *abc;
 
-            if ( ( abc = dynamic_cast< ActiveBoundaryCondition * >(bc.get()) ) ) {
+            //if ( ( abc = dynamic_cast< ActiveBoundaryCondition * >(bc.get()) ) ) {
+            if ( ( abc = dynamic_cast<ActiveBoundaryCondition *>( domain->giveBc( i ) ) ) ) {
                 int ndman = abc->giveNumberOfInternalDofManagers();
                 for ( int j = 1; j <= ndman; j++ ) {
                     this->updateDofUnknownsDictionary(abc->giveInternalDofManager(j), tStep);
@@ -303,9 +307,11 @@ StructuralEngngModel :: updateInternalState(TimeStep *tStep)
         if ( internalVarUpdateStamp != tStep->giveSolutionStateCounter() ) {
 #ifdef _OPENMP
 #pragma omp parallel for 
-#endif
-            for ( auto &elem : domain->giveElements() ) {
-                elem->updateInternalState(tStep);
+#endif      
+            for ( int i = 1; i <= domain->giveNumberOfElements(); i++ ) {
+            //for ( auto &elem : domain->giveElements() ) {
+                //elem->updateInternalState(tStep);
+                domain->giveElement( i )->updateInternalState( tStep );
             }
             internalVarUpdateStamp = tStep->giveSolutionStateCounter();
         }

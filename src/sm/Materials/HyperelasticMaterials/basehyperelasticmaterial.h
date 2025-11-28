@@ -71,12 +71,14 @@ protected:
      * @author Martin Horak
      **/
     enum VolumetricEnergyType {
-        VET_Logarithmic = 0
+        VET_Logarithmic = 0,
+        VET_Quadratic = 1
     };
     /// Bulk modulus
     double K = 0;
     /// volumetric energy type
-    VolumetricEnergyType VET_Type = VET_Logarithmic;
+    //VolumetricEnergyType VET_Type = VET_Logarithmic;
+    VolumetricEnergyType VET_Type = VET_Quadratic;
 
 
 public:
@@ -357,5 +359,6 @@ public:
      * @return the second derivative of the volumetric energy (fourth-order tensor)
      **/
     Tensor4_3d compute_d2VolumetricEnergy_dF2(const Tensor2_3d &F) const;
+
 };
 } // end namespace oofem

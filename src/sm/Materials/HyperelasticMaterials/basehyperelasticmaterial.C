@@ -34,6 +34,7 @@
 
 #include "basehyperelasticmaterial.h"
 #include "dynamicinputrecord.h"
+#include "domain.h"
 
 namespace oofem {
 Tensor2_3d
@@ -46,6 +47,10 @@ BaseHyperElasticMaterial::compute_dVolumetricEnergy_dF(const Tensor2_3d &F) cons
         auto J = F.compute_determinant();
         auto lnJ = log(J);
         dVolumetricEnergy_dF(i_3, j_3) =  K * lnJ / J * this->compute_dJ_dF(F)(i_3, j_3);
+    } else if ( VET_Type == VET_Quadratic ) {
+        auto J                           = F.compute_determinant();
+        dVolumetricEnergy_dF( i_3, j_3 ) = K /2 *(J-1./J) *this->compute_dJ_dF( F )( i_3, j_3 );
+    
     }
     return dVolumetricEnergy_dF;
 }
@@ -61,10 +66,14 @@ BaseHyperElasticMaterial::compute_d2VolumetricEnergy_dF2(const Tensor2_3d &F) co
         auto [ J, cofF ] = F.compute_determinant_and_cofactor();
         auto lnJ = log(J);
         d2VolumetricEnergy_dF2(i_3, j_3, k_3, l_3) =  K * ( 1. - lnJ ) / J / J * cofF(i_3, j_3) * cofF(k_3, l_3) + K * lnJ / J * F.compute_tensor_cross_product()(i_3, j_3, k_3, l_3);
+    } else if ( VET_Type == VET_Quadratic ) {
+        auto [J, cofF] = F.compute_determinant_and_cofactor();
+        d2VolumetricEnergy_dF2( i_3, j_3, k_3, l_3 ) = K/2 * ( 1. + 1. / J / J) * cofF( i_3, j_3 ) * cofF( k_3, l_3 ) + 
+                                                       K/2 *(J - 1. / J )* F.compute_tensor_cross_product()( i_3, j_3, k_3, l_3 );
+
     }
     return d2VolumetricEnergy_dF2;
 }
-
 
 
 

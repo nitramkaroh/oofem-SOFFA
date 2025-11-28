@@ -386,4 +386,27 @@ std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensation( int i )
     return std::make_unique<EigenMtrx>( KcondOOFEM );
 }
 
+std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensationLagrange( int i )
+{
+    // i is position were the PP block starts
+    int uuSize  = i - 1;
+    int matSize = this->giveNumberOfRows();
+    int ppSize  = matSize - uuSize;
+
+    Eigen::SparseMatrix<double> UU = this->EigMat.block( 0, 0, uuSize, uuSize );
+    //Eigen::SparseMatrix<double> UP = this->EigMat.block( 0, i - 1, uuSize, ppSize );
+    //Eigen::SparseMatrix<double> PU = this->EigMat.block( i - 1, 0, ppSize, uuSize );
+    //Eigen::SparseMatrix<double> PP = this->EigMat.block( i - 1, i - 1, ppSize, ppSize );
+
+    //// create factorization and solve for lambda
+    //Eigen::SparseLU<Eigen::SparseMatrix<double> > A_factorization( PP );
+    //Eigen::SparseMatrix<double> temp  = A_factorization.solve( PU ); // Solve the system
+    //Eigen::SparseMatrix<double> Kcond = UU - UP * temp;
+    EigenMtrx KcondOOFEM( UU );
+
+    // std::cout << PP << std::endl;
+    return std::make_unique<EigenMtrx>( KcondOOFEM );
+
+}
+
 } // end namespace oofem

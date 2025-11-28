@@ -36,6 +36,8 @@
 #include "floatmatrix.h"
 #include "floatarray.h"
 #include "classfactory.h"
+#include "domain.h"
+#include "function.h"
 
 
 namespace oofem {
@@ -50,11 +52,33 @@ SimoPisterMaterial::give3dMaterialStiffnessMatrix_dPdF(MatResponseMode mode, Gau
 {
     StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveStatus(gp) );
     FloatArrayF< 9 >vF(status->giveTempFVector() );
-    Tensor2_3d F(vF);
+    Tensor2_3d Fcurrent( vF ), F;
+
+    //FloatArrayF<9> indent = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    //Tensor2_3d F0( indent );
+    //FloatArray vF0_temp;
+    //// Prestrain
+    //if ( gp->giveElement()->giveIPValue( vF0_temp, gp, IST_PrestrainDeformationGradient, tStep ) ) {
+    //    FloatArrayF<9> vF0( vF0_temp );
+    //    F0 = Tensor2_3d::Tensor2_3d( vF0 );
+    //}
+    //F( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
+    F( i_3, j_3 )  = Fcurrent( i_3, j_3 );
+
     auto [ J, cofF ] = F.compute_determinant_and_cofactor();
-    Tensor4_3d A;
-    A(i_3, j_3, k_3, l_3) = G * ( 0.5 * this->compute_d2I1_C_dF2(F)(i_3, j_3, k_3, l_3) + 1 / J / J * cofF(i_3, j_3) * cofF(k_3, l_3) - 1. / J * F.compute_tensor_cross_product()(i_3, j_3, k_3, l_3) )  + this->compute_d2VolumetricEnergy_dF2(F)(i_3, j_3, k_3, l_3);
-    return A.to_voigt_form();
+    
+    Tensor4_3d A, Afull;
+    //A(i_3, j_3, k_3, l_3) = G * ( 0.5 * this->compute_d2I1_C_dF2(F)(i_3, j_3, k_3, l_3) + 1 / J / J * cofF(i_3, j_3) * cofF(k_3, l_3) - 1. / J * F.compute_tensor_cross_product()(i_3, j_3, k_3, l_3) )  + this->compute_d2VolumetricEnergy_dF2(F)(i_3, j_3, k_3, l_3);
+    double bulkMult = 1.;
+    if ( this->bulk_ltf != 0 ) {
+        bulkMult = domain->giveFunction( bulk_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    }
+    A( i_3, j_3, k_3, l_3 ) = G * ( 0.5 * this->compute_d2I1_C_dF2( F )( i_3, j_3, k_3, l_3 ) + 1 / J / J * cofF( i_3, j_3 ) * cofF( k_3, l_3 ) - 1. / J * F.compute_tensor_cross_product()( i_3, j_3, k_3, l_3 ) ) + bulkMult*this->compute_d2VolumetricEnergy_dF2( F )( i_3, j_3, k_3, l_3 );
+    //double J0 = F0.compute_determinant();
+    //Afull( i_3, j_3, k_3, l_3 ) = 1./J0*F0( j_3, m_3 ) * A( i_3, m_3, k_3, n_3 ) * F0( l_3, n_3 );
+    Afull( i_3, j_3, k_3, l_3 ) = A( i_3, j_3, k_3, l_3 );
+
+    return Afull.to_voigt_form();
 }
 
 FloatArrayF< 9 >
@@ -62,16 +86,40 @@ SimoPisterMaterial::giveFirstPKStressVector_3d(const FloatArrayF< 9 > &vF, Gauss
 // returns 9 components of the first piola kirchhoff stress corresponding to the given deformation gradinet
 {
     StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveStatus(gp) );
+    Tensor2_3d Fcurrent( vF ), F, P, Pfull;
 
-    Tensor2_3d F(vF), P;
+    //FloatArray vF0_temp;
+    //FloatArrayF<9> indent = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    //Tensor2_3d F0( indent );
+
+    //// Prestrain
+    //if ( gp->giveElement()->giveIPValue( vF0_temp, gp, IST_PrestrainDeformationGradient, tStep ) ) {
+    //    FloatArrayF<9> vF0( vF0_temp );
+    //    F0  = Tensor2_3d::Tensor2_3d( vF0 );
+    //}
+    //F( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
+    F( i_3, j_3 ) = Fcurrent( i_3, j_3 );
+
     auto [ J, cofF ] = F.compute_determinant_and_cofactor();
+
     // compute the first Piola-Kirchhoff
-    P(i_3, j_3) =  G * ( 0.5 * this->compute_dI1_C_dF(F)(i_3, j_3) - 1. / J * cofF(i_3, j_3) ) + this->compute_dVolumetricEnergy_dF(F)(i_3, j_3);
-    auto vP = P.to_voigt_form();
+    //P(i_3, j_3) =  G * ( 0.5 * this->compute_dI1_C_dF(F)(i_3, j_3) - 1. / J * cofF(i_3, j_3) ) + this->compute_dVolumetricEnergy_dF(F)(i_3, j_3);
+    double bulkMult = 1.;
+    if ( this->bulk_ltf != 0 ) {
+        bulkMult = domain->giveFunction( bulk_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    }
+    P( i_3, j_3 ) = G * ( 0.5 * this->compute_dI1_C_dF( F )( i_3, j_3 ) - 1. / J * cofF( i_3, j_3 ) ) + bulkMult*this->compute_dVolumetricEnergy_dF( F )( i_3, j_3 );
+
+    //double J0 = F0.compute_determinant();
+    //Pfull( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0( j_3, k_3 ); 
+    Pfull( i_3, j_3 ) = P( i_3, j_3 ); 
+
+    auto vP = Pfull.to_voigt_form();
     // update gp
     status->letTempFVectorBe(vF);
+    //status->letTempFVectorBe( F.to_voigt_form() );
     status->letTempPVectorBe(vP);
-    //
+
     return vP;
 }
 
@@ -89,5 +137,6 @@ SimoPisterMaterial::initializeFrom(InputRecord &ir)
     StructuralMaterial::initializeFrom(ir);
     BaseHyperElasticMaterial::initializeFrom(ir);
     IR_GIVE_FIELD(ir, G, _IFT_SimoPisterMaterial_g);
+    IR_GIVE_OPTIONAL_FIELD( ir, bulk_ltf, _IFT_SimoPisterMaterial_bulkLTF );
 }
 } // end namespace oofem

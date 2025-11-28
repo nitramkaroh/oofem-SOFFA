@@ -35,7 +35,8 @@
 #ifndef assemblercallback_h
 #define assemblercallback_h
 
-#include "oofem_export.h"
+//#include "oofem_export.h"
+#include "oofemcfg.h"
 #include "valuemodetype.h" ///@todo We shouldn't have this for assembling vectors or matrices(!) / Mikael
 #include "matresponsemode.h"
 #include "chartype.h"
