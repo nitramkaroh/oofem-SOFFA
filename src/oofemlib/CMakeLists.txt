@@ -325,6 +325,8 @@ set (core_bc
     reinforcement.C
     surfacetensionbc.C
     linearconstraintbc.C
+	igaclampboundarycondition.C
+	igaclampboundaryconditionlagrange.C
     )
 
 if (USE_PYTHON_EXTENSION)

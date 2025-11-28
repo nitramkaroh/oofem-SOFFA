@@ -66,6 +66,15 @@ BSplineInterpolation :: initializeFrom(InputRecord &ir)
         degree [ i ] = degree_tmp.at(i + 1);
     }
 
+    // Get order from degree
+    int minDegree = degree[0];
+    for ( int i = 1; i < nsd; i++ ) {
+        if ( degree[i] < minDegree ) {
+            minDegree = degree[i];
+        };
+    }
+    this->order = minDegree;
+
     for ( int n = 0; n < nsd; n++ ) {
         IR_GIVE_FIELD(ir, knotValues [ n ], IFT_knotVector [ n ]);
         int size = knotValues [ n ].giveSize();
@@ -121,6 +130,11 @@ BSplineInterpolation :: initializeFrom(InputRecord &ir)
 
         // multiplicity of the 1st and last knot set to degree + 1
         knotMultiplicity [ n ].at(1) = knotMultiplicity [ n ].at(size) = degree [ n ] + 1;
+
+        /////////////////////
+        // test, set multiplicity of first and last to d+2 to clamp the ends
+        //knotMultiplicity[n].at( 1 ) = knotMultiplicity[n].at( size ) = degree[n] + 2;
+        ////////////////////
 
         // sum the size of knot vector with multiplicity values
         int sum = 0;
@@ -766,6 +780,13 @@ int BSplineInterpolation :: findSpan(int n, int p, double u, const FloatArray &U
     return mid;
 }
 
+int BSplineInterpolation ::giveStartIndex( double u, int isd) const
+{
+    return this->findSpan( numberOfControlPoints[isd], degree[isd], u, knotVector[isd] ) - degree[isd];
+}
+
+
+
 
 ///////////////////////
 // BSpline2dLineInterpolation
@@ -994,8 +1015,10 @@ double BSpline2dLineInterpolation::boundaryEvalNormal( FloatArray &answer, int i
 
     // Compute normal
     answer.resize( 3 );
-    answer.at( 1 ) = -dXdXi.at( 2 );
-    answer.at( 2 ) = dXdXi.at( 1 );
+    //answer.at( 1 ) = -dXdXi.at( 2 );
+    //answer.at( 2 ) = dXdXi.at( 1 );
+    answer.at( 1 ) = dXdXi.at( 2 );
+    answer.at( 2 ) = -dXdXi.at( 1 );
     answer.at( 3 ) = 0.; // z direciton is assumed ou of plane
 
     answer.normalize();
@@ -1085,7 +1108,7 @@ void BSpline2dLineInterpolation::computePosition( FloatArray &answer, const Floa
     FloatArray dXdXi( degree[0] + 1 ); // array of first derivative of basis function
     double Px    = 0.;
     double Py = 0.;
-
+    
     int uind = span[0] - degree[0];
     int ind  = uind + 1;
     for ( int k = 0; k <= degree[0]; k++ ) {
@@ -1128,6 +1151,59 @@ int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answ
     int indexStart = uind + 1;
     return indexStart;
 
+};
+
+int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords) const
+{
+    if ( nsd != 1 ) {
+        OOFEM_ERROR( "This class is only for line in 2D" );
+    };
+
+    IntArray span( nsd );
+    // std ::vector<FloatMatrix> ders( nsd );
+
+
+    for ( int i = 0; i < nsd; i++ ) {
+        span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+    }
+
+
+    for ( int i = 0; i < nsd; i++ ) {
+        this->dersBasisFuns( maxOrder, lcoords[i], span[i], degree[i], knotVector[i], answer );
+    }
+
+    // Return index where nonzero basis functions start
+    int uind       = span[0] - degree[0];
+    int indexStart = uind + 1;
+    return indexStart;
+};
+
+int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const IntArray &span ) const
+{
+    if ( nsd != 1 ) {
+        OOFEM_ERROR( "This class is only for line in 2D" );
+    };
+
+    if ( span.giveSize() != nsd ) {
+        OOFEM_ERROR( "Size mismatch" );
+    };
+
+    // std ::vector<FloatMatrix> ders( nsd );
+
+
+    //for ( int i = 0; i < nsd; i++ ) {
+    //    span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+    //}
+
+
+    for ( int i = 0; i < nsd; i++ ) {
+        this->dersBasisFuns( maxOrder, lcoords[i], span[i], degree[i], knotVector[i], answer );
+    }
+
+    // Return index where nonzero basis functions start
+    int uind       = span[0] - degree[0];
+    int indexStart = uind + 1;
+    return indexStart;
 };
 
 } // end namespace oofem

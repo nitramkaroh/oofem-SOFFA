@@ -195,6 +195,8 @@ public:
     std::unique_ptr<IntegrationRule> giveBoundaryEdgeIntegrationRule(int order, int boundary) const override
     { OOFEM_ERROR("Not supported."); return nullptr; }
 
+    int giveStartIndex( double u, int isd ) const;
+
 
 protected:
     /**
@@ -244,6 +246,9 @@ protected:
      * @warning Parameter u must be in a valid range.
      */
     int findSpan(int n, int p, double u, const FloatArray &U) const;
+
+    
+
     /**
      * Returns the range of nonzero basis functions for given knot span and given degree.
      */
@@ -266,6 +271,9 @@ public:
 
     int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
+    int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords ) const override;
+
+    int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const IntArray &knotspan ) const override;
 
     double evaldNds( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
 
