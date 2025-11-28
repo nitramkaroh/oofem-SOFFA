@@ -4,9 +4,10 @@
 
 #include "Tensor6_minus_Tensor6.hpp"
 #include "Tensor6_plus_Tensor6.hpp"
+//#include "Tensor6_times_Tensor1_outer.hpp"
 //#include "Tensor6_times_Tensor1_single.hpp"
 //#include "Tensor6_times_Tensor2_single.hpp"
-//#include "Tensor6_times_Tensor2_double.hpp"
+#include "Tensor6_times_Tensor2_double.hpp"
 ////#include "Tensor6_times_Tensor2_symmetric.hpp"
 //#include "Tensor6_times_Tensor3_single.hpp"
 //#include "Tensor6_times_Tensor3_double.hpp"
@@ -18,7 +19,7 @@
 //#include "Tensor6_times_Tensor5_triple.hpp"
 //#include "Tensor6_times_Tensor5_quadruple.hpp"
 //#include "Tensor6_times_Tensor5_quintuple.hpp"
-//#include "Tensor6_times_generic.hpp"
+#include "Tensor6_times_generic.hpp"
 
 #include "../permute.hpp"
 
@@ -49,7 +50,7 @@ namespace FTensor
     Tensor6_Expr(Tensor6<A, Dim0, Dim1, Dim2, Dim3, Dim4, Dim5> &a) : iter(a) {}
     T &operator()(const int N1, const int N2, const int N3, const int N4, const int N5, const int N6)
     {
-      return iter(N1, N2, N3, N4, N5. N6);
+      return iter(N1, N2, N3, N4, N5, N6);
     }
     T operator()(const int N1, const int N2, const int N3, const int N4, const int N5, const int N6) const
     {
@@ -121,7 +122,7 @@ namespace FTensor
               for ( int mm = 0; mm < Dim4; ++mm )
                 for ( int nn = 0; nn < Dim5; ++nn )
                 {
-                  iter( ii, jj, kk, ll, mm, nn ) += permute( *this, rhs, ii, jj, kk, ll, mm, nn );
+                  iter( ii, jj, kk, ll, mm, nn ) -= permute( *this, rhs, ii, jj, kk, ll, mm, nn );
                 }
       return *this;
     }

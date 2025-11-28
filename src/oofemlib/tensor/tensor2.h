@@ -92,7 +92,7 @@ public:
         this->data [ 2 ] [ 2 ] = array.at(3);
     }
 
-    /**
+        /**
      * Creates a second-order order tensor in 3d from FloatMatrix
      */
 
@@ -113,7 +113,7 @@ public:
      * Transforms a second-order tensor into a floatarrayf<9>,  using the Voigt notation
      */
 
-    const inline FloatArrayF< 9 >to_voigt_form() const
+    const inline FloatArrayF< 9 >to_voigt_form()
     {
         return {
                    this->operator()(0, 0),
@@ -128,18 +128,37 @@ public:
         };
     }
 
-    void toFloatMatrix(FloatMatrix& T) const {
+    void toFloatMatrix( FloatMatrix &T ) const
+    {
         T.resize( 3, 3 );
-        T.at( 1, 1 ) = this->operator()( 0,0 );
-        T.at( 2, 2 ) = this->operator()( 1,1 );
-        T.at( 3, 3 ) = this->operator()( 2,2 );
-        T.at( 1, 2 ) = this->operator()( 0,1 );
-        T.at( 1, 3 ) = this->operator()( 0,2 );
-        T.at( 2, 3 ) = this->operator()( 1,2 );
-        T.at( 2, 1 ) = this->operator()( 1,0 );
-        T.at( 3, 1 ) = this->operator()( 2,0 );
-        T.at( 3, 2 ) = this->operator()( 2,1 );
+        T.at( 1, 1 ) = this->operator()( 0, 0 );
+        T.at( 2, 2 ) = this->operator()( 1, 1 );
+        T.at( 3, 3 ) = this->operator()( 2, 2 );
+        T.at( 1, 2 ) = this->operator()( 0, 1 );
+        T.at( 1, 3 ) = this->operator()( 0, 2 );
+        T.at( 2, 3 ) = this->operator()( 1, 2 );
+        T.at( 2, 1 ) = this->operator()( 1, 0 );
+        T.at( 3, 1 ) = this->operator()( 2, 0 );
+        T.at( 3, 2 ) = this->operator()( 2, 1 );
     }
+
+    const inline FloatMatrixF< 3,3 >to_matrix_form()
+    {
+      //@todo: row vs column ordering
+      return {
+	this->data [ 0 ] [ 0 ],
+	this->data [ 0 ] [ 1 ],
+	this->data [ 0 ] [ 2 ],
+	this->data [ 1 ] [ 0 ],
+	this->data [ 1 ] [ 1 ],
+	this->data [ 1 ] [ 2 ],
+	this->data [ 2 ] [ 0 ],
+	this->data [ 2 ] [ 1 ],
+	this->data [ 2 ] [ 2 ],
+      };
+    }
+
+
 
 
     /**
@@ -190,13 +209,6 @@ public:
             }
         }
         return Cpow;
-    }
-
-    void printYourself() const
-    {
-        FloatMatrix T;
-        this->toFloatMatrix( T );
-        T.printYourself();
     }
 
 
@@ -520,8 +532,7 @@ public:
 
 
 
-
-    /**
+     /**
      * Computes determinant and inverse
      * @return determinant and inverse second-order tensor
      */
@@ -532,6 +543,7 @@ public:
         iF( i_3, j_3 ) = 1. / J * cofF( j_3, i_3 );
         return { J, iF };
     }
+
 
     /**
      * Computes fourth-order tensor cross product
@@ -587,8 +599,6 @@ public:
 
         return Ax;
     }
-
-
 };
 
 // not used for now...

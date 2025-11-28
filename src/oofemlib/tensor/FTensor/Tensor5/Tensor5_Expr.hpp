@@ -4,21 +4,23 @@
 
 #include "Tensor5_minus_Tensor5.hpp"
 #include "Tensor5_plus_Tensor5.hpp"
-//#include "Tensor5_times_Tensor1_single.hpp"
-//#include "Tensor5_times_Tensor2_single.hpp"
-//#include "Tensor5_times_Tensor2_double.hpp"
-////#include "Tensor5_times_Tensor2_symmetric.hpp"
-//#include "Tensor5_times_Tensor3_single.hpp"
-//#include "Tensor5_times_Tensor3_double.hpp"
-//#include "Tensor5_times_Tensor3_triple.hpp"
-//#include "Tensor5_times_Tensor4_single.hpp"
-//#include "Tensor5_times_Tensor4_double.hpp"
-//#include "Tensor5_times_Tensor4_triple.hpp"
-//#include "Tensor5_times_Tensor4_quadruple.hpp"
-//#include "Tensor5_times_Tensor5_double.hpp"
-//#include "Tensor5_times_Tensor5_triple.hpp"
-//#include "Tensor5_times_Tensor5_quadruple.hpp"
-//#include "Tensor5_times_generic.hpp"
+#include "Tensor5_times_Tensor1_outer.hpp"
+#include "Tensor5_times_Tensor1_single.hpp"
+#include "Tensor5_times_Tensor2_outer.hpp"
+#include "Tensor5_times_Tensor2_single.hpp"
+#include "Tensor5_times_Tensor2_double.hpp"
+//#include "Tensor5_times_Tensor2_symmetric.hpp"
+#include "Tensor5_times_Tensor3_single.hpp"
+#include "Tensor5_times_Tensor3_double.hpp"
+#include "Tensor5_times_Tensor3_triple.hpp"
+#include "Tensor5_times_Tensor4_single.hpp"
+#include "Tensor5_times_Tensor4_double.hpp"
+#include "Tensor5_times_Tensor4_triple.hpp"
+#include "Tensor5_times_Tensor4_quadruple.hpp"
+#include "Tensor5_times_Tensor5_double.hpp"
+#include "Tensor5_times_Tensor5_triple.hpp"
+#include "Tensor5_times_Tensor5_quadruple.hpp"
+#include "Tensor5_times_generic.hpp"
 
 #include "../permute.hpp"
 
@@ -118,7 +120,7 @@ namespace FTensor
             for(int ll = 0; ll < Dim3; ++ll)
               for ( int mm = 0; mm < Dim4; ++mm )
               {
-                iter(ii, jj, kk, ll, mm) += permute(*this, rhs, ii, jj, kk, ll, mm);
+                iter(ii, jj, kk, ll, mm) -= permute(*this, rhs, ii, jj, kk, ll, mm);
               }
       return *this;
     }

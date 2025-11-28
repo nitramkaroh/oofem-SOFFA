@@ -5,7 +5,7 @@
 #include "Permutation4.hpp"
 #include "Permutation5.hpp"
 #include "Permutation6.hpp"
-//#include "Permutation7.hpp"
+#include "Permutation7.hpp"
 
 namespace FTensor
 {
@@ -71,17 +71,17 @@ namespace FTensor
         rhs, N0, N1, N2, N3, N4, N5 );
   }
 
-  //template <class A, class T, class B, class U, int Dim0_0, int Dim0_1,
-  //    int Dim0_2, int Dim0_3, int Dim0_4, int Dim0_5, int Dim0_6, int Dim1_0, int Dim1_1, int Dim1_2,
-  //    int Dim1_3, int Dim1_4, int Dim1_5, int Dim1_6, char i0, char j0, char k0, char l0, char m0, char n0, char o0, char i1, char j1,
-  //    char k1, char l1, char m1, char n1, char o1>
-  //U permute(
-  //    const Tensor7_Expr<A, T, Dim0_0, Dim0_1, Dim0_2, Dim0_3, Dim0_4, Dim0_5, Dim0_6, i0, j0, k0, l0, m0, n0, o0> &,
-  //    const Tensor7_Expr<B, U, Dim1_0, Dim1_1, Dim1_2, Dim1_3, Dim1_4, Dim1_5, Dim1_6, i1, j1, k1, l1, m1, n1, o1>
-  //        &rhs,
-  //    const int N0, const int N1, const int N2, const int N3, const int N4, const int N5, const int N6 )
-  //{
-  //  return Permutation7<Dim0_0, Dim0_1, Dim0_2, Dim0_3, Dim0_4, Dim0_5, Dim0_6, i0, j0, k0, l0, m0, n0, o0>().eval(
-  //      rhs, N0, N1, N2, N3, N4, N5, N6 );
-  //}
+  template <class A, class T, class B, class U, int Dim0_0, int Dim0_1,
+      int Dim0_2, int Dim0_3, int Dim0_4, int Dim0_5, int Dim0_6, int Dim1_0, int Dim1_1, int Dim1_2,
+      int Dim1_3, int Dim1_4, int Dim1_5, int Dim1_6, char i0, char j0, char k0, char l0, char m0, char n0, char o0, char i1, char j1,
+      char k1, char l1, char m1, char n1, char o1>
+  U permute(
+      const Tensor7_Expr<A, T, Dim0_0, Dim0_1, Dim0_2, Dim0_3, Dim0_4, Dim0_5, Dim0_6, i0, j0, k0, l0, m0, n0, o0> &,
+      const Tensor7_Expr<B, U, Dim1_0, Dim1_1, Dim1_2, Dim1_3, Dim1_4, Dim1_5, Dim1_6, i1, j1, k1, l1, m1, n1, o1>
+          &rhs,
+      const int N0, const int N1, const int N2, const int N3, const int N4, const int N5, const int N6 )
+  {
+    return Permutation7<Dim0_0, Dim0_1, Dim0_2, Dim0_3, Dim0_4, Dim0_5, Dim0_6, i0, j0, k0, l0, m0, n0, o0>().eval(
+        rhs, N0, N1, N2, N3, N4, N5, N6 );
+  }
   }

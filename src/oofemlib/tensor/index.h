@@ -39,10 +39,16 @@
 
 using namespace FTensor;
 
+
 static FTensor::Index<'a', 3> a_3;
 static FTensor::Index<'b', 3> b_3;
 static FTensor::Index<'c', 3> c_3;
 static FTensor::Index<'d', 3> d_3;
+static FTensor::Index<'e', 3> e_3;
+static FTensor::Index<'f', 3> f_3;
+static FTensor::Index<'g', 3> g_3;
+static FTensor::Index<'h', 3> h_3;
+
 
 static FTensor::Index<'i', 3> i_3;
 static FTensor::Index<'j', 3> j_3;
