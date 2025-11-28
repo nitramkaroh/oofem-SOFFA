@@ -52,6 +52,7 @@
 #include "sm/Elements/nlstructuralelement.h"
 #include "sm/Elements/structural3delement.h"
 #include "initialcondition.h"
+#include "igaclampboundaryconditionlagrange.h"
 
 
 #ifdef __PETSC_MODULE
@@ -288,12 +289,15 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
     double alphaStability = 1e-6, alphamax = 1e8; // eigenvector multiplicator
 
     bool LDLTbif = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
-    bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation/eigenvector/postbif. LS options
-    //bool deflationBifurcation = false, eigenvectorBifurcation = false, postBifurcationLineSearch = false; // deflation/eigenvector/postbif. LS options
+    //bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation/eigenvectorpostbif. LS options
+    bool deflationBifurcation = false, eigenvectorBifurcation = false, postBifurcationLineSearch = false; // deflation/eigenvector/postbif. LS options
     std::vector<bool> bifurcTypes( { LDLTbif, deflationBifurcation, eigenvectorBifurcation } );
 
     if ( this->LsType == LST_Exact_Adaptive ) this->lsFlag = false; // For adaptive LS
     bool afterBeforeBifurcation = true;
+
+    double tfun = this->engngModel->giveDomain( 1 )->giveFunction( 3 )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    OOFEM_LOG_INFO( "t=%f\n", tfun );
     //////////////////
 
     for ( nite = 0; ; ++nite ) {
@@ -385,7 +389,7 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
 
         // Check for maximum LS step
         double alphaMax = this->giveMaximumLineSearchStep( ddX, tStep );
-        std::cout << alphaMax << std::endl;
+        //std::cout << alphaMax << std::endl;
 
         if ( alphaMax < 1. && alphaMax > 0. ) {
             ddX.times( 0.9 * alphaMax );
@@ -558,6 +562,29 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
             engngModel->updateComponent( tStep, NonLinearLhs, domain );
             applyConstraintsToStiffness( k );
             bool isPD = stabSolver->checkPD( k );
+
+            
+            ///////////////////////
+            //// // condense lagrange multipliers from bc
+            //EigenMtrx *k_eigmat_lam = dynamic_cast<EigenMtrx *>( &k );
+            //for ( int i = 0; i < domain->giveBcs().size(); i++ ) {
+            //    auto &bc = domain->giveBcs()[i];
+            //    auto abc = dynamic_cast<IGAClampBoundaryConditionLagrange *>( bc.get() );
+            //    if ( abc ) {
+            //        IntArray lambdaLoc( 1 );
+            //        EModelDefaultEquationNumbering dn;
+            //        abc->giveLagrangianMultiplierLocationArray( dn, lambdaLoc );
+
+            //        // now this just takes the K11 block
+            //        std::unique_ptr<EigenMtrx> k_condensed = k_eigmat_lam->doStaticCondensationLagrange( lambdaLoc.at(1) );
+            //        // k_condensed->printYourself();
+            //        isPD = stabSolver->checkPD( *k_condensed );
+
+            //        break; // we just find the first lambda and assume the multipliers are ordered, this shouold be made more general
+            //    }
+            //}
+            ///////////////////////
+            
             ///////////////
             // condense the pressure DOFs
             int indPressure = 0;
@@ -570,6 +597,7 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
                 isPD = stabSolver->checkPD( *k_condensed );
             } 
             //////////////////////
+
             
             //if ( !isPD && stabSolver->giveNumFoundSols() < 1 ) { // If matrix is not PD
             if ( !isPD ) { // If matrix is not PD
