@@ -68,7 +68,7 @@ TrContactElement :: initializeFrom(InputRecord &ir)
 {
     TrPlaneStrain::initializeFrom(ir);
     IR_GIVE_FIELD(ir, normalPenalty_, _IFT_TrContactElement_normalPenalty);
-    IR_GIVE_FIELD( ir, cheatFactor_, _IFT_TrContactElement_cheatFactor );
+    IR_GIVE_OPTIONAL_FIELD( ir, cheatFactor_, _IFT_TrContactElement_cheatFactor );
     this->tangentialPenalty_ = 0;
     this->muStick_ = 0;           
     this->muSlide_ = 0;
