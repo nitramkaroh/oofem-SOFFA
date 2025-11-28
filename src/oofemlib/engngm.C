@@ -69,8 +69,8 @@
 #include "parallelcontext.h"
 #include "unknownnumberingscheme.h"
 #include "contact/contactmanager.h"
-#include "smoothednodalintvarfield.h"
-#include "nodalrecoverymodel.h"
+//#include "smoothednodalintvarfield.h"
+//#include "nodalrecoverymodel.h"
 #include "convergenceexception.h"
 
 

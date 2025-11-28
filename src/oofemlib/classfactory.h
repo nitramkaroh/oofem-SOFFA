@@ -103,7 +103,7 @@ class ContactDefinition;
 class TimeStepReductionStrategy;
 
   
-class Term;
+//class Term;
 
 #ifdef _GNUC
 #define OOFEM_ATTR_UNUSED __attribute__((unused))
@@ -571,8 +571,8 @@ public:
 
     
 
-    std::unique_ptr<Field> createField(const char *name);
-    bool registerField( const char *name, std::unique_ptr<Field> ( *creator )() );
+    //std::unique_ptr<Field> createField(const char *name);
+    //bool registerField( const char *name, std::unique_ptr<Field> ( *creator )() );
 };
 
 extern OOFEM_EXPORT ClassFactory &classFactory;
