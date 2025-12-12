@@ -144,7 +144,8 @@ private:
     void initializeFrom(InputRecord &ir) override;
     void updateYourself(TimeStep *tStep) override {;}
     void printOutputAt(FILE *file, TimeStep *tStep) override{;}
-    
+  // hack for matlab export module
+  double computeVolumeAround(GaussPoint *gp)  override {return 0;}
 
   
 
