@@ -1616,10 +1616,10 @@ NlBeamInternalContact :: giveCompositeExportData(std::vector< VTKPiece > &vtkPie
       InternalStateType type = ( InternalStateType ) cellVarsToExport.at(i);
         if ( type == IST_MaterialNumber ) {
 	  for (int iC = 1; iC <= numCellsLeft; iC++) {
-	    vtkPieces [ 0 ].setCellVar(type, iC, {matNum.at(1)});
+	    vtkPieces [ 0 ].setCellVar(type, iC, {(double) matNum.at(1)});
 	  }
 	  for (int iC = 1; iC <= numCellsRight; iC++) {
-	    vtkPieces [ 1 ].setCellVar(type, iC, {matNum.at(2)});
+              vtkPieces[1].setCellVar( type, iC, { (double) matNum.at( 2 ) } );
 	  }
 	}	
     }
