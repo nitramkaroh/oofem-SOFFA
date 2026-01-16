@@ -75,6 +75,7 @@ set (sm_material
     #Hyperelastic materials
     HyperelasticMaterials/basehyperelasticmaterial.C    
     HyperelasticMaterials/mooneyrivlincompressiblematerial.C
+    HyperelasticMaterials/pneumaticmooneyrivlincompressiblematerial.C
     HyperelasticMaterials/blatzkomaterial.C
     HyperelasticMaterials/simopistermaterial.C
     HyperelasticMaterials/ogdencompressiblematerial.C
