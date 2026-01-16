@@ -104,8 +104,6 @@ PneumaticMooneyRivlinCompressibleMaterial::give3dMaterialStiffnessMatrix_dPdF( M
 
 void PneumaticMooneyRivlinCompressibleMaterial::initializeFrom( InputRecord &ir )
 {
-  StructuralMaterial::initializeFrom( ir );
-  BaseHyperElasticMaterial::initializeFrom( ir );
   MooneyRivlinCompressibleMaterial::initializeFrom( ir );
   IR_GIVE_FIELD( ir, pressure, _IFT_PneumaticMooneyRivlinCompressibleMaterial_pressure );
   IR_GIVE_FIELD( ir, pressure_ltf, _IFT_PneumaticMooneyRivlinCompressibleMaterial_pressure_ltf );
