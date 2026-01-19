@@ -64,7 +64,7 @@ PneumaticMooneyRivlinCompressibleMaterial::giveFirstPKStressVector_3d( const Flo
   double dp = pressure * pressure_level;
 
   // compute pneumatic term
-  P_pneum( i_3, j_3 ) = dp * cofF( i_3, j_3 );
+  P_pneum( i_3, j_3 ) = - dp * cofF( i_3, j_3 );
 
   // add together
   vP += P_pneum.to_voigt_form();
@@ -95,9 +95,9 @@ PneumaticMooneyRivlinCompressibleMaterial::give3dMaterialStiffnessMatrix_dPdF( M
   double dp = pressure * pressure_level;
 
   // compute pneumatic contribution
-  A_pneum(i_3, j_3, k_3, l_3) = dp * Fcross(i_3, j_3, k_3, l_3);
+  A_pneum(i_3, j_3, k_3, l_3) = - dp * Fcross(i_3, j_3, k_3, l_3);
 
-  //add together and return
+  // add together and return
   vA += A_pneum.to_voigt_form();
   return vA;
 }
@@ -108,4 +108,5 @@ void PneumaticMooneyRivlinCompressibleMaterial::initializeFrom( InputRecord &ir 
   IR_GIVE_FIELD( ir, pressure, _IFT_PneumaticMooneyRivlinCompressibleMaterial_pressure );
   IR_GIVE_FIELD( ir, pressure_ltf, _IFT_PneumaticMooneyRivlinCompressibleMaterial_pressure_ltf );
 }
+
 } // end namespace oofem
