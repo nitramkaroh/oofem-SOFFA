@@ -45,8 +45,10 @@
 #include "sm/CrossSections/structuralcrosssection.h"
 
 #include "fei2dquadquad.h"
+#include "fei3dwedgequad.h"
 #include "fei2dquadlin.h"
 #include "fei3dhexalin.h"
+#include "fei3dhexaquad.h"
 #include "fei3dwedgelin.h"
 #include "mathfem.h"
 #include "floatarrayf.h"
@@ -149,7 +151,8 @@ class ThirdMediumElement : public NLStructuralElement
       answer.add( FbarAnswer );
 
       // gradient answers
-      if ( this->giveInterpolation()->giveInterpolationOrder() > 1 ) {
+      int elorder = this->giveInterpolation()->giveInterpolationOrder();
+      if ( elorder > 1 ) {
         firstGradAnswer.resize( this->giveNumberOfDofs() );
         firstGradAnswer.zero();
         this->integrateTerm_c( firstGradAnswer, ThirdMedium_GradGrad_SecondGradientTerm( getU(), getU() ), ir, tStep );
@@ -269,6 +272,12 @@ class ThirdMediumElement : public NLStructuralElement
 
     return cellGeometryWrapper;
   }
+
+  //this is somehow necessary otherwise quadratic wedges throw an error...
+  int computeNumberOfDofs() override {
+    return this->giveNumberOfDofs();
+  }
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -492,6 +501,78 @@ REGISTER_Element( ThirdMediumBrick_l )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define _IFT_ThirdMediumBrick_q_lobatto "lobatto"
+
+    /**
+     * @brief 3D 3M elastic brick element with linear interpolation of displacements
+     *
+     */
+    class ThirdMediumBrick_q : public ThirdMediumElement
+{
+  protected:
+  static FEI3dHexaQuad interpol;
+  const static Variable &u;
+  bool lobatto = false;
+
+  public:
+  ThirdMediumBrick_q( int n, Domain *d ) :
+      ThirdMediumElement( n, d )
+  {
+    numberOfDofMans = 20;
+    numberOfGaussPoints = 27;
+  }
+
+  virtual void initializeFrom( InputRecord &ir ) override
+  {
+    ThirdMediumElement::initializeFrom( ir );
+    lobatto = ir.hasField( _IFT_ThirdMediumBrick_q_lobatto );
+  }
+
+  virtual FEInterpolation *giveInterpolation() const override { return &interpol; }
+
+  void giveDofManDofIDMask( int inode, IntArray &answer ) const override
+  {
+
+    answer = { 1, 2, 3 };
+  }
+  int giveNumberOfDofs() override { return 8; }
+  const char *giveInputRecordName() const override { return "ThirdMediumBrick_q"; }
+  const char *giveClassName() const override { return "ThirdMediumBrick_q"; }
+
+  // const FEInterpolation &getGeometryInterpolation() const override { return this->interpol; }
+
+  Element_Geometry_Type giveGeometryType() const override
+  {
+    return EGT_hexa_2;
+  }
+  // void getEdgeLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q ) const override {}
+
+
+  private:
+  virtual int giveNumberOfDofs() const override { return 3 * numberOfDofMans; }
+  virtual const Variable &getU() const override { return u; }
+  void computeGaussPoints() override
+  {
+    if ( integrationRulesArray.size() == 0 ) {
+      integrationRulesArray.resize( 1 );
+      if ( lobatto ) {
+        integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this );
+      } else {
+        integrationRulesArray[0] = std::make_unique<GaussIntegrationRule>( 1, this );
+      }
+      integrationRulesArray[0]->SetUpPointsOnCube( numberOfGaussPoints, _3dMat );
+    }
+  }
+};
+
+FEI3dHexaQuad ThirdMediumBrick_q ::interpol;
+const Variable &ThirdMediumBrick_q::u = Variable( ThirdMediumBrick_q::interpol, Variable::VariableQuantity::Displacement, Variable::VariableType::vector, 3, NULL, { 1, 2, 3 } );
+
+#define _IFT_ThirdMediumBrick_q_Name "thirdmediumbrick_q"
+REGISTER_Element( ThirdMediumBrick_q )
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #define _IFT_ThirdMediumWedge_l_lobatto "lobatto"
 
     /**
@@ -561,6 +642,78 @@ const Variable &ThirdMediumWedge_l::u = Variable( ThirdMediumWedge_l::interpol, 
 
 #define _IFT_ThirdMediumWedge_l_Name "thirdmediumwedge_l"
 REGISTER_Element( ThirdMediumWedge_l )
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define _IFT_ThirdMediumWedge_q_lobatto "lobatto"
+
+    /**
+     * @brief 3D 3M elastic wedge element with linear interpolation of displacements
+     *
+     */
+    class ThirdMediumWedge_q : public ThirdMediumElement
+{
+  protected:
+  static FEI3dWedgeQuad interpol;
+  const static Variable &u;
+  bool lobatto = false;
+
+  public:
+  ThirdMediumWedge_q( int n, Domain *d ) :
+      ThirdMediumElement( n, d )
+  {
+    numberOfDofMans = 15;
+    numberOfGaussPoints = 9;
+  }
+
+  virtual void initializeFrom( InputRecord &ir ) override
+  {
+    ThirdMediumElement::initializeFrom( ir );
+    lobatto = ir.hasField( _IFT_ThirdMediumWedge_q_lobatto );
+  }
+
+  virtual FEInterpolation *giveInterpolation() const override { return &interpol; }
+
+  void giveDofManDofIDMask( int inode, IntArray &answer ) const override
+  {
+
+    answer = { 1, 2, 3 };
+  }
+  int giveNumberOfDofs() override { return 8; }
+  const char *giveInputRecordName() const override { return "ThirdMediumWedge_q"; }
+  const char *giveClassName() const override { return "ThirdMediumWedge_q"; }
+
+  // const FEInterpolation &getGeometryInterpolation() const override { return this->interpol; }
+
+  Element_Geometry_Type giveGeometryType() const override
+  {
+    return EGT_wedge_2;
+  }
+  // void getEdgeLocalCodeNumbers( IntArray &answer, const Variable::VariableQuantity q ) const override {}
+
+
+  private:
+  virtual int giveNumberOfDofs() const override { return 3 * numberOfDofMans; }
+  virtual const Variable &getU() const override { return u; }
+  void computeGaussPoints() override
+  {
+    if ( integrationRulesArray.size() == 0 ) {
+      integrationRulesArray.resize( 1 );
+      if ( lobatto ) {
+        integrationRulesArray[0] = std::make_unique<LobattoIntegrationRule>( 1, this );
+      } else {
+        integrationRulesArray[0] = std::make_unique<GaussIntegrationRule>( 1, this );
+      }
+      integrationRulesArray[0]->SetUpPointsOnWedge( 3, 3, _3dMat );
+    }
+  }
+};
+
+FEI3dWedgeQuad ThirdMediumWedge_q ::interpol;
+const Variable &ThirdMediumWedge_q::u = Variable( ThirdMediumWedge_q::interpol, Variable::VariableQuantity::Displacement, Variable::VariableType::vector, 3, NULL, { 1, 2, 3 } );
+
+#define _IFT_ThirdMediumWedge_q_Name "thirdmediumwedge_q"
+REGISTER_Element( ThirdMediumWedge_q )
 
 
 } // namespace oofem
