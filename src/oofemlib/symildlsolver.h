@@ -72,14 +72,16 @@ class OOFEM_EXPORT SymildlSolver : public SparseLinearSystemNM
 
   private:
 
-    /// <summary>
-    /// Modifies the block diagonal matrix D of the LDL^T decomposition by flipping its negative diagonal members and
-    ///   also the negative eigenvalues of its 2x2 diagonal blocks
-    /// This forces the solution towards stable solution branches 
-    /// </summary>
-    void modifyD();
+  /// <summary>
+  /// Modifies the block diagonal matrix D of the LDL^T decomposition by flipping its negative diagonal members and
+  ///   also the negative eigenvalues of its 2x2 diagonal blocks
+  /// This forces the solution towards stable solution branches 
+  /// </summary>
+  int modifyD( block_diag_matrix<double> &D ) const;
 
-    void solveModifiedSystem();
+  bool makeBlockPositive( double &a, double &b, double &c, double eps ) const;
+
+  std::vector<double> SymildlSolver::solveModifiedSystem( lilc_matrix<double> &A, lilc_matrix<double> &L, block_diag_matrix<double> &D, std::vector<int> &perm, std::vector<double> &rhs ) const;
 
 };
 } // end namespace oofem
