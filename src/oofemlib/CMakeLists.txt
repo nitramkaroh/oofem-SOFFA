@@ -131,6 +131,11 @@ if (USE_EIGEN)
   list (APPEND core_nm eigenmtrx.C)
 endif ()
 
+if (USE_SYMILDL)
+  list (APPEND core_nm symildlsolver.C)
+  list (APPEND core_nm symildlmtrx.C)
+endif ()
+
 set (core_fields
     fieldmanager.C
     field.C

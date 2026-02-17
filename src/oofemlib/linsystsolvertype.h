@@ -54,7 +54,8 @@ enum LinSystSolverType {
     ST_MKLPardiso = 6,
     ST_SuperLU_MT = 7,
     ST_PardisoProjectOrg = 8,
-    ST_Eigen = 9
+    ST_Eigen = 9,
+    ST_Symildl = 10
 };
 } // end namespace oofem
 #endif // linsystsolvertype_h
