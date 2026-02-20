@@ -349,6 +349,13 @@ public:
     }
 
     /**
+     * Compute the volumetric energy
+     * @param Deformation gradient (second-order tensor in 3d)
+     * @return the volumetric energy (scalar)
+     **/
+    double compute_volumetricEnergy(const Tensor2_3d &F) const;
+
+    /**
      * Compute the first derivative of the volumetric energy wrt deformation gradient F
      * @param Deformation gradient (second-order tensor in 3d)
      * @return the first derivative of the volumetric energy (second-order tensor)

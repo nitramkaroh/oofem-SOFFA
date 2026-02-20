@@ -87,6 +87,11 @@ protected:
     /// Temporary deformation gradient in reduced form (to find balanced state)
     FloatArray tempFVector;
 
+     /// Equilibrated strain energy density
+    double strainEnergyDensity = 0.0;
+    /// Temporary strain energy density (to find balanced state)
+    double tempStrainEnergyDensity = 0.0;
+
 
 
 public:
@@ -111,6 +116,8 @@ public:
     const FloatArray &giveCVector() const { return CVector; }
     /// Returns the const pointer to receiver's deformation gradient vector.
     const FloatArray &giveFVector() const { return FVector; }
+    /// Returns the const pointer to receiver's strain energy density.
+    const double &giveStrainEnergyDensity() const { return strainEnergyDensity; }
     
     /// Returns the const pointer to receiver's temporary strain vector.
     const FloatArray &giveTempStrainVector() const { return tempStrainVector; }
@@ -122,6 +129,8 @@ public:
     const FloatArray &giveTempCVector() const { return tempCVector; }
     /// Returns the const pointer to receiver's temporary deformation gradient vector.
     const FloatArray &giveTempFVector() const { return tempFVector; }
+    /// Returns the const pointer to receiver's temporary strain energy density.
+    const double &giveTempStrainEnergyDensity() const { return tempStrainEnergyDensity; }
     
     /// Assigns strain vector to given vector v.
     void letStrainVectorBe(const FloatArray &v) { strainVector = v; }
@@ -143,6 +152,8 @@ public:
     void letTempCVectorBe(const FloatArray &v) { tempCVector = v; }
     /// Assigns tempFVector to given vector v
     void letTempFVectorBe(const FloatArray &v) { tempFVector = v; }
+    /// Assigns tempStrainEnergyDensity to given scalar s
+    void letTempStrainEnergyDensityBe(const double &s) { tempStrainEnergyDensity = s; }
 
 
     const char *giveClassName() const override { return "StructuralMaterialStatus"; }
