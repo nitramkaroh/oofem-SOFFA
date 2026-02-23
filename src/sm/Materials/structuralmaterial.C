@@ -2140,6 +2140,10 @@ StructuralMaterial::giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStat
     } else if ( type == IST_FirstPKStressTensor ) {
         answer = status->givePVector();
         return 1;
+    } else if ( type == IST_StrainEnergyDensity ) {
+        answer.resize(1); 
+        answer.at(1) = status->giveStrainEnergyDensity();
+        return 1;
     } else if ( type == IST_CauchyStressTensor ) {
       FloatArray vvP = status->givePVector();
       FloatArray vvF = status->giveFVector();

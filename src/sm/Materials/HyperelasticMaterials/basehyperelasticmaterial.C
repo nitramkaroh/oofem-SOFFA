@@ -36,6 +36,23 @@
 #include "dynamicinputrecord.h"
 
 namespace oofem {
+double
+BaseHyperElasticMaterial::compute_volumetricEnergy(const Tensor2_3d &F) const
+
+{
+    // compute jacobian and its logarithm
+    double volumetricEnergy;
+    if ( VET_Type == VET_Logarithmic ) {
+        auto J = F.compute_determinant();
+        auto lnJ = log(J);
+        volumetricEnergy =  (1./2.) * K * lnJ * lnJ;
+    } else if( VET_Type == VET_Quadratic ) {
+        auto J = F.compute_determinant();
+	      volumetricEnergy =  (1./2.) * K * (J-1) * (J-1);
+    }
+    return volumetricEnergy;
+}
+
 Tensor2_3d
 BaseHyperElasticMaterial::compute_dVolumetricEnergy_dF(const Tensor2_3d &F) const
 
@@ -48,7 +65,7 @@ BaseHyperElasticMaterial::compute_dVolumetricEnergy_dF(const Tensor2_3d &F) cons
         dVolumetricEnergy_dF(i_3, j_3) =  K * lnJ / J * this->compute_dJ_dF(F)(i_3, j_3);
     } else if( VET_Type == VET_Quadratic ) {
         auto J = F.compute_determinant();
-	 dVolumetricEnergy_dF(i_3, j_3) =  K * (J-1) * this->compute_dJ_dF(F)(i_3, j_3);
+	      dVolumetricEnergy_dF(i_3, j_3) =  K * (J-1) * this->compute_dJ_dF(F)(i_3, j_3);
     }
     return dVolumetricEnergy_dF;
 }

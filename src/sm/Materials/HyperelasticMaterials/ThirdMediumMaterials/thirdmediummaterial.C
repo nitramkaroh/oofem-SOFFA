@@ -181,6 +181,10 @@ ThirdMediumMaterial ::give_JacobianGradient_FirstPKStressVector_SecondOrderStres
   status->letTempFVectorBe( vF );
   status->letTempGradFVectorBe( vGradF );
 
+  //terrible hack to add to existing stress state
+  auto vP_existing = status->giveTempPVector();
+  status->letTempPVectorBe(vP_existing + P.to_voigt_form());
+
   return std::make_tuple( P.to_voigt_form(), T.to_voigt_form_27() );
 }
 
@@ -285,7 +289,7 @@ std::tuple<FloatArrayF<9>, FloatArrayF<9> >
 ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<9> &vFbar, GaussPoint *gp, TimeStep *tStep )
 {
   Tensor2_3d F( vF ), Fbar( vFbar );
-
+  double W = 0;
   Tensor2_3d P, Pbar;
 
   auto [J, cofF] = F.compute_determinant_and_cofactor();
@@ -297,6 +301,10 @@ ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( const
   }
 
   if ( kappaFbar != 0.0 ) {
+    // Strain Energy Density baby!
+    W += (1./2.) * ( F( r_3, s_3 ) - Fbar( r_3, s_3 ) ) * ( F( r_3, s_3 ) - Fbar( r_3, s_3 ) );
+
+    // Stress baby!
     P( r_3, s_3 ) += kappaFbar * ( F( r_3, s_3 ) - Fbar( r_3, s_3 ) );
     Pbar( r_3, s_3 ) += -kappaFbar * ( F( r_3, s_3 ) - Fbar( r_3, s_3 ) );
   }
@@ -310,6 +318,15 @@ ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( const
   ThirdMediumMaterialStatus *status = this->giveStatus( gp );
   status->letTempFVectorBe( vF );
   status->letTempFbarVectorBe( vFbar );
+
+  //terrible hack to add to existing stress state and energies
+  auto vP_existing = status->giveTempPVector();
+  auto sW_existing = status->giveTempStrainEnergyDensity();
+
+  status->letTempPVectorBe(vP_existing + P.to_voigt_form());
+  status->letTempStrainEnergyDensityBe(sW_existing + W);
+
+
 
   return std::make_tuple( P.to_voigt_form(), Pbar.to_voigt_form() );
 }
@@ -390,6 +407,10 @@ ThirdMediumMaterial ::give_RotationGradient_FirstPKStressVector_SecondOrderStres
   ThirdMediumMaterialStatus *status = static_cast<ThirdMediumMaterialStatus *>( this->giveStatus( gp ) );
   status->letTempFVectorBe( vF_3d );
   status->letTempGradFVectorBe( vGradF_3d );
+
+  //terrible hack to add to existing stress state
+  auto vP_existing = status->giveTempPVector();
+  status->letTempPVectorBe(vP_existing + P.to_voigt_form());
 
   // output
   auto vP_3d = P.to_voigt_form();

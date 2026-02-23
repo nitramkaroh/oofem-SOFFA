@@ -53,7 +53,7 @@ namespace oofem {
  */
 class ThirdMediumConstantStiffnessMaterial : public ConstantStiffnessHyperElasticMaterial, public ThirdMediumMaterial
 {
-
+  
   public:
   ThirdMediumConstantStiffnessMaterial( int n, Domain *d ) :
           ConstantStiffnessHyperElasticMaterial( n, d ) {};
@@ -67,7 +67,6 @@ class ThirdMediumConstantStiffnessMaterial : public ConstantStiffnessHyperElasti
   MaterialStatus *CreateStatus( GaussPoint *gp ) const override {
     return new ThirdMediumMaterialStatus(gp);
   }
-
 
   const char *giveInputRecordName() const override { return _IFT_ThirdMediumConstantStiffnessMaterial_Name; }
   const char *giveClassName() const override { return "ThirdMediumConstantStiffnessMaterial"; }

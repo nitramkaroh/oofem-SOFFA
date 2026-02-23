@@ -41,7 +41,7 @@
 namespace oofem {
 StructuralMaterialStatus :: StructuralMaterialStatus(GaussPoint *g) :
     MaterialStatus(g), strainVector(), stressVector(),
-    tempStressVector(), tempStrainVector(), FVector(), tempFVector()
+    tempStressVector(), tempStrainVector(), FVector(), tempFVector(), tempStrainEnergyDensity()
 {
     int rsize = StructuralMaterial :: giveSizeOfVoigtSymVector( gp->giveMaterialMode() );
     strainVector.resize(rsize);
@@ -60,9 +60,11 @@ StructuralMaterialStatus :: StructuralMaterialStatus(GaussPoint *g) :
 	PVector.resize(9);
 	FVector.resize(9);
 	FVector.at(1) = FVector.at(2) = FVector.at(3) = 1.;
+    strainEnergyDensity = 0.; //ondra help!
     
 	tempPVector = PVector;
 	tempFVector = FVector;
+    tempStrainEnergyDensity = strainEnergyDensity; 
 
 	
       }
@@ -113,10 +115,11 @@ void StructuralMaterialStatus :: updateYourself(TimeStep *tStep)
 {
     MaterialStatus :: updateYourself(tStep);
 
-    stressVector = tempStressVector;
-    strainVector = tempStrainVector;
-    PVector      = tempPVector;
-    FVector      = tempFVector;
+    stressVector        = tempStressVector;
+    strainVector        = tempStrainVector;
+    PVector             = tempPVector;
+    FVector             = tempFVector;
+    strainEnergyDensity = tempStrainEnergyDensity;
 }
 
 
@@ -137,10 +140,11 @@ void StructuralMaterialStatus :: initTempStatus()
     }
 
     // reset temp vars.
-    tempStressVector = stressVector;
-    tempStrainVector = strainVector;
-    tempPVector      = PVector;
-    tempFVector      = FVector;
+    tempStressVector             = stressVector;
+    tempStrainVector             = strainVector;
+    tempPVector                  = PVector;
+    tempFVector                  = FVector;
+    tempStrainEnergyDensity      = strainEnergyDensity;
 }
 
 
@@ -190,6 +194,8 @@ void StructuralMaterialStatus :: copyStateVariables(const MaterialStatus &iStatu
     tempCVector = structStatus.giveTempCVector();
     FVector = structStatus.giveFVector();
     tempFVector = structStatus.giveTempFVector();
+    strainEnergyDensity = structStatus.giveStrainEnergyDensity();
+    tempStrainEnergyDensity = structStatus.giveTempStrainEnergyDensity();
 }
 
 void StructuralMaterialStatus :: addStateVariables(const MaterialStatus &iStatus)

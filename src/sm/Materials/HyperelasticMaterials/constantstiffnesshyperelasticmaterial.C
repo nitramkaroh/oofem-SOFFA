@@ -54,18 +54,20 @@ ConstantStiffnessHyperElasticMaterial::giveFirstPKStressVector_3d( const FloatAr
     StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveStatus(gp) );
 
     Tensor2_3d F(vF), P;
-
+    double W;
     Tensor2_3d delta( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
 
     // compute the first Piola-Kirchhoff
     P( i_3, j_3 ) = this->compute_dVolumetricEnergy_dF( F )( i_3, j_3 )
         + De( i_3, j_3, k_3, l_3 ) * ( F( k_3, l_3 ) - delta( k_3, l_3 ) );
-
+    W = this->compute_volumetricEnergy( F )
+     + (1./2.) * (F( i_3, j_3 ) - delta( i_3, j_3 )) * De( i_3, j_3, k_3, l_3 ) * (F( k_3, l_3 ) - delta( k_3, l_3 ));
       
     auto vP = P.to_voigt_form();
     // update gp
     status->letTempFVectorBe(vF);
     status->letTempPVectorBe(vP);
+    status->letTempStrainEnergyDensityBe(W);
     //
     return vP;
 }

@@ -227,6 +227,7 @@ InternalStateValueType giveInternalStateValueType(InternalStateType type)
     case IST_MoistureContent:
     case IST_IncrementCreepModulus:
     case IST_InternalSource:
+    case IST_StrainEnergyDensity:
         return ISVT_SCALAR;
 
     default:
