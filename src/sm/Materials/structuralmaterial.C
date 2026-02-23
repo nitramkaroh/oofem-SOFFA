@@ -48,6 +48,7 @@
 #include "fieldmanager.h"
 #include "dynamicinputrecord.h"
 #include "tensor/tensor2.h"
+#include "sm/Materials/HyperelasticMaterials/ThirdMediumMaterials/thirdmediummaterialstatus.h"
 
 namespace oofem {
 std::array< std::array< int, 3 >, 3 >StructuralMaterial::vIindex = {
@@ -2157,6 +2158,22 @@ StructuralMaterial::giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStat
       auto J = F.compute_determinant();
       Sigma(i_3, j_3) = 1./J * P(i_3, k_3) * F(j_3, k_3);
       answer = Sigma.to_voigt_form();
+      return 1;
+    } else if ( type == IST_FbarElementCentroidDeformationGradientTensor ) {
+      ThirdMediumMaterialStatus *tmstatus = dynamic_cast<ThirdMediumMaterialStatus *>( status );
+      if (tmstatus == nullptr) {
+        answer.resize(0);
+        return 1;
+      }
+      answer = tmstatus->giveFbarVector();
+      return 1;
+    } else if ( type == IST_PbarStressTensor ) {
+      ThirdMediumMaterialStatus *tmstatus = dynamic_cast<ThirdMediumMaterialStatus *>( status );
+      if ( tmstatus == nullptr ) {
+        answer.resize( 0 );
+        return 1;
+      }
+      answer = tmstatus->givePbarVector();
       return 1;
     } else if ( type == IST_EigenStrainTensor ) {
         FloatArray eigenstrain;

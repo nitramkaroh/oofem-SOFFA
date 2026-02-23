@@ -70,10 +70,19 @@ protected:
     FloatArray gradFVector;
     /// Temporary second deformation gradient in reduced form (to find balanced state)
     FloatArray tempGradFVector;
+    /// Equilibrated second order stress in reduced form
+    FloatArray TVector;
+    /// Temporary second order stress (to find balanced state)
+    FloatArray tempTVector;
 
+    /// Equilibrated deformation gradient vector in the centroid in reduced form
     FloatArray FbarVector;
-    /// Temporary deformation gradient in reduced form (to find balanced state)
+    /// Temporary deformation gradient vector in the centroid in reduced form (to find balanced state)
     FloatArray tempFbarVector;
+    /// Equilibrated Pbar stress in reduced form
+    FloatArray PbarVector;
+    /// Temporary Pbar stress in reduced form
+    FloatArray tempPbarVector;
     
 public:
     /// Constructor. Creates new StructuralMaterialStatus with IntegrationPoint g.
@@ -91,14 +100,26 @@ public:
     const FloatArray &giveGradFVector() const { return gradFVector; }    
     const FloatArray &giveTempGradFVector() const { return tempGradFVector; }
 
-    /// Returns the const pointer to receiver's temporary deformation gradient vector in the centroid.
+    /// Returns the const pointer to receiver's second order stress vector
+    const FloatArray &giveTVector() const { return TVector; }
+    const FloatArray &giveTempTVector() const { return tempTVector; }
+
+    /// Returns the const pointer to receiver's deformation gradient vector in the centroid.
     const FloatArray &giveFbarVector() const { return FbarVector; }
     const FloatArray &giveTempFbarVector() const { return tempFbarVector; }
 
+    /// Returns the const pointer to receiver's Pbar stress vector in the centroid.
+    const FloatArray &givePbarVector() const { return PbarVector; }
+    const FloatArray &giveTempPbarVector() const { return tempPbarVector; }
+
     /// Assigns tempGradFVector to given vector v
     void letTempGradFVectorBe( const FloatArray &v ) { tempGradFVector = v; }
+    /// Assigns tempTVector to given vector v
+    void letTempTVectorBe(const FloatArray &v) { tempTVector = v; }
     /// Assigns tempFbarVector to given vector v
-    void letTempFbarVectorBe(const FloatArray &v) { tempFbarVector = v; }
+    void letTempFbarVectorBe( const FloatArray &v ) { tempFbarVector = v; }
+    /// Assigns tempPbarVector to given vector v
+    void letTempPbarVectorBe( const FloatArray &v ) { tempPbarVector = v; }
 
     /// Functions for MaterialStatusMapperInterface
     void copyStateVariables(const MaterialStatus &iStatus) override;

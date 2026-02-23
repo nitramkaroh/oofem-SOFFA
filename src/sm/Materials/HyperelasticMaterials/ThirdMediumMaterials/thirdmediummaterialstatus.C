@@ -37,13 +37,19 @@
 
 namespace oofem {
 ThirdMediumMaterialStatus ::ThirdMediumMaterialStatus( GaussPoint *g ) :
-  StructuralMaterialStatus(g), gradFVector(), tempGradFVector(), FbarVector(), tempFbarVector()
+  StructuralMaterialStatus(g), gradFVector(), tempGradFVector(), FbarVector(),
+  tempFbarVector(), TVector(), tempTVector(), PbarVector(), tempPbarVector()
 {
   gradFVector.resize( 27 );
   tempGradFVector = gradFVector;
   FbarVector.resize( 9 );
   FbarVector.at(1) = FbarVector.at(2) = FbarVector.at(3) = 1.;
-  tempFbarVector = FbarVector;    
+  tempFbarVector = FbarVector;  
+
+  TVector.resize(27);
+  tempTVector = TVector;
+  PbarVector.resize(9);
+  tempPbarVector = PbarVector;
 
 }
 
@@ -54,6 +60,8 @@ void ThirdMediumMaterialStatus ::updateYourself( TimeStep *tStep )
 
     gradFVector = tempGradFVector;
     FbarVector = tempFbarVector;
+    TVector = tempTVector;
+    PbarVector = tempPbarVector;
 }
 
 
@@ -66,7 +74,8 @@ void ThirdMediumMaterialStatus ::initTempStatus()
 
     tempGradFVector = gradFVector;
     tempFbarVector = FbarVector;
-
+    tempPbarVector = PbarVector;
+    tempTVector = TVector;
 }
 
 void ThirdMediumMaterialStatus :: copyStateVariables(const MaterialStatus &iStatus)
@@ -78,6 +87,8 @@ void ThirdMediumMaterialStatus :: copyStateVariables(const MaterialStatus &iStat
   tempGradFVector = structStatus.giveTempGradFVector();
   FbarVector = structStatus.giveFbarVector();
   tempFbarVector = structStatus.giveTempFbarVector();
+  tempTVector = structStatus.giveTempTVector();
+  tempPbarVector = structStatus.giveTempPbarVector();
 }
 
 } // end namespace oofem
