@@ -444,6 +444,10 @@ VTKBaseExportModule::exportPrimaryVars(ExportRegion &vtkPiece, Set &region, IntA
             if ( dofManMap.contains( i ) ) {
               //there is a reaction force in this dofman
               for ( Dof * dof : *dofMan) {
+                if (!dof->isPrimaryDof()){
+                  continue;
+                }
+
                 int num = dof->giveEquationNumber( EModelDefaultPrescribedEquationNumbering() );
 
                 if ( eqnMap.contains( num ) ) {
