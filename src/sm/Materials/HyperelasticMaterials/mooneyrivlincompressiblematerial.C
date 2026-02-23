@@ -53,12 +53,17 @@ MooneyRivlinCompressibleMaterial::giveFirstPKStressVector_3d(const FloatArrayF< 
     StructuralMaterialStatus *status = static_cast< StructuralMaterialStatus * >( this->giveStatus(gp) );
 
     Tensor2_3d F(vF), P;
+    double W;
+    double J = F.compute_determinant();
+    // compute the strain energy density \psi = C_1(\bar{I}_1 - 3) + C_2(\bar{I}_2-3) + \frac{1}{2} K[ln(J)]^2
+    W = C1 * ( this->compute_I1_Cdev_from_F(F) - 3 ) + C2 * ( this->compute_I2_Cdev_from_F(F) - 3 ) + ( 1./2. ) * K * log(J) * log(J);
     // compute the first Piola-Kirchhoff
     P(i_3, j_3) =  C1 * this->compute_dI1_Cdev_dF(F)(i_3, j_3) + C2 * this->compute_dI2_Cdev_dF(F)(i_3, j_3) + this->compute_dVolumetricEnergy_dF(F)(i_3, j_3);
     auto vP = P.to_voigt_form();
     // update gp
     status->letTempFVectorBe(vF);
     status->letTempPVectorBe(vP);
+    status->letTempStrainEnergyDensityBe(W);
     //
     return vP;
 }
