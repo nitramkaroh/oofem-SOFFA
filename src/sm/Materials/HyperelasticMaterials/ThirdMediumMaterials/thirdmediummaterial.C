@@ -321,9 +321,11 @@ ThirdMediumMaterial ::give_Fbar_FirstPKStressVector_FPKbarStressVector_3d( const
 
   //terrible hack to add to existing stress state and energies
   auto vP_existing = status->giveTempPVector();
+  auto vPbar_existing = status->giveTempPbarVector();
   auto sW_existing = status->giveTempStrainEnergyDensity();
 
   status->letTempPVectorBe(vP_existing + P.to_voigt_form());
+  status->letTempPbarVectorBe(vPbar_existing + Pbar.to_voigt_form());
   status->letTempStrainEnergyDensityBe(sW_existing + W);
 
 
@@ -376,8 +378,7 @@ ThirdMediumMaterial ::give_Fbar_ConstitutiveMatrices_3d( MatResponseMode mode, G
 std::tuple<FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5>, FloatMatrixF<5, 5> >
 ThirdMediumMaterial ::give_Fbar_ConstitutiveMatrices_PlaneStrain( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep )
 {
-  // these elements should give all Tensor3 components without the third dimension in them
-  //  according to the established Voigt notation, see Tensor3_3d::to_voigt_form_27()
+  // these elements should give all Tensor2 components without the third dimension in them
   auto [vdPdF_3d, vdPdFbar_3d, vdPbardF_3d, vdPbardFbar_3d] = this->give_Fbar_ConstitutiveMatrices_3d( mode, gp, tStep );
   auto vdPdF_red = vdPdF_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
   auto vdPdFbar_red = vdPdFbar_3d( { 0, 1, 2, 5, 8 }, { 0, 1, 2, 5, 8 } );
