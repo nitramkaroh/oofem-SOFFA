@@ -49,7 +49,7 @@ namespace oofem {
 REGISTER_SparseLinSolver( SymildlSolver, ST_Symildl );
 
 SymildlSolver ::SymildlSolver( Domain *d, EngngModel *m ) :
-    SparseLinearSystemNM( d, m ) 
+    SparseLinearSystemNM( d, m )
 {
 }
 
@@ -57,85 +57,97 @@ SymildlSolver ::~SymildlSolver() {}
 
 void SymildlSolver ::initializeFrom( InputRecord &ir )
 {
-    this->dControl = ir.hasField(_IFT_SymildlSolver_updateD);
+  this->dControl = ir.hasField( _IFT_SymildlSolver_updateD );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->controlledIncrementReductionFactor, _IFT_SymildlSolver_controlledIncrementReductionFactor );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->postcontrolledIncrementReductionFactor, _IFT_SymildlSolver_postcontrolledIncrementReductionFactor );
+  IR_GIVE_OPTIONAL_FIELD( ir, this->flipMultiplicationFactor, _IFT_SymildlSolver_flipMultiplicationFactor );
 }
-  
+
 
 ConvergedReason SymildlSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x )
 {
-    int neqs = b.giveSize(); // Number of equations
+  int neqs = b.giveSize(); // Number of equations
 
-    SymildlMtrx *As = dynamic_cast<SymildlMtrx *>( &A );
-    if (As == nullptr)
-      OOFEM_ERROR("Wrong matrix type for sym-ildl solver");
+  SymildlMtrx *As = dynamic_cast<SymildlMtrx *>( &A );
+  if ( As == nullptr )
+    OOFEM_ERROR( "Wrong matrix type for sym-ildl solver" );
 
-    CSCMatrix A_data = As->giveMatrix();
+  CSCMatrix A_data = As->giveMatrix();
 
-    // construct solver
-    symildl::solver<double> solver;
-    solver.set_message_level("none");
-    solver.set_pivot("bunch");
-    solver.set_equil("none");
-    solver.set_reorder_scheme("none");
-    solver.save_sol = false;
-    solver.set_solver("full");
-    solver.load( A_data.Ap, A_data.Ai, A_data.Ax );
+  // construct solver
+  symildl::solver<double> solver;
+  solver.set_message_level( "none" );
+  solver.set_pivot( "bunch" );
+  solver.set_equil( "none" );
+  solver.set_reorder_scheme( "none" );
+  solver.save_sol = false;
+  solver.set_solver( "full" );
+  solver.load( A_data.Ap, A_data.Ai, A_data.Ax );
 
-    //debug
-    //lilc_matrix Asymildl = solver.A;
-    //Asymildl.save("debugmatrix.mtx");
-    //As->printYourself();
+  // debug
+  // lilc_matrix Asymildl = solver.A;
+  // Asymildl.save("debugmatrix.mtx");
+  // As->printYourself();
 
-    std::vector<double> rhs( b.begin(), b.end() );
-    if ( !dControl ) {
-      // no control of D is required, we can use the full sym-ildl solving with rhs
-      solver.set_rhs( std::move( rhs ) );
-    }
+  std::vector<double> rhs( b.begin(), b.end() );
+  if ( !dControl ) {
+    // no control of D is required, we can use the full sym-ildl solving with rhs
+    solver.set_rhs( std::move( rhs ) );
+  }
 
-    // time the solution
-    Timer timer;
-    timer.startTimer();
+  // time the solution
+  Timer timer;
+  timer.startTimer();
 
-    solver.solve( 10, 1.e-6, 1 );
-    // /\ this line LDL factorizes the matrix and, if rhs has been set, also solves the system
+  solver.solve( 10, 1.e-6, 1 );
+  // /\ this line LDL factorizes the matrix and, if rhs has been set, also solves the system
 
-    std::vector<double> sol;
-    int nchanges = 0;
-    if ( !dControl ) {
-      // extract solution from solver
-      sol = std::vector<double>(solver.sol_vec.begin(), solver.sol_vec.end());
-    }else{
-      // extract L, D, P from solver, modify D, then solve for solution
-      lilc_matrix<double> A = solver.A;
-      lilc_matrix<double> L = solver.L;
-      block_diag_matrix<double> D = solver.D;
-      std::vector<int> perm = solver.perm;
+  std::vector<double> sol;
+  auto nchanges = std::make_pair(0,0);
+  if ( !dControl ) {
+    // extract solution from solver
+    sol = std::vector<double>( solver.sol_vec.begin(), solver.sol_vec.end() );
+  } else {
+    // extract L, D, P from solver, modify D, then solve for solution
+    lilc_matrix<double> A = solver.A;
+    lilc_matrix<double> L = solver.L;
+    block_diag_matrix<double> D = solver.D;
+    std::vector<int> perm = solver.perm;
 
-      int nchanges = this->modifyD(D);
-      sol = this->solveModifiedSystem(A,L,D,perm,rhs);
+    nchanges = this->modifyD( D );
 
-    }
+    sol = this->solveModifiedSystem( A, L, D, perm, rhs );
+  }
 
 
-    // Copy/move values to FloatArray x
-    x = FloatArray( sol.begin(), sol.end() );
+  // Copy/move values to FloatArray x
+  x = FloatArray( sol.begin(), sol.end() );
 
-    timer.stopTimer();
-    if ( !dControl ) {
-      OOFEM_LOG_INFO( "SymildlSolver:  User time consumed by solution: %.2fs\n", timer.getUtime() );
-    } else {
-      OOFEM_LOG_INFO( "SymildlSolver:  User time consumed by solution: %.2fs, changed %i diagonal blocks\n", timer.getUtime(), nchanges ); 
-    }
+  if ( nchanges.first + nchanges.second > 0 ) {
+    //if changes were made, reduce the resulting increment
+    //this serves to prevent the solver from shooting into lands unknown with the modified stiffness
+    x.times(this->controlledIncrementReductionFactor);
+    OOFEM_LOG_INFO( "SymildlSolver:  Changed %i diagonal entries, %i diagonal blocks, multiplied solution by %f\n", nchanges.first, nchanges.second, this->controlledIncrementReductionFactor );
+  } else if ( dControl && DrecentlyModified) {
+    // if changes were NOT made, reduce the resulting increment
+    // this serves to prevent the solver from shooting into lands unknown after passing stability
+    x.times( this->postcontrolledIncrementReductionFactor );
+    OOFEM_LOG_INFO( "SymildlSolver:  Changed nothing, multiplied solution %f times\n", this->postcontrolledIncrementReductionFactor );
+  }
 
-    return CR_CONVERGED;
+  timer.stopTimer();
+  OOFEM_LOG_INFO( "SymildlSolver:  User time consumed by solution: %.2fs\n", timer.getUtime() );
 
+  DrecentlyModified = nchanges.first + nchanges.second > 0;
+
+  return CR_CONVERGED;
 }
 
 std::vector<double> SymildlSolver::solveModifiedSystem( lilc_matrix<double> &A, lilc_matrix<double> &L, block_diag_matrix<double> &D, std::vector<int> &perm, std::vector<double> &rhs ) const
 {
   std::vector<double> sol_vec;
-  //using the implementation from symildl's full solver
-  //this could be improved if other faster solvers from symildl were implemented here 
+  // using the implementation from symildl's full solver
+  // this could be improved if other faster solvers from symildl were implemented here
 
   // we've permuted and equilibrated the matrix, so we gotta apply
   // the same permutation and equilibration to the right hand side.
@@ -173,85 +185,100 @@ std::vector<double> SymildlSolver::solveModifiedSystem( lilc_matrix<double> &A, 
   }
 
   return sol_vec;
-
 }
 
-int SymildlSolver::modifyD( block_diag_matrix<double> &D ) const
+std::pair<int,int> SymildlSolver::modifyD( block_diag_matrix<double> &D ) const
 {
+  //debugging - save D
+  block_diag_matrix<double> oldD = D;
+
   // iterate through D
-  double tol = 1e-12;
-  int changes = 0;
+  double tol = 0;
+  int nchanges = 0, nchanges_blocks = 0;
   for ( int ii = 0; ii < D.n_cols(); ii++ ) {
     int blocksize = D.block_size( ii );
     if ( blocksize == 1 ) {
       // this is a standard diagonal entry
-      double a = D[ii];
-      if ( a < tol) {
-        a *= -1.;
-        changes++;
+      double &a = D[ii];
+      if ( a < tol ) {
+        a = flipMultiplicationFactor*fabs( a );
+        nchanges++;
       }
     } else if ( blocksize == 2 ) {
       // this is a top left corner of a block diagonal entry
-      double a = D[ii];
-      double b = D[ii+1];
-      double c = D.off_diagonal(ii);
-      bool block_changed = makeBlockPositive(a,b,c,tol);
-      if ( block_changed ) changes++;
+      double &a = D[ii];
+      double &b = D[ii + 1];
+      double &c = D.off_diagonal( ii );
+      bool block_changed = makeBlockPositive( a, b, c, tol);
+      if ( block_changed ) nchanges_blocks++;
     } else if ( blocksize == -2 ) {
       // this is a bottom right corder of a block diagonal entry
       // this entry has already been processed
       continue;
     }
   }
-  return changes;
+  //if ( nchanges_blocks > 0 && false ) {
+  //  // debug
+  //  OOFEM_LOG_INFO("Old D: ---------------------------\n");
+  //  std::cout << oldD << std::endl;
+  //  OOFEM_LOG_INFO( "\n\nNew D: ---------------------------\n" );
+  //  std::cout << D << std::endl;
+  //}
+
+  return std::make_pair(nchanges, nchanges_blocks);
 }
 
-bool SymildlSolver::makeBlockPositive( double &a, double &b, double &c, double eps = 1e-12 ) const
+bool SymildlSolver::makeBlockPositive( double &a, double &b, double &c, double tol, double eps ) const
 {
   // ---- 1. Compute eigenvalues ----
-  double trace_half = 0.5 * ( a + c );
-  double diff_half = 0.5 * ( a - c );
 
-  double rad = std::sqrt( diff_half * diff_half + b * b );
-
-  double lambda1 = trace_half + rad;
-  double lambda2 = trace_half - rad;
+  double lambda1 = 0.5 * ( a + b ) + 0.5 * std::sqrt( ( a + b ) * ( a + b ) - 4. * ( a * b - c * c ) );
+  double lambda2 = 0.5 * ( a + b ) - 0.5 * std::sqrt( ( a + b ) * ( a + b ) - 4. * ( a * b - c * c ) );
 
   // ---- 2. If already positive definite, do nothing ----
   if ( lambda1 > eps && lambda2 > eps )
     return false;
 
   // ---- 3. Clamp eigenvalues ----
-  lambda1 = std::max( lambda1, fabs( lambda1 ) );
-  lambda2 = std::max( lambda2, fabs( lambda2 ) );
+  double lambda1new = lambda1, lambda2new = lambda2;
+  if ( lambda1 < tol )
+    lambda1new = flipMultiplicationFactor * std::abs( lambda1 );
+  if ( lambda2 < tol )
+    lambda2new = flipMultiplicationFactor * std::abs( lambda2 );
 
-  // ---- 4. Compute eigenvector for lambda1 ----
-  double v1x, v1y;
+  // ---- 4. Flip ----
 
-  if ( std::abs( b ) > std::abs( a - lambda1 ) ) {
-    v1x = 1.0;
-    v1y = ( lambda1 - a ) / b;
+  if ( std::abs( c ) <= std::abs( eps ) ) {
+    // it is diagonal, classic method would be dangerous
+    // only flip the diagonal members and not care about the small off-diagonal
+    if (a < tol)
+      a = flipMultiplicationFactor*std::abs( a );
+    if (b < tol)
+      b = flipMultiplicationFactor*std::abs( b );
   } else {
-    v1x = b / ( lambda1 - c );
-    v1y = 1.0;
+    // matrix is not diagonal
+    // construct eigenvectors
+    // v = [c; lambda - a]
+    double v1x, v1y, v2x, v2y;
+
+    v1x = v2x = c;
+    v1y = ( lambda1 - a );
+    v2y = ( lambda2 - a );
+
+    // Normalize
+    double norm1 = std::sqrt( v1x * v1x + v1y * v1y );
+    double norm2 = std::sqrt( v2x * v2x + v2y * v2y );
+    v1x /= norm1;
+    v2x /= norm2;
+    v1y /= norm1;
+    v2y /= norm2;
+
+    // ---- 5. Reconstruct D = Q Λ Qᵀ ----
+    a = lambda1new * v1x * v1x + lambda2new * v2x * v2x;
+    b = lambda1new * v1y * v1y + lambda2new * v2y * v2y;
+    c = lambda1new * v1x * v1y + lambda2new * v2x * v2y;
   }
-
-  // Normalize
-  double norm = std::sqrt( v1x * v1x + v1y * v1y );
-  v1x /= norm;
-  v1y /= norm;
-
-  // Orthogonal second eigenvector
-  double v2x = -v1y;
-  double v2y = v1x;
-
-  // ---- 5. Reconstruct D = Q Λ Qᵀ ----
-  a = lambda1 * v1x * v1x + lambda2 * v2x * v2x;
-  b = lambda1 * v1x * v1y + lambda2 * v2x * v2y;
-  c = lambda1 * v1y * v1y + lambda2 * v2y * v2y;
-
   return true;
 }
 
 } // end namespace oofem
-

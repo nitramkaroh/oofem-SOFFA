@@ -4,6 +4,8 @@
 #define RESTORE_DEBUG_MACRO
 #endif
 
+#define SYM_ILDL_DEBUG
+
 #include <solver.h>
 
 #ifdef RESTORE_DEBUG_MACRO

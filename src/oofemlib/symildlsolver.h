@@ -39,6 +39,9 @@
 
 #define _IFT_SymildlSolver_Name "symildl"
 #define _IFT_SymildlSolver_updateD "dcontrol"
+#define _IFT_SymildlSolver_controlledIncrementReductionFactor "controlledincrementreductionfactor"
+#define _IFT_SymildlSolver_postcontrolledIncrementReductionFactor "postcontrolledincrementreductionfactor"
+#define _IFT_SymildlSolver_flipMultiplicationFactor "flipfactor"
 
 namespace oofem {
 /**
@@ -50,6 +53,11 @@ class OOFEM_EXPORT SymildlSolver : public SparseLinearSystemNM
 
   private:
   bool dControl = false;
+  double controlledIncrementReductionFactor = 1.0; //increments are multiplied by this after dcontrol happens
+  double postcontrolledIncrementReductionFactor = 1.0; //increments are multiplied by this after dcontrol does not happen
+  double flipMultiplicationFactor = 1.0; //controlled values in D are multiplied by this number
+
+  bool DrecentlyModified = false; //internal variable remembers whether D was modified or not at the last call of "solve"
 
   public:
   /**
@@ -77,9 +85,9 @@ class OOFEM_EXPORT SymildlSolver : public SparseLinearSystemNM
   ///   also the negative eigenvalues of its 2x2 diagonal blocks
   /// This forces the solution towards stable solution branches 
   /// </summary>
-  int modifyD( block_diag_matrix<double> &D ) const;
+  std::pair<int, int> modifyD( block_diag_matrix<double> &D ) const;
 
-  bool makeBlockPositive( double &a, double &b, double &c, double eps ) const;
+  bool makeBlockPositive( double &a, double &b, double &c, double tol, double eps = 1.e-12 ) const;
 
   std::vector<double> SymildlSolver::solveModifiedSystem( lilc_matrix<double> &A, lilc_matrix<double> &L, block_diag_matrix<double> &D, std::vector<int> &perm, std::vector<double> &rhs ) const;
 
