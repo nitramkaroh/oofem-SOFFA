@@ -500,7 +500,7 @@ void EngngModel ::solveYourself()
   for ( int imstep = smstep; imstep <= timeStepController->giveNumberOfMetaSteps(); imstep++ ) {
     auto activeMStep = this->giveMetaStep( imstep );
     // update state according to new meta step
-    timeStepController->setCurrentMetaStepNumber( smstep - 1 );
+    timeStepController->setCurrentMetaStepNumber( imstep - 1 );
     timeStepController->initMetaStepAttributes( activeMStep );
     double msFinalTime = activeMStep->giveFinalTime() - this->giveInitialTime();
     //

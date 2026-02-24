@@ -86,9 +86,10 @@ TimeStepController :: giveNextStep()
 	    //currentStep = std::make_unique<TimeStep>(giveNumberOfTimeStepWhenIcApply(), eModel, 0, -dt, dt, 0);
     }
 
-    auto mStepNum = currentStep->giveMetaStepNumber();
+    //auto mStepNum = currentStep->giveMetaStepNumber();
     previousStep = std :: move(currentStep);    
     dt = this->giveCurrentMetaStep()->giveDeltaT(istep, previousStep);
+    auto mStepNum = this->giveCurrentMetaStep()->giveNumber();
     totalTime = previousStep->giveTargetTime() +  dt;
     istep =  previousStep->giveNumber() + 1;      
     counter = previousStep->giveSolutionStateCounter() + 1;
@@ -119,7 +120,7 @@ TimeStepController :: instanciateMetaSteps(DataReader &dr)
     for ( int i = 1; i <= this->numberOfMetaSteps; i++ ) {
         auto &ir = dr.giveInputRecord(DataReader :: IR_mstepRec, i);
         metaStepList[i-1].initializeFrom(ir);
-	totalNumberOfSteps += metaStepList[i-1].giveNumberOfSteps();
+	//totalNumberOfSteps += metaStepList[i-1].giveNumberOfSteps();
     }
 
     //this->numberOfSteps = metaStepList.size();
