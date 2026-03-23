@@ -64,6 +64,7 @@ namespace oofem {
     ENUM_ITEM(_3dLatticeHeatTransferMode) \
     ENUM_ITEM(_3dDirShellMode) /* 7 parameter shell based on director fields */ \
     ENUM_ITEM(_WarpingMode) /* free warping of a cross section */ \
+    ENUM_ITEM( _MPMPlaneStrainMode ) /* plane strain within a magnetoelastic simulation */ \
     /**
      * Type representing type of domain.
      * Domain type (the member value of Domain class) is used to determine the default

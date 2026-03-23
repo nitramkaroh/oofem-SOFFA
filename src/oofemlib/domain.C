@@ -1062,6 +1062,8 @@ Domain :: giveDefaultNodeDofIDArry()
         defaultNodeDofIDArry = {T_f};
     }  else if ( dType == _WarpingMode ) {
         defaultNodeDofIDArry = {D_w};
+    } else if ( dType == _MPMPlaneStrainMode ) {
+      defaultNodeDofIDArry = { D_u, D_v, M_Pot };
     } else {
         OOFEM_ERROR("unknown domainType (%s)", __domainTypeToString(dType));
     }
@@ -1137,6 +1139,8 @@ Domain :: resolveDomainDofsDefaults(const char *typeName)
         dType = _3dMode;
     } else if  ( !strncmp(typeName, "warping", 7) ) {
         dType = _WarpingMode;
+    } else if ( !strncmp( typeName, "mpmplanestrain", 14 ) ) {
+      dType = _MPMPlaneStrainMode;
     } else {
         OOFEM_ERROR("unknown domainType (%s)", typeName);
         return;

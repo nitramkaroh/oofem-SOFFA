@@ -211,6 +211,13 @@ class MPElement : public Element {
   virtual int getNumberOfSurfaceDOFs() const =0;
   virtual int getNumberOfEdgeDOFs() const =0;
 
+  virtual int computeNumberOfDofs() override {
+    //copied from structural2delement.C
+    IntArray dofIdMask;
+    this->giveDofManDofIDMask( -1, dofIdMask ); // ok for standard elements
+    return this->giveInterpolation()->giveNumberOfNodes( this->giveGeometryType() ) * dofIdMask.giveSize();
+  }
+
 
   /**
      Returns mapping from quantity dofs to local surface dofs
