@@ -47,6 +47,7 @@
 #include "crosssection.h"
 #include "unknownnumberingscheme.h"
 #include "EngineeringModels/structengngmodel.h"
+#include "mpmproblem.h"
 
 #include <string>
 #include <sstream>
@@ -385,7 +386,7 @@ VTKBaseExportModule::exportPrimaryVars(ExportRegion &vtkPiece, Set &region, IntA
     for ( int i = 1, n = primaryVarsToExport.giveSize(); i <= n; i++ ) {
       UnknownType type = (UnknownType)primaryVarsToExport.at( i );
 
-      if ( type != ReactionForce ) {
+      if ( type != ReactionForce && type != ReactionMagneticFlux ) {
 
         for ( int inode = 1; inode <= mapL2G.giveSize(); inode++ ) {
           DofManager *dman = d->giveNode( mapL2G.at( inode ) );
@@ -394,7 +395,7 @@ VTKBaseExportModule::exportPrimaryVars(ExportRegion &vtkPiece, Set &region, IntA
           vtkPiece.setPrimaryVarInNode( type, inode, std::move( valueArray ) );
         }
 
-      } else {
+      } else if (type == ReactionForce) {
 
         // build DofIDMask
         IntArray dofIDMask( 3 );
@@ -404,15 +405,25 @@ VTKBaseExportModule::exportPrimaryVars(ExportRegion &vtkPiece, Set &region, IntA
         FloatArray reactions;
         IntArray dofManMap, dofidMap, eqnMap;
 
+        bool modulePresent = false;
 #ifdef __SM_MODULE
         StructuralEngngModel *strEngMod = dynamic_cast<StructuralEngngModel *>( emodel );
         if ( strEngMod ) {
           strEngMod->buildReactionTable( dofManMap, dofidMap, eqnMap, tStep, 1 );
           strEngMod->computeReaction( reactions, tStep, 1 );
-        } else
+          modulePresent = true;
+        }
 #endif
-        {
-          OOFEM_ERROR( "Cannot export reaction forces - only implemented for structural problems." );
+#ifdef __MPM_MODULE
+        MPMProblem *mpmProblem = dynamic_cast<MPMProblem *>( emodel );
+        if ( mpmProblem ) {
+          mpmProblem->buildReactionTable( dofManMap, dofidMap, eqnMap, tStep, 1 );
+          mpmProblem->computeReaction( reactions, tStep, 1 );
+          modulePresent = true;
+        }
+#endif
+        if (!modulePresent){
+          OOFEM_ERROR( "Cannot export reactions - only implemented for structural and magnetoelastic problems." );
         }
 
         for ( int i = 1; i <= d->giveNumberOfDofManagers(); i++ ) {
@@ -462,8 +473,74 @@ VTKBaseExportModule::exportPrimaryVars(ExportRegion &vtkPiece, Set &region, IntA
             vtkPiece.setPrimaryVarInNode( type, inode, std::move( valueArray ) );
           }
         }
+      } else if ( type == ReactionMagneticFlux ) {
+
+        // build DofIDMask
+        IntArray dofIDMask( 1 );
+        int ndofs = 1; // this has to be hardcoded, otherwise ParaView does not understand
+
+        // reaction forces are different, they are not in every node, when they are not present, we export 0.0
+        FloatArray reactions;
+        IntArray dofManMap, dofidMap, eqnMap;
+
+        bool modulePresent = false;
+#ifdef __MPM_MODULE
+        MPMProblem *mpmProblem = dynamic_cast<MPMProblem *>( emodel );
+        if ( mpmProblem ) {
+          mpmProblem->buildReactionTable( dofManMap, dofidMap, eqnMap, tStep, 1 );
+          mpmProblem->computeReaction( reactions, tStep, 1 );
+          modulePresent = true;
+        }
+#endif
+        if ( !modulePresent ) {
+          OOFEM_ERROR( "Cannot export reaction flux - only implemented for magnetoelastic problems." );
+        }
+
+        for ( int i = 1; i <= d->giveNumberOfDofManagers(); i++ ) {
+          if ( mapL2G.contains( i ) ) {
+            // we are doing output for this node
+            int inode = mapL2G.findFirstIndexOf( i );
+
+            // dof manager
+            DofManager *dofMan = d->giveDofManager( i );
+
+            // dof id mask
+            dofIDMask = {
+              (int)Undef
+            };
+            for ( Dof *dof : *dofMan ) {
+              DofIDItem id = dof->giveDofID();
+              if ( id == M_Pot ) {
+                dofIDMask.at( 1 ) = id;
+            }
+
+            // values, zeros by default
+            FloatArray valueArray;
+            valueArray.resize( ndofs );
+            if ( dofManMap.contains( i ) ) {
+              // there is a reaction flux in this dofman
+              for ( Dof *dof : *dofMan ) {
+                if ( !dof->isPrimaryDof() ) {
+                  continue;
+                }
+
+                int num = dof->giveEquationNumber( EModelDefaultPrescribedEquationNumbering() );
+
+                if ( eqnMap.contains( num ) ) {
+                  // there is value of reaction flux, now we just have to place it at the correct spot in the value array
+                  int dofPos = dofIDMask.findFirstIndexOf( dof->giveDofID() );
+                  if ( dofPos > 0 ) {
+                    valueArray.at( dofPos ) = reactions.at( num );
+                  }
+                }
+              }
+            }
+            vtkPiece.setPrimaryVarInNode( type, inode, std::move( valueArray ) );
+          }
+        }
       }
     }
+  }
 }
 
 

@@ -52,6 +52,7 @@
 #include "boundaryload.h"
 #include "outputmanager.h"
 #include "mpm.h"
+#include "EngineeringModels/structengngmodel.h"
 
 namespace oofem {
 REGISTER_EngngModel(MPMProblem);
@@ -277,6 +278,73 @@ MPMProblem :: initializeFrom(InputRecord &ir)
             }
         }
     }
+}
+
+void MPMProblem ::buildReactionTable( IntArray &restrDofMans, IntArray &restrDofs,
+    IntArray &eqn, TimeStep *tStep, int di )
+{
+  //this function has been copied from sm\EngineeringModels\structengngmodel.C
+
+  // determine number of restrained dofs
+  Domain *domain = this->giveDomain( di );
+  int numRestrDofs = this->giveNumberOfDomainEquations( di, EModelDefaultPrescribedEquationNumbering() );
+  int ndofMan = domain->giveNumberOfDofManagers();
+  int rindex, count = 0;
+
+  // initialize corresponding dofManagers and dofs for each restrained dof
+  restrDofMans.resize( numRestrDofs );
+  restrDofs.resize( numRestrDofs );
+  eqn.resize( numRestrDofs );
+
+  for ( int i = 1; i <= ndofMan; i++ ) {
+    DofManager *inode = domain->giveDofManager( i );
+    for ( Dof *jdof : *inode ) {
+      if ( jdof->isPrimaryDof() && ( jdof->hasBc( tStep ) ) ) { // skip slave dofs
+        rindex = jdof->__givePrescribedEquationNumber();
+        if ( rindex ) {
+          count++;
+          restrDofMans.at( count ) = i;
+          restrDofs.at( count ) = jdof->giveDofID();
+          eqn.at( count ) = rindex;
+        } else {
+          // NullDof has no equation number and no prescribed equation number
+          //_error("No prescribed equation number assigned to supported DOF");
+        }
+      }
+    }
+  }
+  // Trim to size.
+  restrDofMans.resizeWithValues( count );
+  restrDofs.resizeWithValues( count );
+  eqn.resizeWithValues( count );
+}
+
+void MPMProblem ::computeReaction( FloatArray &answer, TimeStep *tStep, int di )
+{
+  FloatArray contribution;
+
+  answer.resize( this->giveNumberOfDomainEquations( di, EModelDefaultPrescribedEquationNumbering() ) );
+  answer.zero();
+
+  // Add internal forces
+  this->assembleVector( answer, tStep, LastEquilibratedInternalForceAssembler(), VM_Total,
+      EModelDefaultPrescribedEquationNumbering(), this->giveDomain( di ) );
+  // Subtract external loading
+  ///@todo All engineering models should be using this (for consistency)
+  // this->assembleVector( answer, tStep, ExternalForceAssembler(), VM_Total,
+  //                     EModelDefaultPrescribedEquationNumbering(), this->giveDomain(di) );
+  ///@todo This method is overloaded in some functions, it needs to be generalized.
+  this->computeExternalLoadReactionContribution( contribution, tStep, di );
+  answer.subtract( contribution );
+  this->updateSharedDofManagers( answer, EModelDefaultPrescribedEquationNumbering(), ReactionExchangeTag );
+}
+
+void MPMProblem ::computeExternalLoadReactionContribution( FloatArray &reactions, TimeStep *tStep, int di )
+{
+  reactions.resize( this->giveNumberOfDomainEquations( di, EModelDefaultPrescribedEquationNumbering() ) );
+  reactions.zero();
+  this->assembleVector( reactions, tStep, ExternalForceAssembler(), VM_Total,
+      EModelDefaultPrescribedEquationNumbering(), this->giveDomain( di ) );
 }
 
 double MPMProblem :: giveUnknownComponent(ValueModeType mode, TimeStep *tStep, Domain *d, Dof *dof)

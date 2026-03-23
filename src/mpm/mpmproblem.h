@@ -219,6 +219,13 @@ public:
     int forceEquationNumbering() override;
 
     void printOutputAt(FILE *file, TimeStep *tStep) override;
+
+    /**
+     * From structural engineering module
+     */
+    void buildReactionTable( IntArray &restrDofMans, IntArray &restrDofs, IntArray &eqn, TimeStep *tStep, int di );
+    void computeReaction( FloatArray &answer, TimeStep *tStep, int di );
+    void computeExternalLoadReactionContribution( FloatArray &reactions, TimeStep *tStep, int di );
     
     void updateYourself(TimeStep *tStep) override;
     

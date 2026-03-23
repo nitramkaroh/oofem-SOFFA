@@ -503,7 +503,7 @@ VTKXMLExportModule::giveDataHeaders(std::string &pointHeader, std::string &cellH
         if ( type == DisplacementVector || type == EigenVector || type == VelocityVector || type == DirectorField || type == MacroSlipVector || type == ResidualForce || type == ReactionForce ) {
             vectors += __UnknownTypeToString(type);
             vectors.append(" ");
-        } else if ( type == FluxVector || type == PressureVector || type == Temperature || type == Humidity || type == DeplanationFunction || type == MagneticPotential) {
+        } else if ( type == FluxVector || type == PressureVector || type == Temperature || type == Humidity || type == DeplanationFunction || type == MagneticPotential || type == ReactionMagneticFlux) {
             scalars += __UnknownTypeToString(type);
             scalars.append(" ");
         } else {

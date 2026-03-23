@@ -52,7 +52,9 @@ namespace oofem {
     ENUM_ITEM_WITH_VALUE(MacroSlipVector, 17) \
     ENUM_ITEM_WITH_VALUE(ResidualForce, 18) \
     ENUM_ITEM_WITH_VALUE(MagneticPotential, 19) \
-    ENUM_ITEM_WITH_VALUE(ReactionForce, 20)
+    ENUM_ITEM_WITH_VALUE(ReactionForce, 20) \
+    ENUM_ITEM_WITH_VALUE(ReactionMagneticFlux, 21)
+   
 /**
  * Type representing particular unknown (its physical meaning).
  */
