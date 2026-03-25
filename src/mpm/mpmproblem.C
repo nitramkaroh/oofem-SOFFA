@@ -327,7 +327,11 @@ void MPMProblem ::computeReaction( FloatArray &answer, TimeStep *tStep, int di )
   answer.zero();
 
   // Add internal forces
-  this->assembleVector( answer, tStep, LastEquilibratedInternalForceAssembler(), VM_Total,
+  // the ME residual assembler is used here, because it can assemble the correct order of DOFs
+  // Compared to structural engineering models, where the LastEquilibratedForceAssembler is used,
+  // this does NOT ensure that the returned reactions are in equilibrium. This is the responsibility
+  // of the caller to ensure that the tStep sent inside this function has reached convergence.
+  this->assembleVector( answer, tStep, MEResidualAssembler(0.0,0.0), VM_Total,
       EModelDefaultPrescribedEquationNumbering(), this->giveDomain( di ) );
   // Subtract external loading
   ///@todo All engineering models should be using this (for consistency)

@@ -163,35 +163,6 @@ class MagnetoElasticElement : public MPElement
       answer.resize( this->giveNumberOfUDofs() );
     } else if ( type == ExternalForcesVector ) {
       ;
-    } else if ( type == LastEquilibratedInternalForcesVector ) {
-      //we have to return the equilibrated internal force vector, which has to be obtained from the equilibrated stresses
-      //present in the material status.
-      //we are going to do this the ugly way... combine the contributions from all terms here, without using the status
-      FloatArray standardAnswer, fbarAnswer, secondGradAnswer;
-      standardAnswer.resize( this->giveNumberOfUDofs() + this->giveNumberOfPhiDofs() );
-      standardAnswer.zero();
-      this->integrateTerm_c(standardAnswer, MagnetoElasticity_GradGrad_Term(getU(), getU(), getPhi()), ir, tStep);
-      fbarAnswer.resize(this->giveNumberOfUDofs());
-      fbarAnswer.zero();
-      this->integrateTerm_c( fbarAnswer, MagnetoElasticity_GradGrad_FbarTerm( getU(), getU() ), ir, tStep );
-      secondGradAnswer.resize(this->giveNumberOfUDofs());
-      secondGradAnswer.zero();
-      this->integrateTerm_c( secondGradAnswer, MagnetoElasticity_GradGrad_FbarTerm( getU(), getU() ), ir, tStep );
-      //now we have to add all this together
-      answer.resize(this->giveNumberOfUDofs()+this->giveNumberOfPhiDofs());
-      answer.zero();
-      IntArray locU, locPhi, locUPhi;
-      locU.resize(this->giveNumberOfUDofs());
-      locPhi.resize(this->giveNumberOfPhiDofs());
-      //todo localize this somehow... they go after each other according to the code of the term
-      std::iota( locU.begin(), locU.end(), 1 );
-      std::iota(locPhi.begin(), locPhi.end(), this->giveNumberOfUDofs()+1);
-      locUPhi = locU;
-      locUPhi.followedBy(locPhi);
-      answer.assemble(standardAnswer, locUPhi);
-      answer.assemble(fbarAnswer, locU);
-      answer.assemble(secondGradAnswer, locU);
-
     } else {
       OOFEM_ERROR( "Unknown characteristic vector type" );
     }
