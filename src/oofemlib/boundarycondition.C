@@ -112,10 +112,8 @@ void BoundaryCondition ::initializeFrom( InputRecord &ir )
   IR_GIVE_OPTIONAL_FIELD( ir, additive, _IFT_BoundaryCondition_additive );
 
   // whether or not the bc is additive, the initial values are always zero at initiation
-  this->initialValues = this->values;
-  this->initialValues.zero();
+  this->initialValues.resize( values.giveSize() );
   this->initialValuesSet.resize( initialValues.giveSize() );
-  initialValues.zero();
 }
 
 
