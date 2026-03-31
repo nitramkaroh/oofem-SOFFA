@@ -49,6 +49,7 @@
 #define _IFT_BoundaryCondition_PrescribedValue "prescribedvalue" ///< [rn,optional] Prescribed value of all DOFs
 #define _IFT_BoundaryCondition_PrescribedValue_d "d" ///< [rn,optional] Alternative input field
 #define _IFT_BoundaryCondition_values "values" ///< [ra,optional] Vector of prescribed values for each respective DOF.
+#define _IFT_BoundaryCondition_additive "additive" ///< [i,optional] Vector of prescribed values for each respective DOF.
 //@}
 
 namespace oofem {
@@ -85,6 +86,12 @@ class OOFEM_EXPORT BoundaryCondition : public GeneralBoundaryCondition
 protected:
     /// Prescribed values for each resp. dof
     FloatArray values;
+    /// Values present at the start of imposing the bc, if it is additive
+    FloatArray initialValues;
+    /// Whether the bc is additive (adds its values to the displacement present at the start of its imposition
+    bool additive = false;
+    /// Whether initial values are set already (for additive behavior)
+    IntArray initialValuesSet;
 
 public:
     /**

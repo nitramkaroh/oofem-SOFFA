@@ -41,114 +41,127 @@
 #include "classfactory.h"
 #include "contextioerr.h"
 #include "error.h"
+#include "engngm.h"
 
 namespace oofem {
-REGISTER_BoundaryCondition(BoundaryCondition);
+REGISTER_BoundaryCondition( BoundaryCondition );
 
-double BoundaryCondition :: give(Dof *dof, ValueModeType mode, TimeStep *tStep)
+double BoundaryCondition ::give( Dof *dof, ValueModeType mode, TimeStep *tStep )
 {
-    if ( mode == VM_Incremental ) {
-        return this->give(dof, VM_Total, tStep->giveTargetTime()) - this->give(dof, VM_Total, tStep->giveTargetTime() - tStep->giveTimeIncrement());
+  if ( mode == VM_Incremental ) {
+    return this->give( dof, VM_Total, tStep->giveTargetTime() ) - this->give( dof, VM_Total, tStep->giveTargetTime() - tStep->giveTimeIncrement() );
+  } else {
+    return this->give( dof, mode, tStep->giveIntrinsicTime() );
+  }
+}
+
+
+double BoundaryCondition ::give( Dof *dof, ValueModeType mode, double time )
+{
+  double factor = 0;
+  if ( ( mode == VM_Total ) || ( mode == VM_TotalIntrinsic ) ) {
+    factor = this->giveTimeFunction()->evaluateAtTime( time );
+  } else if ( mode == VM_Velocity ) {
+    factor = this->giveTimeFunction()->evaluateVelocityAtTime( time );
+  } else if ( mode == VM_Acceleration ) {
+    factor = this->giveTimeFunction()->evaluateAccelerationAtTime( time );
+  } else {
+    OOFEM_ERROR( "Should not be called for value mode type then total, velocity, or acceleration." );
+  }
+  int index = this->dofs.findFirstIndexOf( dof->giveDofID() );
+  if ( !index ) {
+    index = 1;
+  }
+
+  // set initial values if this is the first call
+  if ( additive && !initialValuesSet.at(index)) {
+    TimeStep* tStep = domain->giveEngngModel()->givePreviousStep(); //hopefully this will resolve to the last converged step?
+    this->initialValues.at( index ) = dof->giveUnknown( mode, tStep );
+    initialValuesSet.at( index ) = true;
+  }
+
+
+  double prescribedValue = this->values.at( index );
+  return this->initialValues.at( index ) + prescribedValue * factor;
+}
+
+
+void BoundaryCondition ::initializeFrom( InputRecord &ir )
+{
+  GeneralBoundaryCondition ::initializeFrom( ir );
+
+  if ( ir.hasField( _IFT_BoundaryCondition_values ) ) {
+    IR_GIVE_FIELD( ir, values, _IFT_BoundaryCondition_values );
+  } else {
+    double prescribedValue;
+    if ( ir.hasField( _IFT_BoundaryCondition_PrescribedValue ) ) {
+      IR_GIVE_FIELD( ir, prescribedValue, _IFT_BoundaryCondition_PrescribedValue );
     } else {
-        return this->give(dof, mode, tStep->giveIntrinsicTime());
+      IR_GIVE_FIELD( ir, prescribedValue, _IFT_BoundaryCondition_PrescribedValue_d );
     }
-}
-
-
-double BoundaryCondition :: give(Dof *dof, ValueModeType mode, double time)
-{
-    double factor = 0;
-    if ( (mode == VM_Total) || (mode == VM_TotalIntrinsic)) {
-        factor = this->giveTimeFunction()->evaluateAtTime(time);
-    } else if ( mode == VM_Velocity ) {
-        factor = this->giveTimeFunction()->evaluateVelocityAtTime(time);
-    } else if ( mode == VM_Acceleration ) {
-        factor = this->giveTimeFunction()->evaluateAccelerationAtTime(time);
+    // Backwards compatibility with old input method:
+    if ( this->dofs.giveSize() ) {
+      values.resize( this->dofs.giveSize() );
     } else {
-        OOFEM_ERROR("Should not be called for value mode type then total, velocity, or acceleration.");
+      values.resize( 1 );
     }
-    int index = this->dofs.findFirstIndexOf( dof->giveDofID() );
-    if ( !index ) {
-        index = 1;
-    }
-    double prescribedValue = this->values.at(index);
-    return prescribedValue * factor;
-}
-
-
-void
-BoundaryCondition :: initializeFrom(InputRecord &ir)
-{
-    GeneralBoundaryCondition :: initializeFrom(ir);
-
-    if ( ir.hasField(_IFT_BoundaryCondition_values) ) {
-        IR_GIVE_FIELD(ir, values, _IFT_BoundaryCondition_values);
-    } else {
-        double prescribedValue;
-        if ( ir.hasField(_IFT_BoundaryCondition_PrescribedValue) ) {
-            IR_GIVE_FIELD(ir, prescribedValue, _IFT_BoundaryCondition_PrescribedValue);
-        } else {
-            IR_GIVE_FIELD(ir, prescribedValue, _IFT_BoundaryCondition_PrescribedValue_d);
-        }
-        // Backwards compatibility with old input method:
-        if ( this->dofs.giveSize() ) {
-            values.resize( this->dofs.giveSize() );
-        } else {
-            values.resize(1);
-        }
-        values.zero();
-        values.add(prescribedValue);
-    }
-}
-
-
-void
-BoundaryCondition :: giveInputRecord(DynamicInputRecord &input)
-{
-    GeneralBoundaryCondition :: giveInputRecord(input);
-    input.setField(this->values, _IFT_BoundaryCondition_values);
-}
-
-
-void
-BoundaryCondition :: setPrescribedValue(double s)
-{
     values.zero();
-    values.add(s);
+    values.add( prescribedValue );
+  }
+  // additive behavior
+  IR_GIVE_OPTIONAL_FIELD( ir, additive, _IFT_BoundaryCondition_additive );
+
+  // whether or not the bc is additive, the initial values are always zero at initiation
+  this->initialValues = this->values;
+  this->initialValues.zero();
+  this->initialValuesSet.resize( initialValues.giveSize() );
+  initialValues.zero();
 }
 
 
-void
-BoundaryCondition :: scale(double s)
+void BoundaryCondition ::giveInputRecord( DynamicInputRecord &input )
 {
-    values.times(s);
+  GeneralBoundaryCondition ::giveInputRecord( input );
+  input.setField( this->values, _IFT_BoundaryCondition_values );
+  input.setField( this->additive, _IFT_BoundaryCondition_additive );
 }
 
 
-void
-BoundaryCondition :: saveContext(DataStream &stream, ContextMode mode)
+void BoundaryCondition ::setPrescribedValue( double s )
 {
-    GeneralBoundaryCondition :: saveContext(stream, mode);
+  values.zero();
+  values.add( s );
+}
 
-    if ( mode & CM_Definition ) {
-        contextIOResultType iores;
-        if ( (iores = values.storeYourself(stream) ) != CIO_OK ) {
-            THROW_CIOERR(CIO_IOERR);
-        }
+
+void BoundaryCondition ::scale( double s )
+{
+  values.times( s );
+}
+
+
+void BoundaryCondition ::saveContext( DataStream &stream, ContextMode mode )
+{
+  GeneralBoundaryCondition ::saveContext( stream, mode );
+
+  if ( mode & CM_Definition ) {
+    contextIOResultType iores;
+    if ( ( iores = values.storeYourself( stream ) ) != CIO_OK ) {
+      THROW_CIOERR( CIO_IOERR );
     }
+  }
 }
 
 
-void
-BoundaryCondition :: restoreContext(DataStream &stream, ContextMode mode)
+void BoundaryCondition ::restoreContext( DataStream &stream, ContextMode mode )
 {
-    GeneralBoundaryCondition :: restoreContext(stream, mode);
+  GeneralBoundaryCondition ::restoreContext( stream, mode );
 
-    if ( mode & CM_Definition ) {
-        contextIOResultType iores;
-        if ( (iores = values.restoreYourself(stream) ) != CIO_OK ) {
-            THROW_CIOERR(CIO_IOERR);
-        }
+  if ( mode & CM_Definition ) {
+    contextIOResultType iores;
+    if ( ( iores = values.restoreYourself( stream ) ) != CIO_OK ) {
+      THROW_CIOERR( CIO_IOERR );
     }
+  }
 }
 } // end namespace oofem
