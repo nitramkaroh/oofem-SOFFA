@@ -244,7 +244,7 @@ VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
     // Finalize the output:
     std::string fname = giveOutputFileName(tStep);
     fname = fname.substr( fname.find_last_of( '/' ) == std::string::npos ? 0 : fname.find_last_of( '/' ) + 1 );
-    std::string baseFname = this->emodel->giveOutputBaseFileName();
+    std::string baseFname = giveOutputBaseFileName(tStep);
     baseFname = baseFname.substr( baseFname.find_last_of( '/' ) == std::string::npos ? 0 : baseFname.find_last_of( '/' ) + 1 );
 
 #ifdef __VTK_MODULE
