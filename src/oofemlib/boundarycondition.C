@@ -73,16 +73,28 @@ double BoundaryCondition ::give( Dof *dof, ValueModeType mode, double time )
     index = 1;
   }
 
+  int dofManNumber = dof->giveDofManGlobalNumber();
+  if ( initialValues.find( dofManNumber ) == initialValues.end() ){
+    //first time this dof manager has been encountered
+    FloatArray initValues(this->values.giveSize());
+    IntArray initValuesSet(this->values.giveSize());
+    initialValues.emplace(dofManNumber, std::make_pair(initValuesSet, initValues));
+  }
+
+  //get initial value settings for this dof manager
+  auto &[initValuesSetHere, initValuesHere] = this->initialValues.at( dofManNumber );
+  
   // set initial values if this is the first call
-  if ( additive && !initialValuesSet.at(index)) {
+  if ( additive && !initValuesSetHere.at(index) ) {
     TimeStep* tStep = domain->giveEngngModel()->givePreviousStep(); //hopefully this will resolve to the last converged step?
-    this->initialValues.at( index ) = dof->giveUnknown( mode, tStep );
-    initialValuesSet.at( index ) = true;
+    initValuesHere.at( index ) = dof->giveUnknown( mode, tStep );
+    initValuesSetHere.at( index ) = true;
+
   }
 
 
   double prescribedValue = this->values.at( index );
-  return this->initialValues.at( index ) + prescribedValue * factor;
+  return initValuesHere.at( index ) + prescribedValue * factor;
 }
 
 
@@ -111,9 +123,6 @@ void BoundaryCondition ::initializeFrom( InputRecord &ir )
   // additive behavior
   IR_GIVE_OPTIONAL_FIELD( ir, additive, _IFT_BoundaryCondition_additive );
 
-  // whether or not the bc is additive, the initial values are always zero at initiation
-  this->initialValues.resize( values.giveSize() );
-  this->initialValuesSet.resize( initialValues.giveSize() );
 }
 
 

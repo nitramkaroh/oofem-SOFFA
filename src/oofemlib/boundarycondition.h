@@ -39,6 +39,7 @@
 #include "floatarray.h"
 #include "bctype.h"
 #include "valuemodetype.h"
+#include <unordered_map>
 
 /**
  * @name Dirichlet boundary condition.
@@ -86,12 +87,11 @@ class OOFEM_EXPORT BoundaryCondition : public GeneralBoundaryCondition
 protected:
     /// Prescribed values for each resp. dof
     FloatArray values;
-    /// Values present at the start of imposing the bc, if it is additive
-    FloatArray initialValues;
-    /// Whether the bc is additive (adds its values to the displacement present at the start of its imposition
+    /// Values present at the start of imposing the bc, if it is additive, for each dofManager affected
+    // 
+    std::unordered_map<int,std::pair<IntArray,FloatArray>> initialValues;
+    /// Whether the bc is additive (adds its values to the value present in the dof at the start of the bc's imposition)
     bool additive = false;
-    /// Whether initial values are set already (for additive behavior)
-    IntArray initialValuesSet;
 
 public:
     /**
