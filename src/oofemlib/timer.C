@@ -48,7 +48,7 @@ void Timer :: getUtime(std :: chrono :: duration< double > &answer)
 {
 #ifdef _WIN32 //_MSC_VER and __MINGW32__ included
     clock_t utime = clock();
-    answer = std :: chrono :: seconds(utime / CLOCKS_PER_SEC);
+    answer = std ::chrono ::duration<double>( utime ) / CLOCKS_PER_SEC;
 #else
     struct rusage rsg;
     getrusage(RUSAGE_SELF, & rsg);
