@@ -208,7 +208,8 @@ namespace oofem {
   ENUM_ITEM_WITH_VALUE( IST_PrestrainDeformationGradient, 158 )                                                                                                \
   ENUM_ITEM_WITH_VALUE( IST_StrainEnergyDensity, 159 )                                                                                                         \
   ENUM_ITEM_WITH_VALUE( IST_PbarStressTensor, 160 )                                                                                                            \
-  ENUM_ITEM_WITH_VALUE( IST_FbarElementCentroidDeformationGradientTensor, 161 )                                                                                                     
+  ENUM_ITEM_WITH_VALUE( IST_FbarElementCentroidDeformationGradientTensor, 161 )                                                                                \
+  ENUM_ITEM_WITH_VALUE( IST_GaussPointVolume, 162 )                                                                                                                                                                               
 
 
 /**
