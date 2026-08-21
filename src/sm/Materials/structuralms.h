@@ -146,5 +146,37 @@ public:
     void copyStateVariables(const MaterialStatus &iStatus) override;
     void addStateVariables(const MaterialStatus &iStatus) override;
 };
+
+
+////////////
+// Second gradients
+class GradientStructuralMaterialStatus : public StructuralMaterialStatus
+{
+protected:
+    // Committed (History) Variable
+    FloatArray GVector;
+
+    // Temporary Variable (Current Iteration)
+    FloatArray tempGVector;
+
+public:
+    GradientStructuralMaterialStatus( GaussPoint *g );
+    virtual ~GradientStructuralMaterialStatus();
+
+    // Core Status Interface Overrides
+    void initTempStatus() override;
+    void updateYourself( TimeStep *tStep ) override;
+
+    // Getter and Setter for Temporary Variable
+    const FloatArray &giveTempGVector() const { return tempGVector; }
+    void letTempGVectorBe( const FloatArray &vG ) { tempGVector = vG; }
+
+    // Getter for Committed Variable
+    const FloatArray &giveGVector() const { return GVector; }
+
+    void copyStateVariables( const MaterialStatus &iStatus ) override;
+};
+
+
 } // end namespace oofem
 #endif // structuralms_h

@@ -81,6 +81,7 @@ public:
 
     //int computeEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &evaluesFA, FloatMatrix &evectorsFM );
     int computeEigenValuesVectors( SparseMtrx &Ag, FloatArray &evaluesFA, FloatMatrix &evectorsFM ) override;
+    int computeEigenValues( SparseMtrx &Ag, FloatArray &evaluesFA ) override;
     // ConvergedReason solveBifurcation( SparseMtrx &A, FloatArray &b, FloatArray &x );
     //void setEigenValuesVectors( Eigen::SparseMatrix<double> &A, FloatArray &Xeigs );
     bool canCholeskyBifurcation() override { return true; };

@@ -202,4 +202,50 @@ void StructuralMaterialStatus :: addStateVariables(const MaterialStatus &iStatus
 {
     printf("Entering StructuralMaterialStatus :: addStateVariables().\n");
 }
+
+
+////////////////
+// Second gradients
+
+GradientStructuralMaterialStatus::GradientStructuralMaterialStatus( GaussPoint *g ) :
+    StructuralMaterialStatus( g ), GVector(), tempGVector()
+{
+    GVector.resize( 27 );
+    tempGVector = GVector;
+}
+
+GradientStructuralMaterialStatus::~GradientStructuralMaterialStatus()
+{
+}
+
+void GradientStructuralMaterialStatus::initTempStatus()
+{
+    // Initialize base structural variables
+    StructuralMaterialStatus::initTempStatus();
+
+    // Copy committed history into temporary array for the current iteration
+    this->tempGVector = this->GVector;
+
+}
+
+void GradientStructuralMaterialStatus::updateYourself( TimeStep *tStep )
+{
+    // Update base structural variables
+    StructuralMaterialStatus::updateYourself( tStep );
+
+    // Commit temporary gradient values to history upon convergence
+    this->GVector = this->tempGVector;
+}
+
+void GradientStructuralMaterialStatus ::copyStateVariables( const MaterialStatus &iStatus )
+{
+    StructuralMaterialStatus ::copyStateVariables( iStatus );
+
+    const GradientStructuralMaterialStatus &structStatus = static_cast<const GradientStructuralMaterialStatus &>( iStatus );
+
+    GVector     = structStatus.giveGVector();
+    tempGVector = structStatus.giveTempGVector();
+}
+
+
 } // end namespace oofem

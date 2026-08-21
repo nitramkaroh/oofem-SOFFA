@@ -2345,4 +2345,11 @@ EngngModel :: unpackDofManagers(ArrayWithNumbering *destData, ProcessCommunicato
 }
 
 #endif
+
+
+///////////////////////////////////
+void EngngModel ::updateArcLengthInternalForces( FloatArray &answer, TimeStep *tStep, NumericalCmpn cmpn, Domain *d )
+{
+    OOFEM_ERROR( "Unknown Type of component." );
+}
 } // end namespace oofem

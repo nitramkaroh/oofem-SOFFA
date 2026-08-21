@@ -55,7 +55,7 @@ REGISTER_Element( BsplinePlaneStrainSurfaceElement );
 
 BsplinePlaneStrainSurfaceElement ::BsplinePlaneStrainSurfaceElement( int n, Domain *aDomain ) :
     IGAElement( n, aDomain ), Space2dStructuralSurfaceElementEvaluator(), interpolation( 1 ) {
-    this->setSecondGradient( true );
+    //this->setSecondGradient( true );
 }
 
 
@@ -195,6 +195,14 @@ void BsplinePlaneStrainSurfaceElement ::giveCompositeExportData( std::vector<VTK
             } // end loop over irules
         }
     }
+
+    if (internalVarsToExport.giveSize() > 0)
+    {
+        OOFEM_WARNING( "Internal variable/s not supported by this element" );
+        vtkPieces[0].setNumberOfInternalVarsToExport( internalVarsToExport, nNodes ); // set the number of internal variables to export, but do not fill them
+    }
+    
+    
 }
 
 
@@ -207,7 +215,7 @@ REGISTER_Element( BsplineAxisymSurfaceElement );
 BsplineAxisymSurfaceElement ::BsplineAxisymSurfaceElement( int n, Domain *aDomain ) :
     IGAElement( n, aDomain ), AxisymSurfaceElementEvaluator(), interpolation( 1 )
 {
-    this->setSecondGradient( true );
+    //this->setSecondGradient( true );
 }
 
 

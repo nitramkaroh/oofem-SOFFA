@@ -72,6 +72,9 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
     int neqs = b.giveSize(); // Number of equations
 
     EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &A );
+    if ( !Ae ) {
+        OOFEM_ERROR( "EigenSolver requires an EigenMtrx, got %s", A.giveClassName() );
+    }
 
     Eigen::SparseMatrix<double> A_eig = Ae->giveMatrix();
 
@@ -104,13 +107,17 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
 
         Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int> > A_factorization( A_eig );
         x_eig = A_factorization.solve( b_eig ); // Solve the system
-    } 
+
+    } else {
+        // Without this the system would be left unsolved and an empty x reported as converged
+        OOFEM_ERROR( "unknown eigenmethod '%s', use one of: llt, ldlt, lu, qr", method.c_str() );
+    }
 
     // Copy/move values to FloatArray x
     x = FloatArray( x_eig.begin(), x_eig.end() );
 
     timer.stopTimer();
-    OOFEM_LOG_INFO( "EigenSolver:  User time consumed by solution: %.2fs\n", timer.getUtime() );
+    //OOFEM_LOG_INFO( "EigenSolver:  User time consumed by solution: %.2fs\n", timer.getUtime() );
 
     return CR_CONVERGED;
 

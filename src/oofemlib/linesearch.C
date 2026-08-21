@@ -319,14 +319,17 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
     FloatArray direction = dr, rold = r, rhs, Ku( r.giveSize() ), dx_Defl, rhsDefl;
     direction.normalize();
 
-    // if residuum is small enough already
-    if ( fabs( ( RT - F ).dotProduct( direction ) ) < this->ls_tolerance ) {
-        return CR_CONVERGED;
-    }
+    //// if residuum is small enough already (but what about deflation?)
+    //// (but what about deflation?)
+    //if ( fabs( ( RT - F ).dotProduct( direction ) ) < this->ls_tolerance ) {
+    //    return CR_CONVERGED;
+    //}
 
     // do exact linesearch including delfation
-    int p = 2;
-    double RHS, ResNormLS, RHSdefl, deta = 1e-6, alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
+    double pp = this->p;
+    double RHS, ResNormLS, RHSdefl, deta = 1e-6, alph_defl = 1., dx_norm, gamma, kdefl;
+    double x0_norm = this->X0defl.computeNorm(); // for normalization, othewise set to 1
+
     //double Eta     = min( deta, dr.computeNorm() ); // start guess
     double Eta     = dr.computeNorm(); // start guess
     double Eta0    = Eta;
@@ -340,8 +343,8 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
         RHSdefl = RHS;
         if ( this->deflation ) { // Compute deflated residuum
             dx_Defl   = r - this->X0defl;
-            dx_normSq = dx_Defl.dotProduct( dx_Defl );
-            RHSdefl *= 1. / dx_normSq + 1.;
+            dx_norm = dx_Defl.computeNorm();
+            RHSdefl *= pow( x0_norm, pp ) / pow( dx_norm, pp ) + 1.;
         }
 
         // Check convergence
@@ -360,7 +363,7 @@ ExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatAr
         kdefl = Ku.dotProduct( direction );
 
         if ( this->deflation ) {
-            gamma = p / ( dx_normSq + alph_defl * pow( dx_normSq, p ) );
+            gamma = pp / ( dx_norm * dx_norm + alph_defl * pow( dx_norm, pp + 2. ) / pow( x0_norm, pp ) );
             kdefl += gamma * RHS * dx_Defl.dotProduct( direction );
         }
 
@@ -392,8 +395,102 @@ void ExactLineSearchNM ::initializeFrom( InputRecord &ir )
     LineSearchNM ::initializeFrom( ir );
 
     // Rewrite the values from LineSearchNM
-    this->max_iter     = 20;
+    this->max_iter     = 10;
     this->ls_tolerance = 1e-6;
 }
+
+
+///////////////////////////////////////////////////////
+// CALM ExactLineSearchNM
+///////////////////////////////////////////////////////
+MaterialCalmExactLineSearchNM ::MaterialCalmExactLineSearchNM( Domain *d, EngngModel *m ) :
+    ExactLineSearchNM( d, m )
+{
+}
+
+ConvergedReason
+MaterialCalmExactLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &RT, IntArray &eqnmask, TimeStep *tStep, SparseMtrx &k, double &Lambda, double &deltaLambda )
+{
+    // Normalize the direction
+    FloatArray direction = dr, rold = r, rhs, Ku( r.giveSize() ), dx_Defl, rhsDefl, Fint_lam( r.giveSize() );
+    direction.normalize();
+
+    // if residuum is small enough already
+    if ( fabs( ( RT - F ).dotProduct( direction ) ) < this->ls_tolerance ) {
+        return CR_CONVERGED;
+    }
+
+    // do exact linesearch including delfation
+    int p = 2;
+    double RHS, ResNormLS, RHSdefl, deta = 1e-6, alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
+
+    double deltaX_, deltaXt;
+
+    double Fint_lam_d;
+    // double Eta     = min( deta, dr.computeNorm() ); // start guess
+    double Eta     = dr.computeNorm(); // start guess
+    double Eta0    = Eta;
+    FloatArray ddr = Eta * direction;
+    r              = r + ddr; // Initial moification of the solution
+
+    for ( size_t niteLS = 0; niteLS < this->max_iter; niteLS++ ) { // inner Newton loop to find local minimum in the direction
+
+        engngModel->updateArcLengthInternalForces( Fint_lam, tStep, InternalRhs, domain );
+        Fint_lam_d = Fint_lam.dotProduct( direction );
+
+        engngModel->updateComponent( tStep, InternalRhs, domain );
+        rhs     = RT - F;
+        RHS     = rhs.dotProduct( direction );
+        RHSdefl = RHS;
+        //if ( this->deflation ) { // Compute deflated residuum
+        //    dx_Defl   = r - this->X0defl;
+        //    dx_normSq = dx_Defl.dotProduct( dx_Defl );
+        //    RHSdefl *= 1. / dx_normSq + 1.;
+        //}
+
+        // Check convergence
+        OOFEM_LOG_INFO( "|resLS| = %.3e\n", fabs( RHSdefl ) );
+        if ( fabs( RHSdefl ) < this->ls_tolerance ) {
+            dr = r - rold;
+            r  = rold;
+            OOFEM_LOG_INFO( "Eta = %.7e\n", Eta / Eta0 );
+            return CR_CONVERGED;
+        } else if ( isnan( RHSdefl ) ) {
+            break;
+        }
+
+        engngModel->updateComponent( tStep, NonLinearLhs, domain );
+        k.times( direction, Ku );
+        kdefl = Ku.dotProduct( direction );
+
+        //if ( this->deflation ) {
+        //    gamma = p / ( dx_normSq + alph_defl * pow( dx_normSq, p ) );
+        //    kdefl += gamma * RHS * dx_Defl.dotProduct( direction );
+        //}
+
+        deltaX_ = RHS / kdefl;
+        deltaXt = -Fint_lam_d / kdefl;
+
+        //////////////////////////
+        deta = RHS / kdefl;
+        if ( isnan( deta ) ) {
+            break;
+        }
+        Eta += deta;
+        ddr = deta * direction;
+        r   = r + ddr;
+    }
+    // No update of ddX
+    r = rold;
+    OOFEM_LOG_INFO( "Eta = %.7e\n", Eta );
+    return CR_DIVERGED_ITS;
+}
+
+
+void MaterialCalmExactLineSearchNM ::initializeFrom( InputRecord &ir )
+{
+    ExactLineSearchNM ::initializeFrom( ir );
+}
+
 
 } // end namespace oofem

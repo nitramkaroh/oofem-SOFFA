@@ -285,20 +285,25 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
 
     //////////////////
     // bifurcatiuon modification
-    BifurcationInterface *stabSolver = dynamic_cast<BifurcationInterface *>( this->linSolver.get() ); // Check if bifurcation solver is used 
+    BifurcationInterface *stabSolver = dynamic_cast<BifurcationInterface *>( this->linSolver.get() ); // Check if bifurcation solver is used
+    if ( stabSolver ) {
+        // Discard the definiteness recorded for the previous step, or for a previous
+        // attempt of this step, so that it is never reported for the current one.
+        stabSolver->resetPDStatus();
+    }
     bool isBifurcationSet = false;
     double alphaStability = 1e-6, alphamax = 1e8; // eigenvector multiplicator
 
     bool LDLTbif = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
-    //bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation/eigenvectorpostbif. LS options
-    bool deflationBifurcation = false, eigenvectorBifurcation = false, postBifurcationLineSearch = false; // deflation/eigenvector/postbif. LS options
+    bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation/eigenvectorpostbif. LS options
+    //bool deflationBifurcation = false, eigenvectorBifurcation = false, postBifurcationLineSearch = false; // deflation/eigenvector/postbif. LS options
     std::vector<bool> bifurcTypes( { LDLTbif, deflationBifurcation, eigenvectorBifurcation } );
 
     if ( this->LsType == LST_Exact_Adaptive ) this->lsFlag = false; // For adaptive LS
     bool afterBeforeBifurcation = true;
 
-    double tfun = this->engngModel->giveDomain( 1 )->giveFunction( 3 )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    OOFEM_LOG_INFO( "t=%f\n", tfun );
+    //double tfun = this->engngModel->giveDomain( 1 )->giveFunction( 4 )->evaluateAtTime( tStep->giveIntrinsicTime() );
+    //OOFEM_LOG_INFO( "t=%f\n", tfun );
     //////////////////
 
     for ( nite = 0; ; ++nite ) {
@@ -389,13 +394,13 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
             //this->giveConstrainedNRSolver()->solve(X, & ddX, this->forceErrVec, this->forceErrVecOld, status, tStep);
         }
 
-        // Check for maximum LS step
-        double alphaMax = this->giveMaximumLineSearchStep( ddX, tStep );
-        //std::cout << alphaMax << std::endl;
+        //// Check for maximum LS step
+        //double alphaMax = this->giveMaximumLineSearchStep( ddX, tStep );
+        ////std::cout << alphaMax << std::endl;
 
-        if ( alphaMax < 1. && alphaMax > 0. ) {
-            ddX.times( 0.9 * alphaMax );
-        }
+        //if ( alphaMax < 1. && alphaMax > 0. ) {
+        //    ddX.times( 0.9 * alphaMax );
+        //}
 
         /////////////////////////////////////////
 
@@ -600,11 +605,26 @@ void NRSolver::performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatAr
             } 
             //////////////////////
 
+            // Independently verify the negative result with the smallest
+            // eigenpair computed by the stability solver.
+            FloatArray eigenvalues;
+            FloatMatrix eigenvectors;
+            int nconv = stabSolver->computeEigenValues( k, eigenvalues );
+            if ( nconv > 0 ) {
+                bool isPD_check = eigenvalues.at( 1 ) > 0.0;
+                if ( isPD_check != isPD ) {
+                    OOFEM_WARNING( "Positive-definiteness checks disagree" );
+                }
+            } else {
+                OOFEM_WARNING( "Could not compute eigenpairs for positive-definiteness check" );
+            }
+            //////////////////////
+
             
             //if ( !isPD && stabSolver->giveNumFoundSols() < 1 ) { // If matrix is not PD
             if ( !isPD ) { // If matrix is not PD
                 OOFEM_LOG_INFO( "Negative eigenvalue\n" );
-                double tfun = this->engngModel->giveDomain( 1 )->giveFunction( 3 )->evaluateAtTime( tStep->giveIntrinsicTime() );
+                double tfun = this->engngModel->giveDomain( 1 )->giveFunction( 4 )->evaluateAtTime( tStep->giveIntrinsicTime() );
                 OOFEM_LOG_INFO( "gamma=%f\n", tfun );
                 stabSolver->setFoundLimitPoint( true );
                 stabSolver->setPostBifurcationLineSearchSolver( postBifurcationLineSearch ); // Set the post bifurcation exact linesearch
@@ -871,8 +891,8 @@ ExactLineSearchNM *NRSolver ::giveSetPostBifurcationLineSearchSolver(  FloatArra
 {
     if ( !this->linesearchSolverPostBifurcation ) {
         this->linesearchSolverPostBifurcation = std ::make_unique<ExactLineSearchNM>( domain, engngModel );
-        this->linesearchSolverPostBifurcation->setMaxIter( 20 );
-        this->linesearchSolverPostBifurcation->setTolerance( 1e-10);
+        this->linesearchSolverPostBifurcation->setMaxIter( 10 );
+        this->linesearchSolverPostBifurcation->setTolerance( 1e-7);
         this->linesearchSolverPostBifurcation->setDeflation( doDeflation );
     }
 
@@ -1021,6 +1041,13 @@ NRSolver :: applyConstraintsToLoadIncrement(int nite, const SparseMtrx &k, Float
 void
 NRSolver :: printState(FILE *outputStream)
 {
+    // A stability-capable linear solver has recorded the definiteness of the converged
+    // tangent stiffness. This is kept outside the VERBOSE block below, and ahead of its
+    // early return, so that the verdict is reported in every build.
+    if ( auto *stabSolver = dynamic_cast< BifurcationInterface * >( this->linSolver.get() ) ) {
+        stabSolver->printPDStatus(outputStream);
+    }
+
 #ifdef VERBOSE
     // print quasi reactions if direct displacement control used
     fprintf(outputStream, "\nQuasi reaction table:\n\n");

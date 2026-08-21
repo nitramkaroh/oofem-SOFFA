@@ -80,6 +80,8 @@ set (sm_material
     HyperelasticMaterials/ogdencompressiblematerial.C
     HyperelasticMaterials/hyperelasticmaterial1d.C
 	HyperelasticMaterials/statisticalmechanicsmaterial.C
+	HyperelasticMaterials/gradientmooneyrivlin.C
+	
 	
     #Lattice models
     LatticeMaterials/latticematstatus.C

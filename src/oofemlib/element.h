@@ -1164,6 +1164,10 @@ public:
     virtual const IntArray giveLocation() {IntArray answer(0); return answer;}
     virtual void recalculateCoordinates(int nodeNumber, FloatArray &coords){;}
 
+
+    //  For second gradient elements
+    virtual bool supportsSecondGradient() const { return false; }
+
  protected:
     /**
      * Initializes the array of integration rules member variable.

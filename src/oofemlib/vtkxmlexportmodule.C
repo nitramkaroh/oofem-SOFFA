@@ -48,6 +48,8 @@
 #include "unknownnumberingscheme.h"
 #include "EngineeringModels\structengngmodel.h"
 
+#include <iomanip>
+
 #include "xfem/xfemmanager.h"
 #include "xfem/enrichmentitem.h"
 
@@ -145,30 +147,29 @@ VTKXMLExportModule::giveOutputStream(TimeStep *tStep)
 }
 
 
-void
-VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
+void VTKXMLExportModule::doOutput( TimeStep *tStep, bool forcedOutput )
 {
-    if ( !( testTimeStepOutput(tStep) || forcedOutput ) ) {
+    if ( !( testTimeStepOutput( tStep ) || forcedOutput ) ) {
         return;
     }
-  
+
 #ifdef __VTK_MODULE
-    this->fileStream = vtkSmartPointer< vtkUnstructuredGrid >::New();
-    this->nodes = vtkSmartPointer< vtkPoints >::New();
-    this->elemNodeArray = vtkSmartPointer< vtkIdList >::New();
+    this->fileStream    = vtkSmartPointer<vtkUnstructuredGrid>::New();
+    this->nodes         = vtkSmartPointer<vtkPoints>::New();
+    this->elemNodeArray = vtkSmartPointer<vtkIdList>::New();
 
 #else
-    this->fileStream = this->giveOutputStream(tStep);
+    this->fileStream = this->giveOutputStream( tStep );
     struct tm *current;
     time_t now;
-    time(& now);
-    current = localtime(& now);
+    time( &now );
+    current = localtime( &now );
 
 #endif
 
     // Write output: VTK header
 #ifndef __VTK_MODULE
-    this->fileStream << "<!-- TimeStep " << tStep->giveTargetTime() * timeScale << " Computed " << current->tm_year + 1900 << "-" << setw(2) << current->tm_mon + 1 << "-" << setw(2) << current->tm_mday << " at " << current->tm_hour << ":" << current->tm_min << ":" << setw(2) << current->tm_sec << " -->\n";
+    this->fileStream << "<!-- TimeStep " << std::fixed << std::setprecision( 12 ) << tStep->giveTargetTime() * timeScale << std::defaultfloat << std::setprecision( 6 ) << " Computed " << current->tm_year + 1900 << "-" << setw( 2 ) << current->tm_mon + 1 << "-" << setw( 2 ) << current->tm_mday << " at " << current->tm_hour << ":" << current->tm_min << ":" << setw( 2 ) << current->tm_sec << " -->\n";
     this->fileStream << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
     this->fileStream << "<UnstructuredGrid>\n";
 #endif
@@ -176,54 +177,54 @@ VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
     this->giveSmoother(); // make sure smoother is created, Necessary? If it doesn't exist it is created /JB
 
     /* Loop over pieces  ///@todo: this feature has been broken but not checked if it currently works /JB
-        * Start default pieces containing all single cell elements. Elements built up from several vtk
-        * cells (composite elements) are exported as individual pieces after the default ones.
-        */
-    int nPiecesToExport = this->giveNumberOfRegions(); //old name: region, meaning: sets
-    int anyPieceNonEmpty = 0;
-    NodalRecoveryModel *smoother = giveSmoother();
+     * Start default pieces containing all single cell elements. Elements built up from several vtk
+     * cells (composite elements) are exported as individual pieces after the default ones.
+     */
+    int nPiecesToExport                 = this->giveNumberOfRegions(); // old name: region, meaning: sets
+    int anyPieceNonEmpty                = 0;
+    NodalRecoveryModel *smoother        = giveSmoother();
     NodalRecoveryModel *primVarSmoother = givePrimVarSmoother();
 
     for ( int pieceNum = 1; pieceNum <= nPiecesToExport; pieceNum++ ) {
         // Fills a data struct (VTKPiece) with all the necessary data.
-        Set* region = this->giveRegionSet(pieceNum);
-        this->setupVTKPiece(this->defaultVTKPiece, tStep, *region);
-        this->writeVTKPieceProlog(this->defaultVTKPiece, tStep); 
+        Set *region = this->giveRegionSet( pieceNum );
+        this->setupVTKPiece( this->defaultVTKPiece, tStep, *region );
+        this->writeVTKPieceProlog( this->defaultVTKPiece, tStep );
         // Export primary, internal and XFEM variables as nodal quantities
-        this->exportPrimaryVars(this->defaultVTKPiece, *region, primaryVarsToExport, *primVarSmoother, tStep);
-        this->exportIntVars(this->defaultVTKPiece, *region, internalVarsToExport, *smoother, tStep);
-        this->exportExternalForces(this->defaultVTKPiece, *region, externalForcesToExport, tStep);
-        this->exportCellVars(this->defaultVTKPiece, *region, cellVarsToExport, tStep);
+        this->exportPrimaryVars( this->defaultVTKPiece, *region, primaryVarsToExport, *primVarSmoother, tStep );
+        this->exportIntVars( this->defaultVTKPiece, *region, internalVarsToExport, *smoother, tStep );
+        this->exportExternalForces( this->defaultVTKPiece, *region, externalForcesToExport, tStep );
+        this->exportCellVars( this->defaultVTKPiece, *region, cellVarsToExport, tStep );
 
         // Write the VTK piece to file.
-        anyPieceNonEmpty += this->writeVTKPieceVariables(this->defaultVTKPiece, tStep);
-        this->writeVTKPieceEpilog(this->defaultVTKPiece, tStep);   
+        anyPieceNonEmpty += this->writeVTKPieceVariables( this->defaultVTKPiece, tStep );
+        this->writeVTKPieceEpilog( this->defaultVTKPiece, tStep );
         this->defaultVTKPiece.clear();
     }
 
     /*
-        * Output all composite elements - one piece per composite element
-        * Each element is responsible of setting up a VTKPiece which can then be exported
-        */
-    Domain *d = emodel->giveDomain(1);
+     * Output all composite elements - one piece per composite element
+     * Each element is responsible of setting up a VTKPiece which can then be exported
+     */
+    Domain *d = emodel->giveDomain( 1 );
     for ( int pieceNum = 1; pieceNum <= nPiecesToExport; pieceNum++ ) {
-        const IntArray &elements = this->giveRegionSet(pieceNum)->giveElementList();
+        const IntArray &elements = this->giveRegionSet( pieceNum )->giveElementList();
         for ( int i = 1; i <= elements.giveSize(); i++ ) {
-            Element *el = d->giveElement(elements.at(i) );
-            if ( this->isElementComposite(el) ) {
+            Element *el = d->giveElement( elements.at( i ) );
+            if ( this->isElementComposite( el ) ) {
                 if ( el->giveParallelMode() != Element_local ) {
                     continue;
                 }
 
 #ifndef __VTK_MODULE
-                //this->exportCompositeElement(this->defaultVTKPiece, el, tStep);
-                this->exportCompositeElement(this->defaultVTKPieces, el, tStep);
+                // this->exportCompositeElement(this->defaultVTKPiece, el, tStep);
+                this->exportCompositeElement( this->defaultVTKPieces, el, tStep );
 
-                for ( int j = 0; j < ( int ) this->defaultVTKPieces.size(); j++ ) {
-                    this->writeVTKPieceProlog(this->defaultVTKPieces[j], tStep);          
-                    anyPieceNonEmpty += this->writeVTKPieceVariables(this->defaultVTKPieces [ j ],  tStep);
-                    this->writeVTKPieceEpilog(this->defaultVTKPieces[j], tStep);  
-                    this->defaultVTKPieces [ j ].clear();
+                for ( int j = 0; j < (int)this->defaultVTKPieces.size(); j++ ) {
+                    this->writeVTKPieceProlog( this->defaultVTKPieces[j], tStep );
+                    anyPieceNonEmpty += this->writeVTKPieceVariables( this->defaultVTKPieces[j], tStep );
+                    this->writeVTKPieceEpilog( this->defaultVTKPieces[j], tStep );
+                    this->defaultVTKPieces[j].clear();
                 }
 #else
                 // No support for binary export yet
@@ -242,12 +243,12 @@ VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
 #endif
 
     // Finalize the output:
-    std::string fname = giveOutputFileName(tStep);
-    fname = fname.substr( fname.find_last_of( '/' ) == std::string::npos ? 0 : fname.find_last_of( '/' ) + 1 );
+    std::string fname = giveOutputFileName( tStep );
+    fname             = fname.substr( fname.find_last_of( '/' ) == std::string::npos ? 0 : fname.find_last_of( '/' ) + 1 );
 
 #ifdef __VTK_MODULE
 
- #if 0
+#if 0
     // Code fragment intended for future support of composite elements in binary format
     // Doesn't as well as I would want it to, interface to VTK is to limited to control this.
     // * The PVTU-file is written by every process (seems to be impossible to avoid).
@@ -259,36 +260,36 @@ VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
     writer->SetEndPiece(this->emodel->giveRank() );
 
 
- #else
-    vtkSmartPointer< vtkXMLUnstructuredGridWriter >writer = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
- #endif
+#else
+    vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+#endif
 
-    writer->SetFileName(fname.c_str() );
-    //writer->SetInput(this->fileStream); // VTK 4
-    writer->SetInputData(this->fileStream); // VTK 6
+    writer->SetFileName( fname.c_str() );
+    // writer->SetInput(this->fileStream); // VTK 4
+    writer->SetInputData( this->fileStream ); // VTK 6
 
     // Optional - set the mode. The default is binary.
-    //writer->SetDataModeToBinary();
+    // writer->SetDataModeToBinary();
     writer->SetDataModeToAscii();
     writer->Write();
 #else
     this->fileStream << "</UnstructuredGrid>\n</VTKFile>";
-    if(this->fileStream){
+    if ( this->fileStream ) {
         this->fileStream.close();
     }
 #endif
 
     // export raw ip values (if required), works only on one domain
     if ( !this->ipInternalVarsToExport.isEmpty() ) {
-        this->exportIntVarsInGpAs(ipInternalVarsToExport, tStep);
+        this->exportIntVarsInGpAs( ipInternalVarsToExport, tStep );
         if ( !emodel->isParallel() && tStep->giveNumber() >= 1 ) { // For non-parallel enabled OOFEM, then we only check for multiple steps.
             std::ostringstream pvdEntry;
             std::stringstream subStep;
             if ( tstep_substeps_out_flag ) {
                 subStep << "." << tStep->giveSubStepNumber();
             }
-            pvdEntry << "<DataSet timestep=\"" << tStep->giveTargetTime() * this->timeScale << subStep.str() << "\" group=\"\" part=\"\" file=\"" << this->giveOutputBaseFileName(tStep) + ".gp.vtu" << "\"/>";
-            this->gpPvdBuffer.push_back(pvdEntry.str() );
+            pvdEntry << "<DataSet timestep=\"" << std::fixed << std::setprecision( 12 ) << tStep->giveTargetTime() * this->timeScale << subStep.str() << "\" group=\"\" part=\"\" file=\"" << this->giveOutputBaseFileName( tStep ) + ".gp.vtu" << "\"/>";
+            this->gpPvdBuffer.push_back( pvdEntry.str() );
             this->writeGPVTKCollection();
         }
     }
@@ -301,19 +302,19 @@ VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
         for ( int i = 0; i < this->emodel->giveNumberOfProcesses(); ++i ) {
             std::ostringstream pvdEntry;
             std::stringstream subStep;
-            char fext [ 100 ];
+            char fext[100];
             if ( this->emodel->giveNumberOfProcesses() > 1 ) {
-                sprintf(fext, "_%03d.m%d.%d", i, this->number, tStep->giveNumber() );
+                sprintf( fext, "_%03d.m%d.%d", i, this->number, tStep->giveNumber() );
             } else {
-                sprintf(fext, "m%d.%d", this->number, tStep->giveNumber() );
+                sprintf( fext, "m%d.%d", this->number, tStep->giveNumber() );
             }
             if ( tstep_substeps_out_flag ) {
                 subStep << "." << tStep->giveSubStepNumber();
             }
             std::string baseFname = this->emodel->giveOutputBaseFileName();
-            baseFname = baseFname.substr( baseFname.find_last_of( '/' ) == std::string::npos ? 0 : baseFname.find_last_of( '/' ) + 1 );
-            pvdEntry << "<DataSet timestep=\"" << tStep->giveTargetTime() * this->timeScale << subStep.str() << "\" group=\"\" part=\"" << i << "\" file=\"" << baseFname << fext << ".vtu\"/>";
-            this->pvdBuffer.push_back(pvdEntry.str() );
+            baseFname             = baseFname.substr( baseFname.find_last_of( '/' ) == std::string::npos ? 0 : baseFname.find_last_of( '/' ) + 1 );
+            pvdEntry << "<DataSet timestep=\"" << std::fixed << std::setprecision( 12 ) << tStep->giveTargetTime() * this->timeScale << subStep.str() << "\" group=\"\" part=\"" << i << "\" file=\"" << baseFname << fext << ".vtu\"/>";
+            this->pvdBuffer.push_back( pvdEntry.str() );
         }
 
         this->writeVTKCollection();
@@ -323,8 +324,8 @@ VTKXMLExportModule::doOutput(TimeStep *tStep, bool forcedOutput)
         if ( tstep_substeps_out_flag ) {
             subStep << "." << tStep->giveSubStepNumber();
         }
-        pvdEntry << "<DataSet timestep=\"" << tStep->giveTargetTime() * this->timeScale << subStep.str() << "\" group=\"\" part=\"\" file=\"" << fname << "\"/>";
-        this->pvdBuffer.push_back(pvdEntry.str() );
+        pvdEntry << "<DataSet timestep=\"" << std::fixed << std::setprecision( 12 ) << tStep->giveTargetTime() * this->timeScale << subStep.str() << "\" group=\"\" part=\"\" file=\"" << fname << "\"/>";
+        this->pvdBuffer.push_back( pvdEntry.str() );
         this->writeVTKCollection();
     }
 }

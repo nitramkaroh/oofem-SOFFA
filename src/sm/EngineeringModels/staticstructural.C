@@ -54,6 +54,11 @@
 #include "contextioerr.h"
 #include "classfactory.h"
 #include "assemblercallback.h"
+#include "outputmanager.h"
+
+
+#include "sm/Materials/arclengthmaterialinterface.h"
+#include "material.h"
 
 #ifdef __PARALLEL_MODE
  #include "problemcomm.h"
@@ -150,6 +155,13 @@ StaticStructural :: initializeFrom(InputRecord &ir)
 #endif
 
     this->field = std::make_unique<DofDistributedPrimaryField>(this, 1, FT_Displacements, 0);
+
+
+    //////////////
+    // If load level guess is provided
+    double loadLevelTemp = this->loadLevel;
+    IR_GIVE_OPTIONAL_FIELD( ir, loadLevelTemp, _IFT_StaticStructural_loadLevelGuess );
+    this->loadLevel = loadLevelTemp;
 }
 
 
@@ -433,6 +445,36 @@ void StaticStructural :: updateComponent(TimeStep *tStep, NumericalCmpn cmpn, Do
     }
 }
 
+////////////////////////
+void StaticStructural::updateArcLengthInternalForces(FloatArray& answer, TimeStep* tStep, NumericalCmpn cmpn, Domain* d) {
+    this->setCALMmaterial( false ); // assemble only the lambda-dependent term
+
+    // Updates the solution in case it has changed
+    this->field->update( VM_Total, tStep, this->solution, EModelDefaultEquationNumbering() );
+
+    answer.zero();
+    this->assembleVector( answer, tStep, ArcLengthInternalForceAssembler(), VM_Total,
+        EModelDefaultEquationNumbering(), d, &this->eNorm );
+    this->updateSharedDofManagers( answer, EModelDefaultEquationNumbering(), InternalForcesExchangeTag ); // do I need this?
+
+    //internalVarUpdateStamp = tStep->giveSolutionStateCounter(); // Hack for linearstatic
+
+    this->setCALMmaterial( true ); // all internal forces are assembled
+}
+
+void StaticStructural::setCALMmaterial( bool returnAll )
+{
+    auto &matList = this->giveDomain( 1 )->giveMaterials();
+        //domain->giveMaterials();
+    for ( auto &imat : matList ) {
+        auto iface = dynamic_cast<ArcLengthMaterialInterface *>( imat->giveInterface( ArcLengthMaterialInterfaceType ) );
+        if ( iface && iface->hasArcLengthParameter() ) {
+            iface->setReturnAll( returnAll );
+        }
+    }
+}
+////////////////////////
+
 
 void
 StaticStructural :: computeExternalLoadReactionContribution(FloatArray &reactions, TimeStep *tStep, int di)
@@ -536,6 +578,24 @@ StaticStructural :: estimateMaxPackSize(IntArray &commMap, DataStream &buff, int
     }
 
     return 0;
+}
+
+void StaticStructural ::printOutputAt( FILE *file, TimeStep *tStep )
+{
+    if ( !this->giveDomain( 1 )->giveOutputManager()->testTimeStepOutput( tStep ) ) {
+        return; // Do not print even Solution step header
+    }
+    
+    StructuralEngngModel ::printOutputAt( file, tStep );
+    fprintf( file, "Reached load level : %20.6f\n\n",
+        this->loadLevel );
+
+    // Let the solver report its own state, e.g. the definiteness of the converged solution.
+    // The solver is created on demand and dropped whenever the solver type changes, so it
+    // need not exist at this point.
+    if ( this->nMethod ) {
+        this->nMethod->printState( file );
+    }
 }
 
 } // end namespace oofem

@@ -495,6 +495,7 @@ public:
      */
     virtual void computeNmatrixAt(const FloatArray &iLocCoord, FloatMatrix &answer);
 
+
 protected:
     /**
      * Return desired number of integration points for consistent mass matrix

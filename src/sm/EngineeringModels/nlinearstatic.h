@@ -186,6 +186,11 @@ public:
 #endif
   void writeComponentToFile(const char *fname, TimeStep *tStep, NumericalCmpn cmpn, Domain *d) override;
 
+  //  ////////////////
+  //void updateArcLengthInternalForces( FloatArray &answer, TimeStep *tStep, NumericalCmpn cmpn, Domain *d ) override;
+  //void setCALMmaterial( bool returnAll );
+  //////////////////
+
 
 protected:
     void assemble(SparseMtrx &answer, TimeStep *tStep, const MatrixAssembler &ma,

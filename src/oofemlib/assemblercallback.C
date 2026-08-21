@@ -43,6 +43,10 @@
 #include "bodyload.h"
 #include "boundaryload.h"
 
+#include "material.h"
+#include "sm/Materials/arclengthmaterialinterface.h"
+#include "crosssection.h"
+
 namespace oofem {
 
 void VectorAssembler :: vectorFromElement(FloatArray& vec, Element& element, TimeStep* tStep, ValueModeType mode) const { vec.clear(); }
@@ -333,6 +337,27 @@ void EffectiveTangentAssembler :: assembleFromActiveBC(SparseMtrx &k, ActiveBoun
 {
     // TODO: Crucial part to add: We have to support a scaling factor for this method to support effective tangents.
     bc.assemble(k, tStep, TangentStiffnessMatrix, s_r, s_c, this->k, lock);
+}
+
+
+
+//////////////////////////////
+// for arc-length method
+void ArcLengthInternalForceAssembler ::vectorFromElement( FloatArray &vec, Element &element, TimeStep *tStep, ValueModeType mode ) const
+{
+    //IntegrationRule ir( 1, &element );
+    //int n = 1;
+    //double w = 0.;
+    //GaussPoint gpdummy( &ir, n, w, _PlaneStrain );
+    //auto mat = element.giveCrossSection()->giveMaterial( &gpdummy );
+
+    auto mat = element.giveCrossSection()->giveMaterial( NULL );
+
+        //giveMaterial();
+    auto iface = dynamic_cast<ArcLengthMaterialInterface *>( mat->giveInterface( ArcLengthMaterialInterfaceType ) );
+    if ( iface ) {
+        element.giveCharacteristicVector( vec, InternalForcesVector, mode, tStep );
+    }
 }
 
 

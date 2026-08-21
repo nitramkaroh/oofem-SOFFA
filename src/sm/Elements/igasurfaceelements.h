@@ -96,6 +96,9 @@ public:
 
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
 
+    // For second gradient materials, we need to know if the element supports second gradient or not. 
+    virtual bool supportsSecondGradient() const override { return true; }
+
 protected:
     int giveNsd() override { return 1; }
 };
@@ -140,6 +143,9 @@ public:
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
+
+    // For second gradient materials, we need to know if the element supports second gradient or not. 
+    virtual bool supportsSecondGradient() const override { return true; }
 
 protected:
     int giveNsd() override { return 1; }

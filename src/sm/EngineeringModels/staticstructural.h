@@ -47,6 +47,7 @@
 #define _IFT_StaticStructural_solvertype "solvertype"
 #define _IFT_StaticStructural_stiffmode "stiffmode"
 #define _IFT_StaticStructural_nonlocalExtension "nonlocalext"
+#define _IFT_StaticStructural_loadLevelGuess "loadlevelguess"
 
 #define _IFT_StaticStructural_recomputeaftercrackpropagation "recomputeaftercrackprop"
 namespace oofem {
@@ -98,6 +99,10 @@ public:
     void terminate(TimeStep *tStep) override;
 
     void updateComponent(TimeStep *tStep, NumericalCmpn cmpn, Domain *d) override;
+    ////////////////
+    void updateArcLengthInternalForces( FloatArray &answer, TimeStep *tStep, NumericalCmpn cmpn, Domain *d ) override;
+    void setCALMmaterial( bool returnAll );
+    ////////////////
     void updateSolution(FloatArray &solutionVector, TimeStep *tStep, Domain *d) override;
     void updateInternalRHS(FloatArray &answer, TimeStep *tStep, Domain *d, FloatArray *eNorm) override;
     void updateMatrix(SparseMtrx &mat, TimeStep *tStep, Domain *d) override;
@@ -161,8 +166,8 @@ public:
 
   
     //FieldPtr giveField (FieldType key, TimeStep *) override;
-
-
+protected:
+    void printOutputAt( FILE *file, TimeStep *tStep ) override;
 
 };
 } // end namespace oofem

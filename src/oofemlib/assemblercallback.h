@@ -231,5 +231,15 @@ public:
     void assembleFromActiveBC(SparseMtrx &k, ActiveBoundaryCondition &bc, TimeStep* tStep, const UnknownNumberingScheme &s_r, const UnknownNumberingScheme &s_c, void *lock=nullptr) const override;
 };
 
+
+
+
+//////////////////////////
+class OOFEM_EXPORT ArcLengthInternalForceAssembler : public VectorAssembler
+{
+public:
+    void vectorFromElement( FloatArray &vec, Element &element, TimeStep *tStep, ValueModeType mode ) const override;
+};
+
 }
 #endif // assemblercallback_h

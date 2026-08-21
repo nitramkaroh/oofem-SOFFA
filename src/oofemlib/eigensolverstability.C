@@ -98,7 +98,9 @@ ConvergedReason EigenSolverStability ::solve( SparseMtrx &A, FloatArray &b, Floa
 bool EigenSolverStability::checkPD( SparseMtrx &A )
 {
     EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &A );
-    Eigen::SparseMatrix<double> A_eig = Ae->giveMatrix();
+    if ( !Ae ) {
+        OOFEM_ERROR( "definiteness check requires an EigenMtrx, got %s", A.giveClassName() );
+    }
 
     SimplicialLDLTderived<Eigen::SparseMatrix<double> >& A_factorization = Ae->giveLDLTFactorization();
 
@@ -107,14 +109,67 @@ bool EigenSolverStability::checkPD( SparseMtrx &A )
     int numNegEigs = 0;
     negEig = A_factorization.updateD( minLam, false, numNegEigs );
 
+    // Keep the inertia of the factorization, so that the definiteness of the converged
+    // solution can be reported in the .out file after the step has been completed.
+    // The values are recorded even when the factorization is not reliable, so that the
+    // reported verdict always agrees with the one the solver itself acted upon.
+    if ( A_factorization.info() != Eigen::Success ) {
+        OOFEM_WARNING( "LDL^T factorization did not succeed, definiteness check is unreliable" );
+    }
+
+    this->storePDStatus( !negEig, numNegEigs, minLam, Ae->giveNumberOfRows() );
+
     return !negEig;
+}
+
+int EigenSolverStability::computeEigenValues( SparseMtrx &Ag, FloatArray &evaluesFA )
+{
+    EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &Ag );
+    if ( !Ae ) {
+        OOFEM_ERROR( "eigenvalue computation requires an EigenMtrx, got %s", Ag.giveClassName() );
+    }
+
+    // A local copy is kept, the Spectra operator below only holds a reference to it
+    Eigen::SparseMatrix<double> A = Ae->giveMatrix();
+    int neigs = 1, maxTrials = 5, ncvMult = 2, ncv = 30;
+    int nconv = 0, count = 0;
+
+    int Asize = (int)A.rows();
+    //Spectra::SparseSymShiftSolve<double> op( A );
+    Spectra::SparseSymMatProd<double> op( A );
+
+    while ( nconv == 0 && count < maxTrials ) {
+        int ncv2 = std::min( ncv, Asize );
+        //Spectra::SymEigsShiftSolver<Spectra::SparseSymShiftSolve<double> > eigs( op, neigs, ncv2, 1e-8 );
+        Spectra::SymEigsSolver<Spectra::SparseSymMatProd<double> > eigs( op, neigs, ncv2 );
+        eigs.init();
+
+        nconv = eigs.compute( Spectra::SortRule::SmallestAlge );
+        if ( eigs.info() == Spectra::CompInfo::Successful ) {
+            Eigen::VectorXd evalues = eigs.eigenvalues();
+            evaluesFA               = FloatArray( evalues.begin(), evalues.end() );
+        } else {
+            count++;
+            ncv = (int)ncvMult * ncv;
+            OOFEM_LOG_INFO( "eigenvalues not found\n" );
+            OOFEM_LOG_INFO( "ncv =  %i\n", ncv );
+        }
+    }
+
+    return nconv;
 }
 
 //
 
 int EigenSolverStability ::computeEigenValuesVectors( SparseMtrx &Ag, FloatArray &evaluesFA, FloatMatrix &evectorsFM )
 {
-    Eigen::SparseMatrix<double> A = dynamic_cast<EigenMtrx *>( &Ag )->giveMatrix();
+    EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &Ag );
+    if ( !Ae ) {
+        OOFEM_ERROR( "eigenpair computation requires an EigenMtrx, got %s", Ag.giveClassName() );
+    }
+
+    // A local copy is kept, the Spectra operator below only holds a reference to it
+    Eigen::SparseMatrix<double> A = Ae->giveMatrix();
     int neigs = 1, maxTrials = 5, ncvMult = 2, ncv = 200; // Predefined values, should be in input file
     int nconv = 0, count = 0;
 
@@ -166,7 +221,11 @@ int EigenSolverStability ::computeEigenValuesVectors( SparseMtrx &Ag, FloatArray
 
 void EigenSolverStability::CholeskyUpdate( SparseMtrx &Ag, FloatArray &b, FloatArray &x )
 {
-    EigenMtrx *Ae                                                        = dynamic_cast<EigenMtrx *>( &Ag );
+    EigenMtrx *Ae = dynamic_cast<EigenMtrx *>( &Ag );
+    if ( !Ae ) {
+        OOFEM_ERROR( "Cholesky update requires an EigenMtrx, got %s", Ag.giveClassName() );
+    }
+
     Eigen::VectorXd b_eig                                                = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( b.givePointer(), b.giveSize() );
     double minLam                                                        = 0.;
     int numNegEigs                                                       = 0;

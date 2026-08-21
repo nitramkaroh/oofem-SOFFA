@@ -40,6 +40,8 @@
 #include "sm/Materials/structuralsurfacems.h"
 #include "sm/Materials/HyperelasticSurfaceMaterials/hyperelasticsurfacematerial.h"
 
+#include "sm/Materials/arclengthmaterialinterface.h"
+
 
 ///@name Input fields for SurfaceTensionMaterial
 //@{
@@ -48,12 +50,19 @@
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma2 "gamma2"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha1 "alpha1"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha2 "alpha2"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha_s1 "alphas"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_delta "delta"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF "gamma_ltf"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gaminit "gaminit"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_omega1 "omega1"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_lambda "lambda"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_mu "mu"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_ArcLengthParameter "arclenghtpar"
+
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_FixGamma "fixgamma"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_FixOmega "fixomega"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_FixAlpha_s "fixalphas"
+
 //@}
 
 ///@name Input fields for SurfaceTensionMaterial2
@@ -61,14 +70,33 @@
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_Name "surfacetensionmat2"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_use_H0 "useh0"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_H0 "h0"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_FixGamma "fixgamma"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_FixOmega "fixomega"
+
 
     //@}
 
 namespace oofem {
+
+
+//// this should be moved to separate class
+//class ArcLengthMaterialInterface
+//{
+//protected:
+//public:
+//    ArcLengthMaterialInterface() {};
+//    ~ArcLengthMaterialInterface() {};
+//
+//    bool hasArcLengthParameter()
+//    {
+//        return false;
+//    };
+//};
+
+
+
 /**
- * This class implements basic surface tension material for fluids
+ * This class implements basic surface tension material for fluids.
+ * Eventhough it has second order functions, the primary gradient material is IsotropicPolyconvexHyperelasticSurfaceMaterial2. The second order functions are implemented for testing purpose only and should be deleted.
+ * supportsSecondGradient still return 0 here.
  */
 class IsotropicPolyconvexHyperelasticSurfaceMaterial : public HyperElasticSurfaceMaterial
 {
@@ -78,9 +106,14 @@ protected:
     double gamma1, gamma2, gaminit;
     int gamma_ltf = 0;
     double alpha1, alpha2; 
+    double alpha_s1; // material parameter for term (Js-1)^2
     double delta; 
     double omega1; // For second order stress tensor
     double lambda = 0., mu = 0.; // Neo-Hookean model
+
+    bool fixGamma   = false;
+    bool fixOmega   = false;
+    bool fixAlpha_s = false;
 
 
 public:
@@ -96,10 +129,10 @@ public:
     Tensor2_3d giveFirstPKSurfaceStressBending( const Tensor2_3d &F, Tensor2_3d &IdentityUD, const Tensor1_3d &normal, const Tensor3_3d &G, const Tensor2_3d &MK ) const;
 
 
-    FloatArrayF<27> giveSecondOrderSurfaceStressVector_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
+    //FloatArrayF<27> giveSecondOrderSurfaceStressVector_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
 
-    FloatMatrixF<27, 27> give3dSurfaceMaterialStiffnessMatrix_dAddF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
-    FloatMatrixF<27, 9> give3dSurfaceMaterialStiffnessMatrix_dAdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
+    //FloatMatrixF<27, 27> give3dSurfaceMaterialStiffnessMatrix_dAddF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
+    //FloatMatrixF<27, 9> give3dSurfaceMaterialStiffnessMatrix_dAdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
 
 
     MaterialStatus *CreateStatus( GaussPoint *gp ) const override;
@@ -129,7 +162,7 @@ public:
 // Material with energy depending on the actual curvature
 // e = Js (gamma + 0.5 omega (tr b - H0)^2), where b is the actual curvature
 
-class IsotropicPolyconvexHyperelasticSurfaceMaterial2 : public IsotropicPolyconvexHyperelasticSurfaceMaterial
+class IsotropicPolyconvexHyperelasticSurfaceMaterial2 : public IsotropicPolyconvexHyperelasticSurfaceMaterial, public ArcLengthMaterialInterface
 {
 protected:
     // use_H0:
@@ -139,8 +172,14 @@ protected:
     int use_H0 = 0;
     double H0_val  = 0.;
 
-    bool fixGamma = false;
-    bool fixOmega = false;
+    enum CALM_parameter {
+        calm_par_no, // none of the parameters is the arc length load
+        calm_par_gamma, // gamma is arc length load parameter
+        calm_par_omega, // omega is arc length load parameter
+    };
+
+    CALM_parameter arcLengthParamater = calm_par_no; // determines which parameter is associated to arclength, if any, 0 - none, 1 - gamma
+
 
 
 public:
@@ -160,6 +199,25 @@ public:
     const char *giveInputRecordName() const override { return _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_Name; }
     const char *giveClassName() const override { return "IsotropicPolyconvexHyperelasticSurfaceMaterial2"; }
 
+    double giveGamma( TimeStep *tStep ) const;
+    double giveOmega( TimeStep *tStep ) const;
+    double giveAlpha_s( TimeStep *tStep ) const;
+
+    Interface *giveInterface( InterfaceType t ) override
+    {
+        if ( t == ArcLengthMaterialInterfaceType ) {
+            return static_cast<ArcLengthMaterialInterface *>( this );
+        } else {
+            return nullptr;
+        }
+    }
+
+    bool supportsSecondGradient() const override { return true; }
+
 };
+
+
+
+
 } // end namespace oofem
 #endif

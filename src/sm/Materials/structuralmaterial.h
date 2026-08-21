@@ -698,6 +698,26 @@ public:
     friend class StructuralCrossSection;
     friend class SimpleCrossSection;
     friend class LayeredCrossSection;
+
+
+    ////////////////
+    // Second gradient
+    virtual FloatArrayF<27> giveSecondOrderStressVector_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, GaussPoint *gp, TimeStep *tStep ) const
+    {
+        OOFEM_ERROR( "not implemented " );
+    }     
+
+    virtual FloatMatrixF<27, 27> give3dMaterialStiffnessMatrix_dAddF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const
+    {
+        OOFEM_ERROR( "not implemented " );
+    }
+
+    virtual FloatMatrixF<27, 9> give3dMaterialStiffnessMatrix_dAdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const
+    {
+        OOFEM_ERROR( "not implemented " );
+    }
+
+    virtual bool supportsSecondGradient() const { return false; }
 };
 } // end namespace oofem
 #endif // structuralmaterial_h

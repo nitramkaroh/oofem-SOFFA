@@ -46,6 +46,10 @@
 #include "intarray.h"
 #include "dofiditem.h"
 
+#include "bifurcationinterface.h"
+#include "eigenmtrx.h"
+#include "linesearch.h"
+
 ///@name Input fields for CylindricalALM
 //@{
 #define _IFT_CylindricalALM_Name "calm"
@@ -73,7 +77,17 @@
 #define _IFT_CylindricalALM_rtolf "rtolf"
 #define _IFT_CylindricalALM_rtold "rtold"
 #define _IFT_CylindricalALM_rootselectiontype "rootselectiontype"
+
+#define _IFT_CylindricalALM_linesearchtype "linesearchtype"
+
 //@}
+
+
+
+////////////////////////
+// Cylindrical arc-length for which the loading parameter is material parameter
+#define _IFT_MaterialCylindricalALM_Name "matcalm"
+////////////////////////
 
 
 namespace oofem {
@@ -226,6 +240,16 @@ protected:
     /// previous increment of dX, needed by root selection type 1
     FloatArray old_dX;
 
+    
+    //////
+    LineSearchType LsType = LST_Default;
+    /// Line search solver for postbifurcation analysis
+    std ::unique_ptr<ExactLineSearchNM> linesearchSolverPostBifurcation;
+    /// Line search solver
+    std ::unique_ptr<LineSearchNM> linesearchSolver;
+    //////
+    //////
+
 public:
     CylindricalALM(Domain * d, EngngModel * m);
     virtual ~CylindricalALM();
@@ -237,6 +261,7 @@ public:
                     int &nite, TimeStep *) override;
     double giveCurrentStepLength() override { return deltaL; }
     void setStepLength(double s) override { deltaL = s; }
+    void printState(FILE *outputStream) override;
     void initializeFrom(InputRecord &ir) override;
     bool referenceLoad() const override { return true; }
     void saveContext(DataStream &stream, ContextMode mode) override;
@@ -254,7 +279,7 @@ public:
         }
     }
     const char *giveClassName() const override { return "CylindricalALM"; }
-    const char *giveInputRecordName() const { return _IFT_CylindricalALM_Name; }
+    virtual const char *giveInputRecordName() const { return _IFT_CylindricalALM_Name; }
 
     SparseLinearSystemNM *giveLinearSolver() override;
 
@@ -272,7 +297,7 @@ protected:
                 double maxeta, double mineta, int &status);
 
     /// Evaluates the convergence criteria.
-    bool checkConvergence(const FloatArray &R, const FloatArray *R0, const FloatArray &F,
+    virtual bool checkConvergence(const FloatArray &R, const FloatArray *R0, const FloatArray &F,
                           const FloatArray &X, const FloatArray &ddX,
                           double Lambda, double RR0, double RR, double drProduct,
                           const FloatArray &internalForcesEBENorm, int nite, bool &errorOutOfRange);
@@ -283,6 +308,162 @@ protected:
                        const FloatArray &R, const FloatArray *R0, const FloatArray &F,
                        double &DeltaLambda, double &DeltaLambdam1, double &deltaLambda,
                        double &Lambda, double &ReachedLambda, double RR, double &drProduct, TimeStep *tStep);
+
+        /// Constructs and returns a line search solver.
+    LineSearchNM *giveLineSearchSolver();
 };
+
+
+////////////////////////
+// Cylindrical arc-length for which the loading parameter is material parameter
+
+
+class OOFEM_EXPORT MaterialCylindricalALM : public CylindricalALM
+{
+protected:
+    /// Line search solver for postbifurcation analysis
+    std ::unique_ptr<ExactLineSearchNM> linesearchSolverPostBifurcation;
+    bool dL_update = false; // helper flag
+
+
+public:
+    MaterialCylindricalALM( Domain *d, EngngModel *m );
+    virtual ~MaterialCylindricalALM() {};
+
+    // Overloaded methods:
+    ConvergedReason solve( SparseMtrx &K, FloatArray &R, FloatArray *R0,
+        FloatArray &X, FloatArray &dX, FloatArray &F,
+        const FloatArray &internalForcesEBENorm, double &ReachedLambda, referenceLoadInputModeType rlm,
+        int &nite, TimeStep * ) override;
+    //void initializeFrom( InputRecord &ir ) override;
+
+    const char *giveClassName() const override { return "MaterialCylindricalALM"; }
+    const char *giveInputRecordName() const { return _IFT_MaterialCylindricalALM_Name; }
+
+    void setCALMmaterial( bool returnAll); // determines if the arclength material evaluates all internal forces or just the lambda part
+    void setMaterialLambda( double lambdaSet ); // determines if the arclength material evaluates all internal forces or just the lambda part
+
+    void performBifurcationAnalysis( SparseMtrx &k, FloatArray &X, FloatArray &dX, FloatArray &F, const FloatArray &internalForcesEBENorm,
+        referenceLoadInputModeType rlm, int &nite, TimeStep *tStep, FloatArray &rhs, bool &converged, const FloatArray &R, const FloatArray &R0,
+        bool &errorOutOfRangeFlag, BifurcationInterface *stabSolver, bool &isBifurcationSet, double &alphamax, double &alphaStability,
+        FloatArray &ddX, std::vector<bool> &bifurcTypes, bool &postBifurcationLineSearch, double Lambda, double RR0, double RR, double drProduct );
+
+    ExactLineSearchNM *MaterialCylindricalALM ::giveSetPostBifurcationLineSearchSolver( FloatArray &X0, bool doDeflation, double p_set = 2. );
+
+    bool findPressureDofIndex( int &indMin );
+    bool findPressureDofIndices( IntArray &pinds );
+    //std::unique_ptr<SparseMtrx> getCondensedMatrixPressure( SparseMtrx &k );
+    //std::unique_ptr<SparseMtrx> getCondensedMatrixPressure( std::unique_ptr<SparseMtrx> k );
+    void getCondensedMatrixPressure( SparseMtrx &k );
+
+
+    void solve_linesearch( FloatArray &X, const FloatArray &Xinitial, FloatArray &ddX, FloatArray &F, const FloatArray &RT, TimeStep *tStep, SparseMtrx &k,
+        const double &ReachedLambda, double &Lambda, double &DeltaLambda, const double &DeltaLambdam1, double &deltaLambda,
+        const FloatArray &deltaX_, const FloatArray &deltaXt, FloatArray &dX, const FloatArray &dXm1, bool deflation = false, const FloatArray &Xdefl = FloatArray( 0 ) );
+
+    bool checkConvergence( const FloatArray &R, const FloatArray *R0, const FloatArray &F,
+        const FloatArray &X, const FloatArray &ddX,
+        double Lambda, double RR0, double RR, double drProduct,
+        const FloatArray &internalForcesEBENorm, int nite, bool &errorOutOfRange ) override;
+
+
+
+};
+////////////////////////
+
+////////////////////////
+#define _IFT_CylindricalALMStability_Name "calmstability"
+#define _IFT_CylindricalALMStability_timeAsArcLength "timeasarclength"
+#define _IFT_CylindricalALMStability_pdConstrainedDofs "pdconstraineddofs"
+
+class OOFEM_EXPORT CylindricalALMStability : public CylindricalALM
+{
+protected:
+    /**
+     * If set, the arc-length increment is identified with the solution step time
+     * increment: deltaL = tStep->giveTimeIncrement().
+     *
+     * The step length then stops being solver-owned state and becomes a quantity
+     * handed down by the TimeStepController, so that a single lever (the metastep
+     * deltaT) controls how far the step advances. Consequences:
+     *  - pseudo-time becomes the cumulated arc length by construction, since
+     *    targetTime accumulates deltaT;
+     *  - @c prescribedtimes becomes an explicit arc-length schedule and
+     *    @c requiredtimes pins exact arc-length stations;
+     *  - @c finalt becomes the total arc length to be traced;
+     *  - the solver must no longer modify deltaL on its own, so the internal
+     *    step-length reduction is replaced by a ConvergenceException (letting
+     *    MetaStep::reduceTimeStep own the retry) and the post-convergence
+     *    adaptation is delegated to MetaStep::adaptTimeStep.
+     *
+     * The step length keywords @c steplength / @c minsteplength are then unused;
+     * @c dtmax / @c dtmin of the metastep reduction strategy take over.
+     * Default is false, which keeps the legacy solver-owned behaviour.
+     */
+    bool timeAsArcLength = false;
+
+    /**
+     * Optional set of DOFs to be removed from the tangent stiffness before its
+     * definiteness is evaluated, given as <node, nodeDof> pairs.
+     *
+     * This decouples the stability test from the path-following control. The arc-length
+     * constraint (@c hpc) is a numerical device for traversing the branch, whereas removing
+     * rows and columns asks a physical question: is the equilibrium stable when these DOFs
+     * are held fixed. Keying the latter on the HPC mask forced arc-length control onto the
+     * very DOF whose definiteness was of interest, which is degenerate wherever that DOF
+     * has a turning point, because there the projection of the tangent onto it vanishes.
+     * With this field the constrained check works under any @c hpcmode, in particular
+     * under full ALM (@c hpcmode 0).
+     *
+     * When left unset the HPC mask is used, so existing input behaves as before.
+     */
+    IntArray pdConstrainedDmanDofSrcArray;
+    /// Equation numbers of pdConstrainedDmanDofSrcArray; built on the first solve.
+    IntArray pdConstrainedDofMask;
+    /// Nonzero while pdConstrainedDofMask still has to be built.
+    int pd_init = 0;
+
+    /// Converts the <node, nodeDof> pairs into equation numbers. Mirrors convertHPCMap.
+    void convertPDConstrainedMap();
+
+    /**
+     * Returns the DOFs to be removed before the definiteness check, empty if the check
+     * should not be constrained. Prefers the dedicated mask and falls back to the HPC
+     * mask, the latter only in calm_hpc_on mode where it is an actual constraint set.
+     */
+    const IntArray &givePDConstrainedDofMask() const;
+
+public:
+    CylindricalALMStability( Domain *d, EngngModel *m );
+
+    void initializeFrom( InputRecord &ir ) override;
+
+    ConvergedReason solve(
+        SparseMtrx &K,
+        FloatArray &R,
+        FloatArray *R0,
+        FloatArray &X,
+        FloatArray &dX,
+        FloatArray &F,
+        const FloatArray &internalForcesEBENorm,
+        double &ReachedLambda,
+        referenceLoadInputModeType rlm,
+        int &nite,
+        TimeStep *tStep ) override;
+
+    /// Returns true if the arc-length increment is taken from the solution step.
+    bool giveTimeAsArcLengthFlag() const { return timeAsArcLength; }
+
+    const char *giveClassName() const override
+    {
+        return "CylindricalALMStability";
+    }
+
+    const char *giveInputRecordName() const override
+    {
+        return _IFT_CylindricalALMStability_Name;
+    }
+};
+
 } // end namespace oofem
 #endif // calmls_h

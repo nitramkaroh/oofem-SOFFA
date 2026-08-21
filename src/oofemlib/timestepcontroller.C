@@ -193,11 +193,15 @@ TimeStepController :: reduceTimeStep()
 void
 TimeStepController :: adaptTimeStep(int nIter)
 {
-  
-  MetaStep *mS = this->giveCurrentMetaStep();
+
   this->giveCurrentMetaStep()->adaptTimeStep(nIter, this->currentStep->giveTargetTime());
-  this->currentStep->setTimeIncrement(mS->giveDeltaT());
-  
+  // Note: the adapted increment belongs to the NEXT step and is picked up by
+  // giveNextStep() via MetaStep::giveDeltaT(). It must not be written into the
+  // current step, which has already been solved with its own increment: doing so
+  // breaks the invariant targetTime - timeIncrement == previous targetTime, which
+  // VM_Incremental evaluation, context restore and (when the arc-length increment
+  // is the time increment) the cumulated arc length all rely on.
+
 }
 
 

@@ -559,4 +559,47 @@ void StructuralElementEvaluator::computeDeformationGradientVector( FloatArray &a
     }
 }
 
+void StructuralElementEvaluator::setupEvaluator()
+{
+    Element *elem = this->giveElement();
+    CrossSection *cs = elem->giveCrossSection();
+
+    // 1. Safety check: Ensure the element actually has a cross-section
+    if ( cs ) {
+        IntegrationPoint dummyIP( nullptr, 1, 0., _3dMat );
+        Material *mat = cs->giveMaterial( &dummyIP );
+
+        if ( mat ) {
+            StructuralMaterial *strmat = dynamic_cast<StructuralMaterial *>( mat );
+
+            if ( strmat ) {
+                bool b1                 = elem->supportsSecondGradient();
+                bool b2                 = strmat->supportsSecondGradient();
+                this->hasSecondGradient = b1 && b2;
+            }
+        }
+    }
+}
+
+
+// Second order stuff
+void StructuralElementEvaluator::computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
+{
+    FloatArray vF, vG;
+    this->computeDeformationGradientVector( vF, gp, tStep );
+    this->computeGradientOfDeformationGradientVector( vG, gp, tStep );
+    answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveSecondOrderStresses( vF, vG, gp, tStep );
+}
+
+
+void StructuralElementEvaluator ::computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
+{
+    answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveStiffnessMatrix_dAddF_3d( rMode, gp, tStep );
+}
+
+void StructuralElementEvaluator ::computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
+{
+    answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveStiffnessMatrix_dAdF_3d( rMode, gp, tStep );
+}
+
 } // end namespace oofem

@@ -45,6 +45,9 @@
 
 #define _IFT_EigenMtrx_Name "EigenMtrx"
 
+#include <fstream>
+#include <string>
+
 namespace oofem {
 /**
  * Implementation of sparse matrix stored using Eigen library.
@@ -183,11 +186,16 @@ public:
 
     void printYourself() const override;
 
+    void printToFile( const std::string &filename );
+
     ///////////
     //void getBlock( int i, int j, int p, int q, EigenMtrx &BlockMatrix );
     std::unique_ptr<EigenMtrx> getBlock( int i, int j, int p, int q );
     std::unique_ptr<EigenMtrx> doStaticCondensation( int i );
+    void doStaticCondensationOwn( int i);
     std::unique_ptr<EigenMtrx> doStaticCondensationLagrange( int i );
+
+    std::unique_ptr<EigenMtrx> EigenMtrx::removeRowsAndColumns( const IntArray &indsToDelete );
     ///////////
 };
 } // end namespace oofem

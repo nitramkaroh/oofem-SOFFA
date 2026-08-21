@@ -16,6 +16,7 @@ rt_elem     = 9996
 rt_reaction = 9995
 rt_loadlevel= 9994
 rt_errorestimate = 9993
+rt_minpivot = 9992
 
 global rectime, recnumber, recdofnum, recvalue
 global firstTimeStepFlag, debug
@@ -34,6 +35,7 @@ global error_on_missing_record
 #('ber', solution_step, elem_id, 'keyword', keyword_indx, value) - beam element record
 #('rr', solution_step, node_id, dof_id, value) - reaction
 #('llr',solution_step, value) - load level record
+#('mpr',solution_step, value) - smallest diagonal pivot of LDL^T factorization
 #('time') - time, only extractor mode
 #('ee', solution_step, value) - error estimate
 #('include', result) - inclusion and processing of another file
@@ -80,7 +82,13 @@ timeStep_re = re.compile(r"""
         
 dofMan_re = re.compile(r"""
         ^           # beginning of line
-        (?:Node|RigidArmNode|HangingNode|SlaveNode)\s*         # char string
+        # Matches any dof manager class name: DofManager::printOutputAt prints
+        # giveClassName(), and every node type ends in "Node" (Node, SlaveNode,
+        # GeneralSlaveNode, HangingNode, RigidArmNode, qcNode, Lattice*CouplingNode),
+        # ElementSide being the only exception. Deliberately no looser than this:
+        # this pattern is tried before element_re, so anything broader would
+        # swallow the element records.
+        (?:\w*Node|ElementSide)\s*         # char string
         (\d+).*         # node label
         """,re.X)
 
@@ -164,6 +172,14 @@ reaction_re = re.compile (r"""
 loadlevel_re = re.compile (r"""
         load\ level\s+:\s+
         ([-]*\d+\.\d+(e[+-]\d+)?) # value
+        """,re.X)
+
+# Smallest diagonal pivot of the LDL^T factorization of the converged tangent
+# stiffness, as reported by BifurcationInterface::printPDStatus. The value always
+# carries an explicit sign, hence [-+]? and not the [-]* used for the load level.
+minpivot_re = re.compile (r"""
+        smallest\ diagonal\ pivot\ of\ D\s+:\s+
+        ([-+]?\d+\.\d+(e[+-]\d+)?) # value
         """,re.X)
 
 include_re = re.compile (r"""
@@ -284,6 +300,16 @@ def parse_input_rec (context, recline):
         except ValueError:
             print ( "Input error on\n",recline ) 
             return None
+
+    elif re.search('^#MINPIVOT',recline):
+        if (mode == 'c'): tstep = float(getKeywordValue(context.infilename, recline, 'tStep'))
+        else: tstep = 0
+        try:
+            value = float(getKeywordValue(context.infilename, recline, 'value', 0.0))
+            return ('mpr', tstep, value)
+        except ValueError:
+            print ( "Input error on\n",recline )
+            return None
     elif re.search('^#ERRORESTIMATE', recline):
         if (mode == 'c'): tstep = float(getKeywordValue(context.infilename, recline, 'tStep'))
         else: tstep = 0
@@ -359,6 +385,16 @@ def check_loadlevel_rec (context):
         else: timeflag = (rec[1] == context.rectime)
 
         if ((rec[0] == 'llr') and timeflag):
+            context.recVal[irec]=context.recvalue
+
+#extract smallest diagonal pivot record
+def check_minpivot_rec (context):
+    for irec,rec in enumerate(context.userrec):
+
+        if (mode == 'e'): timeflag = 1
+        else: timeflag = (rec[1] == context.rectime)
+
+        if ((rec[0] == 'mpr') and timeflag):
             context.recVal[irec]=context.recvalue
 
 #check time rec
@@ -441,6 +477,16 @@ def match_primary_rec (context, line):
         context.rectype = rt_errorestimate
         context.recvalue  = float(match.group(1))
         check_errorestimate_rec (context)
+        return None
+
+    # Tried late on purpose: this line occurs at most once per step, whereas the
+    # patterns above are tried on every line of the output file.
+    match = minpivot_re.search(line)
+    if match:
+        context.rectype = rt_minpivot
+        context.recvalue = float(match.group(1))
+        if debug: print ( "found smallest diagonal pivot ", context.recvalue )
+        check_minpivot_rec (context)
         return None
 
 
@@ -625,6 +671,7 @@ oofem_output_file_name
 #ELEMENT   {tStep #} number # [irule #] gp # keyword # component # {value #}
 #REACTION  {tStep #} number # dof # {value #}
 #LOADLEVEL {tStep #} {value #}
+#MINPIVOT  {tStep #} {value #}
 #INCLUDE slave_input_file.in
 <#TIME>
 #%END_CHECK%

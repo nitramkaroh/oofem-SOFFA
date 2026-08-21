@@ -404,6 +404,7 @@ void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatri
     //    FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
 
     // returns index where nonzero basis functions start (1-based)
+    auto knotSpan       = gp->giveIntegrationRule()->giveKnotSpan();
     int indexStart = interp->evalDerivatives( 2, ders, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
 
@@ -416,8 +417,12 @@ void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatri
     double Rxi = 0., Yxi = 0., Rxixi = 0., Yxixi = 0.;
     double R = 0.; // undeformed radius (X1)
 
+    IntArray mask;
+    interp->giveKnotSpanBasisFuncMask( *knotSpan, mask );
+
     for ( int k = 0; k < ders.giveNumberOfColumns(); k++ ) {
-        int indCords = indexStart + k;
+        // int indCords = indexStart + k; // works only for 1D case, not for 2D case with subpatches
+        int indCords          = mask.at( k + 1 );
         double vertexCoord_1 = nodesCoords.at( 2 * indCords - 1 );
         double vertexCoord_2  = nodesCoords.at( 2 * indCords );
 

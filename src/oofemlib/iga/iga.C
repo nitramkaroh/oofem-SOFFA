@@ -39,6 +39,7 @@
 #include "iga.h"
 #include "gausspoint.h"
 #include "feitspline.h"
+#include "sm/Elements/structuralelementevaluator.h"
 
 #ifdef __OOFEG
  #include "oofeggraphiccontext.h"
@@ -395,6 +396,21 @@ void IGAElement::giveNodalCoordinates( FloatArray &NodalCoordinates ) const
         NodalCoordinates.append( pos_i_cut );
     }
 }
+
+void IGAElement::postInitialize()
+{
+    // 1. Run standard geometry/element initialization
+    Element::postInitialize();
+
+    // 2. Safely check if "this" final object also inherits from StructuralElementEvaluator
+    auto *evaluatorBranch = dynamic_cast<StructuralElementEvaluator *>( this );
+
+    if ( evaluatorBranch ) {
+        // Automatically triggers the flag resolution for ANY element using this mixin
+        evaluatorBranch->setupEvaluator();
+    }
+}
+
 
 // integration elements are setup in the same way as for IGAElement for now HUHU
 

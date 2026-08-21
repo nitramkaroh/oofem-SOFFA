@@ -35,6 +35,9 @@
 #include "metastep.h"
 #include "function.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace oofem {
 MetaStep :: MetaStep(int n, EngngModel *e) :
     eModel(e),
@@ -176,15 +179,26 @@ MetaStep :: adaptTimeStep(int niter, double targetTime)
     dT = dtmin;    
   }
 
-  //check not to overshoot any required time
+  // Tolerance for deciding whether a target time has already been reached. targetTime is
+  // an accumulated sum, so it generally does not land exactly on a prescribed value: after
+  // stepping to 32.7 it may sit an ULP or two short of the literal 32.7. Comparing exactly
+  // would then report an overshoot and turn that residue into the whole time increment
+  // (7.1e-15 at t = 32.7, i.e. one double ULP), wasting a full solution step. The tolerance
+  // is relative so that it keeps working at large times.
+  const double timeTol = 1.e-10 * std::max( 1., std::fabs( targetTime ) );
+
+  // Check not to overshoot any required time.
+  // Note: dT is reduced in place, so later iterations compare against the already reduced
+  // increment. That makes the loop snap to the nearest required time ahead regardless of
+  // the order of requiredTimes, hence no break here.
   for(int ii = 0; ii < requiredTimes.giveSize(); ii++){
-    if (targetTime < requiredTimes(ii) && targetTime + dT > requiredTimes(ii)){
+    if (targetTime < requiredTimes(ii) - timeTol && targetTime + dT > requiredTimes(ii) + timeTol){
       dT = requiredTimes(ii) - targetTime;
     }
   }
 
   //check not to overshoot the final time
-  if( targetTime + dT > this->finalTime ) {
+  if( targetTime + dT > this->finalTime + timeTol ) {
     dT = finalTime - targetTime;
   }
 

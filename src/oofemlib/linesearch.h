@@ -116,6 +116,7 @@ class OOFEM_EXPORT ExactLineSearchNM : public LineSearchNM
 protected:
     bool deflation = false;
     FloatArray X0defl;
+    double p = 2.; // exponent for deflation
 
 public:
     /// Constructor
@@ -131,7 +132,28 @@ public:
 
     void setX0defl( FloatArray &X0 ) { this->X0defl = X0; }
     void setDeflation( bool doDeflation ) { this->deflation = doDeflation; }
+    void set_p( double pset ) { this->p = pset; }
 
 };
+
+// Line search for cylindrical arc length method 
+class OOFEM_EXPORT MaterialCalmExactLineSearchNM : public ExactLineSearchNM
+{
+protected:
+
+public:
+    /// Constructor
+    MaterialCalmExactLineSearchNM( Domain *d, EngngModel *m );
+
+    //ConvergedReason solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &R, FloatArray *R0,
+    //    IntArray &eqnmask, double& lambda, double &etaValue, LS_status &status, TimeStep *tStep, SparseMtrx &k );
+
+    ConvergedReason solve( FloatArray &r, FloatArray &dr, FloatArray &F, FloatArray &RT, IntArray &eqnmask, TimeStep *tStep, SparseMtrx &k, double &Lambda, double &deltaLambda );
+
+    void initializeFrom( InputRecord &ir ) override;
+    const char *giveClassName() const { return "MaterialCalmExactLineSearchNM"; }
+
+};
+
 } // end namespace oofem
 #endif // linesearch_h

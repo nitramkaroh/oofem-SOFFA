@@ -36,6 +36,9 @@
 #define planestresselementevaluator_h
 
 #include "sm/Elements/structuralelementevaluator.h"
+#include "oofemlib/tensor/tensor1.h"
+#include "oofemlib/tensor/tensor2.h"
+#include "oofemlib/tensor/tensor3.h"
 
 namespace oofem {
 /**
@@ -103,6 +106,18 @@ protected:
     }
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
+    ///////////// Stuff for gradient continuum
+    // Maybe the size should be reduced? 
+    void computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
+
+    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override; // SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR, AS IT IS COMMON FOR ALL STRUCTURAL ELEMENTS
+
+    //void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override; // SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR
+
+    //void computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;// SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR
+
+    //void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;// SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR
+
 public:
     void initializeFrom( InputRecord &ir ) override;
 
@@ -147,6 +162,17 @@ protected:
         OOFEM_ERROR( "This element is only for large strains so far" );
         return;
     }
+
+    ///////////// Stuff for gradient continuum
+    void computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
+
+    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override; // SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR, AS IT IS COMMON FOR ALL STRUCTURAL ELEMENTS
+
+    //void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override ; 
+
+    //void computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
+
+    //void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
 public:
     void initializeFrom( InputRecord &ir ) override;

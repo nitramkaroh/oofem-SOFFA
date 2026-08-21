@@ -55,6 +55,9 @@
 #include "unknownnumberingscheme.h"
 #include "function.h"
 
+//#include "sm/Materials/arclengthmaterialinterface.h"
+//#include "material.h"
+
 #ifdef __PARALLEL_MODE
  #include "problemcomm.h"
  #include "communicator.h"
@@ -1073,4 +1076,37 @@ NonLinearStatic :: unpackMigratingData(TimeStep *tStep)
 
     initFlag = true;
 }
+
+//////////////////////////
+//void NonLinearStatic::updateArcLengthInternalForces( FloatArray &answer, TimeStep *tStep, NumericalCmpn cmpn, Domain *d )
+//{
+//    this->setCALMmaterial( false ); // assemble only the lambda-dependent term
+//
+//    // Updates the solution in case it has changed
+//    //this->field->update( VM_Total, tStep, this->solution, EModelDefaultEquationNumbering() );
+//
+//    answer.zero();
+//    this->assembleVector( answer, tStep, ArcLengthInternalForceAssembler(), VM_Total,
+//        EModelDefaultEquationNumbering(), d);
+//    this->updateSharedDofManagers( answer, EModelDefaultEquationNumbering(), InternalForcesExchangeTag ); // do I need this?
+//
+//    // internalVarUpdateStamp = tStep->giveSolutionStateCounter(); // Hack for linearstatic
+//
+//    this->setCALMmaterial( true ); // all internal forces are assembled
+//}
+//
+//void NonLinearStatic::setCALMmaterial( bool returnAll )
+//{
+//    auto &matList = this->giveDomain( 1 )->giveMaterials();
+//    // domain->giveMaterials();
+//    for ( auto &imat : matList ) {
+//        auto iface = dynamic_cast<ArcLengthMaterialInterface *>( imat->giveInterface( ArcLengthMaterialInterfaceType ) );
+//        if ( iface && iface->hasArcLengthParameter() ) {
+//            iface->setReturnAll( returnAll );
+//        }
+//    }
+//}
+//////////////////////////
+
+
 } // end namespace oofem

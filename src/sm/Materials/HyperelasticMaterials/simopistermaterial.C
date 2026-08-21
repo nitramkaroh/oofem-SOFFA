@@ -139,4 +139,135 @@ SimoPisterMaterial::initializeFrom(InputRecord &ir)
     IR_GIVE_FIELD(ir, G, _IFT_SimoPisterMaterial_g);
     IR_GIVE_OPTIONAL_FIELD( ir, bulk_ltf, _IFT_SimoPisterMaterial_bulkLTF );
 }
+
+
+//// Gradient version
+//GradientSimoPisterMaterial::GradientSimoPisterMaterial( int n, Domain *d ) :
+//    SimoPisterMaterial( n, d )
+//{
+//}
+//
+//void GradientSimoPisterMaterial::initializeFrom( InputRecord &ir )
+//{
+//    SimoPisterMaterial::initializeFrom( ir );
+//}
+//
+//FloatArrayF<27>
+//GradientSimoPisterMaterial::giveSecondOrderStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep ) const
+//// returns 27 components of the second order stress conjugate to gradient of F
+//{
+//    // NEDS TO BE FINISHED
+//    Tensor3_3d A;
+//    auto vA  = A.to_voigt_form_27();
+//    return vA;
+//}
+//
+//FloatMatrixF<27, 27>
+//GradientSimoPisterMaterial::give3dMaterialStiffnessMatrix_dAddF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const
+//// returns the 27x27 second order tangent stiffness matrix - dA/ddF (derivative of second order stress wrt to gradient of F)
+//{
+//    // NEDS TO BE FINISHED
+//    Tensor6_3d dA;
+//    return dA.to_voigt_form();
+//}
+//
+//
+//FloatMatrixF<27, 9>
+//GradientSimoPisterMaterial::give3dMaterialStiffnessMatrix_dAdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const
+//// returns the 27x9 mixed tangent stiffness matrix - dA/dF (derivative of second order stress wrt to F)
+//{
+//    // NEDS TO BE FINISHED
+//    Tensor5_3d dA;
+//    return dA.to_voigt_form_27x9();
+//}
+
+REGISTER_Material( GradientSimoPisterMaterial );
+
+GradientSimoPisterMaterial::GradientSimoPisterMaterial( int n, Domain *d ) :
+    SimoPisterMaterial( n, d ),
+    omega( 0. )
+{
+}
+
+void GradientSimoPisterMaterial::initializeFrom( InputRecord &ir )
+{
+    // Initialize standard Mooney-Rivlin parameters
+    SimoPisterMaterial::initializeFrom( ir );
+
+    // Read the gradient penalty/stiffness parameter
+    IR_GIVE_OPTIONAL_FIELD( ir, omega, _IFT_GradientSimoPisterMaterial_omega );
+}
+//
+//FloatArrayF<9>
+//GradientSimoPisterMaterial::giveFirstPKStressVector_3d( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
+//{
+//    FloatArrayF<9> vP = SimoPisterMaterial::giveFirstPKStressVector_3d( vF, gp, tStep );
+//    return vP;
+//}
+//
+//FloatMatrixF<9, 9>
+//GradientSimoPisterMaterial::give3dMaterialStiffnessMatrix_dPdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const
+//{
+//    // Standard hyperelastic tangent (dP/dF) from the base class
+//    return SimoPisterMaterial::give3dMaterialStiffnessMatrix_dPdF( mode, gp, tStep );
+//}
+
+FloatArrayF<27>
+GradientSimoPisterMaterial::giveSecondOrderStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep ) const
+{
+    // vG is the gradient of F (nabla F).
+    // For W_grad = 0.5 * omega * (nabla F : nabla F), the conjugate stress A is simply omega * nabla F.
+
+    Tensor3_3d G( vG );
+    Tensor3_3d A;
+
+    A( i_3, j_3, k_3 ) = this->omega * G( i_3, j_3, k_3 );
+
+    auto vA = A.to_voigt_form_27();
+
+    // Store in status if elements rely on it (e.g., for numerical tangent checks)
+    GradientStructuralMaterialStatus *status = static_cast<GradientStructuralMaterialStatus *>( this->giveStatus( gp ) );
+    if ( status ) {
+        status->letTempGVectorBe( vG );
+        // If you have a custom status that holds higher order stress, it can be saved here.
+    }
+
+    return vA;
+}
+
+FloatMatrixF<27, 27>
+GradientSimoPisterMaterial::give3dMaterialStiffnessMatrix_dAddF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const
+{
+    // The second-order stiffness dA/d(nabla F)
+    // Since A = omega * G, the derivative is an isotropic 6th-order tensor scaled by omega.
+
+    FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d Identity3d( indent3d );
+
+    Tensor6_3d dA;
+
+    // dA_{ijkpqr} = omega * delta_{ip} * delta_{jq} * delta_{kr}
+    dA( i_3, j_3, k_3, p_3, q_3, r_3 ) = this->omega * Identity3d( i_3, p_3 ) * Identity3d( j_3, q_3 ) * Identity3d( k_3, r_3 );
+
+    return dA.to_voigt_form();
+}
+
+FloatMatrixF<27, 9>
+GradientSimoPisterMaterial::give3dMaterialStiffnessMatrix_dAdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const
+{
+    // Mixed tangent stiffness dA/dF.
+    // In this purely additive volumetric energy split, A does not depend on F.
+    // Return a strictly zero 27x9 matrix.
+
+    Tensor5_3d dA;
+    return dA.to_voigt_form_27x9();
+}
+
+MaterialStatus *
+GradientSimoPisterMaterial::CreateStatus( GaussPoint *gp ) const
+{
+    return new GradientStructuralMaterialStatus( gp );
+}
+
+
 } // end namespace oofem

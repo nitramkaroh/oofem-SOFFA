@@ -197,6 +197,10 @@ public:
 
     int giveStartIndex( double u, int isd ) const;
 
+    //////////////////////
+    // Evaluate up to second derivatives of basis functions
+    int evalSecondDerivatives(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
 
 protected:
     /**

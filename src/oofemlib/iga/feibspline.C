@@ -174,7 +174,7 @@ void BSplineInterpolation ::evalN( FloatArray &answer, const FloatArray &lcoords
             span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
         }
     }
-
+    
     for ( int i = 0; i < nsd; i++ ) {
         this->basisFuns( N[i], span[i], lcoords[i], degree[i], knotVector[i] );
     }
@@ -785,8 +785,62 @@ int BSplineInterpolation ::giveStartIndex( double u, int isd) const
     return this->findSpan( numberOfControlPoints[isd], degree[isd], u, knotVector[isd] ) - degree[isd];
 }
 
+int BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
+    IntArray span( nsd );
+    std ::vector<FloatMatrix> ders( nsd ); // vector of derivatives of basis functions in each parametric direction
 
+    if ( gw.knotSpan ) {
+        span = *gw.knotSpan;
+    } else {
+        for ( int i = 0; i < nsd; i++ ) {
+            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+        }
+    }
 
+    int count = giveNumberOfKnotSpanBasisFunctions( span ); // for number of rows in answer matrix
+    
+    // compute second derivatives of basis functions in each parametric direction
+    for ( int i = 0; i < nsd; i++ ) {
+        this->dersBasisFuns( 2, lcoords[i], span[i], degree[i], knotVector[i], ders[i] );
+    }
+
+    if ( nsd == 2 )
+    {
+        answer.resize( count, 6 ); // 6 columns for all derivatives, 1 - N, 2 - dN/du, 3 - dN/dv, 4 - d2N/du2, 5 - d2N/dv2,6 - d2N/dudv
+
+        int cnt = 0;
+        for ( int l = 0; l <= degree[1]; l++ ) {
+            for ( int k = 0; k <= degree[0]; k++ ) {
+                // N
+                answer( cnt, 0 ) = ders[0]( 0, k ) * ders[1]( 0, l ); // N
+                // 1st derivatives
+                answer( cnt, 1 ) = ders[0]( 1, k ) * ders[1]( 0, l ); // dN/du
+                answer( cnt, 2 ) = ders[0]( 0, k ) * ders[1]( 1, l ); // dN/dv
+                // 2nd derivatives
+                answer( cnt, 3 ) = ders[0]( 2, k ) * ders[1]( 0, l ); // d2N/duu = d2Nu/duu*Nv
+                answer( cnt, 4 ) = ders[0]( 0, k ) * ders[1]( 2, l ); // d2N/dvv = Nu*d2Nv/dvv
+                answer( cnt, 5 ) = ders[0]( 1, k ) * ders[1]( 1, l ); // d2N/duv = dNu/du*dNv/dv
+                cnt++;
+            }
+        }
+    }
+    else
+    {
+        OOFEM_ERROR( "evaldNdx not implemented for nsd = %d", nsd );
+    }
+
+    //// Return index where nonzero basis functions start
+    //int uind       = span[0] - degree[0];
+    //int indexStart = uind + 1;
+    //return indexStart;
+
+    int uind = span[0] - degree[0];
+    int vind = span[1] - degree[1];
+    int ind  = vind * numberOfControlPoints[0] + uind + 1;
+    return ind;
+};
 
 ///////////////////////
 // BSpline2dLineInterpolation

@@ -66,7 +66,7 @@ protected:
     /// Flag indicating if geometrical nonlinearities apply.
     int nlGeometry;
 
-    void setSecondGradient( bool setTo ) { this->hasSecondGradient = setTo; };
+    //void setSecondGradient( bool setTo ) { this->hasSecondGradient = setTo; }; // Not needed anymoer? 
 
     StructuralElementEvaluator();
     virtual ~StructuralElementEvaluator() { }
@@ -168,10 +168,7 @@ protected:
      */
     virtual void computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
-    virtual void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
-    {
-        OOFEM_ERROR( "method not implemented for this element" );
-    };
+    virtual void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
     /**
      * Computes constitutive matrix of receiver.
@@ -194,15 +191,9 @@ protected:
         OOFEM_ERROR( "method not implemented for this element" );
     }
 
-    virtual void computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
-    {
-        OOFEM_ERROR( "method not implemented for this element" );
-    }
+    virtual void computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep );
 
-    virtual void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
-    {
-        OOFEM_ERROR( "method not implemented for this element" );
-    }
+    virtual void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep );
 
     /**
      * Optimized version, allowing to pass element displacements as parameter.
@@ -257,6 +248,11 @@ protected:
 #endif
 public:
     virtual void initializeFrom( InputRecord &ir );
+
+    // For the element post-initialization, allowing to set up some services of the evaluator which require element and material information. 
+    // This is needed for example for second gradient elements, where the evaluator needs to know if the element supports second gradient or not.
+    void setupEvaluator(); // Renamed from postInitialize
+
 };
 } // end namespace oofem
 #endif //structuralelementevaluator_h
