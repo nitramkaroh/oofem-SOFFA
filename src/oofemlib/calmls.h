@@ -375,6 +375,7 @@ public:
 #define _IFT_CylindricalALMStability_Name "calmstability"
 #define _IFT_CylindricalALMStability_timeAsArcLength "timeasarclength"
 #define _IFT_CylindricalALMStability_pdConstrainedDofs "pdconstraineddofs"
+#define _IFT_CylindricalALMStability_reverseAfterTime "reverseaftertime"
 
 class OOFEM_EXPORT CylindricalALMStability : public CylindricalALM
 {
@@ -432,6 +433,31 @@ protected:
      * mask, the latter only in calm_hpc_on mode where it is an actual constraint set.
      */
     const IntArray &givePDConstrainedDofMask() const;
+
+    /**
+     * Arc length after which the branch is traced in the opposite direction. Negative
+     * (the default) means never, zero reverses from the very first step.
+     *
+     * Keyed on arc length rather than on a step count on purpose: the step count is an
+     * artefact of the stepping, since a time step reduction subdivides a step, whereas
+     * the traversed arc length identifies the state on the branch. Note that with
+     * @c timeasarclength off the field keys on the load-time-function parameter instead,
+     * because that is then the meaning of time.
+     *
+     * Listing the same value in @c requiredtimes makes a step boundary land exactly on
+     * it, so that the turn happens at the intended arc length instead of overshooting.
+     */
+    double reverseAfterTime = -1.;
+
+    /**
+     * Orientation of the traversal, +1 forward and -1 reversed. Multiplies the memoryless
+     * reference deltaXt^T R of the predictor, which is what makes one flag serve both root
+     * selection types: RST_Cos consults that reference on every step, so the factor acts
+     * persistently, whereas RST_Dot consults it only when seeding and then continues from
+     * old_dX, so the factor acts once and the continuation carries the new orientation.
+     * Applying it persistently to RST_Dot would negate the history every step and oscillate.
+     */
+    double pathDirection = 1.;
 
 public:
     CylindricalALMStability( Domain *d, EngngModel *m );

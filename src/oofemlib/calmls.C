@@ -2866,6 +2866,14 @@ CylindricalALMStability::initializeFrom( InputRecord &ir )
         // Equation numbers are unknown at this point, defer the conversion to solve.
         this->pd_init = 1;
     }
+
+    // Arc length at which the traversal direction is reversed; negative disables it.
+    this->reverseAfterTime = -1.;
+    IR_GIVE_OPTIONAL_FIELD( ir, this->reverseAfterTime, _IFT_CylindricalALMStability_reverseAfterTime );
+    if ( this->reverseAfterTime >= 0. ) {
+        OOFEM_LOG_INFO( "CALMLS:       Traversal direction will be reversed after arc length %e\n",
+            this->reverseAfterTime );
+    }
 }
 
 
@@ -3037,6 +3045,28 @@ CylindricalALMStability ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
         RR0 = 0.0;
     }
 
+    // Decide the orientation of this step. The state we start from is
+    // targetTime - timeIncrement, which TimeStepController::reduceTimeStep keeps
+    // invariant, so the trigger is stable when a step is retried with a smaller
+    // increment. Deliberately placed before the restart label: the direction is a
+    // per-step decision and must not be re-evaluated by a mid-step goto restart.
+    {
+        double sNow = tStep->giveTargetTime() - tStep->giveTimeIncrement();
+        double aNow = fabs( sNow );
+        // sNow is an accumulated sum, so compare with a relative tolerance, otherwise the
+        // threshold can be missed by an ULP.
+        double tol    = 1.e-10 * ( aNow > 1. ? aNow : 1. );
+        double newDir = ( this->reverseAfterTime >= 0. && sNow >= this->reverseAfterTime - tol ) ? -1. : 1.;
+
+        if ( newDir != this->pathDirection ) {
+            this->pathDirection = newDir;
+            // Drop the accumulated direction so that the predictor is re-seeded and the new
+            // orientation takes effect on this step rather than one step later.
+            old_dX.clear();
+            OOFEM_LOG_INFO( "CALMLS:       Reversing traversal direction at arc length %e\n", sNow );
+        }
+    }
+
     //
     // A  initial step (predictor)
     //
@@ -3104,12 +3134,12 @@ restart:
     if ( rootselectiontype == RST_Cos ) {
         /* XR is unscaled Bergan's param of current stiffness XR = deltaXt^T k deltaXt
          * this is used to test whether k has negative or positive slope */
-        XR = parallel_context->localDotProduct( deltaXt, R );
+        XR = this->pathDirection * parallel_context->localDotProduct( deltaXt, R );
     } else {
         if ( old_dX.giveSize() ) {
             XR = parallel_context->localDotProduct( deltaXt, old_dX );
         } else {
-            XR = parallel_context->localDotProduct( deltaXt, R );
+            XR = this->pathDirection * parallel_context->localDotProduct( deltaXt, R );
         }
     }
     DeltaLambda = deltaLambda = sgn( XR ) * deltaL / p;
