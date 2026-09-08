@@ -343,12 +343,40 @@ QuadraticLineSearchNM ::solve( FloatArray &r, FloatArray &dr, FloatArray &F, Flo
       }
 
       eta = std::max(eta, minEta);
+      // [SOFFA 2026-09] the model-computed step must actually be taken
+      // (previously only logged, the full step was always applied)
+      r = rn + eta * dr;
+      if ( eta < 1.0 ) {
+        engngModel->updateComponent( tStep, InternalRhs, domain );
+      }
     } else {
-      eta = 0.1;//0.1;//1.e-10;
+      // [SOFFA 2026-09] full step not usable - start backtracking from a
+      // damped step (previously a single 0.1 / 1e-2 try-and-discard)
+      eta = 0.5;
       r = rn + eta * dr;
       engngModel->updateComponent( tStep, InternalRhs, domain );
-      if(std::isnan(F.computeNorm())) {
-      eta = 1.e-2;
+    }
+
+    // [SOFFA 2026-09] NaN-aware backtracking: if the residual at the trial
+    // state is not finite (e.g. the harmonic material's incompressibility
+    // barrier sqrt(I^2-16ab) went imaginary), halve the step until the trial
+    // state is back inside the material domain (floor 1e-3 of the Newton
+    // correction - below minEta on purpose). If the floor is still outside
+    // the domain, accept it: the convergence check flags divergence and the
+    // existing time-step reduction handles it.
+    double fn = F.computeNorm();
+    while ( !std::isfinite( fn ) ) {
+      double etan = eta * 0.5;
+      if ( etan < 1.e-3 ) {
+        etan = 1.e-3;
+      }
+      r = rn + etan * dr;
+      engngModel->updateComponent( tStep, InternalRhs, domain );
+      fn = F.computeNorm();
+      eta = etan;
+      OOFEM_LOG_INFO( "Line Search NaN backtrack: eta = %.7e | ", eta );
+      if ( eta <= 1.e-3 ) {
+        break;
       }
     }
    
