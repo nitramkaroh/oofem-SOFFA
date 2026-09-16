@@ -113,7 +113,7 @@ Structural Problems
 StaticStructural
 ~~~~~~~~~~~~~~~~
 
-``StaticStructural`` ``nsteps #(in)`` [``deltat #(...)``] [``prescribedtimes #(...)``] [``stiffmode #(...)``] [``nonlocalext #(...)``] [``sparselinsolverparams #(...)``] [``finalt #(...)``]
+``StaticStructural`` ``nsteps #(in)`` [``deltat #(...)``] [``prescribedtimes #(...)``] [``stiffmode #(...)``] [``nonlocalext #(...)``] [``sparselinsolverparams #(...)``] [``solvertype #(s)``] [``initialguess #(in)``] [``finalt #(...)``]
     [``treductiontype #(...)``] [``dTmax #(...)``]  [``dTmin #(...)``] [``minrequirediter #(...)``]   [``maxrequirediter #(...)``]
 
 Static structural analysis. Can be used to solve linear and nonlinear
@@ -138,6 +138,16 @@ corresponding to individual solution times can be specified using
 optional parameter ``prescribedtimes``, allowing to input array of
 discrete solution times, the number of solution steps is then equal to
 the size of this array. 
+
+The optional ``solvertype`` field selects the nonlinear solver; its default
+is ``"nrsolver"``. If OOFEM is built with PETSc, ``"petscsnes"`` selects
+the PETSc SNES adapter and requires ``smtype 7``. Its input fields are
+documented in :ref:`petscsnessolver`.
+
+For ``StaticStructural``, ``initialguess`` is 1 by default. In this mode a
+tangent predictor is computed before the nonlinear solve. ``petscsnes`` uses
+a separate PETSc linear solver for this predictor and starts SNES from the
+predicted solution. Set ``initialguess 0`` to disable the predictor.
 
 In addition to standard boundary condition types, the ``StaticStructural``
 analysis also supports **contact analysis** through the penalty-based contact

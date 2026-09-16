@@ -137,6 +137,214 @@ table :ref:`precondtable`.
    \               SMT_CompCol        with no fill up
    ============ == ================== =========================================
 
+.. _petscsnessolver:
+
+PETSc SNES nonlinear solver
+---------------------------
+
+The PETSc SNES nonlinear solver is selected in an engineering-model or
+metastep record using
+
+| ``solvertype "petscsnes"`` ``smtype 7``
+| [``snesmaxiter #(in)``] [``snesmaxfunc #(in)``]
+  [``snesatol #(rn)``] [``snesrtol #(rn)``] [``snesstol #(rn)``]
+  [``snestype #(s)``] [``snesoptionsprefix #(s)``]
+  [``snesmonitor #(in)``] [``soldepextforces``]
+| [``snesfieldscaling #(in)``] [``snesminscalesquared #(rn)``]
+  [``forcescaledofs #(ia)`` ``forcescale #(ra)``]
+| [``snesbounddofs #(ia)`` ``sneslowerbounds #(ra)``
+  ``snesupperbounds #(ra)``] [``snesirreversibledofs #(ia)``]
+| [``snestrustregion #(in)``] [``snestrdelta0 #(rn)``]
+  [``snestrdeltamin #(rn)``] [``snestrdeltamax #(rn)``]
+  [``snestrmaxtrials #(in)``]
+
+This solver requires an OOFEM build with PETSc and the PETSc sparse matrix
+storage, ``smtype 7``. It currently supports load-controlled, serial OOFEM
+analyses only; OpenMP assembly may still be used, but distributed OOFEM
+analyses with more than one MPI rank are rejected. One ``SNESSolve`` is
+performed for each OOFEM step. SNES failure is reported as nonconvergence so
+that the engineering model can apply its usual step-reduction and restart
+strategy.
+
+The residual supplied to PETSc is the internal force minus the external
+force, and its Jacobian is the OOFEM tangent. A separate PETSc matrix is used
+inside SNES so residual row scaling does not modify the physical OOFEM
+tangent.
+
+Basic SNES options
+~~~~~~~~~~~~~~~~~~
+
+``snesmaxiter``
+    Maximum number of nonlinear iterations. The default is 50 and the value
+    must be positive.
+
+``snesmaxfunc``
+    Maximum number of residual evaluations. The default is 10000 and the
+    value must be positive.
+
+``snesatol``
+    Absolute residual tolerance. The default is ``1.e-50`` and the value must
+    be non-negative.
+
+``snesrtol``
+    Relative residual tolerance. The default is ``1.e-8`` and the value must
+    be non-negative.
+
+``snesstol``
+    Relative step tolerance. The default is ``1.e-12`` and the value must be
+    non-negative.
+
+``snestype``
+    PETSc SNES type name. The default is ``"newtonls"`` and the string must
+    not be empty. Other PETSc types can also be selected through the PETSc
+    options database.
+
+``snesmonitor``
+    If nonzero, print the OOFEM SNES iteration monitor. The default is 1.
+    PETSc's own monitors can independently be enabled with PETSc command-line
+    options.
+
+``soldepextforces``
+    Presence of this flag causes ``ExternalRhs`` to be reassembled at every
+    SNES trial solution and after state restoration. By default the external
+    force vectors passed to the solver are kept fixed. A solver configured
+    with this flag does not advertise support for compact custom equation
+    numbering.
+
+Residual scaling
+~~~~~~~~~~~~~~~~
+
+``snesfieldscaling``
+    If nonzero, scale the residual and the corresponding Jacobian rows by
+    DOF group. The default is 1. The scale is constructed at the first
+    admissible residual evaluation and remains fixed during that nonlinear
+    solve. Consequently, the SNES residual tolerances apply to the scaled
+    norm.
+
+``snesminscalesquared``
+    Positive threshold below which a DOF group is left unscaled. The default
+    is ``1.e-6`` and the value must be finite and positive.
+
+``forcescaledofs`` and ``forcescale``
+    Parallel arrays of DOF identifiers and user-supplied characteristic
+    forces. They must be specified together and have equal lengths. Every
+    force value must be finite and positive.
+
+For a DOF group :math:`d`, the squared characteristic force is formed from
+the squared external-force norm, the sum of squared element-force
+contributions, and, when specified, :math:`n_d f_d^2`, where :math:`n_d` is
+the number of active equations in the group and :math:`f_d` is its
+``forcescale`` value.
+If this sum is at least ``snesminscalesquared``, the residual and tangent rows
+in the group are multiplied by the inverse square root of the sum. Otherwise
+they are left unscaled. ``forcescale`` and ``snesminscalesquared`` have no
+effect when ``snesfieldscaling`` is zero.
+
+Variable bounds
+~~~~~~~~~~~~~~~
+
+``snesbounddofs``, ``sneslowerbounds``, and ``snesupperbounds``
+    Parallel arrays defining lower and upper bounds by DOF identifier. All
+    three arrays are empty by default and, when used, must have equal lengths.
+    A DOF identifier must be positive and may occur only once. Bounds must be
+    finite and each lower bound must not exceed its upper bound. A bound is
+    applied to every active equation having the corresponding DOF identifier.
+
+    Bounds require the SNES type ``vinewtonrsls`` or ``vinewtonssls``. This
+    requirement is checked after PETSc command-line options have been applied.
+
+``snesirreversibledofs``
+    List of bounded DOF identifiers whose value may not decrease during a
+    step. The default is an empty list. Every identifier in this list must
+    also occur in ``snesbounddofs``. Its effective lower bound is the larger
+    of the specified lower bound and the accepted value at the beginning of
+    the step. That reference value is retained across cutbacks and staggered
+    sweeps.
+
+PETSc's VI active-bound tolerance defaults to ``1.e-8`` and can be changed
+with ``-snes_vi_zero_tolerance`` or its prefixed equivalent.
+
+Bounded trust region
+~~~~~~~~~~~~~~~~~~~~
+
+``snestrustregion``
+    Enables OOFEM's bounded reduced-space trust-region line search when set to
+    1. The default is 0. This is distinct from selecting PETSc's ``newtontr``
+    SNES type. It requires at least one variable bound and the selected SNES
+    type must be ``vinewtonrsls``.
+
+``snestrdelta0``
+    Initial trust-region radius. The default is 1.
+
+``snestrdeltamin``
+    Minimum trust-region radius. The default is ``1.e-8`` and it must be
+    positive.
+
+``snestrdeltamax``
+    Maximum trust-region radius. The default is ``1.e8``.
+
+``snestrmaxtrials``
+    Maximum number of trial points in one trust-region step. The default is
+    20 and the value must be positive.
+
+The three radii must be finite and satisfy
+
+.. math::
+
+   0 < \mathtt{snestrdeltamin}
+     \leq \mathtt{snestrdelta0}
+     \leq \mathtt{snestrdeltamax}.
+
+The trust-region metric is balanced by DOF group and is frozen from the first
+full Newton direction of the nonlinear solve.
+
+PETSc run-time options
+~~~~~~~~~~~~~~~~~~~~~~
+
+``snesoptionsprefix`` assigns a PETSc options prefix to this SNES object. The
+default is an empty string. The string must not start with ``-``, which PETSc
+adds automatically; a trailing underscore is customary. For example, with
+
+.. code-block:: text
+
+   snesoptionsprefix "nl_"
+
+the corresponding options are ``-nl_snes_type``, ``-nl_ksp_type``,
+``-nl_pc_type``, ``-nl_snes_linesearch_type``, and
+``-nl_snes_vi_zero_tolerance``.
+
+PETSc options are processed after the OOFEM input fields and therefore
+override the input SNES type, tolerances, iteration limits, and PETSc KSP/PC
+choices. When ``snestrustregion 1`` is used, its shell line search is installed
+after PETSc options are processed and therefore replaces any command-line
+line-search type.
+
+The tangent predictor used by ``StaticStructural`` has a separate, unprefixed
+PETSc KSP. Without ``snesoptionsprefix``, global ``-ksp_*`` and ``-pc_*``
+options affect both that predictor and SNES's inner linear solve. With a
+prefix, unprefixed KSP/PC options affect the predictor, while prefixed KSP/PC
+options affect SNES.
+
+Each metastep record is self-contained. Omitted SNES fields are reset to the
+defaults above instead of inheriting values from the preceding metastep.
+
+Minimal example
+~~~~~~~~~~~~~~~
+
+A minimal ``StaticStructural`` analysis record using the default tangent
+predictor and default ``newtonls`` SNES type is
+
+.. code-block:: text
+
+   StaticStructural nsteps 1 smtype 7 solvertype "petscsnes" snesrtol 1.e-10 snesatol 1.e-12
+
+PETSc algorithms and preconditioners may then be selected at run time, for
+example
+
+.. code-block:: console
+
+   oofem -f model.in -snes_type newtonls -ksp_type preonly -pc_type lu
+
 .. _eigensolverssection:
 
 Eigen value solvers
