@@ -38,6 +38,7 @@
 
 #include <set>
 #include <vector>
+#include <string>
 
 #include "sparselinsystemnm.h"
 #include "sparsenonlinsystemnm.h"
@@ -72,6 +73,9 @@
 #define _IFT_NRSolver_forceScaleDofs "forcescaledofs"
 #define _IFT_NRSolver_solutionDependentExternalForces "soldepextforces"
 #define _IFT_NRSolver_linesearchtype "linesearchtype"
+#define _IFT_NRSolver_stiffnessexportstarttime "stiffnessexportstarttime"
+#define _IFT_NRSolver_stiffnessexportendtime "stiffnessexportendtime"
+#define _IFT_NRSolver_stiffnessexportprefix "stiffnessexportprefix"
 //@}
 
 namespace oofem {
@@ -165,6 +169,12 @@ protected:
     std :: map< int, double >dg_forceScale;
 
     double maxIncAllowed;
+
+    /// Stiffness export: window of intrinsic times at which the converged (final-state)
+    /// tangent is written out as a MatrixMarket file. Enabled when start >= 0.
+    double stiffnessexportStart = -1.0;
+    double stiffnessexportEnd = 1.e30;
+    std ::string stiffnessexportPrefix = "C:/GIT/OOFEM/out/stiff_";
 public:
     NRSolver(Domain *d, EngngModel *m);
     virtual ~NRSolver();
@@ -206,6 +216,9 @@ protected:
     void applyConstraintsToStiffness(SparseMtrx &k);
     void applyConstraintsToLoadIncrement(int nite, const SparseMtrx &k, FloatArray &R,
                                          referenceLoadInputModeType rlm, TimeStep *tStep);
+
+    /// Exports the converged (final-state) tangent stiffness as a MatrixMarket file.
+    void exportStiffness(SparseMtrx &k, TimeStep *tStep, int nite);
 
     /**
      * Determines whether or not the solution has reached convergence.

@@ -111,6 +111,9 @@ ConvergedReason EigenSolver ::solve( SparseMtrx &A, FloatArray &b, FloatArray &x
       const bool update = true;
       int numNegEigs;
       A_factorization.updateD( minEig, update, numNegEigs );
+      if (numNegEigs > 0){
+        OOFEM_LOG_INFO( "Eigensolver Dcontrol: Flipping %i negative D diagonal entries\n", numNegEigs);
+      }
       x_eig = A_factorization.solve( b_eig ); // Solve the system
 
     } else {

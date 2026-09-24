@@ -49,12 +49,15 @@
 #include "parallelcontext.h"
 #include "unknownnumberingscheme.h"
 #include "convergenceexception.h"
+#include "eigenmtrx.h"
 #ifdef __PETSC_MODULE
 #include "petscsolver.h"
 #include "petscsparsemtrx.h"
 #endif
 
 #include <cstdio>
+#include <string>
+#include <fstream>
 
 namespace oofem {
 #define nrsolver_ERROR_NORM_SMALL_NUM 1.e-6
@@ -200,6 +203,17 @@ void NRSolver ::initializeFrom( InputRecord &ir )
     for ( int i = 0; i < dofs.giveSize(); ++i ) {
       dg_forceScale[dofs[i]] = forces[i];
     }
+  }
+
+  // optional: export the converged (final-state) tangent stiffness as a MatrixMarket file
+  // for every step whose intrinsic time lies in [stiffnessexportstarttime, stiffnessexportendtime]
+  stiffnessexportStart = -1.0;
+  stiffnessexportEnd = 1.e30;
+  stiffnessexportPrefix = "";
+  IR_GIVE_OPTIONAL_FIELD( ir, stiffnessexportStart, _IFT_NRSolver_stiffnessexportstarttime );
+  IR_GIVE_OPTIONAL_FIELD( ir, stiffnessexportEnd, _IFT_NRSolver_stiffnessexportendtime );
+  if (stiffnessexportStart >=0.0){
+    IR_GIVE_FIELD( ir, stiffnessexportPrefix, _IFT_NRSolver_stiffnessexportprefix );
   }
 }
 
@@ -409,7 +423,68 @@ NRSolver ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
   }
 #endif
 
+  // export the converged (final-state) tangent stiffness when requested and inside the time window
+  if ( status == CR_CONVERGED && stiffnessexportStart >= 0.0 && tStep ) {
+    const double tCur = tStep->giveIntrinsicTime(); // == "Final Time" in the step log, time entering the material laws
+    if ( tCur >= stiffnessexportStart - 1.e-9 && tCur <= stiffnessexportEnd + 1.e-9 ) {
+      engngModel->updateComponent( tStep, NonLinearLhs, domain ); // K at the final (converged) X
+      if ( this->prescribedDofsFlag ) {
+        this->applyConstraintsToStiffness( k );
+      }
+      this->exportStiffness( k, tStep, nite );
+    }
+  }
+
   return status;
+}
+
+void NRSolver ::exportStiffness( SparseMtrx &k, TimeStep *tStep, int nite )
+{
+  EigenMtrx *em = dynamic_cast< EigenMtrx * >( &k );
+  if ( !em ) {
+    OOFEM_LOG_INFO( "NRSolver: stiffness export skipped: matrix is not an EigenMtrx\n" );
+    return;
+  }
+  const Eigen::SparseMatrix< double > &M = em->giveMatrix();
+
+  std ::string fn = stiffnessexportPrefix;
+  char buf[64];
+  sprintf( buf, "step%04d_t%.2f.mtx", tStep->giveNumber(), tStep->giveIntrinsicTime() );
+  fn += buf;
+
+  std ::ofstream f( fn.c_str() );
+  if ( !f.good() ) {
+    OOFEM_LOG_ERROR( "NRSolver: cannot open stiffness export file %s\n", fn.c_str() );
+    return;
+  }
+
+  int nnz = ( int )M.nonZeros();
+  IntArray peq;
+  if ( prescribedDofsFlag ) {
+    peq = prescribedEqs;
+  }
+  f << "%%MatrixMarket matrix coordinate real symmetric\n";
+  f << "# step=" << tStep->giveNumber()
+    << " intrinsicTime=" << tStep->giveIntrinsicTime()
+    << " iterations=" << nite
+    << " neq=" << M.rows() << "\n";
+  if ( peq.giveSize() ) {
+    f << "# prescribedEqs (1-based, masked with identity rows): ";
+    for ( int i = 1; i <= peq.giveSize(); i++ ) {
+      f << peq.at( i ) << " ";
+    }
+    f << "\n";
+  }
+  f << M.rows() << " " << M.cols() << " " << nnz << "\n";
+  for ( int i = 0; i < M.outerSize(); ++i ) {
+    for ( Eigen::SparseMatrix< double >::InnerIterator it( M, i ); it; ++it ) {
+      f << it.row() + 1 << " " << it.col() + 1 << " " << it.value() << "\n";
+    }
+  }
+  f.close();
+
+  OOFEM_LOG_INFO( "NRSolver: stiffness exported to %s (step %d, t=%e, neq=%d, nnz=%d)\n",
+      fn.c_str(), tStep->giveNumber(), tStep->giveIntrinsicTime(), ( int )M.rows(), nnz );
 }
 
 
