@@ -694,6 +694,33 @@ StructuralMaterial::givePlaneStrainStiffnessMatrix_dPdF(MatResponseMode mode,
 }
 
 
+FloatArrayF< 27 >
+StructuralMaterial::giveSecondOrderStressVector_PlaneStrain(const FloatArrayF< 5 > &vF, const FloatArrayF< 27 > &vG,
+                                                            GaussPoint *gp, TimeStep *tStep) const
+{
+    // The second order stress stays in full 27 form, the G matrix of the plane strain element has 27 rows too
+    return this->giveSecondOrderStressVector_3d(assemble< 9 >(vF, { 0, 1, 2, 5, 8 }), vG, gp, tStep);
+}
+
+
+FloatMatrixF< 27, 5 >
+StructuralMaterial::givePlaneStrainMaterialStiffnessMatrix_dAdF(MatResponseMode mode,
+                                                                GaussPoint *gp, TimeStep *tStep) const
+{
+    // Only the columns of the in-plane components of F (11, 22, 33, 12, 21) are kept,
+    // the variations of the others vanish in plane strain
+    auto m3d = this->give3dMaterialStiffnessMatrix_dAdF(mode, gp, tStep);
+    const int cols[ 5 ] = { 0, 1, 2, 5, 8 };
+    FloatMatrixF< 27, 5 > answer;
+    for ( int i = 0; i < 27; i++ ) {
+        for ( int j = 0; j < 5; j++ ) {
+            answer(i, j) = m3d(i, cols [ j ]);
+        }
+    }
+    return answer;
+}
+
+
 FloatMatrixF< 4, 4 >
 StructuralMaterial::givePlaneStressStiffnessMatrix_dPdF(MatResponseMode mode,
                                                         GaussPoint *gp, TimeStep *tStep) const

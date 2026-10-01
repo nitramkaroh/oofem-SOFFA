@@ -216,11 +216,14 @@ StructuralCrossSection::imposeStrainConstrainsOnGradient(GaussPoint *gp,
 /////////
 // Second gradients 
 FloatArray
-StructuralCrossSection::giveSecondOrderStresses( const FloatArray &fullF, const FloatArray &fullG, GaussPoint *gp, TimeStep *tStep ) const
+StructuralCrossSection::giveSecondOrderStresses( const FloatArray &reducedF, const FloatArray &vG, GaussPoint *gp, TimeStep *tStep ) const
 {
+    // F comes in the reduced form of the material mode, the gradient of F always has all 27 components
     MaterialMode mode = gp->giveMaterialMode();
-    if ( mode == _3dMat || mode == _PlaneStrain ) {
-        return this->giveSecondOrderStress_3d( fullF, fullG, gp, tStep ); // So far uses 3d stress also for plane strain, more expensive, since only some components are nonzero
+    if ( mode == _3dMat ) {
+        return this->giveSecondOrderStress_3d( reducedF, vG, gp, tStep );
+    } else if ( mode == _PlaneStrain ) {
+        return this->giveSecondOrderStress_PlaneStrain( reducedF, vG, gp, tStep );
     } else {
         OOFEM_ERROR( "unsupported mode" );
     }
@@ -233,18 +236,32 @@ StructuralCrossSection::giveSecondOrderStress_3d( const FloatArrayF<9> &vF, cons
     return mat->giveSecondOrderStressVector_3d( vF, vG, gp, tStep );
 }
 
+FloatArrayF<27>
+StructuralCrossSection::giveSecondOrderStress_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep ) const
+{
+    auto mat = dynamic_cast<StructuralMaterial *>( this->giveMaterial( gp ) );
+    return mat->giveSecondOrderStressVector_PlaneStrain( vF, vG, gp, tStep );
+}
+
 FloatMatrixF<27, 27>
 StructuralCrossSection::giveStiffnessMatrix_dAddF_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
 {
     auto mat = dynamic_cast<StructuralMaterial *>( this->giveMaterial( gp ) );
-    return mat->give3dMaterialStiffnessMatrix_dAddF( rMode, gp, tStep );  // NEED TO BE DONE 
+    return mat->give3dMaterialStiffnessMatrix_dAddF( rMode, gp, tStep );
 }
 
 FloatMatrixF<27, 9>
 StructuralCrossSection::giveStiffnessMatrix_dAdF_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
 {
     auto mat = dynamic_cast<StructuralMaterial *>( this->giveMaterial( gp ) );
-    return mat->give3dMaterialStiffnessMatrix_dAdF( rMode,  gp, tStep );  // NEED TO BE DONE 
+    return mat->give3dMaterialStiffnessMatrix_dAdF( rMode,  gp, tStep );
+}
+
+FloatMatrixF<27, 5>
+StructuralCrossSection::giveStiffnessMatrix_dAdF_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const
+{
+    auto mat = dynamic_cast<StructuralMaterial *>( this->giveMaterial( gp ) );
+    return mat->givePlaneStrainMaterialStiffnessMatrix_dAdF( rMode, gp, tStep );
 }
 
 } // end namespace oofem

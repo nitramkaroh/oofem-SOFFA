@@ -458,24 +458,11 @@ void PlaneStrainStructuralElementEvaluator::computeGradientOfDeformationGradient
     answer.beProductOf( G, xr );
 }
 
-//void PlaneStrainStructuralElementEvaluator::computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
-//{
-//    FloatArray vF, vG;
-//    this->computeDeformationGradientVector( vF, gp, tStep );
-//    this->computeGradientOfDeformationGradientVector( vG, gp, tStep );
-//    answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveSecondOrderStresses( vF, vG, gp, tStep );
-//}
-//
-//
-//void PlaneStrainStructuralElementEvaluator ::computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
-//{
-//    answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveStiffnessMatrix_dAddF_3d( rMode, gp, tStep );
-//}
-//
-//void PlaneStrainStructuralElementEvaluator ::computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
-//{
-//    answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveStiffnessMatrix_dAdF_3d( rMode, gp, tStep );
-//}
+void PlaneStrainStructuralElementEvaluator ::computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
+{
+    // 27 x 5, to match the 5 rows of the BH matrix (11, 22, 33, 12, 21)
+    answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveStiffnessMatrix_dAdF_PlaneStrain( rMode, gp, tStep );
+}
 
 
 ///////

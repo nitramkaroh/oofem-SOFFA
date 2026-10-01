@@ -112,11 +112,8 @@ protected:
 
     void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override; // SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR, AS IT IS COMMON FOR ALL STRUCTURAL ELEMENTS
 
-    //void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override; // SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR
-
-    //void computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;// SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR
-
-    //void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;// SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR
+    /// dA/dF reduced to the plane strain components of F, 27 x 5
+    void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
 public:
     void initializeFrom( InputRecord &ir ) override;

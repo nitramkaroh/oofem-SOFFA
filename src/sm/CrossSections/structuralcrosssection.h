@@ -365,11 +365,13 @@ public:
 
     ///////////////////////////
     // Second gradient stuff
-    FloatArray giveSecondOrderStresses( const FloatArray &fullF, const FloatArray &fullG, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatArray giveSecondOrderStresses( const FloatArray &reducedF, const FloatArray &vG, GaussPoint *gp, TimeStep *tStep ) const;
     FloatArrayF<27> giveSecondOrderStress_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, GaussPoint *gp, TimeStep *tStep ) const;
- 
+    FloatArrayF<27> giveSecondOrderStress_PlaneStrain( const FloatArrayF<5> &reducedF, const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep ) const;
+
     FloatMatrixF<27, 27> giveStiffnessMatrix_dAddF_3d( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
     FloatMatrixF<27, 9> giveStiffnessMatrix_dAdF_3d( MatResponseMode rMode,  GaussPoint *gp, TimeStep *tStep ) const;
+    FloatMatrixF<27, 5> giveStiffnessMatrix_dAdF_PlaneStrain( MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) const;
 };
 } // end namespace oofem
 #endif // structuralcrosssection_h

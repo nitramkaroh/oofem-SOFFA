@@ -717,6 +717,11 @@ public:
         OOFEM_ERROR( "not implemented " );
     }
 
+    /// Default implementation expands F to 3D and relies on giveSecondOrderStressVector_3d
+    virtual FloatArrayF<27> giveSecondOrderStressVector_PlaneStrain( const FloatArrayF<5> &vF, const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep ) const;
+    /// Default implementation takes the columns 11, 22, 33, 12, 21 of give3dMaterialStiffnessMatrix_dAdF
+    virtual FloatMatrixF<27, 5> givePlaneStrainMaterialStiffnessMatrix_dAdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const;
+
     virtual bool supportsSecondGradient() const { return false; }
 };
 } // end namespace oofem

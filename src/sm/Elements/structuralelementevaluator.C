@@ -472,6 +472,10 @@ void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, M
                 //temp.printYourself();
                 /////////////
 
+                // dA/dF must be reduced like F (27 x 5 in plane strain); the products below check this only in Debug
+                if ( dAdF.giveNumberOfColumns() != bj.giveNumberOfRows() ) {
+                    OOFEM_ERROR( "dA/dF has %d columns but the BH matrix has %d rows", dAdF.giveNumberOfColumns(), bj.giveNumberOfRows() );
+                }
                 dAB.beProductOf( dAdF, bj ); // term with derivative wrt F
                 m->plusProductUnsym( Gmat, dAB, dV );
 
