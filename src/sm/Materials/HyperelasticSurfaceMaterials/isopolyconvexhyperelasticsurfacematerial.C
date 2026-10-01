@@ -52,6 +52,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::IsotropicPolyconvexHyperelasticS
     gamma2( 0. ),
     alpha1( 0. ),
     alpha2( 0. ),
+    alpha_s1( 0. ),
     delta( 0. ),
     gaminit( 0. ),
     omega1(0.)
