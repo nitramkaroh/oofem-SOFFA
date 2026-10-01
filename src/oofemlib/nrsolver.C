@@ -295,8 +295,8 @@ NRSolver :: solve(SparseMtrx &k, FloatArray &R, FloatArray *R0,
     double alphaStability = 1e-6, alphamax = 1e8; // eigenvector multiplicator
 
     bool LDLTbif = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
-    bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation/eigenvectorpostbif. LS options
-    //bool deflationBifurcation = false, eigenvectorBifurcation = false, postBifurcationLineSearch = false; // deflation/eigenvector/postbif. LS options
+    //bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation/eigenvectorpostbif. LS options
+    bool deflationBifurcation = false, eigenvectorBifurcation = false, postBifurcationLineSearch = false; // deflation/eigenvector/postbif. LS options
     std::vector<bool> bifurcTypes( { LDLTbif, deflationBifurcation, eigenvectorBifurcation } );
 
     if ( this->LsType == LST_Exact_Adaptive ) this->lsFlag = false; // For adaptive LS
