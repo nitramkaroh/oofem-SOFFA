@@ -42,6 +42,7 @@ set (tm_cs
     )
 
 set (tm_material
+    Materials/allencahnmat.C
     Materials/anisomassmat.C
     Materials/bazantnajjarmat.C
     Materials/hemobaznajmat.C

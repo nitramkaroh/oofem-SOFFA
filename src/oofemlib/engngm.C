@@ -529,7 +529,7 @@ void EngngModel ::solveYourself()
         try {
           this->solveYourselfAt( this->giveCurrentStep() );
           auto nIter = this->giveCurrentStep()->numberOfIterations;
-          timeStepController->adaptTimeStep( nIter );
+          this->adaptTimeStep( nIter );
           repeat = false;
         } catch ( ConvergenceException &ce ) {
           if ( timeStepController->giveCurrentMetaStep()->giveTimeStepReductionStrategy()->giveReductionFlag() ) {

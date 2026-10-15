@@ -142,6 +142,7 @@ public:
     void postInitialize();
     void reduceTimeStep();
     void adaptTimeStep(int nIter);
+    void adaptTimeStep(int nIter, TimeStep *step);
     //@todo improve: return number of steps of the current metastep
     int giveNumberOfSteps(){return this->giveCurrentMetaStep()->giveNumberOfSteps();}
 

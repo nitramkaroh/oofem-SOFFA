@@ -1,0 +1,244 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{amsmath,amssymb,booktabs,tabularx,array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{2em}
+\title{Allen--Cahn in OOFEM\\[0.25em]\large Implementazione e verifiche numeriche}
+\author{Nota di studio}
+\date{14 ottobre 2026}
+\begin{document}
+\maketitle
+
+\section*{Scopo e risultato in breve}
+Questa nota spiega che cosa abbiamo implementato e riassume i controlli numerici eseguiti. I risultati verificano con esito positivo i casi Allen--Cahn analizzati, incluso il bordo dinamico con flusso normale e coefficienti bulk/superficiali distinti. Non dimostrano ancora che ogni possibile caso sia corretto né che sia stata riprodotta tutta la formulazione di Stefanelli--Voso.
+
+\section{Equazione bulk e implementazione}
+La forma standard è
+\[
+  \frac{\partial u}{\partial t}-\Delta u+u^3-u=0,
+  \qquad\text{equivalentemente}\qquad
+  u_t-\Delta u=u-u^3.
+\]
+$u(x,t)$ è il parametro d'ordine. La diffusione regolarizza il campo; la reazione nonlineare ha stati di equilibrio $u=\pm1$ e rende instabile $u=0$. Nel codice usiamo la forma generale
+\[
+ c_\Omega u_t-k_\Omega\Delta u=\mu_\Omega(u-u^3),
+\]
+dove $c$ è la capacità, $k$ la diffusività e $\mu$ la mobilità. Con $c=k=\mu=1$ si ritrova l'equazione standard.
+
+OOFEM riutilizza l'assemblaggio del trasporto: il materiale fornisce il flusso $\boldsymbol q=-k\nabla u$, la capacità e la sorgente interna $\mu(u-u^3)$ con la tangente coerente. Il materiale è in \path{src/tm/Materials/allencahnmat.C}; gli input di esempio sono \path{tests/tm/allencahn.in} e \path{tests/tm/allencahn_dynamic_boundary.in}.
+
+\section{Bordo dinamico}
+Sul bordo $\Gamma=\partial\Omega$ il valore del campo evolve secondo una propria equazione. La forma verificata è
+\[
+ c_\Gamma u_t-k_\Gamma\Delta_\Gamma u
+       +k_\Omega\partial_n u=\mu_\Gamma(u-u^3),
+       \qquad x\in\Gamma.
+\]
+$\Delta_\Gamma$ è il Laplaciano tangenziale e $\partial_n u$ la derivata normale uscente. Il flusso normale usa la diffusività bulk $k_\Omega$; la diffusione lungo il bordo usa $k_\Gamma$. La formulazione agli elementi finiti combina gli elementi quadrilateri bulk con gli elementi lineari sul contorno, condividendo i gradi di libertà al bordo.
+
+\subsection*{Dalle equazioni alla forma debole assemblata}
+Questa è la verifica diretta della corrispondenza matematica. Moltiplicando l'equazione bulk per $v$ e integrando per parti si ottiene
+\[
+ \int_\Omega[c_\Omega u_t v+k_\Omega\nabla u\cdot\nabla v
+       -\mu_\Omega(u-u^3)v]dx
+       -\int_\Gamma k_\Omega\partial_nu\,v\,d\Gamma=0.
+\]
+Moltiplicando l'equazione dinamica di bordo per $v_\Gamma$ e integrando per parti lungo $\Gamma$:
+\[
+ \int_\Gamma[c_\Gamma u_t v_\Gamma
+       +k_\Gamma\nabla_\Gamma u\cdot\nabla_\Gamma v_\Gamma
+       -\mu_\Gamma(u-u^3)v_\Gamma]d\Gamma
+       +\int_\Gamma k_\Omega\partial_nu\,v_\Gamma d\Gamma=0.
+\]
+Per funzioni test compatibili, $v_\Gamma=v|_\Gamma$: sommando le due righe i termini normali si cancellano. La forma globale risultante contiene quindi capacità, diffusione e reazione sia nel bulk sia sul bordo, senza un carico normale esplicito. Questo è il motivo matematico per cui il flusso di accoppiamento è rappresentato implicitamente nell'assemblaggio globale.
+
+Nel sorgente OOFEM, la matrice di capacità integra $cN^TN$, la matrice diffusiva integra $kB^TB$ e il vettore sorgente integra $\mu(u-u^3)N$. La tangente aggiunta a sinistra è $\mu(3u^2-1)N^TN$, cioè la derivata del residuo $-\mu(u-u^3)$. Sono i contributi richiesti dalla forma debole sopra. La cancellazione del flusso avviene solo se gli elementi lineari di bordo e quelli bulk condividono gli stessi nodi/gradi di libertà. Nei casi provati ciò è rispettato. Con $\alpha=1$ l'avanzamento temporale usato è backward Euler.
+
+\section{Test MMS: soluzione esatta non uniforme}
+Il metodo delle soluzioni manifatturate (MMS) sceglie una soluzione esatta, calcola le sorgenti che la rendono soluzione delle equazioni e confronta il campo numerico con quello esatto. È una verifica dell'implementazione delle equazioni, non un modello fisico aggiuntivo.
+
+Abbiamo scelto
+\[
+ u^*(x,y,t)=m+b(t)q(x,y),\quad
+ q=\cos(\pi x)\cos(\pi y)+\beta\sin(\pi x)\sin(\pi y),\quad
+ b(t)=A e^{-\lambda t},
+\]
+con $m=0.2$, $A=0.1$, $\beta=0.25$ e $\lambda=1$. Il campo è spazialmente variabile. Per $\beta\ne0$ anche il flusso normale è non nullo; sui lati del quadrato unitario,
+\[
+ \partial_n u^*=-\beta\pi b(t)\sin(\pi s),
+\]
+dove $s$ è la coordinata tangenziale. Al tempo $T=0.02$ il massimo del flusso normale in modulo è circa $0.077$.
+
+Le sorgenti MMS sono ricavate dalle equazioni. Nel bulk:
+\[
+ g_\Omega=c_\Omega u_t^*-k_\Omega\Delta u^*
+       -\mu_\Omega(u^*-(u^*)^3),\qquad
+ \Delta u^*=-2\pi^2bq.
+\]
+Sul bordo:
+\[
+ g_\Gamma=c_\Gamma u_t^*-k_\Gamma\Delta_\Gamma u^*
+       +k_\Omega\partial_nu^*-\mu_\Gamma(u^*-(u^*)^3),\qquad
+ \Delta_\Gamma u^*=-\pi^2bq.
+\]
+Per rendere esplicita la diffusività bulk nel termine normale dell'MMS è stato aggiunto il campo input opzionale \texttt{knormal}. Se omesso, assume il valore di \texttt{k}; gli input precedenti restano compatibili. Per estendere il test MMS a rettangoli sono disponibili anche \texttt{mmslx} e \texttt{mmsly}, entrambi unitari per default.
+
+\section{Verifica 1: raffinamento temporale}
+Abbiamo fissato una mesh $32\times32$, $T=0.02$ e confrontato coppie di soluzioni con passo $\Delta t$ e $\Delta t/2$. La tabella dà le norme $L^2$ della differenza tra i due campi, integrate separatamente nel bulk e sul bordo. In questa prova non si confronta ogni soluzione con quella esatta: il confronto fra passi sulla stessa mesh riduce l'influenza dell'errore spaziale.
+
+\begin{center}
+\begin{tabular}{rrr}
+\toprule
+$\Delta t$ & $\|u_{\Delta t}-u_{\Delta t/2}\|_{L^2(\Omega)}$ & $\|u_{\Delta t}-u_{\Delta t/2}\|_{L^2(\Gamma)}$\\
+\midrule
+$0.004$  & $7.73\cdot10^{-7}$ & $2.61\cdot10^{-6}$\\
+$0.002$  & $3.90\cdot10^{-7}$ & $1.33\cdot10^{-6}$\\
+$0.001$  & $1.95\cdot10^{-7}$ & $6.74\cdot10^{-7}$\\
+$0.0005$ & $1.04\cdot10^{-7}$ & $3.40\cdot10^{-7}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Dimezzando il passo, le differenze si riducono approssimativamente della metà. È compatibile con l'ordine 1 atteso dal passo implicito di Eulero all'indietro. La verifica è fatta a mesh fissa; non è una stima dell'errore temporale assoluto rispetto a una soluzione continua.
+
+\section{Verifica 2: norme spaziali integrate}
+A $T=0.02$ abbiamo calcolato gli errori con quadratura di Gauss sugli elementi, separando bulk e bordo. $L^2$ misura l'errore del valore; $|\cdot|_{H^1}$ è la seminorma del gradiente (bulk) o della derivata tangenziale (bordo). Il passo temporale è $0.0005$ per tutte le mesh.
+
+\begin{center}
+\small
+\begin{tabular}{rrrrr}
+\toprule
+Mesh & $L^2(\Omega)$ & $|H^1(\Omega)|$ & $L^2(\Gamma)$ & $|H^1(\Gamma)|$\\
+\midrule
+$4\times4$   & $4.968\,10^{-3}$ & $5.175\,10^{-2}$ & $7.829\,10^{-3}$ & $9.793\,10^{-2}$\\
+$8\times8$   & $1.262\,10^{-3}$ & $2.555\,10^{-2}$ & $1.973\,10^{-3}$ & $4.927\,10^{-2}$\\
+$16\times16$ & $3.165\,10^{-4}$ & $1.274\,10^{-2}$ & $4.938\,10^{-4}$ & $2.467\,10^{-2}$\\
+$32\times32$ & $7.902\,10^{-5}$ & $6.363\,10^{-3}$ & $1.230\,10^{-4}$ & $1.234\,10^{-2}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Quando $h$ si dimezza, le norme $L^2$ si riducono circa di un fattore 4, quindi l'ordine osservato è circa 2. Le seminorme $H^1$ si riducono circa di un fattore 2, ordine 1. È il comportamento atteso per elementi bilineari nel bulk e lineari lungo il bordo.
+
+\subsection*{Valori teorici e numerici in punti selezionati}
+La tabella confronta la soluzione esatta MMS con i valori letti dall'output VTK della mesh $32\times32$ al tempo $T=0.02$. Lo scostamento relativo è $|u_{\rm num}-u^*|/|u^*|$.
+\begin{center}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Punto & Teoria $u^*$ & Numerico $u_{\rm num}$ & Scostamento assoluto & Relativo\\
+\midrule
+$(0,0)$ angolo & 0.298019867 & 0.298008200 & $1.17\,10^{-5}$ & 0.00391\%\\
+$(0.5,0.5)$ centro & 0.224504967 & 0.224510400 & $5.43\,10^{-6}$ & 0.00242\%\\
+$(0.5,0)$ bordo & 0.200000000 & 0.199999700 & $3.00\,10^{-7}$ & 0.00015\%\\
+$(0,1)$ angolo & 0.101980133 & 0.101986000 & $5.87\,10^{-6}$ & 0.00575\%\\
+$(0.25,0.25)$ interno & 0.261262417 & 0.261272700 & $1.03\,10^{-5}$ & 0.00394\%\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Verifica 3: parametri e dissipazione}
+\subsection*{Variazioni dei parametri MMS}
+Abbiamo ripetuto MMS variando $\beta=0,0.25,0.5$, mobilità $\mu=0.5,1,2$ e diffusività comune $k=0.5,1,2$. Tutti i run sono terminati e gli errori sono rimasti finiti e piccoli. Inoltre, il raffinamento $8,16,32$ conserva l'ordine 2 in $L^2$ quando si assegnano materiali distinti al bulk e al bordo:
+\begin{itemize}
+ \item capacità e mobilità distinte: $(c_\Omega,k_\Omega,\mu_\Omega)=(1,1,1)$ e $(c_\Gamma,k_\Gamma,\mu_\Gamma)=(0.6,1,1.5)$;
+ \item diffusività distinte: $k_\Omega=1$, $k_\Gamma=0.7$, con \texttt{knormal}=1 nel materiale di bordo.
+\end{itemize}
+Per il secondo caso gli errori $L^2$ bulk sono $1.252\,10^{-3}$, $3.142\,10^{-4}$, $7.846\,10^{-5}$; quelli sul bordo sono $1.931\,10^{-3}$, $4.836\,10^{-4}$, $1.205\,10^{-4}$. Il fattore circa 4 a ogni raffinamento conferma l'ordine 2 anche con $k_\Omega\ne k_\Gamma$.
+
+\subsection*{Energia nei casi non forzati}
+Per la dinamica senza sorgente MMS abbiamo monitorato
+\[
+ E=\int_\Omega\left[\frac{k_\Omega}{2}|\nabla u|^2+
+       \frac{\mu_\Omega}{4}(u^2-1)^2\right]dx+
+   \int_\Gamma\left[\frac{k_\Gamma}{2}|\nabla_\Gamma u|^2+
+       \frac{\mu_\Gamma}{4}(u^2-1)^2\right]d\Gamma.
+\]
+Con mesh $16\times16$, $\Delta t=0.0025$, $T=0.1$ (40 passi), l'energia è stata integrata a ogni passo con quadratura sugli elementi.
+
+\begin{center}
+\small
+\begin{tabular}{lrrr}
+\toprule
+Caso & $E$ primo output & $E(T)$ & Incrementi positivi\\
+\midrule
+Coefficienti unitari & 1.25817 & 1.14500 & 0\\
+$c=0.7, k=0.5, \mu=1.5$ su bulk e bordo & 1.76949 & 1.66703 & 0\\
+$c_\Omega=1.2, c_\Gamma=0.6$, $\mu_\Omega=1.5,\mu_\Gamma=0.8$, $k=1$ & 1.18661 & 1.05934 & 0\\
+$k_\Omega=1.2$, $k_\Gamma=0.7$, $c=\mu=1$ & 1.23546 & 1.14825 & 0\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+L'energia è diminuita in tutti i 40 intervalli di ciascun caso (nessun incremento oltre la tolleranza numerica). Questo è coerente con la dissipazione attesa per il sistema e i coefficienti provati; è un controllo numerico su intervalli discreti, non una dimostrazione generale. Allen--Cahn non è in generale una dinamica a massa conservata: il controllo strutturale qui usato è la diminuzione dell'energia.
+
+\clearpage
+\section{Altre geometrie e condizioni al contorno}
+Per il rettangolo la soluzione MMS è stata generalizzata a $[0,L_x]\times[0,L_y]$. Sono stati eseguiti tre controlli aggiuntivi; le norme sono integrate con quadratura sugli elementi e gli errori sono confrontati con la soluzione analitica a $T=0.02$.
+
+\subsection*{Rettangolo con bordo dinamico}
+Dominio $[0,2]\times[0,1]$, elementi quadrilateri nel bulk, elementi lineari dinamici su tutto il perimetro, $\beta=0.25$. La tabella riporta gli errori $L^2$ nel bulk e sul bordo.
+\begin{center}\small
+\begin{tabular}{lrr}
+\toprule
+Mesh & $L^2(\Omega)$ & $L^2(\Gamma)$\\
+\midrule
+$4\times2$ & $1.702\,10^{-2}$ & $2.247\,10^{-2}$\\
+$8\times4$ & $4.513\,10^{-3}$ & $5.834\,10^{-3}$\\
+$16\times8$ & $1.143\,10^{-3}$ & $1.471\,10^{-3}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+Gli errori si riducono di circa un fattore 4 a ogni raffinamento.
+
+\subsection*{Triangoli con bordo dinamico}
+Dominio quadrato unitario suddiviso in triangoli lineari $P_1$, con elementi dinamici lineari sul contorno e $\beta=0.25$.
+\begin{center}\small
+\begin{tabular}{lrr}
+\toprule
+Suddivisione per lato & $L^2(\Omega)$ & $L^2(\Gamma)$\\
+\midrule
+4 & $5.289\,10^{-3}$ & $8.414\,10^{-3}$\\
+8 & $1.393\,10^{-3}$ & $2.092\,10^{-3}$\\
+16 & $3.524\,10^{-4}$ & $5.220\,10^{-4}$\\
+32 & $8.825\,10^{-5}$ & $1.300\,10^{-4}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+Anche con triangoli gli errori $L^2$ mostrano ordine circa 2.
+
+\subsection*{Condizione mista Dirichlet--Neumann}
+Sul rettangolo $[0,2]\times[0,1]$ abbiamo imposto il valore MMS sui lati verticali e lasciato i lati orizzontali in condizione naturale di Neumann omogenea. Il test è stazionario ($\lambda=0$) e usa $\beta=0$, così la soluzione esatta ha flusso normale nullo sui lati orizzontali. Gli errori integrati nel bulk sono:
+\begin{center}\small
+\begin{tabular}{lrr}
+\toprule
+Mesh & $L^2(\Omega)$ & $|H^1(\Omega)|$\\
+\midrule
+$8\times4$ & $4.249\,10^{-3}$ & $5.181\,10^{-2}$\\
+$16\times8$ & $1.080\,10^{-3}$ & $2.595\,10^{-2}$\\
+$32\times16$ & $2.712\,10^{-4}$ & $1.298\,10^{-2}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+La convergenza è di ordine circa 2 in $L^2$ e 1 nella seminorma $H^1$, come atteso.
+
+\clearpage
+\section{Stato delle verifiche e prossimi passi}
+\textbf{Evidenza ottenuta:} il bulk e il bordo dinamico riproducono la soluzione MMS; gli errori integrati convergono con gli ordini spaziali attesi; il passo temporale mostra convergenza compatibile con l'ordine 1; l'energia non aumenta nei casi non forzati provati, anche con coefficienti bulk e superficiali distinti. Cinque test automatici Allen--Cahn passano: bulk, bordo dinamico standard, rettangolo dinamico, mesh triangolare dinamica e bordo misto Dirichlet--Neumann. La build debug è stata ricompilata dopo l'aggiunta di \texttt{knormal}, \texttt{mmslx} e \texttt{mmsly}.
+
+\textbf{Limiti:} i risultati non convalidano ogni condizione iniziale, geometria o parametro, e MMS verifica l'equazione codificata, non la sua corrispondenza completa al modello fisico di Stefanelli--Voso. La suite completa OOFEM ha fallimenti preesistenti; il confronto con la baseline eseguito nella verifica precedente non mostrava nuove regressioni. In questo ciclo sono stati rilanciati i cinque test Allen--Cahn, non l'intera suite.
+
+Prossimi controlli utili: rendere questi casi MMS permanenti nella suite automatica; aumentare l'insieme dei parametri e delle geometrie; confrontare condizioni al contorno e coefficienti con il riferimento Stefanelli--Voso; verificare la fisica di simulazioni non manifatturate con bilanci e osservabili specifici del problema.
+
+\vfill
+\small\textit{Gli input di regressione sono in \path{tests/tm/allencahn_*.in}; i run di raffinamento sono in \path{/tmp/allencahn_extended/} e \path{/tmp/allencahn_geometries/}. Le norme e le energie sono state calcolate dagli output VTK.}
+\end{document}

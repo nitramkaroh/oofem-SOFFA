@@ -43,6 +43,7 @@
 #include "verbose.h"
 #include "tm/Elements/transportelement.h"
 #include "classfactory.h"
+#include <cmath>
 #include "datastream.h"
 #include "contextioerr.h"
 #include "function.h"
@@ -191,8 +192,7 @@ NonStationaryTransportProblem :: giveSolutionStepWhenIcApply(bool force)
         return master->giveSolutionStepWhenIcApply();
     } else {
         if ( !stepWhenIcApply ) {
-            stepWhenIcApply = std::make_unique<TimeStep>(giveNumberOfTimeStepWhenIcApply(), this, 0, this->initT - giveDeltaT( giveNumberOfFirstStep() ), giveDeltaT( giveNumberOfFirstStep() ), 0);
-            //stepWhenIcApply = std::make_unique<TimeStep>(giveNumberOfTimeStepWhenIcApply(), this, 0, -deltaT, deltaT, 0);
+            stepWhenIcApply = std::make_unique<TimeStep>(giveNumberOfTimeStepWhenIcApply(), this, 0, this->initT, giveDeltaT( giveNumberOfFirstStep() ), 0);
         }
 
         return stepWhenIcApply.get();
@@ -225,6 +225,19 @@ NonStationaryTransportProblem :: giveDeltaT(int n)
     return deltaT;
 }
 
+void
+NonStationaryTransportProblem :: adaptTimeStep(double nIter)
+{
+    // Explicit time schedules take precedence over adaptive stepping.
+    if ( dtFunction || discreteTimes.giveSize() > 0 || !currentStep ) {
+        return;
+    }
+
+    timeStepController->adaptTimeStep(static_cast<int>(nIter), currentStep.get());
+    // Transport creates steps itself and reads the next increment from deltaT.
+    deltaT = timeStepController->giveCurrentMetaStep()->giveDeltaT();
+}
+
 double
 NonStationaryTransportProblem :: giveDiscreteTime(int iStep)
 {
@@ -244,27 +257,48 @@ NonStationaryTransportProblem :: giveDiscreteTime(int iStep)
 TimeStep *
 NonStationaryTransportProblem :: giveNextStep()
 {
-    int istep = this->giveNumberOfFirstStep();
-    double totalTime = this->initT;
-    double intrinsicTime;
-    StateCounterType counter = 1;
-
-    if ( currentStep ) {
-        istep =  currentStep->giveNumber() + 1;
-        totalTime = currentStep->giveTargetTime() + giveDeltaT(istep);
-        counter = currentStep->giveSolutionStateCounter() + 1;
-    } else {
-        // first step -> generate initial step
+    if ( !currentStep ) {
+        // Start from the initial-condition state and advance by one full time increment.
         currentStep = std::make_unique<TimeStep>( *giveSolutionStepWhenIcApply() );
     }
 
+    int istep = currentStep->giveNumber() + 1;
+    double dt = giveDeltaT(istep);
+    double totalTime = currentStep->giveTargetTime() + dt;
+    double finalTime = timeStepController->giveCurrentMetaStep()->giveFinalTime();
+    double timeTolerance = 1.e-12 * (1.0 + std::abs(finalTime));
+    if ( totalTime >= finalTime - timeTolerance ) {
+        dt = finalTime - currentStep->giveTargetTime();
+        totalTime = finalTime;
+    }
+    double intrinsicTime;
+    StateCounterType counter = currentStep->giveSolutionStateCounter() + 1;
+
     previousStep = std :: move(currentStep);
-    currentStep = std::make_unique<TimeStep>(istep, this, 1, totalTime, this->giveDeltaT ( istep ), counter);
+    currentStep = std::make_unique<TimeStep>(istep, this, 1, totalTime, dt, counter);
     //set intrinsic time to time of integration
     intrinsicTime = currentStep->giveTargetTime();
 //     intrinsicTime = previousStep->giveTargetTime() + this->alpha *this->giveDeltaT(istep);
     currentStep->setIntrinsicTime(intrinsicTime);
     return currentStep.get();
+}
+
+TimeStep *
+NonStationaryTransportProblem :: giveCurrentStep(bool force)
+{
+    if ( master && !force ) {
+        return master->giveCurrentStep();
+    }
+    return currentStep.get();
+}
+
+TimeStep *
+NonStationaryTransportProblem :: givePreviousStep(bool force)
+{
+    if ( master && !force ) {
+        return master->givePreviousStep();
+    }
+    return previousStep.get();
 }
 
 

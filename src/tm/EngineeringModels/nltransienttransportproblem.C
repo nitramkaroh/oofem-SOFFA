@@ -209,6 +209,9 @@ void NLTransientTransportProblem :: solveYourselfAt(TimeStep *tStep)
             OOFEM_ERROR("convergence not reached after %d iterations", nsmax);
         }
     } while ( ( fabs(solutionErr) > rtol ) || ( fabs(incrementErr) > rtol ) );
+
+    // The time-step controller adapts the next increment using this count.
+    tStep->numberOfIterations = currentIterations;
 }
 
 

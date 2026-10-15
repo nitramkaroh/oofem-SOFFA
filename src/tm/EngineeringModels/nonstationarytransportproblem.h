@@ -147,6 +147,9 @@ public:
     void updateDomainLinks() override;
 
     TimeStep *giveNextStep() override;
+    void adaptTimeStep(double nIter) override;
+    TimeStep *giveCurrentStep(bool force = false) override;
+    TimeStep *givePreviousStep(bool force = false) override;
     TimeStep *giveSolutionStepWhenIcApply(bool force = false) override;
     NumericalMethod *giveNumericalMethod(MetaStep *mStep) override;
 

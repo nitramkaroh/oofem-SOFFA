@@ -185,18 +185,27 @@ TimeStepController :: reduceTimeStep()
 {
   MetaStep *mS = this->giveCurrentMetaStep();
   mS->reduceTimeStep();
-  this->currentStep->setTargetTime(this->currentStep->giveTargetTime()-this->currentStep->giveTimeIncrement()+mS->giveDeltaT());
-  this->currentStep->setIntrinsicTime(this->currentStep->giveIntrinsicTime()-this->currentStep->giveTimeIncrement()+mS->giveDeltaT());
-  this->currentStep->setTimeIncrement(mS->giveDeltaT());
+  TimeStep *currentStep = eModel->giveCurrentStep();
+  currentStep->setTargetTime(currentStep->giveTargetTime()-currentStep->giveTimeIncrement()+mS->giveDeltaT());
+  currentStep->setIntrinsicTime(currentStep->giveIntrinsicTime()-currentStep->giveTimeIncrement()+mS->giveDeltaT());
+  currentStep->setTimeIncrement(mS->giveDeltaT());
   
 }
 
 void
 TimeStepController :: adaptTimeStep(int nIter)
 {
+  this->adaptTimeStep(nIter, this->currentStep.get());
+}
+
+void
+TimeStepController :: adaptTimeStep(int nIter, TimeStep *step)
+{
+  if ( !step ) {
+    OOFEM_ERROR("Cannot adapt a time step that has not been created");
+  }
   MetaStep *mS = this->giveCurrentMetaStep();
-  this->giveCurrentMetaStep()->adaptTimeStep(nIter, this->currentStep->giveTargetTime());
-  this->currentStep->setTimeIncrement(mS->giveDeltaT());
+  mS->adaptTimeStep(nIter, step->giveTargetTime());
 
 }
 
