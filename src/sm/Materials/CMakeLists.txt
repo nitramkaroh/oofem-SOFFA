@@ -73,7 +73,8 @@ set (sm_material
     #Mixed pressure material interface
     MixedPressure/mixedpressurematerialextensioninterface.C
     #Hyperelastic materials
-    HyperelasticMaterials/basehyperelasticmaterial.C    
+    HyperelasticMaterials/basehyperelasticmaterial.C
+    HyperelasticMaterials/magnetoelasticmooneyrivlincompressiblematerial.C    
     HyperelasticMaterials/mooneyrivlincompressiblematerial.C
     HyperelasticMaterials/blatzkomaterial.C
     HyperelasticMaterials/simopistermaterial.C

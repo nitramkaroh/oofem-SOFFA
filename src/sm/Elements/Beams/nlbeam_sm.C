@@ -95,7 +95,7 @@ NlBeam_SM :: initializeFrom(InputRecord &ir)
     //compute alpha
     this->alpha = this->computeAlpha();
     // Applied magnetic field
-    double BaA = 0, mu0 = 1, theta = 0,rho = 0, Br = 0;
+    double BaA = 0, mu0 = 1.25663706127e-6, theta = 0,rho = 0, Br = 0;
     IR_GIVE_OPTIONAL_FIELD(ir, BaA, "baa");
     IR_GIVE_OPTIONAL_FIELD(ir, mu0, "mu0");
     IR_GIVE_OPTIONAL_FIELD(ir, theta, "theta");
