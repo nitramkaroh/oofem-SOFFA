@@ -1,0 +1,2 @@
+run_dir,mesh,epsilon,Smax,ds,direct_dt,bulk_L2_space_time,boundary_L2_space_time,OOFEM_returncode,WED_returncode
+/tmp/stvowu_clean_repro,8x4,.05,12,.1,.001,0.0011511135443132078,0.0020197937851194887,0,0

@@ -55,7 +55,12 @@ Line1_ht :: Line1_ht(int n, Domain *aDomain) :
     TransportElement(n, aDomain, HeatTransferEM), SpatialLocalizerInterface(this), ZZNodalRecoveryModelInterface(this)
 {
     numberOfDofMans  = 2;
-    numberOfGaussPoints = 1;
+    // A single point integrates the line stiffness exactly, but it
+    // under-integrates both the consistent capacity matrix (N_i N_j) and
+    // nonlinear internal-source terms. For the Allen-Cahn cubic source,
+    // N_i (u - u^3) has degree four on a linear line element, so three-point
+    // Gauss integration is required for exact integration.
+    numberOfGaussPoints = 3;
 }
 
 Line1_hmt :: Line1_hmt(int n, Domain *aDomain) : Line1_ht(n, aDomain)
@@ -86,7 +91,8 @@ Line1_ht :: computeGaussPoints()
 void
 Line1_ht :: initializeFrom(InputRecord &ir)
 {
-    numberOfGaussPoints = 1;
+    // Keep the three-point default set by the constructor. Element input may
+    // still override it explicitly with `nip`.
     TransportElement :: initializeFrom(ir);
 }
 

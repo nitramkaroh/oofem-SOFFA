@@ -1,0 +1,7 @@
+case,mesh,dt,steps,T,nodes,nodal_rms,max_abs
+rectangle,quadrilateral,0.0005,40,0.02,45,2.0634131e-4,5.0056733e-4
+triangle,triangular,0.0005,40,0.02,81,2.7054887e-4,5.0155025e-4
+rectangle_dt_0.001,quadrilateral,0.001,20,0.02,45,2.0523651e-4,4.9846733e-4
+rectangle_dt_0.0005,quadrilateral,0.0005,40,0.02,45,2.0634131e-4,5.0056733e-4
+rectangle_dt_0.00025,quadrilateral,0.00025,80,0.02,45,2.0690904e-4,5.0181288e-4
+control_without_normal_flux_source,quadrilateral,0.0005,40,0.02,45,6.4513665e-4,1.3711000e-3

@@ -43,6 +43,8 @@
 #include "mathfem.h"
 #include "assemblercallback.h"
 #include "unknownnumberingscheme.h"
+#include <algorithm>
+#include <cmath>
 
 namespace oofem {
 REGISTER_EngngModel(NLTransientTransportProblem);
@@ -65,10 +67,57 @@ NLTransientTransportProblem :: initializeFrom(InputRecord &ir)
     NR_Mode = nrsolverModifiedNRM;
     MANRMSteps = 0;
     IR_GIVE_OPTIONAL_FIELD(ir, MANRMSteps, _IFT_NLTransientTransportProblem_manrmsteps);
+    IR_GIVE_OPTIONAL_FIELD(ir, bdfOrder, _IFT_NLTransientTransportProblem_bdforder);
+    if ( bdfOrder < 1 || bdfOrder > 5 ) {
+        throw ValueInputException(ir, _IFT_NLTransientTransportProblem_bdforder,
+                                  "BDF order must be between 1 and 5");
+    }
+    if ( bdfOrder > 1 && alpha != 1.0 ) {
+        throw ValueInputException(ir, _IFT_NonStationaryTransportProblem_alpha,
+                                  "BDF integration requires alpha 1.0");
+    }
+    if ( bdfOrder > 1 && ( dtFunction != 0 || discreteTimes.giveSize() > 0 ) ) {
+        throw ValueInputException(ir, _IFT_NonStationaryTransportProblem_deltat,
+                                  "BDF integration requires a fixed time increment");
+    }
     if ( MANRMSteps > 0 ) {
         NR_Mode = nrsolverAccelNRM;
     } else {
         NR_Mode = nrsolverModifiedNRM;
+    }
+}
+
+void
+NLTransientTransportProblem :: giveBdfCoefficients(int order, std::vector<double> &coefficients)
+{
+    static const std::vector< std::vector<double> > table = {
+        {},
+        { 1.0, -1.0 },
+        { 1.5, -2.0, 0.5 },
+        { 11.0 / 6.0, -3.0, 1.5, -1.0 / 3.0 },
+        { 25.0 / 12.0, -4.0, 3.0, -4.0 / 3.0, 0.25 },
+        { 137.0 / 60.0, -5.0, 5.0, -10.0 / 3.0, 1.25, -0.2 }
+    };
+    if ( order < 1 || order > 5 ) {
+        OOFEM_ERROR("invalid BDF order %d", order);
+    }
+    coefficients = table[order];
+}
+
+void
+NLTransientTransportProblem :: captureBdfElementState(TimeStep *tStep)
+{
+    std::vector<FloatArray> state;
+    Domain *domain = this->giveDomain(1);
+    state.reserve(domain->giveNumberOfElements());
+    for ( auto &element : domain->giveElements() ) {
+        FloatArray local;
+        element->computeVectorOf(VM_Total, tStep, local);
+        state.emplace_back(std::move(local));
+    }
+    bdfElementHistory.push_front(std::move(state));
+    while ( bdfElementHistory.size() > 5 ) {
+        bdfElementHistory.pop_back();
     }
 }
 
@@ -77,6 +126,14 @@ NLTransientTransportProblem :: giveNextStep()
 {
     double intrinsicTime;
     NonStationaryTransportProblem :: giveNextStep();
+    if ( bdfOrder > 1 && bdfPreviousIncrement > 0.0 ) {
+        const double currentIncrement = currentStep->giveTimeIncrement();
+        if ( std::abs(currentIncrement - bdfPreviousIncrement) >
+             1.e-12 * std::max(currentIncrement, bdfPreviousIncrement) ) {
+            OOFEM_ERROR("BDF integration requires a uniform time step; previous dt=%g, current dt=%g",
+                        bdfPreviousIncrement, currentIncrement);
+        }
+    }
     intrinsicTime = previousStep->giveTargetTime() + this->alpha*(currentStep->giveTargetTime()-previousStep->giveTargetTime());
     currentStep->setIntrinsicTime(intrinsicTime);
     return currentStep.get();
@@ -164,7 +221,12 @@ void NLTransientTransportProblem :: solveYourselfAt(TimeStep *tStep)
                            EModelDefaultEquationNumbering(), this->giveDomain(1) );
             conductivityMatrix->times(alpha);
             //Add capacity matrix
-            this->assemble( *conductivityMatrix, & TauStep, MidpointLhsAssembler(lumpedCapacityStab, alpha),
+            std::vector<double> coefficients;
+            const int activeOrder = bdfOrder == 1 ? 1 :
+                std::min(bdfOrder, static_cast<int>(bdfElementHistory.size()));
+            giveBdfCoefficients(activeOrder, coefficients);
+            this->assemble( *conductivityMatrix, & TauStep,
+                           MidpointLhsAssembler(lumpedCapacityStab, alpha, coefficients[0]),
                            EModelDefaultEquationNumbering(), this->giveDomain(1) );
         }
 
@@ -191,11 +253,23 @@ void NLTransientTransportProblem :: solveYourselfAt(TimeStep *tStep)
         // compute norm of residuals from balance equations
         solutionErr = rhs.computeNorm();
 
+        if ( !std::isfinite(solutionErr) ) {
+            OOFEM_ERROR("non-finite nonlinear transport residual at t=%g, iteration %d", tStep->giveTargetTime(), nite);
+        }
+
         linSolver->solve(*conductivityMatrix, rhs, solutionVectorIncrement);
+        for ( double value : solutionVectorIncrement ) {
+            if ( !std::isfinite(value) ) {
+                OOFEM_ERROR("non-finite nonlinear transport increment at t=%g, iteration %d", tStep->giveTargetTime(), nite);
+            }
+        }
         solutionVector->add(solutionVectorIncrement);
         this->updateInternalState(tStep); //insert to hash=0(current), if changes in equation numbering
         // compute error in the solutionvector increment
         incrementErr = solutionVectorIncrement.computeNorm();
+        if ( !std::isfinite(incrementErr) ) {
+            OOFEM_ERROR("non-finite nonlinear transport increment norm at t=%g, iteration %d", tStep->giveTargetTime(), nite);
+        }
 
         // update solution state counter
         TauStep.incrementStateCounter();
@@ -283,6 +357,9 @@ NLTransientTransportProblem :: applyIC(TimeStep *stepWhenIcApply)
         element->updateInternalState(stepWhenIcApply);
         element->updateYourself(stepWhenIcApply);
     }
+    if ( bdfOrder > 1 && bdfElementHistory.empty() ) {
+        captureBdfElementState(stepWhenIcApply);
+    }
 }
 
 void
@@ -305,6 +382,10 @@ NLTransientTransportProblem :: createPreviousSolutionInDofUnknownsDictionary(Tim
 void
 NLTransientTransportProblem :: updateYourself(TimeStep *tStep)
 {
+    if ( bdfOrder > 1 ) {
+        captureBdfElementState(tStep);
+        bdfPreviousIncrement = tStep->giveTimeIncrement();
+    }
     //this->updateInternalState(tStep);
     //Set intrinsic time for a staggered problem here. This is important for materials such as hydratingconcretemat, who keep history of intrinsic times.
     double intrinsicTime = tStep->giveIntrinsicTime();
@@ -387,6 +468,52 @@ NLTransientTransportProblem :: assembleAlgorithmicPartOfRhs(FloatArray &answer,
 
     Domain *domain = this->giveDomain(1);
     int nelem = domain->giveNumberOfElements();
+
+    if ( bdfOrder > 1 ) {
+        const int activeOrder = std::min(bdfOrder, static_cast<int>(bdfElementHistory.size()));
+        std::vector<double> coefficients;
+        giveBdfCoefficients(activeOrder, coefficients);
+        const double inverseDt = 1.0 / tStep->giveTimeIncrement();
+        for ( int i = 1; i <= nelem; i++ ) {
+            element = domain->giveElement(i);
+            if ( element->giveParallelMode() == Element_remote || !element->isActivated(tStep) ) {
+                continue;
+            }
+            element->giveLocationArray(loc, ns);
+            element->giveCharacteristicMatrix(charMtrxCond, TangentStiffnessMatrix, tStep);
+            element->giveCharacteristicMatrix(charMtrxCap,
+                lumpedCapacityStab ? LumpedMassMatrix : MassMatrix, tStep);
+
+            if ( lumpedCapacityStab ) {
+                const int size = charMtrxCap.giveNumberOfRows();
+                for ( int j = 1; j <= size; j++ ) {
+                    double rowSum = 0.0;
+                    for ( int k = 1; k <= size; k++ ) {
+                        rowSum += charMtrxCap.at(j, k);
+                        charMtrxCap.at(j, k) = 0.0;
+                    }
+                    charMtrxCap.at(j, j) = rowSum;
+                }
+            }
+
+            element->computeVectorOf(VM_Total, currentStep, r);
+            drdt = r;
+            drdt.times(coefficients[0]);
+            for ( int j = 1; j <= activeOrder; j++ ) {
+                if ( bdfElementHistory[j - 1].size() != static_cast<size_t>(nelem) ) {
+                    OOFEM_ERROR("BDF solution history is inconsistent with the element numbering");
+                }
+                drdt.add(coefficients[j], bdfElementHistory[j - 1][i - 1]);
+            }
+            drdt.times(inverseDt);
+            help.beProductOf(charMtrxCap, drdt);
+            contrib.beProductOf(charMtrxCond, r);
+            contrib.add(help);
+            contrib.negated();
+            answer.assemble(contrib, loc);
+        }
+        return;
+    }
 
     for ( int i = 1; i <= nelem; i++ ) {
         element = domain->giveElement(i);

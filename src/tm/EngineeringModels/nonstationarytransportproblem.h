@@ -80,9 +80,10 @@ class MidpointLhsAssembler : public MatrixAssembler
 protected:
     double lumped;
     double alpha;
+    double capacityFactor;
 
 public:
-    MidpointLhsAssembler(bool lumped, double alpha);
+    MidpointLhsAssembler(bool lumped, double alpha, double capacityFactor = 1.0);
     void matrixFromElement(FloatMatrix &mat, Element &element, TimeStep *tStep) const override;
 };
 

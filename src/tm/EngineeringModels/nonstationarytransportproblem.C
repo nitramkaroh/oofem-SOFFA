@@ -67,8 +67,8 @@ void TransportExternalForceAssembler :: vectorFromElement(FloatArray &vec, Eleme
 }
 
 
-MidpointLhsAssembler :: MidpointLhsAssembler(bool lumped, double alpha) : 
-    MatrixAssembler(), lumped(lumped), alpha(alpha)
+MidpointLhsAssembler :: MidpointLhsAssembler(bool lumped, double alpha, double capacityFactor) :
+    MatrixAssembler(), lumped(lumped), alpha(alpha), capacityFactor(capacityFactor)
 {}
 
 
@@ -78,7 +78,7 @@ void MidpointLhsAssembler :: matrixFromElement(FloatMatrix &answer, Element &el,
     el.giveCharacteristicMatrix(answer, TangentStiffnessMatrix, tStep);
     el.giveCharacteristicMatrix(capacity, this->lumped ? LumpedMassMatrix : MassMatrix, tStep);
     answer.times(this->alpha);
-    answer.add(1. / tStep->giveTimeIncrement(), capacity);
+    answer.add(this->capacityFactor / tStep->giveTimeIncrement(), capacity);
 }
 
 

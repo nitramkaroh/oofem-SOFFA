@@ -38,6 +38,8 @@
 #include "tm/EngineeringModels/nonstationarytransportproblem.h"
 #include "sparselinsystemnm.h"
 #include "sparsemtrx.h"
+#include <deque>
+#include <vector>
 
 ///@name Input fields for NLTransientTransportProblem
 //@{
@@ -45,6 +47,7 @@
 #define _IFT_NLTransientTransportProblem_nsmax "nsmax"
 #define _IFT_NLTransientTransportProblem_rtol "rtol"
 #define _IFT_NLTransientTransportProblem_manrmsteps "manrmsteps"
+#define _IFT_NLTransientTransportProblem_bdforder "bdforder"
 //@}
 
 namespace oofem {
@@ -66,6 +69,11 @@ protected:
     nlttp_ModeType NR_Mode = nrsolverModifiedNRM;
     int MANRMSteps = 0;
     int currentIterations = 0;
+    int bdfOrder = 1;
+    double bdfPreviousIncrement = 0.0;
+    // Element-local solution history, newest previous state first. This is
+    // opt-in and only used when bdforder > 1.
+    std::deque< std::vector<FloatArray> > bdfElementHistory;
 
 public:
     NLTransientTransportProblem(int i, EngngModel * _master);
@@ -87,6 +95,8 @@ public:
     int giveCurrentNumberOfIterations() override { return currentIterations; }
 
 protected:
+    void captureBdfElementState(TimeStep *tStep);
+    static void giveBdfCoefficients(int order, std::vector<double> &coefficients);
     void updateInternalState(TimeStep *tStep) override;
     void applyIC(TimeStep *tStep) override;
     void createPreviousSolutionInDofUnknownsDictionary(TimeStep *tStep);

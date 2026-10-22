@@ -1,0 +1,384 @@
+space_n_8.out
+Chen et al. (2025) Sec. 6.2 exact-solution Allen-Cahn MMS; P1 triangles, homogeneous Dirichlet data
+nltransienttransportproblem nsteps 400 deltat 0.0025 alpha 1.0 rtol 1.e-11 nsmax 40 nmodules 1
+vtkxml tstep_all domain_all primvars 1 6
+domain heattransfer
+OutputManager tstep_all dofman_all element_all
+ndofman 81 nelem 128 ncrosssect 1 nmat 1 nbc 1 nic 81 nltf 1 nset 83
+node 1 coords 3 0 0 0
+node 2 coords 3 0.7853981633974483 0 0
+node 3 coords 3 1.570796326794897 0 0
+node 4 coords 3 2.356194490192345 0 0
+node 5 coords 3 3.141592653589793 0 0
+node 6 coords 3 3.926990816987241 0 0
+node 7 coords 3 4.71238898038469 0 0
+node 8 coords 3 5.497787143782138 0 0
+node 9 coords 3 6.283185307179586 0 0
+node 10 coords 3 0 0.7853981633974483 0
+node 11 coords 3 0.7853981633974483 0.7853981633974483 0
+node 12 coords 3 1.570796326794897 0.7853981633974483 0
+node 13 coords 3 2.356194490192345 0.7853981633974483 0
+node 14 coords 3 3.141592653589793 0.7853981633974483 0
+node 15 coords 3 3.926990816987241 0.7853981633974483 0
+node 16 coords 3 4.71238898038469 0.7853981633974483 0
+node 17 coords 3 5.497787143782138 0.7853981633974483 0
+node 18 coords 3 6.283185307179586 0.7853981633974483 0
+node 19 coords 3 0 1.570796326794897 0
+node 20 coords 3 0.7853981633974483 1.570796326794897 0
+node 21 coords 3 1.570796326794897 1.570796326794897 0
+node 22 coords 3 2.356194490192345 1.570796326794897 0
+node 23 coords 3 3.141592653589793 1.570796326794897 0
+node 24 coords 3 3.926990816987241 1.570796326794897 0
+node 25 coords 3 4.71238898038469 1.570796326794897 0
+node 26 coords 3 5.497787143782138 1.570796326794897 0
+node 27 coords 3 6.283185307179586 1.570796326794897 0
+node 28 coords 3 0 2.356194490192345 0
+node 29 coords 3 0.7853981633974483 2.356194490192345 0
+node 30 coords 3 1.570796326794897 2.356194490192345 0
+node 31 coords 3 2.356194490192345 2.356194490192345 0
+node 32 coords 3 3.141592653589793 2.356194490192345 0
+node 33 coords 3 3.926990816987241 2.356194490192345 0
+node 34 coords 3 4.71238898038469 2.356194490192345 0
+node 35 coords 3 5.497787143782138 2.356194490192345 0
+node 36 coords 3 6.283185307179586 2.356194490192345 0
+node 37 coords 3 0 3.141592653589793 0
+node 38 coords 3 0.7853981633974483 3.141592653589793 0
+node 39 coords 3 1.570796326794897 3.141592653589793 0
+node 40 coords 3 2.356194490192345 3.141592653589793 0
+node 41 coords 3 3.141592653589793 3.141592653589793 0
+node 42 coords 3 3.926990816987241 3.141592653589793 0
+node 43 coords 3 4.71238898038469 3.141592653589793 0
+node 44 coords 3 5.497787143782138 3.141592653589793 0
+node 45 coords 3 6.283185307179586 3.141592653589793 0
+node 46 coords 3 0 3.926990816987241 0
+node 47 coords 3 0.7853981633974483 3.926990816987241 0
+node 48 coords 3 1.570796326794897 3.926990816987241 0
+node 49 coords 3 2.356194490192345 3.926990816987241 0
+node 50 coords 3 3.141592653589793 3.926990816987241 0
+node 51 coords 3 3.926990816987241 3.926990816987241 0
+node 52 coords 3 4.71238898038469 3.926990816987241 0
+node 53 coords 3 5.497787143782138 3.926990816987241 0
+node 54 coords 3 6.283185307179586 3.926990816987241 0
+node 55 coords 3 0 4.71238898038469 0
+node 56 coords 3 0.7853981633974483 4.71238898038469 0
+node 57 coords 3 1.570796326794897 4.71238898038469 0
+node 58 coords 3 2.356194490192345 4.71238898038469 0
+node 59 coords 3 3.141592653589793 4.71238898038469 0
+node 60 coords 3 3.926990816987241 4.71238898038469 0
+node 61 coords 3 4.71238898038469 4.71238898038469 0
+node 62 coords 3 5.497787143782138 4.71238898038469 0
+node 63 coords 3 6.283185307179586 4.71238898038469 0
+node 64 coords 3 0 5.497787143782138 0
+node 65 coords 3 0.7853981633974483 5.497787143782138 0
+node 66 coords 3 1.570796326794897 5.497787143782138 0
+node 67 coords 3 2.356194490192345 5.497787143782138 0
+node 68 coords 3 3.141592653589793 5.497787143782138 0
+node 69 coords 3 3.926990816987241 5.497787143782138 0
+node 70 coords 3 4.71238898038469 5.497787143782138 0
+node 71 coords 3 5.497787143782138 5.497787143782138 0
+node 72 coords 3 6.283185307179586 5.497787143782138 0
+node 73 coords 3 0 6.283185307179586 0
+node 74 coords 3 0.7853981633974483 6.283185307179586 0
+node 75 coords 3 1.570796326794897 6.283185307179586 0
+node 76 coords 3 2.356194490192345 6.283185307179586 0
+node 77 coords 3 3.141592653589793 6.283185307179586 0
+node 78 coords 3 3.926990816987241 6.283185307179586 0
+node 79 coords 3 4.71238898038469 6.283185307179586 0
+node 80 coords 3 5.497787143782138 6.283185307179586 0
+node 81 coords 3 6.283185307179586 6.283185307179586 0
+tr1ht 1 nodes 3 1 2 11
+tr1ht 2 nodes 3 1 11 10
+tr1ht 3 nodes 3 2 3 12
+tr1ht 4 nodes 3 2 12 11
+tr1ht 5 nodes 3 3 4 13
+tr1ht 6 nodes 3 3 13 12
+tr1ht 7 nodes 3 4 5 14
+tr1ht 8 nodes 3 4 14 13
+tr1ht 9 nodes 3 5 6 15
+tr1ht 10 nodes 3 5 15 14
+tr1ht 11 nodes 3 6 7 16
+tr1ht 12 nodes 3 6 16 15
+tr1ht 13 nodes 3 7 8 17
+tr1ht 14 nodes 3 7 17 16
+tr1ht 15 nodes 3 8 9 18
+tr1ht 16 nodes 3 8 18 17
+tr1ht 17 nodes 3 10 11 20
+tr1ht 18 nodes 3 10 20 19
+tr1ht 19 nodes 3 11 12 21
+tr1ht 20 nodes 3 11 21 20
+tr1ht 21 nodes 3 12 13 22
+tr1ht 22 nodes 3 12 22 21
+tr1ht 23 nodes 3 13 14 23
+tr1ht 24 nodes 3 13 23 22
+tr1ht 25 nodes 3 14 15 24
+tr1ht 26 nodes 3 14 24 23
+tr1ht 27 nodes 3 15 16 25
+tr1ht 28 nodes 3 15 25 24
+tr1ht 29 nodes 3 16 17 26
+tr1ht 30 nodes 3 16 26 25
+tr1ht 31 nodes 3 17 18 27
+tr1ht 32 nodes 3 17 27 26
+tr1ht 33 nodes 3 19 20 29
+tr1ht 34 nodes 3 19 29 28
+tr1ht 35 nodes 3 20 21 30
+tr1ht 36 nodes 3 20 30 29
+tr1ht 37 nodes 3 21 22 31
+tr1ht 38 nodes 3 21 31 30
+tr1ht 39 nodes 3 22 23 32
+tr1ht 40 nodes 3 22 32 31
+tr1ht 41 nodes 3 23 24 33
+tr1ht 42 nodes 3 23 33 32
+tr1ht 43 nodes 3 24 25 34
+tr1ht 44 nodes 3 24 34 33
+tr1ht 45 nodes 3 25 26 35
+tr1ht 46 nodes 3 25 35 34
+tr1ht 47 nodes 3 26 27 36
+tr1ht 48 nodes 3 26 36 35
+tr1ht 49 nodes 3 28 29 38
+tr1ht 50 nodes 3 28 38 37
+tr1ht 51 nodes 3 29 30 39
+tr1ht 52 nodes 3 29 39 38
+tr1ht 53 nodes 3 30 31 40
+tr1ht 54 nodes 3 30 40 39
+tr1ht 55 nodes 3 31 32 41
+tr1ht 56 nodes 3 31 41 40
+tr1ht 57 nodes 3 32 33 42
+tr1ht 58 nodes 3 32 42 41
+tr1ht 59 nodes 3 33 34 43
+tr1ht 60 nodes 3 33 43 42
+tr1ht 61 nodes 3 34 35 44
+tr1ht 62 nodes 3 34 44 43
+tr1ht 63 nodes 3 35 36 45
+tr1ht 64 nodes 3 35 45 44
+tr1ht 65 nodes 3 37 38 47
+tr1ht 66 nodes 3 37 47 46
+tr1ht 67 nodes 3 38 39 48
+tr1ht 68 nodes 3 38 48 47
+tr1ht 69 nodes 3 39 40 49
+tr1ht 70 nodes 3 39 49 48
+tr1ht 71 nodes 3 40 41 50
+tr1ht 72 nodes 3 40 50 49
+tr1ht 73 nodes 3 41 42 51
+tr1ht 74 nodes 3 41 51 50
+tr1ht 75 nodes 3 42 43 52
+tr1ht 76 nodes 3 42 52 51
+tr1ht 77 nodes 3 43 44 53
+tr1ht 78 nodes 3 43 53 52
+tr1ht 79 nodes 3 44 45 54
+tr1ht 80 nodes 3 44 54 53
+tr1ht 81 nodes 3 46 47 56
+tr1ht 82 nodes 3 46 56 55
+tr1ht 83 nodes 3 47 48 57
+tr1ht 84 nodes 3 47 57 56
+tr1ht 85 nodes 3 48 49 58
+tr1ht 86 nodes 3 48 58 57
+tr1ht 87 nodes 3 49 50 59
+tr1ht 88 nodes 3 49 59 58
+tr1ht 89 nodes 3 50 51 60
+tr1ht 90 nodes 3 50 60 59
+tr1ht 91 nodes 3 51 52 61
+tr1ht 92 nodes 3 51 61 60
+tr1ht 93 nodes 3 52 53 62
+tr1ht 94 nodes 3 52 62 61
+tr1ht 95 nodes 3 53 54 63
+tr1ht 96 nodes 3 53 63 62
+tr1ht 97 nodes 3 55 56 65
+tr1ht 98 nodes 3 55 65 64
+tr1ht 99 nodes 3 56 57 66
+tr1ht 100 nodes 3 56 66 65
+tr1ht 101 nodes 3 57 58 67
+tr1ht 102 nodes 3 57 67 66
+tr1ht 103 nodes 3 58 59 68
+tr1ht 104 nodes 3 58 68 67
+tr1ht 105 nodes 3 59 60 69
+tr1ht 106 nodes 3 59 69 68
+tr1ht 107 nodes 3 60 61 70
+tr1ht 108 nodes 3 60 70 69
+tr1ht 109 nodes 3 61 62 71
+tr1ht 110 nodes 3 61 71 70
+tr1ht 111 nodes 3 62 63 72
+tr1ht 112 nodes 3 62 72 71
+tr1ht 113 nodes 3 64 65 74
+tr1ht 114 nodes 3 64 74 73
+tr1ht 115 nodes 3 65 66 75
+tr1ht 116 nodes 3 65 75 74
+tr1ht 117 nodes 3 66 67 76
+tr1ht 118 nodes 3 66 76 75
+tr1ht 119 nodes 3 67 68 77
+tr1ht 120 nodes 3 67 77 76
+tr1ht 121 nodes 3 68 69 78
+tr1ht 122 nodes 3 68 78 77
+tr1ht 123 nodes 3 69 70 79
+tr1ht 124 nodes 3 69 79 78
+tr1ht 125 nodes 3 70 71 80
+tr1ht 126 nodes 3 70 80 79
+tr1ht 127 nodes 3 71 72 81
+tr1ht 128 nodes 3 71 81 80
+SimpleTransportCS 1 thickness 1.0 area 1.0 mat 1 set 1
+allencahn 1 d 1.0 k 0.0001 c 1.0 mobility 1.0 manufactured 1 mmsbase 0.0 mmsamplitude 0.05 mmsrate 0.1 mmsbeta 0.0 mmslx 3.141592653589793 mmsly 3.141592653589793 mmstemporal 0 mmsspatial 1
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 10 values 1 0.0 set 2
+InitialCondition 1 dofs 1 10 Conditions 1 u 0 set 3
+InitialCondition 2 dofs 1 10 Conditions 1 u 0 set 4
+InitialCondition 3 dofs 1 10 Conditions 1 u 0 set 5
+InitialCondition 4 dofs 1 10 Conditions 1 u 0 set 6
+InitialCondition 5 dofs 1 10 Conditions 1 u 0 set 7
+InitialCondition 6 dofs 1 10 Conditions 1 u -0 set 8
+InitialCondition 7 dofs 1 10 Conditions 1 u -0 set 9
+InitialCondition 8 dofs 1 10 Conditions 1 u -0 set 10
+InitialCondition 9 dofs 1 10 Conditions 1 u -0 set 11
+InitialCondition 10 dofs 1 10 Conditions 1 u 0 set 12
+InitialCondition 11 dofs 1 10 Conditions 1 u 0.025 set 13
+InitialCondition 12 dofs 1 10 Conditions 1 u 0.03535533905932738 set 14
+InitialCondition 13 dofs 1 10 Conditions 1 u 0.025 set 15
+InitialCondition 14 dofs 1 10 Conditions 1 u 4.329780281177466e-18 set 16
+InitialCondition 15 dofs 1 10 Conditions 1 u -0.025 set 17
+InitialCondition 16 dofs 1 10 Conditions 1 u -0.03535533905932738 set 18
+InitialCondition 17 dofs 1 10 Conditions 1 u -0.025 set 19
+InitialCondition 18 dofs 1 10 Conditions 1 u -8.659560562354932e-18 set 20
+InitialCondition 19 dofs 1 10 Conditions 1 u 0 set 21
+InitialCondition 20 dofs 1 10 Conditions 1 u 0.03535533905932738 set 22
+InitialCondition 21 dofs 1 10 Conditions 1 u 0.05 set 23
+InitialCondition 22 dofs 1 10 Conditions 1 u 0.03535533905932738 set 24
+InitialCondition 23 dofs 1 10 Conditions 1 u 6.123233995736766e-18 set 25
+InitialCondition 24 dofs 1 10 Conditions 1 u -0.03535533905932738 set 26
+InitialCondition 25 dofs 1 10 Conditions 1 u -0.05 set 27
+InitialCondition 26 dofs 1 10 Conditions 1 u -0.03535533905932738 set 28
+InitialCondition 27 dofs 1 10 Conditions 1 u -1.224646799147353e-17 set 29
+InitialCondition 28 dofs 1 10 Conditions 1 u 0 set 30
+InitialCondition 29 dofs 1 10 Conditions 1 u 0.025 set 31
+InitialCondition 30 dofs 1 10 Conditions 1 u 0.03535533905932738 set 32
+InitialCondition 31 dofs 1 10 Conditions 1 u 0.025 set 33
+InitialCondition 32 dofs 1 10 Conditions 1 u 4.329780281177467e-18 set 34
+InitialCondition 33 dofs 1 10 Conditions 1 u -0.025 set 35
+InitialCondition 34 dofs 1 10 Conditions 1 u -0.03535533905932738 set 36
+InitialCondition 35 dofs 1 10 Conditions 1 u -0.025 set 37
+InitialCondition 36 dofs 1 10 Conditions 1 u -8.659560562354934e-18 set 38
+InitialCondition 37 dofs 1 10 Conditions 1 u 0 set 39
+InitialCondition 38 dofs 1 10 Conditions 1 u 4.329780281177466e-18 set 40
+InitialCondition 39 dofs 1 10 Conditions 1 u 6.123233995736766e-18 set 41
+InitialCondition 40 dofs 1 10 Conditions 1 u 4.329780281177468e-18 set 42
+InitialCondition 41 dofs 1 10 Conditions 1 u 7.498798913309289e-34 set 43
+InitialCondition 42 dofs 1 10 Conditions 1 u -4.329780281177466e-18 set 44
+InitialCondition 43 dofs 1 10 Conditions 1 u -6.123233995736766e-18 set 45
+InitialCondition 44 dofs 1 10 Conditions 1 u -4.329780281177468e-18 set 46
+InitialCondition 45 dofs 1 10 Conditions 1 u -1.499759782661858e-33 set 47
+InitialCondition 46 dofs 1 10 Conditions 1 u -0 set 48
+InitialCondition 47 dofs 1 10 Conditions 1 u -0.025 set 49
+InitialCondition 48 dofs 1 10 Conditions 1 u -0.03535533905932738 set 50
+InitialCondition 49 dofs 1 10 Conditions 1 u -0.025 set 51
+InitialCondition 50 dofs 1 10 Conditions 1 u -4.329780281177466e-18 set 52
+InitialCondition 51 dofs 1 10 Conditions 1 u 0.025 set 53
+InitialCondition 52 dofs 1 10 Conditions 1 u 0.03535533905932738 set 54
+InitialCondition 53 dofs 1 10 Conditions 1 u 0.025 set 55
+InitialCondition 54 dofs 1 10 Conditions 1 u 8.659560562354932e-18 set 56
+InitialCondition 55 dofs 1 10 Conditions 1 u -0 set 57
+InitialCondition 56 dofs 1 10 Conditions 1 u -0.03535533905932738 set 58
+InitialCondition 57 dofs 1 10 Conditions 1 u -0.05 set 59
+InitialCondition 58 dofs 1 10 Conditions 1 u -0.03535533905932738 set 60
+InitialCondition 59 dofs 1 10 Conditions 1 u -6.123233995736766e-18 set 61
+InitialCondition 60 dofs 1 10 Conditions 1 u 0.03535533905932738 set 62
+InitialCondition 61 dofs 1 10 Conditions 1 u 0.05 set 63
+InitialCondition 62 dofs 1 10 Conditions 1 u 0.03535533905932738 set 64
+InitialCondition 63 dofs 1 10 Conditions 1 u 1.224646799147353e-17 set 65
+InitialCondition 64 dofs 1 10 Conditions 1 u -0 set 66
+InitialCondition 65 dofs 1 10 Conditions 1 u -0.025 set 67
+InitialCondition 66 dofs 1 10 Conditions 1 u -0.03535533905932738 set 68
+InitialCondition 67 dofs 1 10 Conditions 1 u -0.02500000000000001 set 69
+InitialCondition 68 dofs 1 10 Conditions 1 u -4.329780281177468e-18 set 70
+InitialCondition 69 dofs 1 10 Conditions 1 u 0.025 set 71
+InitialCondition 70 dofs 1 10 Conditions 1 u 0.03535533905932738 set 72
+InitialCondition 71 dofs 1 10 Conditions 1 u 0.02500000000000001 set 73
+InitialCondition 72 dofs 1 10 Conditions 1 u 8.659560562354935e-18 set 74
+InitialCondition 73 dofs 1 10 Conditions 1 u -0 set 75
+InitialCondition 74 dofs 1 10 Conditions 1 u -8.659560562354932e-18 set 76
+InitialCondition 75 dofs 1 10 Conditions 1 u -1.224646799147353e-17 set 77
+InitialCondition 76 dofs 1 10 Conditions 1 u -8.659560562354935e-18 set 78
+InitialCondition 77 dofs 1 10 Conditions 1 u -1.499759782661858e-33 set 79
+InitialCondition 78 dofs 1 10 Conditions 1 u 8.659560562354932e-18 set 80
+InitialCondition 79 dofs 1 10 Conditions 1 u 1.224646799147353e-17 set 81
+InitialCondition 80 dofs 1 10 Conditions 1 u 8.659560562354935e-18 set 82
+InitialCondition 81 dofs 1 10 Conditions 1 u 2.999519565323716e-33 set 83
+ConstantFunction 1 f(t) 1.0
+Set 1 elementranges {(1 128)}
+Set 2 nodes 32 1 2 3 4 5 6 7 8 9 73 74 75 76 77 78 79 80 81 10 19 28 37 46 55 64 18 27 36 45 54 63 72
+Set 3 nodes 1 1
+Set 4 nodes 1 2
+Set 5 nodes 1 3
+Set 6 nodes 1 4
+Set 7 nodes 1 5
+Set 8 nodes 1 6
+Set 9 nodes 1 7
+Set 10 nodes 1 8
+Set 11 nodes 1 9
+Set 12 nodes 1 10
+Set 13 nodes 1 11
+Set 14 nodes 1 12
+Set 15 nodes 1 13
+Set 16 nodes 1 14
+Set 17 nodes 1 15
+Set 18 nodes 1 16
+Set 19 nodes 1 17
+Set 20 nodes 1 18
+Set 21 nodes 1 19
+Set 22 nodes 1 20
+Set 23 nodes 1 21
+Set 24 nodes 1 22
+Set 25 nodes 1 23
+Set 26 nodes 1 24
+Set 27 nodes 1 25
+Set 28 nodes 1 26
+Set 29 nodes 1 27
+Set 30 nodes 1 28
+Set 31 nodes 1 29
+Set 32 nodes 1 30
+Set 33 nodes 1 31
+Set 34 nodes 1 32
+Set 35 nodes 1 33
+Set 36 nodes 1 34
+Set 37 nodes 1 35
+Set 38 nodes 1 36
+Set 39 nodes 1 37
+Set 40 nodes 1 38
+Set 41 nodes 1 39
+Set 42 nodes 1 40
+Set 43 nodes 1 41
+Set 44 nodes 1 42
+Set 45 nodes 1 43
+Set 46 nodes 1 44
+Set 47 nodes 1 45
+Set 48 nodes 1 46
+Set 49 nodes 1 47
+Set 50 nodes 1 48
+Set 51 nodes 1 49
+Set 52 nodes 1 50
+Set 53 nodes 1 51
+Set 54 nodes 1 52
+Set 55 nodes 1 53
+Set 56 nodes 1 54
+Set 57 nodes 1 55
+Set 58 nodes 1 56
+Set 59 nodes 1 57
+Set 60 nodes 1 58
+Set 61 nodes 1 59
+Set 62 nodes 1 60
+Set 63 nodes 1 61
+Set 64 nodes 1 62
+Set 65 nodes 1 63
+Set 66 nodes 1 64
+Set 67 nodes 1 65
+Set 68 nodes 1 66
+Set 69 nodes 1 67
+Set 70 nodes 1 68
+Set 71 nodes 1 69
+Set 72 nodes 1 70
+Set 73 nodes 1 71
+Set 74 nodes 1 72
+Set 75 nodes 1 73
+Set 76 nodes 1 74
+Set 77 nodes 1 75
+Set 78 nodes 1 76
+Set 79 nodes 1 77
+Set 80 nodes 1 78
+Set 81 nodes 1 79
+Set 82 nodes 1 80
+Set 83 nodes 1 81
