@@ -246,6 +246,9 @@ void IGAElement ::initializeFrom( InputRecord &ir )
     // generate individual export IntegrationElements; one for each nonzero knot span
     indx = 0;
     IR_GIVE_OPTIONAL_FIELD( ir, numExportPoints, _IFT_IGAElement_numberOfExportPoints );
+    if ( numExportPoints < 2 ) {
+        throw ValueInputException( ir, _IFT_IGAElement_numberOfExportPoints, "at least 2 export points per knot span are required" );
+    }
 
     if ( nsd == 1 ) {
         // HUHU
@@ -332,9 +335,9 @@ void IGAElement ::initializeFrom( InputRecord &ir )
                 indx++;
             }
         }
-    } else {
-        throw ValueInputException( ir, "Domain", "unsupported number of spatial dimensions" );
     }
+    // nsd == 3: export points are not implemented for 3D IGA elements, so none are created;
+    // the element still works for the analysis. Other values of nsd were rejected above.
 
 #ifdef __PARALLEL_MODE
     // read optional knot span parallel mode
