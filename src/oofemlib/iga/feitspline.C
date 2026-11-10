@@ -130,7 +130,7 @@ void TSplineInterpolation :: evalN(FloatArray &answer, const FloatArray &lcoords
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
@@ -180,7 +180,7 @@ double TSplineInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &l
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
@@ -304,7 +304,7 @@ void TSplineInterpolation :: local2global(FloatArray &answer, const FloatArray &
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
@@ -364,7 +364,7 @@ void TSplineInterpolation :: giveJacobianMatrixAt(FloatMatrix &jacobian, const F
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 

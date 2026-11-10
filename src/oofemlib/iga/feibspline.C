@@ -171,7 +171,7 @@ void BSplineInterpolation ::evalN( FloatArray &answer, const FloatArray &lcoords
         span = *gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
         }
     }
     
@@ -216,7 +216,7 @@ double BSplineInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &l
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
@@ -395,7 +395,7 @@ void BSplineInterpolation :: local2global(FloatArray &answer, const FloatArray &
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
@@ -476,7 +476,7 @@ void BSplineInterpolation :: giveJacobianMatrixAt(FloatMatrix &jacobian, const F
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
@@ -759,7 +759,14 @@ void BSplineInterpolation :: dersBasisFuns(int n, double u, int span, int p, con
 
 int BSplineInterpolation :: findSpan(int n, int p, double u, const FloatArray &U) const
 {
-    if ( u == U [ n + 1 ] ) {
+    // Reject parameters outside the knot domain to prevent the bisection from stalling.
+    double uStart = U [ p ];
+    double uEnd   = U [ n + 1 ];
+    if ( u < uStart || u > uEnd ) {
+        OOFEM_ERROR("Parameter %g lies outside the knot vector <%g, %g>", u, uStart, uEnd);
+    }
+
+    if ( u == uEnd ) {
         return n;
     }
 
@@ -782,7 +789,7 @@ int BSplineInterpolation :: findSpan(int n, int p, double u, const FloatArray &U
 
 int BSplineInterpolation ::giveStartIndex( double u, int isd) const
 {
-    return this->findSpan( numberOfControlPoints[isd], degree[isd], u, knotVector[isd] ) - degree[isd];
+    return this->findSpan( numberOfControlPoints[isd] - 1, degree[isd], u, knotVector[isd] ) - degree[isd];
 }
 
 int BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
@@ -795,7 +802,7 @@ int BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const Floa
         span = *gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
         }
     }
 
@@ -873,7 +880,7 @@ double BSpline2dLineInterpolation ::evaldNdxGeneral( FloatMatrix &answer, const 
         span = *gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
         }
     }
 
@@ -930,7 +937,7 @@ void BSpline2dLineInterpolation ::evald2Ndx2General( FloatMatrix &answer, const 
         span = *gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
         }
     }
 
@@ -999,7 +1006,7 @@ void BSpline2dLineInterpolation ::giveJacobianMatrixAt( FloatMatrix &jacobian, c
         span = *gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
         }
     }
 
@@ -1042,7 +1049,7 @@ double BSpline2dLineInterpolation::boundaryEvalNormal( FloatArray &answer, int i
         span = *gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
         }
     }
 
@@ -1095,7 +1102,7 @@ double BSpline2dLineInterpolation ::evaldNds( FloatMatrix &answer, const FloatAr
         span = *gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
         }
     }
 
@@ -1149,7 +1156,7 @@ void BSpline2dLineInterpolation::computePosition( FloatArray &answer, const Floa
         span = *gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
         }
     }
 
@@ -1192,7 +1199,7 @@ int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answ
         span = *gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
         }
     }
 
@@ -1218,7 +1225,7 @@ int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answ
 
 
     for ( int i = 0; i < nsd; i++ ) {
-        span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
+        span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
     }
 
 

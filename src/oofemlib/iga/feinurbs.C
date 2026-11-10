@@ -62,7 +62,7 @@ void NURBSInterpolation :: evalN(FloatArray &answer, const FloatArray &lcoords, 
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
@@ -132,7 +132,7 @@ double NURBSInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &lco
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
@@ -559,7 +559,7 @@ void NURBSInterpolation :: local2global(FloatArray &answer, const FloatArray &lc
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
@@ -658,7 +658,7 @@ void NURBSInterpolation :: giveJacobianMatrixAt(FloatMatrix &jacobian, const Flo
         span = * gw.knotSpan;
     } else {
         for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan(numberOfControlPoints [ i ], degree [ i ], lcoords[i], knotVector [ i ]);
+            span[i] = this->findSpan(numberOfControlPoints [ i ] - 1, degree [ i ], lcoords[i], knotVector [ i ]);
         }
     }
 
