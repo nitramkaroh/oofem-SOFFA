@@ -2874,6 +2874,11 @@ CylindricalALMStability::initializeFrom( InputRecord &ir )
         OOFEM_LOG_INFO( "CALMLS:       Traversal direction will be reversed after arc length %e\n",
             this->reverseAfterTime );
     }
+
+    this->r0Increment = ir.hasField( _IFT_CylindricalALMStability_r0Increment );
+    if ( this->r0Increment ) {
+        OOFEM_LOG_INFO( "CALMLS:       Predictor loaded by the increment of the non-reference load\n" );
+    }
 }
 
 
@@ -3152,6 +3157,10 @@ restart:
     rhs.times( DeltaLambda );
     if ( R0 ) {
         rhs.add( *R0 );
+        // Only the increment of R0 is unbalanced at the converged start state, see r0Increment.
+        if ( this->r0Increment && R0_old.giveSize() ) {
+            rhs.subtract( R0_old );
+        }
     }
     linSolver->solve( k, rhs, dX );
     X.add( dX );
@@ -3544,6 +3553,9 @@ restart:
 
     ReachedLambda = Lambda;
     old_dX        = dX;
+    if ( R0 ) {
+        R0_old = *R0;
+    }
     return status;
 }
 
