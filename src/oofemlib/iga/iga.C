@@ -372,7 +372,10 @@ IGAElement ::giveKnotSpanParallelMode( int knotSpanIndex ) const
 
 Interface *IGAElement ::giveInterface( InterfaceType it )
 {
-    return static_cast<VTKXMLExportModuleElementInterface *>( this );
+    if ( it == VTKXMLExportModuleElementInterfaceType ) {
+        return static_cast<VTKXMLExportModuleElementInterface *>( this );
+    }
+    return Element ::giveInterface( it );
 }
 
 
