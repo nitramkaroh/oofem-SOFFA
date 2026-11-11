@@ -1443,8 +1443,11 @@ double IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveOmega( TimeStep *tSt
 
 void IsotropicPolyconvexHyperelasticSurfaceMaterial2::checkBendingSupport( double omega, GaussPoint *gp ) const
 {
-    // Only the degree is checked here, not the continuity (repeated knots lower it)
-    if ( std::fabs( omega ) > 1e-8 ) {
+    // Any nonzero omega needs the second gradient; no threshold, because a small value is still a bending term
+    // and its size depends on the units. omega is the current value from giveOmega (omega1 scaled by gamma_ltf
+    // or by the arc-length parameter), so with ltf(0) = 0 the error comes in the first step with a nonzero value.
+    // Only the degree is checked here, not the continuity (repeated knots lower it).
+    if ( omega != 0. ) {
         auto iga_el = dynamic_cast<IGAElement *>( gp->giveElement() );
         if ( !iga_el || iga_el->giveInterpolation()->giveInterpolationOrder() <= 1 ) {
             OOFEM_ERROR( "omega1 != 0 needs an IGA surface element of degree at least 2 (element %d is %s)",
