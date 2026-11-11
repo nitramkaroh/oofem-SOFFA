@@ -479,7 +479,11 @@ void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, M
                 /////////////
 
                 dAG.beProductOf( dAddF, Gmat ); // term with derivative wrt dF
-                m->plusProductSymmUpper( Gmat, dAG, dV );
+                if ( matStiffSymmFlag ) { // the upper triangle is mirrored below, after the loop
+                    m->plusProductSymmUpper( Gmat, dAG, dV );
+                } else {
+                    m->plusProductUnsym( Gmat, dAG, dV );
+                }
                 /////////////
                 //FloatMatrix temp;
                 //temp.beTProductOf( Gmat, dAG );
