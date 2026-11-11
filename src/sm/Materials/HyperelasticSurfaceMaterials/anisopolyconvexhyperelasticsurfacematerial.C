@@ -248,14 +248,16 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
     // get the vector rotated around the original reference normal
     FloatArray l( { 0., 0., 1. } );
     el->giveIPValue( l, gp, IST_ElementReferenceNormal, tStep );
-    Tensor1_3d lt( FloatArrayF<3>::FloatArrayF<3>( l ) ); // Create tensor from it
+    FloatArrayF<3> l3( l );
+    Tensor1_3d lt( l3 ); // Create tensor from it
     
     // Contruct the rotation matrix using levicivita tensor
     Tensor2_3d eps1( 0., 0., 0., 0., 0., 1., 0., -1., 0. ), eps2( 0., 0., -1., 0., 0., 0., 1., 0., 0. ), eps3( 0., 1., 0., -1., 0., 0., 0., 0., 0. );
     Tensor2_3d Qt; 
     Qt( i_3, j_3 ) = l.at( 1 ) * eps1( j_3, i_3 ) + l.at( 2 ) * eps2( j_3, i_3 ) + l.at( 3 ) * eps3( j_3, i_3 ) + lt( i_3 ) * lt( j_3 );
         
-    Tensor1_3d matdirLocT, matdirT( FloatArrayF<3>::FloatArrayF<3>( matdir ) );
+    FloatArrayF<3> matdir3( matdir );
+    Tensor1_3d matdirLocT, matdirT( matdir3 );
     matdirLocT( i_3 ) = Qt( i_3, j_3 ) * matdirT( j_3 );
 
     return matdirLocT;

@@ -287,7 +287,8 @@ Structural3DElement::computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatR
     status->letTempFVectorBe( vF ); // get F in status to the previous state
 
     // Modify the stiffness
-    Tensor4_3d A( FloatMatrixF<9, 9>::FloatMatrixF<9, 9>( answerTmp ) ), Amod;
+    FloatMatrixF<9, 9> mA( answerTmp );
+    Tensor4_3d A( mA ), Amod;
     Amod( i_3, j_3, k_3, l_3 ) = 1. / F0.compute_determinant() * F0( j_3, m_3 ) * A( i_3, m_3, k_3, n_3 ) * F0( l_3, n_3 );
     answer  = Amod.to_voigt_form();
 

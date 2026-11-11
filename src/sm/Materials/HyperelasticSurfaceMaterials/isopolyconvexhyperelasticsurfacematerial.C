@@ -602,7 +602,7 @@ Tensor2_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::DoRTRtTransform( cons
     temp1.beProductTOf( Tm, R );
     Tmr.beProductOf( R, temp1 );
 
-    return Tensor2_3d::Tensor2_3d( Tmr );
+    return Tensor2_3d( Tmr );
 }
 
 void IsotropicPolyconvexHyperelasticSurfaceMaterial::TransformTensor1( const Tensor1_3d &T, Tensor1_3d &Ttrans, GaussPoint *gp ) const

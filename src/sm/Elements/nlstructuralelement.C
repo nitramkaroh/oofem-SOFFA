@@ -141,7 +141,8 @@ NLStructuralElement::computeFirstPKStressVector(FloatArray &answer, GaussPoint *
     FloatArray answerTmp = cs->giveFirstPKStresses( vFmod, gp, tStep ); // Compute stress with modified F
 
     if ( this->giveMaterialMode() == _3dMat ) { // This should be changed
-        Tensor2_3d P( FloatArrayF<9>::FloatArrayF<9>( answerTmp ) ), Pmod;
+        FloatArrayF<9> vPtmp( answerTmp );
+        Tensor2_3d P( vPtmp ), Pmod;
         Pmod( i_3, j_3 ) = 1. / F0.compute_determinant() * P( i_3, k_3 ) * F0( j_3, k_3 ); // Modify the answer
         answer           = Pmod.to_voigt_form();
     }
@@ -570,7 +571,7 @@ void NLStructuralElement::PrestrainDeformationGradient( const FloatArray &vF, Fl
     FloatArray vF0_temp;
     if ( this->giveIPValue( vF0_temp, gp, IST_PrestrainDeformationGradient, tStep ) ) {
         FloatArrayF<9> vF0( vF0_temp );
-        F0 = Tensor2_3d::Tensor2_3d( vF0 );
+        F0 = Tensor2_3d( vF0 );
     }
     FloatArrayF<9> vF2( vF );
     Tensor2_3d Fmod, Fcurrent( vF2 );
@@ -587,7 +588,8 @@ double NLStructuralElement::giveElementMaximumLineSearchStep( FloatArray &elemen
         for ( auto &gp : *this->giveDefaultIntegrationRulePtr() ) {
             // Compute current deformation gradient
             this->computeDeformationGradientVector( vF, gp, tStep);
-            Tensor2_3d F(  FloatArrayF<9>::FloatArrayF<9> (vF) );
+            FloatArrayF<9> vF9( vF );
+            Tensor2_3d F( vF9 );
             auto [J, cofF] = F.compute_determinant_and_cofactor();
 
             // Compute ddX deformation gradient
@@ -595,7 +597,8 @@ double NLStructuralElement::giveElementMaximumLineSearchStep( FloatArray &elemen
             this->computeBHmatrixAt( gp, B );
             Fls.beProductOf( B, element_ddX );
 
-            Tensor2_3d Fls_T( FloatArrayF<9>::FloatArrayF<9> (Fls) );
+            FloatArrayF<9> vFls9( Fls );
+            Tensor2_3d Fls_T( vFls9 );
             auto [J_ls, cofF_ls] = Fls_T.compute_determinant_and_cofactor();
 
             // solve the quadratic equation
