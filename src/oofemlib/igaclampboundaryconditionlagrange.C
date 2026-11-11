@@ -44,6 +44,7 @@
 #include "classfactory.h"
 #include "iga/feibspline.h"
 #include "iga/iga.h"
+#include "igaclampboundarycondition.h"
 // #include "feitspline.h"
 
 // #ifdef _OPENMP
@@ -87,6 +88,13 @@ void IGAClampBoundaryConditionLagrange ::initializeFrom( InputRecord &ir )
         //this->pressureDof = std::make_unique<ElementDofManager>( 1, aDomain, this );
         //this->pressureDof->appendDof( new MasterDof( this->pressureDof.get(), P_f ) );
     }
+}
+
+
+void IGAClampBoundaryConditionLagrange ::postInitialize()
+{
+    ActiveBoundaryCondition ::postInitialize();
+    IGAClampBoundaryCondition ::checkClampLocation( this->giveDomain(), this->elementNumber, this->localPosition.at( 1 ), this->BcKnotSpan.at( 1 ) );
 }
 
 

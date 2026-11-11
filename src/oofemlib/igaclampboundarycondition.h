@@ -81,6 +81,14 @@ public:
     virtual ~IGAClampBoundaryCondition() {};
 
     void initializeFrom( InputRecord &ir ) override;
+    void postInitialize() override;
+
+    /**
+     * Checks the clamp location; shared by IGAClampBoundaryCondition and IGAClampBoundaryConditionLagrange.
+     * Element elementNumber must be a planar IGA curve element of degree at least 1, and knotSpan
+     * (a zero-based knot index) must be a nonzero knot interval containing localPosition.
+     */
+    static void checkClampLocation( Domain *d, int elementNumber, double localPosition, int knotSpan );
 
     void assemble( SparseMtrx &answer, TimeStep *tStep,
         CharType type, const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s, double scale = 1.0,

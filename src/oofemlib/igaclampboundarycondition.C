@@ -46,6 +46,8 @@
 #include "iga/iga.h"
 //#include "feitspline.h"
 
+#include <cmath>
+
 //#ifdef _OPENMP
 //#include <omp.h>
 //#endif
@@ -91,6 +93,43 @@ void IGAClampBoundaryCondition ::initializeFrom( InputRecord &ir )
 }
 
 
+void IGAClampBoundaryCondition ::checkClampLocation( Domain *d, int elementNumber, double localPosition, int knotSpan )
+{
+    if ( elementNumber < 1 || elementNumber > d->giveNumberOfElements() ) {
+        OOFEM_ERROR( "numel %d is outside the element range", elementNumber );
+    }
+    auto elem   = dynamic_cast<IGAElement *>( d->giveElement( elementNumber ) );
+    auto interp = elem ? dynamic_cast<BSpline2dLineInterpolation *>( elem->giveInterpolation() ) : nullptr;
+    if ( !interp ) {
+        OOFEM_ERROR( "numel %d must reference a planar IGA curve element", elementNumber );
+    }
+
+    const auto &knots = interp->giveKnotVector()[0];
+    const int degree  = interp->giveInterpolationOrder();
+    const int ncp     = interp->giveNumberOfControlPoints( 1 );
+    if ( degree < 1 ) {
+        OOFEM_ERROR( "numel %d must be at least of degree 1 to be clamped", elementNumber );
+    }
+    if ( knotSpan < degree || knotSpan >= ncp ) {
+        OOFEM_ERROR( "bcknotspan %d is outside the zero-based knot-index range [%d, %d]", knotSpan, degree, ncp - 1 );
+    }
+    if ( !( knots[knotSpan] < knots[knotSpan + 1] ) ) {
+        OOFEM_ERROR( "bcknotspan %d must identify a nonzero knot interval", knotSpan );
+    }
+    // Include both ends so an internal knot can be approached from either selected span (NaN fails both comparisons).
+    if ( !std::isfinite( localPosition ) || localPosition < knots[knotSpan] || localPosition > knots[knotSpan + 1] ) {
+        OOFEM_ERROR( "locpos %g is outside bcknotspan %d [%g, %g]", localPosition, knotSpan, knots[knotSpan], knots[knotSpan + 1] );
+    }
+}
+
+
+void IGAClampBoundaryCondition ::postInitialize()
+{
+    ActiveBoundaryCondition ::postInitialize();
+    checkClampLocation( this->giveDomain(), this->elementNumber, this->localPosition.at( 1 ), this->BcKnotSpan.at( 1 ) );
+}
+
+
 void IGAClampBoundaryCondition ::assemble( SparseMtrx &answer, TimeStep *tStep,
     CharType type, const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s,
     double scale,
@@ -100,11 +139,12 @@ void IGAClampBoundaryCondition ::assemble( SparseMtrx &answer, TimeStep *tStep,
     FEInterpolation *interp = el->giveInterpolation();
     // compute normal
     FloatArray normal;
-    interp->boundaryEvalNormal( normal, 1, this->localPosition, FEIIGAElementGeometryWrapper( el, &this->BcKnotSpan ) );
+    auto gw = FEIIGAElementGeometryWrapper( el, &this->BcKnotSpan );
+    interp->boundaryEvalNormal( normal, 1, this->localPosition, gw );
     normal.resize( 2 ); // delete the third outofplane direction
 
     FloatMatrix ders, dersT;
-    interp->evalDerivatives( 1, ders, this->localPosition );
+    interp->evalDerivatives( 1, ders, this->localPosition, gw );
 
     FloatMatrix dNdxi_mat;
     dNdxi_mat.resize( 2, 2 * ders.giveNumberOfColumns() );
@@ -159,12 +199,13 @@ void IGAClampBoundaryCondition ::assembleVector( FloatArray &answer, TimeStep *t
 
         // compute normal
         FloatArray normal;
-        interp->boundaryEvalNormal( normal, 1, this->localPosition, FEIIGAElementGeometryWrapper( el, &this->BcKnotSpan ) );
+        auto gw = FEIIGAElementGeometryWrapper( el, &this->BcKnotSpan );
+        interp->boundaryEvalNormal( normal, 1, this->localPosition, gw );
         normal.resize( 2 ); // delete the third outofplane direction
 
         FloatMatrix ders, dersT;
         // obtain 0 and 1st derivative of nonzero shapefunctions
-        interp->evalDerivatives( 1, ders, this->localPosition ); 
+        interp->evalDerivatives( 1, ders, this->localPosition, gw );
         //dersT.beTranspositionOf( ders );
 
         FloatMatrix dNdxi_mat;
