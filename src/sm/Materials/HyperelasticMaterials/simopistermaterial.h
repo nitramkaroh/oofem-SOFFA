@@ -52,9 +52,11 @@
 #define _IFT_SimoPisterMaterial_bulkLTF "bulk_ltf"
 //@}
 
-// For the gradient version of the material
+///@name Input fields for GradientSimoPisterMaterial
+//@{
 #define _IFT_GradientSimoPisterMaterial_Name "gradientsimopistermat"
 #define _IFT_GradientSimoPisterMaterial_omega "omega"
+//@}
 
 namespace oofem {
 /**
@@ -80,7 +82,7 @@ class SimoPisterMaterial : public StructuralMaterial, public BaseHyperElasticMat
 {
 protected:
     double G = 0.; ///< Shear modulus.
-    int bulk_ltf = 0;
+    int bulk_ltf = 0; ///< Time function scaling the volumetric energy U(J) (keyword bulk_ltf, 0: none).
 
 public:
     SimoPisterMaterial(int n, Domain *d);
@@ -105,11 +107,16 @@ public:
 };
 
 
-// Second gradient formulation of Simo-Pister material, see article simo1984remarks for details.
+/**
+ * Second gradient extension of SimoPisterMaterial: its energy (keywords g, k, bulk_ltf) plus
+ * 0.5 omega nabla F : nabla F, so the second order stress is A = omega nabla F (27 components) with the constant
+ * dA/dgradF = omega I and dA/dF = 0. Keyword omega (default 0). Needs an element supporting the second gradient
+ * (bsplineplanestrainelement, bsplineaxisymelement).
+ */
 class GradientSimoPisterMaterial : public SimoPisterMaterial
 {
 protected:
-    // Gradient length-scale / stiffness parameter
+    /// Stiffness of the gradient term
     double omega;
 
 public:
@@ -119,10 +126,6 @@ public:
 
     const char *giveInputRecordName() const override { return _IFT_GradientSimoPisterMaterial_Name; }
     const char *giveClassName() const override { return "GradientSimoPisterMaterial"; }
-
-    //// Standard PK1 and its derivative (Inherited from base, but overridden to sync status if needed)
-    //FloatArrayF<9> giveFirstPKStressVector_3d( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const override;
-    //FloatMatrixF<9, 9> give3dMaterialStiffnessMatrix_dPdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const override;
 
     virtual FloatArrayF<27> giveSecondOrderStressVector_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, GaussPoint *gp, TimeStep *tStep ) const override;
     virtual FloatMatrixF<27, 27> give3dMaterialStiffnessMatrix_dAddF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const override;

@@ -40,7 +40,6 @@
 #include "domain.h"
 #include "function.h"
 #include "sm/Elements/nlstructuralsurfaceelement.h"
-//#include "sm/Elements/SurfaceElements/quadsurface.h"
 #include "structuralelement.h"
 #include "sm/Elements/SurfaceElements/triangularsurface.h"
 
@@ -130,7 +129,7 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
             gp->giveElement()->giveNumber(), gp->giveElement()->giveClassName() );
     }
 
-    // If the direction of anisotropy is not directly specified, construct it 
+    // Unless the element gives the direction (anisodir), (X - p_1) x (X - p_2) x n in global coordinates
     if ( !el->giveIPValue( matdir, gp, IST_AnisotropyDirection, tStep ) ) {
         // global geometry: normal of the element, Gauss point and p_1, p_2
         FloatArray geometricNormal = el->giveNormal( gp );
@@ -140,7 +139,7 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
         matdir.normalize();
     }
 
-    // Transform to local system
+    // Global to the frame of the element (first 3 x 3 block of its load rotation matrix)
     FloatMatrix T; // transformation matrix
     int val = el->computeLoadGToLRotationMtrx( T );
     T.resizeWithData( 3, 3 );
@@ -151,8 +150,8 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
     const FloatArray &l = normal;
     FloatArrayF<3> l3( l );
     Tensor1_3d lt( l3 ); // Create tensor from it
-    
-    // Contruct the rotation matrix using levicivita tensor
+
+    // Rotation matrix l x l + [l]_x, built with the Levi-Civita tensor
     Tensor2_3d eps1( 0., 0., 0., 0., 0., 1., 0., -1., 0. ), eps2( 0., 0., -1., 0., 0., 0., 1., 0., 0. ), eps3( 0., 1., 0., -1., 0., 0., 0., 0., 0. );
     Tensor2_3d Qt; 
     Qt( i_3, j_3 ) = l.at( 1 ) * eps1( j_3, i_3 ) + l.at( 2 ) * eps2( j_3, i_3 ) + l.at( 3 ) * eps3( j_3, i_3 ) + lt( i_3 ) * lt( j_3 );

@@ -64,16 +64,8 @@ void GradientMooneyRivlinCompressibleMaterial::initializeFrom( InputRecord &ir )
 FloatArrayF<9>
 GradientMooneyRivlinCompressibleMaterial::giveFirstPKStressVector_3d( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const
 {
-    // The standard bulk PK1 stress is independent of the gradient part in this simple formulation.
-    // We delegate to the base Mooney-Rivlin class.
+    // The gradient energy does not depend on F: P is the Mooney-Rivlin one (which also stores F and P)
     FloatArrayF<9> vP = MooneyRivlinCompressibleMaterial::giveFirstPKStressVector_3d( vF, gp, tStep );
-
-    //// Update status variables for consistent output/state tracking
-    //StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
-    //if ( status ) {
-    //    status->letTempFVectorBe( vF );
-    //    status->letTempPVectorBe( vP );
-    //}
 
     return vP;
 }
@@ -98,11 +90,10 @@ GradientMooneyRivlinCompressibleMaterial::giveSecondOrderStressVector_3d( const 
 
     auto vA = A.to_voigt_form_27();
 
-    // Store in status if elements rely on it (e.g., for numerical tangent checks)
+    // grad F is kept in the status
     GradientStructuralMaterialStatus *status = static_cast<GradientStructuralMaterialStatus *>( this->giveStatus( gp ) );
     if ( status ) {
         status->letTempGVectorBe( vG );
-        // If you have a custom status that holds higher order stress, it can be saved here.
     }
 
     return vA;
@@ -128,13 +119,9 @@ GradientMooneyRivlinCompressibleMaterial::give3dMaterialStiffnessMatrix_dAddF( M
 FloatMatrixF<27, 9>
 GradientMooneyRivlinCompressibleMaterial::give3dMaterialStiffnessMatrix_dAdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const
 {
-    // Mixed tangent stiffness dA/dF.
-    // In this purely additive volumetric energy split, A does not depend on F.
-    // Return a strictly zero 27x9 matrix.
-
+    // Mixed tangent stiffness dA/dF: A = omega nabla F does not depend on F, so it is zero.
     Tensor5_3d dA;
     return dA.to_voigt_form_27x9();
-
 }
 
 MaterialStatus *

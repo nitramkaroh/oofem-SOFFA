@@ -45,38 +45,40 @@
 
 namespace oofem {
 
+/**
+ * Cross section of the surface elements: passes F (9 components), grad F (27), the gradient of the reference
+ * surface identity (27) and the unit reference normal to the surface material (HyperElasticSurfaceMaterial, see
+ * there for the frame and the component order) and returns its stresses and tangents. Only the 3D material mode
+ * is supported. Input as SimpleCrossSection; the thickness is not used by the surface elements.
+ */
 class OOFEM_EXPORT SimpleSurfaceCrossSection : public SimpleCrossSection
 {
-protected:
-
-
 public:
-
     SimpleSurfaceCrossSection( int n, Domain *d ) : SimpleCrossSection( n, d ){};
 
+    /// Small strains: stress (6) for the strain (6).
     FloatArray giveRealSurfaceStresses( const FloatArray &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
-    FloatArrayF<6> giveRealSurfaceStress_3d( const FloatArrayF<6> &reducedStrain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
-    FloatArray giveFirstPKSurfaceStresses( const FloatArray &reducedF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
-    FloatArray giveSecondOrderSurfaceStresses( const FloatArray &fullF, const FloatArray &fullG, const FloatArray &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatArrayF<6> giveRealSurfaceStress_3d( const FloatArrayF<6> &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    /// First Piola-Kirchhoff stress (9) for F (9).
+    FloatArray giveFirstPKSurfaceStresses( const FloatArray &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    /// Second order stress (27) conjugate to grad F.
+    FloatArray giveSecondOrderSurfaceStresses( const FloatArray &vF, const FloatArray &vG, const FloatArray &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
 
-    FloatArrayF<9> giveFirstPKSurfaceStress_3d( const FloatArrayF<9> &reducedF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
-    FloatArrayF<27> giveSecondOrderSurfaceStress_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
- 
-    //void giveCharSurfaceMaterialStiffnessMatrix( FloatMatrix &answer, const FloatArray &normal, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ); // NOT SURE
-    FloatMatrixF<6, 6> giveSurfaceStiffnessMatrix_3d( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const; // NOT SURE
+    FloatArrayF<9> giveFirstPKSurfaceStress_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    FloatArrayF<27> giveSecondOrderSurfaceStress_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
 
-    //void giveCharSurfaceMaterialStiffnessMatrix_dPdF( FloatMatrix &answer, const FloatArray &normal, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep );
+    /// Small strains: stiffness (6 x 6), not implemented by the current surface materials.
+    FloatMatrixF<6, 6> giveSurfaceStiffnessMatrix_3d( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+
+    /// dP/dF (9 x 9).
     FloatMatrixF<9, 9> giveSurfaceStiffnessMatrix_dPdF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    /// dA/dgradF (27 x 27).
     FloatMatrixF<27, 27> giveSurfaceStiffnessMatrix_dAddF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    /// dA/dF (27 x 9).
     FloatMatrixF<27, 9> giveSurfaceStiffnessMatrix_dAdF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
-
 
     const char *giveClassName() const override { return "SimpleSurfaceCrossSection"; }
     const char *giveInputRecordName() const override { return _IFT_SimpleSurfaceCrossSection_Name; }
-
-    //void giveTemperatureVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) const; // NOT SURE
-
-  
 };
 } // end namespace oofem
 #endif // SimpleSurfaceCrossSection_h

@@ -45,29 +45,34 @@ class GaussPoint;
 class Dictionary;
 class Domain;
 
+/**
+ * Status of the surface materials. Besides F, P and the Cauchy stress of StructuralMaterialStatus it holds, for the
+ * second gradient, grad F and the gradient of the reference surface identity (27 components each, as left by the
+ * last evaluation of the second order stress; the stress and the tangents of the bending material read them), and
+ * for postprocessing the curvature K = -n . grad F and the moment M = de/dK (9 components each, stored by the
+ * bending material; the 2D surface evaluator interpolates K between Gauss points). The initial F is the
+ * surface identity of the element frame: diag(1, 1, 0) for the Lagrange elements, I - N x N for the IGA elements.
+ */
 class OOFEM_EXPORT StructuralSurfaceMaterialStatus : public StructuralMaterialStatus
 {
 protected:
-
-    
-    FloatArray GVector; // Second gradient vector
+    FloatArray GVector; ///< grad F
     FloatArray tempGVector;
 
-    FloatArray MVector; // Second order stress conjugate to Curvature tensor viewed from ref. cofnig (see Silhous)
+    FloatArray MVector; ///< Second order stress M = de/dK conjugate to the curvature K
     FloatArray tempMVector;
 
-    FloatArray KVector; // Reference curvature tensor
+    FloatArray KVector; ///< Current curvature K = -n . grad F, in the reference frame
     FloatArray tempKVector;
 
-    FloatArray dIVector; // gradient of reference identity
+    FloatArray dIVector; ///< Gradient of the reference surface identity
     FloatArray tempdIVector;
 
-    FloatMatrix D2eDK2_Matrix; // second order stiffness
+    FloatMatrix D2eDK2_Matrix; ///< d2e/dK2 (9 x 9); no longer written by the materials, stays zero
     FloatMatrix tempD2eDK2_Matrix;
 
-
 public:
-    /// Constructor. Creates new StructuralMaterialStatus with IntegrationPoint g.
+    /// Constructor. Creates new StructuralSurfaceMaterialStatus with IntegrationPoint g.
     StructuralSurfaceMaterialStatus( GaussPoint *g );
 
     void initTempStatus() override;
@@ -101,4 +106,4 @@ public:
     void copyStateVariables( const MaterialStatus &iStatus ) override;
 };
 } // end namespace oofem
-#endif // structuralms_h
+#endif // structuralsurfacems_h

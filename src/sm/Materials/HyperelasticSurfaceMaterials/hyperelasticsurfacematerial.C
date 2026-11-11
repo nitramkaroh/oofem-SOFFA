@@ -69,14 +69,11 @@ HyperElasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArray
     auto F      = from_voigt_form( vF );
     auto E      = 0.5 * ( Tdot( F, F ) - eye<3>() );
     auto vE     = to_voigt_strain( E );
-    //FloatArrayF<3> vE_red( vE[0],vE[1],vE[5] ); // Reduce to 2D
 
     auto vS = this->giveRealSurfaceStressVector_3d( vE, normal, gp, tStep );
 
     // Compute first PK stress from second PK stress
     auto status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
-
-    //FloatArrayF<6> vS{ vS_red[0], vS_red[1], .0, .0, .0, vS_red[5] }; // Enlarge to 3d
 
     auto S      = from_voigt_stress( vS );
     auto P      = dot( F, S );

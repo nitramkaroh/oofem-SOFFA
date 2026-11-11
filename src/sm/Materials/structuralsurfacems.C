@@ -52,7 +52,7 @@ StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g
     FVector.at( 1 ) = FVector.at( 2 ) = 1.;
 
     if ( IGAElement *el = dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
-        // Construct 2d identity
+        // IGA surfaces work in the global frame: I - N x N of the reference normal
         FloatArray normal = el->giveNormal( g );
         FloatArrayF<3> UDn( normal );
         Tensor1_3d Nt( UDn );

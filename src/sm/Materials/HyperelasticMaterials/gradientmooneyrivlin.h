@@ -36,17 +36,22 @@
 #define gradientmooneyrivlin_h
 
 #include "sm/Materials/HyperelasticMaterials/mooneyrivlincompressiblematerial.h"
-//#include "sm/Materials/structuralmaterial.h"
 
 #define _IFT_GradientMooneyRivlinCompressibleMaterial_Name "gradientmooneyrivlin"
 #define _IFT_GradientMooneyRivlinCompressibleMaterial_omega "omega"
 
 namespace oofem {
 
+/**
+ * Second gradient extension of MooneyRivlinCompressibleMaterial: the energy W(F) of the Mooney-Rivlin material
+ * (keywords c1, c2, k) plus 0.5 omega nabla F : nabla F, so the second order stress is A = omega nabla F
+ * (27 components) with the constant dA/dgradF = omega I and dA/dF = 0. Keyword omega (default 0).
+ * Needs an element supporting the second gradient (bsplineplanestrainelement, bsplineaxisymelement).
+ */
 class GradientMooneyRivlinCompressibleMaterial : public MooneyRivlinCompressibleMaterial
 {
 protected:
-    // Gradient length-scale / stiffness parameter
+    /// Stiffness of the gradient term
     double omega;
 
 public:
@@ -55,7 +60,7 @@ public:
 
     void initializeFrom( InputRecord &ir ) override;
 
-    // Standard PK1 and its derivative (Inherited from base, but overridden to sync status if needed)
+    // P and dP/dF are those of the Mooney-Rivlin material
     FloatArrayF<9> giveFirstPKStressVector_3d( const FloatArrayF<9> &vF, GaussPoint *gp, TimeStep *tStep ) const override;
     FloatMatrixF<9, 9> give3dMaterialStiffnessMatrix_dPdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const override;
 
