@@ -424,7 +424,8 @@ void IGATSplineElement :: initializeFrom(InputRecord &ir)
 {
     TSplineInterpolation *interpol = static_cast< TSplineInterpolation * >( this->giveInterpolation() );
 
-    int indx = 0, numberOfGaussPoints = 1;
+    int indx = 0;
+    numberOfGaussPoints = 1; // default of nip, read by Element::initializeFrom (as in IGAElement::initializeFrom)
 
     Element :: initializeFrom(ir); // read nodes , material, cross section
 
