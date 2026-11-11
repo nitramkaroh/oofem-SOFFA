@@ -66,7 +66,7 @@ BSplineInterpolation :: initializeFrom(InputRecord &ir)
         degree [ i ] = degree_tmp.at(i + 1);
     }
 
-    // Get order from degree
+    // interpolation order = the lowest degree over the parametric directions
     int minDegree = degree[0];
     for ( int i = 1; i < nsd; i++ ) {
         if ( degree[i] < minDegree ) {
@@ -130,11 +130,6 @@ BSplineInterpolation :: initializeFrom(InputRecord &ir)
 
         // multiplicity of the 1st and last knot set to degree + 1
         knotMultiplicity [ n ].at(1) = knotMultiplicity [ n ].at(size) = degree [ n ] + 1;
-
-        /////////////////////
-        // test, set multiplicity of first and last to d+2 to clamp the ends
-        //knotMultiplicity[n].at( 1 ) = knotMultiplicity[n].at( size ) = degree[n] + 2;
-        ////////////////////
 
         // sum the size of knot vector with multiplicity values
         int sum = 0;
@@ -833,11 +828,7 @@ int BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const Floa
         OOFEM_ERROR( "evaldNdx not implemented for nsd = %d", nsd );
     }
 
-    //// Return index where nonzero basis functions start
-    //int uind       = span[0] - degree[0];
-    //int indexStart = uind + 1;
-    //return indexStart;
-
+    // one-based patch index of the first nonzero basis function (control point) of the span
     int uind = span[0] - degree[0];
     int vind = span[1] - degree[1];
     int ind  = vind * numberOfControlPoints[0] + uind + 1;
@@ -887,8 +878,7 @@ double BSpline2dLineInterpolation ::evaldNdxGeneral( FloatMatrix &answer, const 
     answer.resize( count, 2 );
     jacobian.zero();
 
-    //FloatArray dXdXi( degree[0]+1 ); // array of first derivative of basis function
-    FloatArray dXdXi(2 ); // array of first derivative of basis function
+    FloatArray dXdXi(2 ); // tangent X_,xi of the reference curve
     double dxdxi = 0.;
     double dydxi = 0.;
 
@@ -896,7 +886,6 @@ double BSpline2dLineInterpolation ::evaldNdxGeneral( FloatMatrix &answer, const 
     int ind  = uind + 1;
     for ( int k = 0; k <= degree[0]; k++ ) {
         const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        //jacobian( 0, 0 ) += ders[0]( 1, k ) * vertexCoords[0]; // dx/du=sum(dNu/du*x)
         dxdxi += ders[0]( 1, k ) * vertexCoords[0];
         dydxi += ders[0]( 1, k ) * vertexCoords[1];
     }
@@ -908,7 +897,7 @@ double BSpline2dLineInterpolation ::evaldNdxGeneral( FloatMatrix &answer, const 
     double G_11 = 1. / ( dxdxi * dxdxi + dydxi * dydxi ); // Same as 1/J^2
     Jacob       = 1 / sqrt(G_11);
 
-
+    // surface gradient dN_k/dX = N_k' g^11 X_,xi
     for ( int k = 0; k <= degree[0]; k++ ) {
         for ( int l = 0; l <= 1; l++ ) {
             answer( k, l ) = dXdXi( l ) *ders[0]( 1, k ) * G_11;
@@ -943,16 +932,15 @@ void BSpline2dLineInterpolation ::evald2Ndx2General( FloatMatrix &answer, const 
     int count = giveNumberOfKnotSpanBasisFunctions( span );
     answer.resize( count, 3 );
 
-    FloatArray dXdXi(2 ); // array of first derivative of basis function
-    FloatArray d2XdXi2(2); // array of second derivative of basis function
-    FloatArray dXprod( 3 ); // product of fist derivatives
+    FloatArray dXdXi(2 ); // tangent X_,xi
+    FloatArray d2XdXi2(2); // X_,xixi
+    FloatArray dXprod( 3 ); // (x_,xi^2, y_,xi^2, x_,xi y_,xi), i.e. |X_,xi|^2 t x t in the order xx, yy, xy
     double dxdxi = 0., dydxi = 0., d2xdxi2 = 0., d2ydxi2 = 0.;
 
     int uind = span[0] - degree[0];
     int ind  = uind + 1;
     for ( int k = 0; k <= degree[0]; k++ ) {
         const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        // jacobian( 0, 0 ) += ders[0]( 1, k ) * vertexCoords[0]; // dx/du=sum(dNu/du*x)
         dxdxi += ders[0]( 1, k ) * vertexCoords[0];
         dydxi += ders[0]( 1, k ) * vertexCoords[1];
 
@@ -974,10 +962,10 @@ void BSpline2dLineInterpolation ::evald2Ndx2General( FloatMatrix &answer, const 
     // Inverse (contravariant) metric coefficient g^{11} = 1 / |X_,xi|^2.
     double G_11 = 1. / ( dxdxi * dxdxi + dydxi * dydxi ); // Same as 1/J^2
 
-    // Christoffel symbol 
-    double Gamma = G_11 * ( dxdxi * d2xdxi2 + dydxi * d2ydxi2 );   
+    // Christoffel symbol Gamma^1_11 = g^11 X_,xi . X_,xixi; d2N/ds2 = ( N'' - Gamma N' ) g^11 along the arc length s
+    double Gamma = G_11 * ( dxdxi * d2xdxi2 + dydxi * d2ydxi2 );
 
-
+    // d2N_k/dX2 = d2N_k/ds2 t x t (xx, yy, xy)
     for ( int k = 0; k <= degree[0]; k++ ) {
         for ( int l = 0; l <= 2; l++ ) {
             answer( k, l ) = dXprod( l ) * ( ders[0]( 2, k ) - ders[0]( 1, k ) * Gamma ) * G_11 * G_11;
@@ -1017,7 +1005,6 @@ void BSpline2dLineInterpolation ::giveJacobianMatrixAt( FloatMatrix &jacobian, c
     int ind  = uind + 1;
     for ( int k = 0; k <= degree[0]; k++ ) {
         const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        // jacobian( 0, 0 ) += ders[0]( 1, k ) * vertexCoords[0]; // dx/du=sum(dNu/du*x)
         dxdxi += ders[0]( 1, k ) * vertexCoords[0];
         dydxi += ders[0]( 1, k ) * vertexCoords[1];
     }
@@ -1031,7 +1018,6 @@ void BSpline2dLineInterpolation ::giveJacobianMatrixAt( FloatMatrix &jacobian, c
 
 double BSpline2dLineInterpolation::boundaryEvalNormal( FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
-    // Compute base vector
     if ( nsd != 1 ) {
         OOFEM_ERROR( "This class is only for line in 2D" );
     };
@@ -1060,22 +1046,19 @@ double BSpline2dLineInterpolation::boundaryEvalNormal( FloatArray &answer, int i
     int ind  = uind + 1;
     for ( int k = 0; k <= degree[0]; k++ ) {
         const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        // jacobian( 0, 0 ) += ders[0]( 1, k ) * vertexCoords[0]; // dx/du=sum(dNu/du*x)
         dxdxi += ders[0]( 1, k ) * vertexCoords[0];
         dydxi += ders[0]( 1, k ) * vertexCoords[1];
     }
 
-    FloatArray dXdXi( degree[0] + 1 ); // array of first derivative of basis function
+    FloatArray dXdXi( degree[0] + 1 ); // tangent X_,xi (first two entries)
     dXdXi.at( 1 ) = dxdxi;
     dXdXi.at( 2 ) = dydxi;
 
-    // Compute normal
+    // normal = tangent rotated clockwise
     answer.resize( 3 );
-    //answer.at( 1 ) = -dXdXi.at( 2 );
-    //answer.at( 2 ) = dXdXi.at( 1 );
     answer.at( 1 ) = dXdXi.at( 2 );
     answer.at( 2 ) = -dXdXi.at( 1 );
-    answer.at( 3 ) = 0.; // z direciton is assumed ou of plane
+    answer.at( 3 ) = 0.; // the curve lies in the xy plane
 
     answer.normalize();
 
@@ -1126,7 +1109,6 @@ int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answ
 
     const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
     IntArray span( nsd );
-    //std ::vector<FloatMatrix> ders( nsd );
 
     if ( gw.knotSpan ) {
         span = *gw.knotSpan;

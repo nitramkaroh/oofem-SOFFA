@@ -44,7 +44,7 @@
 ///@name Input fields for IGAElement
 //@{
 #define _IFT_IGAElement_KnotSpanParallelMode "knotspanparmode"
-#define _IFT_IGAElement_numberOfExportPoints "numexp"
+#define _IFT_IGAElement_numberOfExportPoints "numexp" ///< VTK export points per knot span and direction (optional, default 2, at least 2).
 //@}
 
 namespace oofem {
@@ -83,7 +83,13 @@ public:
     const IntArray *giveKnotSpan() override { return & this->knotSpan; }
     void setKnotSpan1(const IntArray &src) { this->knotSpan = src; }
 
+    /**
+     * Creates nPoints points (on a line) or floor(sqrt(nPoints))^2 points (on a square) with zero
+     * coordinates and weights, to be placed by the caller (the VTK export points of IGAElement).
+     * @return Number of created points.
+     */
     int SetUpDummyPointsOnLine( int nPoints, MaterialMode mode );
+    /// @copydoc SetUpDummyPointsOnLine
     int SetUpDummyPointsOnSquare( int nPoints, MaterialMode mode );
 };
 
@@ -94,7 +100,9 @@ public:
 class OOFEM_EXPORT IGAElement : public Element, public VTKXMLExportModuleElementInterface
 {
 protected:
+    /// VTK export points, one rule per nonzero knot span (curves and 2D patches only).
     std::vector<std ::unique_ptr<IGAIntegrationElement> > ExportIntegrationRulesArray;
+    /// Number of export points per knot span and parametric direction (numexp).
     int numExportPoints = 2;
 
 #ifdef __PARALLEL_MODE
@@ -104,24 +112,31 @@ public:
     IGAElement( int n, Domain *aDomain ) :
         Element( n, aDomain ), VTKXMLExportModuleElementInterface()
     {}
+    /**
+     * Reads the nodes, material, cross section and the interpolation, creates one integration rule
+     * with nip points per nonzero knot span (a x a points for nsd = 2, nip a square number) and the
+     * VTK export points (numexp). nlgeo is read by the element evaluators.
+     */
     void initializeFrom(InputRecord &ir) override;
 
-    virtual FloatArray giveNormal( GaussPoint *gp ) const { 
-        OOFEM_ERROR( "method not implemented for this element" ); 
+    /// Unit normal of the reference geometry at the Gauss point (surface elements).
+    virtual FloatArray giveNormal( GaussPoint *gp ) const {
+        OOFEM_ERROR( "method not implemented for this element" );
         FloatArray normal;
         return normal;
     };
 
     virtual Element *giveElement() { return this; };
 
+    /// Coordinates of all control points, for each one the components of its displacement directions.
     virtual void giveNodalCoordinates( FloatArray &NodalCoordinates ) const;
 
     /// The IGA interpolations need FEIIGAElementGeometryWrapper (Element's version passes FEIElementGeometryWrapper).
     int computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords ) override;
 
-    // composite type - so we can do the postprocessing in the next function
+    /// Composite geometry, exported by giveCompositeExportData.
     Element_Geometry_Type giveGeometryType() const override { return EGT_Composite; }
-    // divide the beam into some small subelements
+    /// VTK export sampled at the export points of every knot span; stops with an error unless implemented by the element.
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
     Interface *giveInterface( InterfaceType it ) override;
 

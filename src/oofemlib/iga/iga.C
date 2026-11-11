@@ -51,12 +51,9 @@ namespace oofem {
 
 int IGAIntegrationElement ::SetUpDummyPointsOnLine( int nPoints, MaterialMode mode )
 {
-    // FloatArray coords_xi, weights;
-    // this->giveLineCoordsAndWeights( nPoints, coords_xi, weights );
     this->gaussPoints.resize( nPoints );
 
     for ( int i = 1; i <= nPoints; i++ ) {
-        // this->gaussPoints[i - 1] = new GaussPoint( this, i, { coords_xi.at( i ) }, weights.at( i ), mode );
         this->gaussPoints[i - 1] = new GaussPoint( this, i, { 0. }, 0., mode );
     }
 
@@ -65,13 +62,9 @@ int IGAIntegrationElement ::SetUpDummyPointsOnLine( int nPoints, MaterialMode mo
 }
 
 int IGAIntegrationElement ::SetUpDummyPointsOnSquare( int nPoints, MaterialMode mode )
-// GaussIntegrationRule :: SetUpPointsOnSquare(int nPoints_xi1, int nPoints_xi2, MaterialMode mode)
 {
     int nPoints_xi1 = (int)floor( sqrt( double( nPoints ) ) );
     int nPoints_xi2 = nPoints_xi1;
-    // FloatArray coords_xi1, weights1, coords_xi2, weights2;
-    // this->giveLineCoordsAndWeights( nPoints_xi1, coords_xi1, weights1 );
-    // this->giveLineCoordsAndWeights( nPoints_xi2, coords_xi2, weights2 );
     this->gaussPoints.resize( nPoints_xi1 * nPoints_xi2 );
     int count = 0;
     for ( int i = 1; i <= nPoints_xi1; i++ ) {
@@ -103,7 +96,6 @@ void IGAElement ::initializeFrom( InputRecord &ir )
     // generate individual IntegrationElements; one for each nonzero knot span
     int nsd = this->giveNsd();
     if ( nsd == 1 ) {
-        // HUHU
         int numberOfKnotSpansU            = this->giveInterpolation()->giveNumberOfKnotSpans( 1 );
         const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity( 1 );
         const FloatArray *knotValuesU     = this->giveInterpolation()->giveKnotValues( 1 );
@@ -118,10 +110,8 @@ void IGAElement ::initializeFrom( InputRecord &ir )
             knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
 
             integrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
-            // integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
             auto matMode = this->giveMaterialMode();
-            // integrationRulesArray[indx]->SetUpPointsOnSquare( numberOfGaussPoints, matMode ); // HUHU _PlaneStress, rectangle
-            integrationRulesArray[indx]->SetUpPointsOnLine( numberOfGaussPoints, matMode ); // HUHU _PlaneStress, rectangle
+            integrationRulesArray[indx]->SetUpPointsOnLine( numberOfGaussPoints, matMode );
 
 
             // remap local subelement gp coordinates into knot span coordinates and update integration weight
@@ -164,9 +154,8 @@ void IGAElement ::initializeFrom( InputRecord &ir )
                 knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
 
                 integrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
-                // integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
                 auto matMode = this->giveMaterialMode();
-                integrationRulesArray[indx]->SetUpPointsOnSquare( numberOfGaussPoints, matMode ); // HUHU _PlaneStress, rectangle
+                integrationRulesArray[indx]->SetUpPointsOnSquare( numberOfGaussPoints, matMode ); // nip = square number, a x a points
 
 
                 // remap local subelement gp coordinates into knot span coordinates and update integration weight
@@ -240,9 +229,8 @@ void IGAElement ::initializeFrom( InputRecord &ir )
     }
 
 
-    //////////////////
-    // export integration rule
-    // generate individual export IntegrationElements; one for each nonzero knot span
+    // VTK export points: one IGAIntegrationElement per nonzero knot span with numexp equidistant points
+    // per parametric direction (including the span ends)
     indx = 0;
     IR_GIVE_OPTIONAL_FIELD( ir, numExportPoints, _IFT_IGAElement_numberOfExportPoints );
     if ( numExportPoints < 2 ) {
@@ -250,7 +238,6 @@ void IGAElement ::initializeFrom( InputRecord &ir )
     }
 
     if ( nsd == 1 ) {
-        // HUHU
         int numberOfKnotSpansU            = this->giveInterpolation()->giveNumberOfKnotSpans( 1 );
         const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity( 1 );
         const FloatArray *knotValuesU     = this->giveInterpolation()->giveKnotValues( 1 );
@@ -265,16 +252,14 @@ void IGAElement ::initializeFrom( InputRecord &ir )
             knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
 
             ExportIntegrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
-            // integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
             auto matMode = this->giveMaterialMode();
-            ExportIntegrationRulesArray[indx]->SetUpDummyPointsOnLine( numExportPoints, matMode ); // HUHU _PlaneStress, rectangle
+            ExportIntegrationRulesArray[indx]->SetUpDummyPointsOnLine( numExportPoints, matMode );
 
 
-            // remap local subelement gp coordinates into knot span coordinates and update integration weight
+            // place the points equidistantly in the knot span
             int count = 0;
             for ( auto &gp : *ExportIntegrationRulesArray[indx] ) {
                 newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du / ( numExportPoints - 1 ) * count;
-                // newgpcoords.printYourself();
                 gp->setNaturalCoordinates( newgpcoords );
                 gp->setWeight( du / ( numExportPoints - 1 ) );
                 count++;
@@ -310,12 +295,11 @@ void IGAElement ::initializeFrom( InputRecord &ir )
                 knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
 
                 ExportIntegrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
-                // integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
                 auto matMode = this->giveMaterialMode();
-                ExportIntegrationRulesArray[indx]->SetUpDummyPointsOnSquare( numExportPoints * numExportPoints, matMode ); // HUHU _PlaneStress, rectangle
+                ExportIntegrationRulesArray[indx]->SetUpDummyPointsOnSquare( numExportPoints * numExportPoints, matMode );
 
 
-                // remap local subelement gp coordinates into knot span coordinates and update integration weight
+                // place the points on an equidistant grid in the knot span, u index running fastest
                 int countX   = 0;
                 int countY   = 0;
                 int countTot = 0;
@@ -324,10 +308,8 @@ void IGAElement ::initializeFrom( InputRecord &ir )
                     countY              = std::floor( countTot / ( numExportPoints ) );
                     newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du / ( numExportPoints - 1 ) * ( countX );
                     newgpcoords.at( 2 ) = knotValuesV->at( vi ) + dv / ( numExportPoints - 1 ) * ( countY );
-                    // newgpcoords.printYourself();
 
                     gp->setNaturalCoordinates( newgpcoords );
-                    // gp->setWeight( du * dv / ( numExportPoints - 1 )/ ( numExportPoints - 1 ) ); // Shouldn be needed
                     countTot++;
                 }
 
@@ -401,7 +383,7 @@ void IGAElement::giveNodalCoordinates( FloatArray &NodalCoordinates ) const
     for ( int i = 1; i <= this->giveNumberOfDofManagers(); i++ ) {
         pos_i = this->giveNode( i )->giveCoordinates();
         this->giveDofManDofIDMask( i, dofIDMask );
-        // take just first two coordinates
+        // keep the coordinates of the displacement directions (D_u, D_v, D_w = 1, 2, 3)
         pos_i_cut.resize( dofIDMask.giveSize() );
         for ( auto &dofid : dofIDMask ) {
             pos_i_cut.at( dofid ) = pos_i.at( dofid );

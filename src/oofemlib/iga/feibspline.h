@@ -195,8 +195,12 @@ public:
     std::unique_ptr<IntegrationRule> giveBoundaryEdgeIntegrationRule(int order, int boundary) const override
     { OOFEM_ERROR("Not supported."); return nullptr; }
 
-    //////////////////////
-    // Evaluate up to second derivatives of basis functions
+    /**
+     * Nonzero basis functions of the knot span with their first and second derivatives with respect
+     * to the parameters (nsd = 2 only): answer is count x 6 with the columns N, N_,u, N_,v, N_,uu,
+     * N_,vv, N_,uv. The knot span is taken from the geometry wrapper when given, otherwise found from lcoords.
+     * @return One-based patch index of the first nonzero basis function.
+     */
     int evalSecondDerivatives(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
 
@@ -261,20 +265,43 @@ protected:
 };
 
 
+/**
+ * B-spline curve in the xy plane: one parametric direction xi (nsd = 1, all methods stop otherwise) with
+ * the control points (element nodes) in the xy plane. Used by the IGA surface elements and the IGA clamp.
+ * Derivatives with respect to x, y are the surface (tangential) derivatives along the reference curve,
+ * with the tangent X_,xi, the metric g_11 = |X_,xi|^2, g^11 = 1/g_11 and the unit tangent t.
+ * Unless stated otherwise, the knot span is taken from the geometry wrapper when given, otherwise
+ * found from lcoords, and the rows of the answers are the p+1 nonzero basis functions of the span.
+ */
 class OOFEM_EXPORT BSpline2dLineInterpolation : public BSplineInterpolation
 {
 public:
     BSpline2dLineInterpolation( int nsd ) :
         BSplineInterpolation( nsd ){}
     void initializeFrom( InputRecord &ir ) override {BSplineInterpolation::initializeFrom( ir );}
+    /// Same as evaldNdxGeneral.
     double evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
+    /// Same as evald2Ndx2General.
     void evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
+    /**
+     * Basis functions and their derivatives with respect to xi up to maxOrder: answer is
+     * (maxOrder+1) x (p+1), row r holds the r-th derivatives of the nonzero functions of the span.
+     * @return One-based patch index of the first nonzero basis function.
+     */
     int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
+    /**
+     * Surface gradient of the basis functions, dN/dX = N' g^11 X_,xi: answer is (p+1) x 2 (x, y).
+     * @return |X_,xi|.
+     */
     double evaldNdxGeneral( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
 
+    /**
+     * Second surface derivatives of the basis functions, d2N/dX2 = d2N/ds2 t x t with
+     * d2N/ds2 = ( N'' - Gamma N' ) g^11 and Gamma = g^11 X_,xi . X_,xixi: answer is (p+1) x 3 (xx, yy, xy).
+     */
     void evald2Ndx2General( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
 
     /**
@@ -289,6 +316,7 @@ public:
     /// Position on the curve in the xy plane (both coordinates; BSplineInterpolation gives one per parametric dimension).
     void local2global( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
+    /// 1 x 1 matrix with |X_,xi|.
     void giveJacobianMatrixAt( FloatMatrix &jacobianMatrix, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
 };

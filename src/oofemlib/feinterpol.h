@@ -496,24 +496,27 @@ public:
     std :: string errorInfo(const char *func) const { return func; } ///@todo Class name?
 
 
+    /**
+     * Basis functions and their derivatives with respect to the parametric coordinate up to maxOrder
+     * (IGA curves, see BSpline2dLineInterpolation::evalDerivatives).
+     * @return Index of the first nonzero basis function.
+     */
     virtual int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
     {
         OOFEM_ERROR( "Not supported." );
         return 0;
     }
 
+    /**
+     * Basis functions with their first and second derivatives with respect to the parametric
+     * coordinates (IGA patches, see BSplineInterpolation::evalSecondDerivatives).
+     * @return Index of the first nonzero basis function.
+     */
     virtual int evalSecondDerivatives(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
     {
         OOFEM_ERROR( "Not supported." );
         return 0;
     }
-
-
-    //virtual int evalNind( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
-    //{
-    //    OOFEM_ERROR( "Not supported." );
-    //    return 0;
-    //}
 };
 } // end namespace oofem
 #endif // feinterpol_h

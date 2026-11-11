@@ -44,7 +44,6 @@
 #include "classfactory.h"
 #include "iga/feibspline.h"
 #include "iga/iga.h"
-//#include "feitspline.h"
 
 #include <cmath>
 
@@ -60,16 +59,11 @@ IGAClampBoundaryCondition ::IGAClampBoundaryCondition( int n, Domain *d ) :
     ActiveBoundaryCondition( n, d )
 {
 }
-//IGAClampBoundaryCondition ::IGAClampBoundaryCondition( int n, Domain *d ) :
-//    BoundaryCondition( n, d )
-//{
-//}
 
 
 void IGAClampBoundaryCondition ::initializeFrom( InputRecord &ir )
 {
     ActiveBoundaryCondition ::initializeFrom( ir );
-    //BoundaryCondition ::initializeFrom( ir );
     IR_GIVE_FIELD( ir, this->elementNumber, _IFT_IGAClampBoundaryCondition_ElementNumber );
     double lp;
     IR_GIVE_FIELD( ir, lp, _IFT_IGAClampBoundaryCondition_LocalPosition );
@@ -135,15 +129,17 @@ void IGAClampBoundaryCondition ::assemble( SparseMtrx &answer, TimeStep *tStep,
 
     auto el                 = this->giveDomain()->giveElement( this->elementNumber );
     FEInterpolation *interp = el->giveInterpolation();
-    // compute normal
+    // normal of the reference curve in the selected knot span
     FloatArray normal;
     auto gw = FEIIGAElementGeometryWrapper( el, &this->BcKnotSpan );
     interp->boundaryEvalNormal( normal, 1, this->localPosition, gw );
-    normal.resize( 2 ); // delete the third outofplane direction
+    normal.resize( 2 ); // drop the out-of-plane component
 
+    // rows: basis functions and their first derivatives w.r.t. xi (nonzero functions of the span)
     FloatMatrix ders, dersT;
     interp->evalDerivatives( 1, ders, this->localPosition, gw );
 
+    // du/dxi = dNdxi_mat * u_span (2 x 2*nnz)
     FloatMatrix dNdxi_mat;
     dNdxi_mat.resize( 2, 2 * ders.giveNumberOfColumns() );
     for ( int i = 1; i <= ders.giveNumberOfColumns(); i++ ) {
@@ -151,19 +147,18 @@ void IGAClampBoundaryCondition ::assemble( SparseMtrx &answer, TimeStep *tStep,
         dNdxi_mat.at( 2, 2 * i )     = ders.at( 2, i );
     }
 
-    // dNdXi projected to normal
+    // c = dNdxi_mat^T n, so that n . du/dxi = c . u_span
     FloatArray dNdxi;
     dNdxi.beTProductOf( dNdxi_mat, normal );
-    
 
-    //Create the matrix
+    // penalty matrix p c c^T
     FloatMatrix dNdNt;
     dNdNt.beDyadicProductOf( dNdxi, dNdxi );
     dNdNt.times( this->penalty * scale );
 
 
     IGAElement *elem = static_cast<IGAElement *>( el );
-    // get local code numbers corresponding to currect knotspan
+    // element-local code numbers of the dofs of the current knot span
     IntArray lc;
     this->giveLocalCodeNumbers( lc, elem, this->BcKnotSpan );
 
@@ -203,17 +198,17 @@ void IGAClampBoundaryCondition ::assembleVector( FloatArray &answer, TimeStep *t
         auto el                 = this->giveDomain()->giveElement( this->elementNumber );
         FEInterpolation *interp = el->giveInterpolation();
 
-        // compute normal
+        // normal of the reference curve in the selected knot span
         FloatArray normal;
         auto gw = FEIIGAElementGeometryWrapper( el, &this->BcKnotSpan );
         interp->boundaryEvalNormal( normal, 1, this->localPosition, gw );
-        normal.resize( 2 ); // delete the third outofplane direction
+        normal.resize( 2 ); // drop the out-of-plane component
 
         FloatMatrix ders, dersT;
-        // obtain 0 and 1st derivative of nonzero shapefunctions
+        // rows: basis functions and their first derivatives w.r.t. xi (nonzero functions of the span)
         interp->evalDerivatives( 1, ders, this->localPosition, gw );
-        //dersT.beTranspositionOf( ders );
 
+        // du/dxi = dNdxi_mat * u_span (2 x 2*nnz)
         FloatMatrix dNdxi_mat;
         dNdxi_mat.resize( 2, 2 * ders.giveNumberOfColumns() );
         for ( int i = 1; i <= ders.giveNumberOfColumns(); i++ ) {
@@ -221,37 +216,31 @@ void IGAClampBoundaryCondition ::assembleVector( FloatArray &answer, TimeStep *t
             dNdxi_mat.at( 2, 2 * i )     = ders.at( 2, i );
         }
 
-
-        // dNdXi projected to normal
+        // c = dNdxi_mat^T n, so that n . du/dxi = c . u_span
         FloatArray dNdxi;
         dNdxi.beTProductOf( dNdxi_mat, normal );
 
-
-
-
-        // get displacements of all element nodes
+        // total displacements of all control points of the patch
         FloatArray u;
         IGAElement *elem = static_cast<IGAElement *>( el );
         elem->computeVectorOf( VM_Total, tStep, u );
 
-        // get local code numbers corresponding to currect knotspan
+        // element-local code numbers of the dofs of the current knot span
         IntArray lc,lcGlob;
         FloatArray ur, xr;
         this->giveLocalCodeNumbers( lc, elem, this->BcKnotSpan );
 
-        // extract displacements related to the current knotspan
+        // displacements of the current knot span
         ur.resize( dNdxi.giveSize() );
         for ( int i = 1; i <= lc.giveSize(); i++ ) {
             if ( lc.at( i ) ) {
                 ur.at( i ) = u.at( lc.at( i ) );
-            } 
+            }
         }
 
-
+        // internal forces p c (c . u_span)
         FloatArray prod2 = dNdxi.dotProduct( ur ) * dNdxi;
         prod2.times( this->penalty );
-
-        //( prod2 - prod ).printYourself();
 
         // global equation numbers of the dofs of the clamped knot span only
         IntArray loc( lc.giveSize() );
@@ -259,9 +248,6 @@ void IGAClampBoundaryCondition ::assembleVector( FloatArray &answer, TimeStep *t
         for ( int i = 1; i <= lc.giveSize(); i++ ) {
             loc.at( i ) = lc.at( i ) ? lcGlob.at( lc.at( i ) ) : 0;
         }
-
-        //answerTemp.assemble( this->penalty*dNdxi.dotProduct( ur ) * dNdxi, lc );
-
 
 #ifdef _OPENMP
         if ( lock ) {
@@ -289,7 +275,9 @@ int IGAClampBoundaryCondition ::giveLocalCodeNumbers( IntArray &answer, Element 
 
     nsd = elem->giveInterpolation()->giveNsd();
 
-    if ( nsd == 1 ) { // Change compared to the general funciton!!
+    // unlike StructuralElementEvaluator::giveIntegrationElementLocalCodeNumbers: the planar curve has
+    // one parametric dimension but two displacement dofs (u, v) per control point
+    if ( nsd == 1 ) {
         nsd = 2;
     }
 
@@ -313,121 +301,4 @@ int IGAClampBoundaryCondition ::giveLocalCodeNumbers( IntArray &answer, Element 
     }
 }
 
-
-//double
-//IGAClampBoundaryCondition ::computeTangentFromContact( FloatMatrix &answer, Node *masterNode, Node *slaveNode, TimeStep *tStep )
-//{
-//    double gap;
-//    FloatArray Nv;
-//    this->computeGap( gap, masterNode, slaveNode, tStep );
-//    this->computeNormalMatrixAt( Nv, masterNode, slaveNode, tStep );
-//    answer.initFromVector( Nv, false );
-//
-//    return gap;
-//    // answer.times(this->penalty);
-//    /*    if ( gap > 0.0 ) {
-//     *  int size = this->masterSet.giveSize();
-//     *  FloatMatrix help(2 * size, 2 * size);
-//     *  answer.beUnitMatrix();
-//     *  }*/
-//}
-//
-//void IGAClampBoundaryCondition ::computeGap( double &answer, Node *masterNode, Node *slaveNode, TimeStep *tStep )
-//{
-//    FloatArray uS, uM;
-//    auto xs           = slaveNode->giveCoordinates();
-//    auto xm           = masterNode->giveCoordinates();
-//    FloatArray normal = xs - xm;
-//    double norm       = normal.computeNorm();
-//    if ( norm < 1.0e-8 ) {
-//        OOFEM_ERROR( "Couldn't compute normal between master node (num %d) and slave node (num %d), nodes are too close to each other.", masterNode->giveGlobalNumber(), slaveNode->giveGlobalNumber() );
-//    } else {
-//        normal.times( 1.0 / norm );
-//    }
-//
-//    slaveNode->giveUnknownVector( uS, { D_u, D_v }, VM_Total, tStep, true );
-//    masterNode->giveUnknownVector( uM, { D_u, D_v }, VM_Total, tStep, true );
-//    xs.add( uS );
-//    xm.add( uM );
-//    FloatArray dx = xs - xm;
-//    answer        = dx.dotProduct( normal );
-//}
-//
-//
-//void IGAClampBoundaryCondition ::computeNormalMatrixAt( FloatArray &answer, Node *masterNode, Node *slaveNode, TimeStep *TimeStep )
-//{
-//    const auto &xs = slaveNode->giveCoordinates();
-//    const auto &xm = masterNode->giveCoordinates();
-//    auto normal    = xs - xm;
-//    double norm    = normal.computeNorm();
-//    if ( norm < 1.0e-8 ) {
-//        OOFEM_ERROR( "Couldn't compute normal between master node (num %d) and slave node (num %d), nodes are too close to each other.", masterNode->giveGlobalNumber(), slaveNode->giveGlobalNumber() );
-//    } else {
-//        normal.times( 1.0 / norm );
-//    }
-//    // The normal is not updated for node2node which is for small deformations only
-//    // C = {n -n}
-//    answer = {
-//        normal.at( 1 ), normal.at( 2 ),
-//        -normal.at( 1 ), -normal.at( 2 )
-//    };
-//}
-//
-//
-//void IGAClampBoundaryCondition ::computeExternalForcesFromContact( FloatArray &answer, Node *masterNode, Node *slaveNode, TimeStep *tStep )
-//{
-//    answer.resize( 1 );
-//    this->computeGap( answer.at( 1 ), masterNode, slaveNode, tStep );
-//    if ( answer.at( 1 ) > 0.0 ) {
-//        answer.at( 1 ) = 0.0;
-//    }
-//}
-//
-//
-//void IGAClampBoundaryCondition ::giveLagrangianMultiplierLocationArray( const UnknownNumberingScheme &r_s, std ::vector<IntArray> &answer )
-//{
-//    int size = this->masterSet.giveSize();
-//    answer.resize( size );
-//    IntArray dofIdArray = {
-//        D_u, D_v
-//    };
-//
-//    // assemble location array
-//    IntArray l( 1 );
-//    for ( int i = 0; i < size; i++ ) {
-//        l.at( 1 )      = r_s.giveDofEquationNumber( *lmdm.at( i )->begin() );
-//        answer.at( i ) = l;
-//    }
-//}
-//
-//
-//void IGAClampBoundaryCondition ::giveLocationArrays( std ::vector<IntArray> &rows, std ::vector<IntArray> &cols, CharType type, const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s )
-//{
-//    IntArray r_loc, c_loc;
-//    rows.resize( 3 * masterSet.giveSize() );
-//    cols.resize( 3 * masterSet.giveSize() );
-//    IntArray dofIdArray = {
-//        D_u, D_v
-//    };
-//    std ::vector<IntArray> lambdaeq;
-//    this->giveLagrangianMultiplierLocationArray( r_s, lambdaeq );
-//
-//    for ( int pos = 1; pos <= masterSet.giveSize(); pos++ ) {
-//        Node *masterNode = this->giveDomain()->giveNode( masterSet.at( pos ) );
-//        Node *slaveNode  = this->giveDomain()->giveNode( slaveSet.at( pos ) );
-//
-//        masterNode->giveLocationArray( dofIdArray, r_loc, r_s );
-//        slaveNode->giveLocationArray( dofIdArray, c_loc, c_s );
-//
-//        // column block
-//        rows[0 + 3 * ( pos - 1 )] = r_loc;
-//        cols[0 + 3 * ( pos - 1 )] = lambdaeq.at( pos - 1 );
-//        // row block
-//        cols[1 + 3 * ( pos - 1 )] = c_loc;
-//        rows[1 + 3 * ( pos - 1 )] = lambdaeq.at( pos - 1 );
-//        // diagonal enry (some sparse mtrx implementation requaire this)
-//        rows[2 + 3 * ( pos - 1 )] = lambdaeq.at( pos - 1 );
-//        cols[2 + 3 * ( pos - 1 )] = lambdaeq.at( pos - 1 );
-//    }
-//}
 } // namespace oofem
