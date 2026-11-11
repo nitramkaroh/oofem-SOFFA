@@ -112,4 +112,4 @@ public:
      void giveLagrangianMultiplierLocationArray( const UnknownNumberingScheme &r_s, IntArray &answer );
 };
 } // end namespace oofem
-#endif // node2nodecontact_h
+#endif // igaclampboundaryconditionlagrange_h

@@ -47,9 +47,9 @@
 #include "igaclampboundarycondition.h"
 // #include "feitspline.h"
 
-// #ifdef _OPENMP
-// #include <omp.h>
-// #endif
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace oofem {
 REGISTER_BoundaryCondition( IGAClampBoundaryConditionLagrange );
@@ -103,6 +103,11 @@ void IGAClampBoundaryConditionLagrange ::assemble( SparseMtrx &answer, TimeStep 
     double scale,
     void *lock )
 {
+    // the constraint is linear in the unknowns, so all stiffness types get the same matrix
+    if ( type != TangentStiffnessMatrix && type != SecantStiffnessMatrix && type != ElasticStiffnessMatrix ) {
+        return;
+    }
+
     auto el                 = this->giveDomain()->giveElement( this->elementNumber );
     FEInterpolation *interp = el->giveInterpolation();
     // compute normal
@@ -145,18 +150,20 @@ void IGAClampBoundaryConditionLagrange ::assemble( SparseMtrx &answer, TimeStep 
     //answerTemp.resize( ndofs, ndofs );
     //answerTemp.assemble( dNdNt, lc );
 
-    // assemble to the element vector
-    FloatMatrix dNdxi_m;
-    int ndofs = elem->computeNumberOfDofs();
-    dNdxi_m.resize( ndofs, 1 );
-    IntArray lc1(1);
-    lc1.at( 1 ) = 1;
-    dNdxi_m.assemble( dNdxi, lc, lc1 );
+    // the constraint row (and its transpose) for the dofs of the clamped knot span only
+    FloatMatrix dNdxi_m( dNdxi.giveSize(), 1 );
+    for ( int i = 1; i <= dNdxi.giveSize(); i++ ) {
+        dNdxi_m.at( i, 1 ) = scale * dNdxi.at( i );
+    }
 
-    // assemble to the global vector
-    IntArray lcGlob_r, lcGlob_c;
+    // global equation numbers of the dofs of the clamped knot span
+    IntArray lcGlob_r, lcGlob_c, loc_r( lc.giveSize() ), loc_c( lc.giveSize() );
     elem->giveLocationArray( lcGlob_r, r_s );
     elem->giveLocationArray( lcGlob_c, c_s );
+    for ( int i = 1; i <= lc.giveSize(); i++ ) {
+        loc_r.at( i ) = lc.at( i ) ? lcGlob_r.at( lc.at( i ) ) : 0;
+        loc_c.at( i ) = lc.at( i ) ? lcGlob_c.at( lc.at( i ) ) : 0;
+    }
     //answer.assemble( lcGlob_r, lcGlob_c, this->penalty * answerTemp );
 
 
@@ -177,8 +184,18 @@ void IGAClampBoundaryConditionLagrange ::assemble( SparseMtrx &answer, TimeStep 
     FloatMatrix dNdxi_mT;
     dNdxi_mT.beTranspositionOf( dNdxi_m );
 
-    answer.assemble( lcGlob_r, lcGlob_lam_c, dNdxi_m );
-    answer.assemble( lcGlob_lam_r, lcGlob_c, dNdxi_mT );
+#ifdef _OPENMP
+    if ( lock ) {
+        omp_set_lock( static_cast<omp_lock_t *>( lock ) );
+    }
+#endif
+    answer.assemble( loc_r, lcGlob_lam_c, dNdxi_m );
+    answer.assemble( lcGlob_lam_r, loc_c, dNdxi_mT );
+#ifdef _OPENMP
+    if ( lock ) {
+        omp_unset_lock( static_cast<omp_lock_t *>( lock ) );
+    }
+#endif
 
 
 }
@@ -249,16 +266,13 @@ void IGAClampBoundaryConditionLagrange ::assembleVector( FloatArray &answer, Tim
         lambda =  mdof->giveUnknown( mode, tStep ) ;
 
 
-        // assemble to the element vector, 
-        FloatArray answerTemp;
-        int ndofs = elem->computeNumberOfDofs();
-        answerTemp.resize( ndofs );
-        answerTemp.assemble( lambda * dNdxi, lc );
-
-
-        // assemble to the global vector at positions of classical displacement
+        // global equation numbers of the dofs of the clamped knot span only
+        IntArray loc( lc.giveSize() );
         elem->giveLocationArray( lcGlob, s );
-        answer.assemble(  answerTemp, lcGlob );
+        for ( int i = 1; i <= lc.giveSize(); i++ ) {
+            loc.at( i ) = lc.at( i ) ? lcGlob.at( lc.at( i ) ) : 0;
+        }
+        FloatArray fe = lambda * dNdxi;
 
         ////////////////////////////////////
         // Assemble the lambda part
@@ -274,7 +288,18 @@ void IGAClampBoundaryConditionLagrange ::assembleVector( FloatArray &answer, Tim
         //lmdm->giveLocationArray( dofIdArray, lcGlob_lam, s );
         lcGlob_lam.at(1) = s.giveDofEquationNumber( *lmdm->begin() );
 
+#ifdef _OPENMP
+        if ( lock ) {
+            omp_set_lock( static_cast<omp_lock_t *>( lock ) );
+        }
+#endif
+        answer.assemble( fe, loc );
         answer.assemble( der, lcGlob_lam );
+#ifdef _OPENMP
+        if ( lock ) {
+            omp_unset_lock( static_cast<omp_lock_t *>( lock ) );
+        }
+#endif
     }
 }
 

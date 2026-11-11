@@ -48,9 +48,9 @@
 
 #include <cmath>
 
-//#ifdef _OPENMP
-//#include <omp.h>
-//#endif
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace oofem {
 REGISTER_BoundaryCondition( IGAClampBoundaryCondition );
@@ -128,6 +128,11 @@ void IGAClampBoundaryCondition ::assemble( SparseMtrx &answer, TimeStep *tStep,
     double scale,
     void *lock )
 {
+    // the clamp term is linear in the unknowns, so all stiffness types get the same matrix
+    if ( type != TangentStiffnessMatrix && type != SecantStiffnessMatrix && type != ElasticStiffnessMatrix ) {
+        return;
+    }
+
     auto el                 = this->giveDomain()->giveElement( this->elementNumber );
     FEInterpolation *interp = el->giveInterpolation();
     // compute normal
@@ -154,6 +159,7 @@ void IGAClampBoundaryCondition ::assemble( SparseMtrx &answer, TimeStep *tStep,
     //Create the matrix
     FloatMatrix dNdNt;
     dNdNt.beDyadicProductOf( dNdxi, dNdxi );
+    dNdNt.times( this->penalty * scale );
 
 
     IGAElement *elem = static_cast<IGAElement *>( el );
@@ -162,18 +168,25 @@ void IGAClampBoundaryCondition ::assemble( SparseMtrx &answer, TimeStep *tStep,
     this->giveLocalCodeNumbers( lc, elem, this->BcKnotSpan );
 
 
-    // assemble to the element vector
-    FloatMatrix answerTemp;
-    int ndofs = elem->computeNumberOfDofs();
-    answerTemp.resize( ndofs, ndofs );
-    answerTemp.assemble( dNdNt, lc );
-
-    // assemble to the global vector
-    //EModelDefaultEquationNumbering dn;
-    IntArray lcGlob_r, lcGlob_c;
+    // global equation numbers of the dofs of the clamped knot span only
+    IntArray lcGlob_r, lcGlob_c, loc_r( lc.giveSize() ), loc_c( lc.giveSize() );
     elem->giveLocationArray( lcGlob_r, r_s );
     elem->giveLocationArray( lcGlob_c, c_s );
-    answer.assemble( lcGlob_r, lcGlob_c, this->penalty * answerTemp );
+    for ( int i = 1; i <= lc.giveSize(); i++ ) {
+        loc_r.at( i ) = lc.at( i ) ? lcGlob_r.at( lc.at( i ) ) : 0;
+        loc_c.at( i ) = lc.at( i ) ? lcGlob_c.at( lc.at( i ) ) : 0;
+    }
+#ifdef _OPENMP
+    if ( lock ) {
+        omp_set_lock( static_cast<omp_lock_t *>( lock ) );
+    }
+#endif
+    answer.assemble( loc_r, loc_c, dNdNt );
+#ifdef _OPENMP
+    if ( lock ) {
+        omp_unset_lock( static_cast<omp_lock_t *>( lock ) );
+    }
+#endif
 
 
 }
@@ -235,27 +248,32 @@ void IGAClampBoundaryCondition ::assembleVector( FloatArray &answer, TimeStep *t
         }
 
 
-        FloatMatrix dNdNt;
-        dNdNt.beDyadicProductOf( dNdxi, dNdxi );
-        FloatArray prod, prod2;
-        prod.beProductOf( dNdNt, ur );
-        prod2 = dNdxi.dotProduct( ur ) * dNdxi;
+        FloatArray prod2 = dNdxi.dotProduct( ur ) * dNdxi;
+        prod2.times( this->penalty );
 
         //( prod2 - prod ).printYourself();
 
-        // assemble to the element vector
-        FloatArray answerTemp;
-        int ndofs = elem->computeNumberOfDofs();
-        answerTemp.resize( ndofs );
-        answerTemp.assemble( prod2, lc );
+        // global equation numbers of the dofs of the clamped knot span only
+        IntArray loc( lc.giveSize() );
+        elem->giveLocationArray( lcGlob, s );
+        for ( int i = 1; i <= lc.giveSize(); i++ ) {
+            loc.at( i ) = lc.at( i ) ? lcGlob.at( lc.at( i ) ) : 0;
+        }
 
         //answerTemp.assemble( this->penalty*dNdxi.dotProduct( ur ) * dNdxi, lc );
 
 
-        // assemble to the global vector
-        //EModelDefaultEquationNumbering dn;
-        elem->giveLocationArray( lcGlob, s );
-        answer.assemble( this->penalty * answerTemp, lcGlob );
+#ifdef _OPENMP
+        if ( lock ) {
+            omp_set_lock( static_cast<omp_lock_t *>( lock ) );
+        }
+#endif
+        answer.assemble( prod2, loc );
+#ifdef _OPENMP
+        if ( lock ) {
+            omp_unset_lock( static_cast<omp_lock_t *>( lock ) );
+        }
+#endif
     }
 }
 
