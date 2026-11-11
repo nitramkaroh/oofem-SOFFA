@@ -88,13 +88,6 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector
     Paniso1( i_3, j_3 ) = this->compute_surface_d_normFa_dF( F, a )( i_3, j_3 ); 
     Paniso2( i_3, j_3 ) = this->compute_surface_d_SqrtNormCa_dF( F, a )( i_3, j_3 ); 
 
-    //// Check how it is in the undeformed original reference frame
-    // Tensor2_3d F_rotated, P_rotated;
-    // this->TransformTensor2( F, F_rotated, gp );
-    // this->TransformTensor2( Paniso1, P_rotated, gp );
-    // Tensor1_3d a_rotated;
-    // this->TransformTensor1( a, a_rotated, gp );
-
     double eta_t, beta_t;
     if ( this->aniso_ltf == 0 ) {
         eta_t  = this->eta;
@@ -173,15 +166,6 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffness
     Afull( i_3, j_3, k_3, l_3 ) = A( i_3, j_3, k_3, l_3 ) + Aiso( i_3, j_3, k_3, l_3 );
 
 
-    //// Transform to to original reference frame, just for testing
-    // Tensor4_3d A_rotated;
-    // Tensor2_3d F_rotated;
-    // Tensor1_3d a_rotated;
-    // this->TransformTensor1( a, a_rotated, gp );
-    // this->TransformTensor2( F, F_rotated, gp );
-    // this->TransformTensor4( A, A_rotated, gp );
-    // FloatMatrix Ar = A_rotated.to_voigt_form();
-    // FloatArray Fr = F_rotated.to_voigt_form();
 
 
     return Afull.to_voigt_form();

@@ -136,12 +136,6 @@ public:
     const char *giveInputRecordName() const override { return _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_Name; }
     const char *giveClassName() const override { return "IsotropicPolyconvexHyperelasticSurfaceMaterial"; }
 
-    Tensor2_3d DoRTRtTransform( const Tensor2_3d &T, const FloatMatrix &R ) const;
-
-    void TransformTensor1( const Tensor1_3d &T, Tensor1_3d &Ttrans, GaussPoint *gp ) const;
-    void TransformTensor2( const Tensor2_3d &T, Tensor2_3d &Ttrans, GaussPoint *gp ) const;
-    void TransformTensor4( const Tensor4_3d &T, Tensor4_3d &Ttrans, GaussPoint *gp ) const;
-
     Tensor4_3d computeTangentPK1Num( const FloatArrayF<27> &vG, const FloatArrayF<27> &gradI, double EPSILON, const Tensor2_3d &P, const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
     Tensor4_3d computeTangentPK1NumB( double EPSILON, const Tensor2_3d &F, Tensor2_3d &IdentityUD, const Tensor1_3d &normal, const Tensor3_3d &G, const Tensor2_3d &MK ) const;
     Tensor6_3d computeTangentSecondOrderNum( const FloatArrayF<27> &vG, const FloatArrayF<27> &gradI, double EPSILON, const Tensor2_3d &P, const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;

@@ -75,15 +75,7 @@ public:
 
     Tensor4_3d compute_surface_d2_normF_dF2( const Tensor2_3d &F ) const;
 
-    Tensor2_3d compute_surface_d_traceU_dF( const Tensor2_3d &F ) const;
-
-    Tensor4_3d compute_surface_d2_traceU_dF2( const Tensor2_3d &F ) const;
-
     FloatArray compute_deformed_normal( const Tensor2_3d &F ) const;
-
-    Tensor2_3d compute_surface_a_dot_d_normal_dF( const Tensor2_3d &F, const FloatArray &a ) const;
-
-    Tensor4_3d compute_surface_a_dot_d2_normal_d2F( const Tensor2_3d &F, const FloatArray &a ) const;
 
     Tensor1_3d compute_surface_deformed_normal( const Tensor2_3d &F, const Tensor1_3d &undeformedNormal ) const;
 
