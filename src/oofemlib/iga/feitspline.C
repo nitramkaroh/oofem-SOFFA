@@ -75,7 +75,7 @@ void TSplineInterpolation :: initializeFrom(InputRecord &ir)
         int pos = 0;
         for ( int i = 0; i < totalNumberOfControlPoints; i++ ) {
             auto &indexKnotVec = localIndexKnotVector [ i ] [ n ];
-            indexKnotVec.resize( degree [ 2 ] + 2 );
+            indexKnotVec.resize( degree [ n ] + 2 );
 
             int p = 0;
             for ( int j = 0; j < degree [ n ] + 2; j++ ) {
