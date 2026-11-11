@@ -81,7 +81,8 @@ struct SurfaceMaterialParameter {
  * @f]
  * where F is the surface deformation gradient and J = |cof F N| the area ratio. The terms gamma J and alpha |F|
  * form the surface-polyconvex model of Horak, Smejkal, Kruzik, Surface-polyconvex models for soft elastic solids,
- * JMPS 2025 (eq. 90): they are positively one-homogeneous, which the existence theory needs. The terms with alphas,
+ * JMPS 2025 (eq. 90): in the independent lifted variables (F, cof F), these terms are positively
+ * one-homogeneous. J(t F) = t^2 J(F), so this is not one-homogeneity in F alone. The terms with alphas,
  * mu and lambda are not, so they are an extension outside that theory.
  *
  * Kinematic contract: F (9 components) and the unit reference normal N are given in the same orthonormal frame with
