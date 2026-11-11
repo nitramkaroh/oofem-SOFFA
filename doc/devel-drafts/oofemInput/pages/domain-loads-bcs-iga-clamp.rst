@@ -38,8 +38,10 @@ additional degree of freedom introduced by this boundary condition.
     Number of the clamped IGA curve element (degree at least 1).
 
 :param:`locpos{rn}`
-    The curve parameter :math:`\xi_c` (not a physical coordinate), e.g. 1 for the end
-    of a curve with the knots 0 and 1.
+    The curve parameter :math:`\xi_c` (not a physical coordinate). The element divides
+    the knot values of :param:`knotvectoru` by their range (last minus first knot), and
+    :param:`locpos` refers to these scaled values: for knots starting at 0 the parameter
+    runs from 0 to 1, so 1 is the end of the curve also for the knots 0, 2.
 
 :param:`bcknotspan{in}`
     Index of the knot span containing :param:`locpos`, counted from zero in the full

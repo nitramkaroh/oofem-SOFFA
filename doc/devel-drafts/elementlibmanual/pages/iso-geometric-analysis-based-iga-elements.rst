@@ -111,8 +111,10 @@ support materials depending also on the gradient of the deformation gradient (e.
 :param:`surfacetensionmat2` on the surfaces). Such a material is detected automatically
 from the cross section of the element; an element that does not support the second
 gradient stops with an error. The second gradient needs :math:`C^1` continuity of the
-interpolation, i.e. degree at least 2 without repeated internal knots; only the degree
-is checked.
+interpolation, i.e. degree at least 2 without repeated internal knots. The surface
+elements check the degree (repeated knots are not checked); the bulk elements
+:param:`bsplineplanestrainelement` and :param:`bsplineaxisymelement` do not check it, and
+with degree 1 their second gradient is zero without any message.
 
 Export to VTK
 -------------
