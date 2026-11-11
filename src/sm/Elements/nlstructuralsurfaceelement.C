@@ -33,7 +33,6 @@
  */
 
 #include "sm/Elements/nlstructuralsurfaceelement.h"
-#include "sm/Elements/Structural3DSurfaceElement.h"
 
 #include "sm/Materials/structuralms.h"
 #include "sm/CrossSections/structuralcrosssection.h"
