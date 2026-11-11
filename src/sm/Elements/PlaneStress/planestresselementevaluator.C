@@ -515,19 +515,20 @@ void AxisymStructuralElementEvaluator::computeBHmatrixAt( GaussPoint *gp, FloatM
 
 double AxisymStructuralElementEvaluator ::computeVolumeAround( GaussPoint *gp )
 {
-    double determinant, weight, thickness, volume;
+    // Volume per radian, R dR dZ, as in AxisymElement and the axisymmetric surface elements:
+    // the cross section thickness has no meaning here and is not used
+    double determinant, weight, volume;
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
     determinant = fabs( interp->giveTransformationJacobian( gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( this->giveElement(),gp->giveIntegrationRule()->giveKnotSpan() ) ) );
     weight      = gp->giveWeight();
-    thickness   = this->giveElement()->giveCrossSection()->give( CS_Thickness, gp );
 
     FloatArray gcoords;
     interp->local2global( gcoords, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-    double r = gcoords.at( 1 ); 
+    double r = gcoords.at( 1 );
 
-    volume      = determinant * weight * thickness*r;
+    volume      = determinant * weight * r;
 
     return volume;
 }
