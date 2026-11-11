@@ -32,7 +32,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef structural3surfacedelement_h
+#ifndef structural3dsurfaceelement_h
 #define structural3dsurfaceelement_h
 
 #include "sm/Elements/nlstructuralsurfaceelement.h"
@@ -87,4 +87,4 @@ protected:
     void computeGaussPoints() override;
 };
 } // end namespace oofem
-#endif // structural3delement_h
+#endif // structural3dsurfaceelement_h
