@@ -1578,7 +1578,9 @@ restart:
 
     engngModel->updateComponent( tStep, NonLinearLhs, domain );
     /*linSolver->solve( k, R, deltaXt );*/
-    linSolver->solve( k, -1.*Fint_lam, deltaXt );
+    FloatArray negFint( Fint_lam ); // solve() takes a non-const right-hand side, so no temporary here
+    negFint.times( -1. );
+    linSolver->solve( k, negFint, deltaXt );
 
     // If desired by the user, the solution is (slightly) perturbed, so that various symmetries can be broken.
     // This is useful e.g. to trigger localization in a homogeneous material under uniform stress without
@@ -1737,7 +1739,9 @@ restart:
             // compute deltaXt for i-th iteration
             //
             //linSolver->solve( k, R, deltaXt );
-            linSolver->solve( k, -1. * Fint_lam, deltaXt );
+            FloatArray negFintIt( Fint_lam );
+            negFintIt.times( -1. );
+            linSolver->solve( k, negFintIt, deltaXt );
         }
 
         // B.2.

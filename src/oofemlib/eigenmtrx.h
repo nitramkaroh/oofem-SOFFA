@@ -195,7 +195,7 @@ public:
     void doStaticCondensationOwn( int i);
     std::unique_ptr<EigenMtrx> doStaticCondensationLagrange( int i );
 
-    std::unique_ptr<EigenMtrx> EigenMtrx::removeRowsAndColumns( const IntArray &indsToDelete );
+    std::unique_ptr<EigenMtrx> removeRowsAndColumns( const IntArray &indsToDelete );
     ///////////
 };
 } // end namespace oofem

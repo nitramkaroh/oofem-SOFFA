@@ -348,7 +348,7 @@ public:
         bool &errorOutOfRangeFlag, BifurcationInterface *stabSolver, bool &isBifurcationSet, double &alphamax, double &alphaStability,
         FloatArray &ddX, std::vector<bool> &bifurcTypes, bool &postBifurcationLineSearch, double Lambda, double RR0, double RR, double drProduct );
 
-    ExactLineSearchNM *MaterialCylindricalALM ::giveSetPostBifurcationLineSearchSolver( FloatArray &X0, bool doDeflation, double p_set = 2. );
+    ExactLineSearchNM *giveSetPostBifurcationLineSearchSolver( FloatArray &X0, bool doDeflation, double p_set = 2. );
 
     bool findPressureDofIndex( int &indMin );
     bool findPressureDofIndices( IntArray &pinds );
