@@ -155,7 +155,7 @@ public:
 
     void initializeFrom(InputRecord &ir) override {
         IGATSplineElement :: initializeFrom(ir);
-        //PlaneStressStructuralElementEvaluator::initializeFrom(ir);
+        PlaneStressStructuralElementEvaluator :: initializeFrom(ir);
     }
 
     void giveCharacteristicMatrix(FloatMatrix &answer, CharType mtrx, TimeStep *tStep) override {

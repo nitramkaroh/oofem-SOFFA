@@ -63,8 +63,8 @@ protected:
     /// Flag indicating if transformation matrix has been already computed
     int rotationMatrixDefined;
 
-    /// Flag indicating if geometrical nonlinearities apply.
-    int nlGeometry;
+    /// Flag indicating if geometrical nonlinearities apply (0 small strains, 1 first Piola-Kirchhoff), read by initializeFrom.
+    int nlGeometry = 0;
 
     //void setSecondGradient( bool setTo ) { this->hasSecondGradient = setTo; }; // Not needed anymoer? 
 
