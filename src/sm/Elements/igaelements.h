@@ -234,6 +234,7 @@ protected:
 
 
 
+/// B-spline patch in plane strain (two parametric directions, dofs u, v), see PlaneStrainStructuralElementEvaluator.
 class BsplinePlaneStrainElement : public IGAElement, public PlaneStrainStructuralElementEvaluator
 {
 protected:
@@ -267,8 +268,9 @@ public:
     const char *giveInputRecordName() const override { return _IFT_BsplinePlaneStrainElement_Name; }
     const char *giveClassName() const override { return "BsplinePlaneStrainElement"; }
 
+    /// VTK export of the patch sampled in numexp x numexp points per knot span (displacements only).
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
-    // For second gradient materials, we need to know if the element supports second gradient or not.
+    /// Second gradient materials are accepted; they need C1 continuity (degree at least 2), which is not checked.
     virtual bool supportsSecondGradient() const override { return true; }
 
 
@@ -288,8 +290,7 @@ protected:
 };
 
 
-///// Axisym
-
+/// Axisymmetric B-spline patch (x the radius, y the axis), see AxisymStructuralElementEvaluator.
 class BsplineAxisymElement : public IGAElement, public AxisymStructuralElementEvaluator
 {
 protected:
@@ -323,11 +324,12 @@ public:
     const char *giveInputRecordName() const override { return _IFT_BsplineAxisymElement_Name; }
     const char *giveClassName() const override { return "BsplineAxisymElement"; }
 
+    /// VTK export of the patch sampled in numexp x numexp points per knot span (displacements only).
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
 
     MaterialMode giveMaterialMode() override { return _3dMat; }
 
-    // For second gradient materials, we need to know if the element supports second gradient or not.
+    /// Second gradient materials are accepted; they need C1 continuity (degree at least 2), which is not checked.
     virtual bool supportsSecondGradient() const override { return true; }
 
 protected:

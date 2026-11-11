@@ -129,7 +129,7 @@ int NURBSSpace3dElement :: checkConsistency()
     return 1;
 }
 ///////////////////
-// bspline plane strain
+// B-spline plane strain
 BsplinePlaneStrainElement ::BsplinePlaneStrainElement( int n, Domain *aDomain ) :
     IGAElement( n, aDomain ), PlaneStrainStructuralElementEvaluator(), interpolation( 2 ) {}
 
@@ -159,12 +159,10 @@ void BsplinePlaneStrainElement ::giveCompositeExportData( std::vector<VTKPiece> 
 
     vtkPieces.resize( 1 );
     int numCells           = numElementsInCell * numSubCells;
-    const int numCellNodes = 4; // linear line
+    const int numCellNodes = 4; // bilinear quad
     int nNodes             = numPointsInCell * numSubCells;
-    //
     vtkPieces.at( 0 ).setNumberOfCells( numCells );
     vtkPieces.at( 0 ).setNumberOfNodes( nNodes );
-    //
     IntArray nodes( numCellNodes );
 
     FloatArray nodeCoords( 2 );
@@ -192,16 +190,13 @@ void BsplinePlaneStrainElement ::giveCompositeExportData( std::vector<VTKPiece> 
 
             // Compute coordinates of the points
             nodeCoords.beProductOf( Nmat, X );
-            //nodeCoords.printYourself();
 
             vtkPieces.at( 0 ).setNodeCoords( iNode, nodeCoords );
             iNode++;
         }
     } // end loop over irules
-    ///////////////////
 
-
-    // write connectivity
+    // write connectivity (VTK_QUAD cells of the numexp x numexp grid of each knot span)
     IntArray connectivity( 4 );
     int offset = 0;
     int iN, jN, kN, lN;
@@ -218,7 +213,6 @@ void BsplinePlaneStrainElement ::giveCompositeExportData( std::vector<VTKPiece> 
                 connectivity.at( 2 ) = jN + ( isubCell - 1 ) * numPointsInCell;
                 connectivity.at( 3 ) = kN + ( isubCell - 1 ) * numPointsInCell;
                 connectivity.at( 4 ) = lN + ( isubCell - 1 ) * numPointsInCell;
-                //connectivity.printYourself();
 
                 vtkPieces.at( 0 ).setConnectivity( count, connectivity );
                 offset += 4;
@@ -228,26 +222,6 @@ void BsplinePlaneStrainElement ::giveCompositeExportData( std::vector<VTKPiece> 
             }
         }
     }
-
-    //for ( int iElement = 1; iElement <= numCells; iElement++ ) {
-    //    iN                   = iElement + count;
-    //    jN                   = iElement + 1 + count;
-    //    kN                   = iElement + 1 + count;
-    //    lN                   = iElement + 1 + count;
-    //    connectivity.at( 1 ) = iN;
-    //    connectivity.at( 2 ) = jN;
-    //    connectivity.at( 3 ) = kN;
-    //    connectivity.at( 4 ) = lN;
-    //    // connectivity.printYourself();
-
-    //    vtkPieces.at( 0 ).setConnectivity( iElement, connectivity );
-    //    offset += 2;
-    //    vtkPieces.at( 0 ).setOffset( iElement, offset );
-    //    vtkPieces.at( 0 ).setCellType( iElement, 3 );
-    //    if ( iElement % numElementsInCell == 0 ) {
-    //        count++;
-    //    }
-    //}
 
     // export the displacements
     int n = primaryVarsToExport.giveSize();
@@ -264,7 +238,7 @@ void BsplinePlaneStrainElement ::giveCompositeExportData( std::vector<VTKPiece> 
                 for ( GaussPoint *gp : *iRule ) {
                     this->computeNMatrixAt( Nmat, gp );
 
-                    // Get nodal coordinates to the corresponding nodes
+                    // displacements of the element
                     FloatArray u;
                     IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
                     elem->computeVectorOf( VM_Total, tStep, u );
@@ -293,7 +267,7 @@ void BsplinePlaneStrainElement ::giveCompositeExportData( std::vector<VTKPiece> 
 
 
 ///////////////////
-// axisym
+// B-spline axisymmetric
 BsplineAxisymElement ::BsplineAxisymElement( int n, Domain *aDomain ) :
     IGAElement( n, aDomain ), AxisymStructuralElementEvaluator(), interpolation( 2 ) {}
 
@@ -323,12 +297,10 @@ void BsplineAxisymElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkP
 
     vtkPieces.resize( 1 );
     int numCells           = numElementsInCell * numSubCells;
-    const int numCellNodes = 4; // linear line
+    const int numCellNodes = 4; // bilinear quad
     int nNodes             = numPointsInCell * numSubCells;
-    //
     vtkPieces.at( 0 ).setNumberOfCells( numCells );
     vtkPieces.at( 0 ).setNumberOfNodes( nNodes );
-    //
     IntArray nodes( numCellNodes );
 
     FloatArray nodeCoords( 2 );
@@ -356,16 +328,13 @@ void BsplineAxisymElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkP
 
             // Compute coordinates of the points
             nodeCoords.beProductOf( Nmat, X );
-            // nodeCoords.printYourself();
 
             vtkPieces.at( 0 ).setNodeCoords( iNode, nodeCoords );
             iNode++;
         }
     } // end loop over irules
-    ///////////////////
 
-
-    // write connectivity
+    // write connectivity (VTK_QUAD cells of the numexp x numexp grid of each knot span)
     IntArray connectivity( 4 );
     int offset = 0;
     int iN, jN, kN, lN;
@@ -382,7 +351,6 @@ void BsplineAxisymElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkP
                 connectivity.at( 2 ) = jN + ( isubCell - 1 ) * numPointsInCell;
                 connectivity.at( 3 ) = kN + ( isubCell - 1 ) * numPointsInCell;
                 connectivity.at( 4 ) = lN + ( isubCell - 1 ) * numPointsInCell;
-                // connectivity.printYourself();
 
                 vtkPieces.at( 0 ).setConnectivity( count, connectivity );
                 offset += 4;
@@ -408,7 +376,7 @@ void BsplineAxisymElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkP
                 for ( GaussPoint *gp : *iRule ) {
                     this->computeNMatrixAt( Nmat, gp );
 
-                    // Get nodal coordinates to the corresponding nodes
+                    // displacements of the element
                     FloatArray u;
                     IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
                     elem->computeVectorOf( VM_Total, tStep, u );

@@ -128,7 +128,7 @@ NLStructuralElement::computeFirstPKStressVector(FloatArray &answer, GaussPoint *
     FloatArray vF;
     this->computeDeformationGradientVector(vF, gp, tStep);
 
-    // Include prestrain Prestrain
+    // Prestrain (3d only): the material gets F F0 and P is mapped back, P F0^T / det F0
     FloatArray vFmod;
     Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
     if ( this->giveMaterialMode()==_3dMat ) { // This should be changed
@@ -592,7 +592,7 @@ double NLStructuralElement::giveElementMaximumLineSearchStep( FloatArray &elemen
             Tensor2_3d F( vF9 );
             auto [J, cofF] = F.compute_determinant_and_cofactor();
 
-            // Compute ddX deformation gradient
+            // displacement gradient of the increment ddX
             FloatMatrix B;
             this->computeBHmatrixAt( gp, B );
             Fls.beProductOf( B, element_ddX );

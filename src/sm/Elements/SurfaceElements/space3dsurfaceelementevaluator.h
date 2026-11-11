@@ -58,11 +58,9 @@ protected:
      */
     void computeNMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
     /**
-     * Assembles the strain-displacement matrix of the receiver at given integration point
-     * In case of IGAElements, B is assumed to contain only contribution from nonzero interpolation functions
+     * Displacement gradient matrix, 9 x (3 nno) for the nno nonzero basis functions; only the derivatives
+     * with respect to x and y are filled (see the class note).
      */
-
-    //void computeBMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
     double computeVolumeAround( GaussPoint *gp ) override;
@@ -76,4 +74,4 @@ public:
     void initializeFrom( InputRecord &ir ) override;
 };
 } // end namespace oofem
-#endif // space3delementevaluator_h
+#endif // space3dsurfaceelementevaluator_h

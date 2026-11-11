@@ -33,7 +33,6 @@
  */
 
 #include "sm/Elements/igasurfaceelements.h"
-//#include "sm/CrossSections/structuralcrosssection.h"
 #include "sm/CrossSections/simplesurfacecrosssection.h"
 #include "floatarray.h"
 #include "floatmatrix.h"
@@ -54,9 +53,7 @@ REGISTER_Element( BsplinePlaneStrainSurfaceElement );
 
 
 BsplinePlaneStrainSurfaceElement ::BsplinePlaneStrainSurfaceElement( int n, Domain *aDomain ) :
-    IGAElement( n, aDomain ), Space2dStructuralSurfaceElementEvaluator(), interpolation( 1 ) {
-    //this->setSecondGradient( true );
-}
+    IGAElement( n, aDomain ), Space2dStructuralSurfaceElementEvaluator(), interpolation( 1 ) {}
 
 
 void BsplinePlaneStrainSurfaceElement ::initializeFrom( InputRecord &ir )
@@ -94,10 +91,8 @@ void BsplinePlaneStrainSurfaceElement ::giveCompositeExportData( std::vector<VTK
     int numCells           = (numPointsInCell-1) * numSubCells;
     const int numCellNodes = 2; // linear line
     int nNodes             = numPointsInCell * numSubCells;
-    //
     vtkPieces.at( 0 ).setNumberOfCells( numCells );
     vtkPieces.at( 0 ).setNumberOfNodes( nNodes );
-    //
     IntArray nodes( numCellNodes );
 
     FloatArray nodeCoords( 2 );
@@ -124,15 +119,11 @@ void BsplinePlaneStrainSurfaceElement ::giveCompositeExportData( std::vector<VTK
 
             // Compute coordinates of the points
             nodeCoords.beProductOf( Nmat, X );
-            //nodeCoords.printYourself();
 
             vtkPieces.at( 0 ).setNodeCoords( iNode, nodeCoords );
             iNode++;
         }
     } // end loop over irules
-    ///////////////////
-
-
 
     // write connectivity
     IntArray connectivity( 2 );
@@ -144,7 +135,6 @@ void BsplinePlaneStrainSurfaceElement ::giveCompositeExportData( std::vector<VTK
         jN                   = iElement + 1 + count;
         connectivity.at( 1 ) = iN;
         connectivity.at( 2 ) = jN;
-        //connectivity.printYourself();
 
         vtkPieces.at( 0 ).setConnectivity( iElement, connectivity );
         offset += 2;
@@ -170,7 +160,7 @@ void BsplinePlaneStrainSurfaceElement ::giveCompositeExportData( std::vector<VTK
                 for ( GaussPoint *gp : *iRule ) {
                     this->computeNMatrixAt( Nmat, gp );
 
-                    // Get nodal coordinates to the corresponding nodes
+                    // displacements of the element
                     FloatArray u;
                     IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
                     elem->computeVectorOf( VM_Total, tStep, u );
@@ -213,10 +203,7 @@ REGISTER_Element( BsplineAxisymSurfaceElement );
 
 
 BsplineAxisymSurfaceElement ::BsplineAxisymSurfaceElement( int n, Domain *aDomain ) :
-    IGAElement( n, aDomain ), AxisymSurfaceElementEvaluator(), interpolation( 1 )
-{
-    //this->setSecondGradient( true );
-}
+    IGAElement( n, aDomain ), AxisymSurfaceElementEvaluator(), interpolation( 1 ) {}
 
 
 void BsplineAxisymSurfaceElement ::initializeFrom( InputRecord &ir )
@@ -254,10 +241,8 @@ void BsplineAxisymSurfaceElement ::giveCompositeExportData( std::vector<VTKPiece
     int numCells           = ( numPointsInCell - 1 ) * numSubCells;
     const int numCellNodes = 2; // linear line
     int nNodes             = numPointsInCell * numSubCells;
-    //
     vtkPieces.at( 0 ).setNumberOfCells( numCells );
     vtkPieces.at( 0 ).setNumberOfNodes( nNodes );
-    //
     IntArray nodes( numCellNodes );
 
     FloatArray nodeCoords( 2 );
@@ -284,14 +269,11 @@ void BsplineAxisymSurfaceElement ::giveCompositeExportData( std::vector<VTKPiece
 
             // Compute coordinates of the points
             nodeCoords.beProductOf( Nmat, X );
-            // nodeCoords.printYourself();
 
             vtkPieces.at( 0 ).setNodeCoords( iNode, nodeCoords );
             iNode++;
         }
     } // end loop over irules
-    ///////////////////
-
 
     // write connectivity
     IntArray connectivity( 2 );
@@ -303,7 +285,6 @@ void BsplineAxisymSurfaceElement ::giveCompositeExportData( std::vector<VTKPiece
         jN                   = iElement + 1 + count;
         connectivity.at( 1 ) = iN;
         connectivity.at( 2 ) = jN;
-        // connectivity.printYourself();
 
         vtkPieces.at( 0 ).setConnectivity( iElement, connectivity );
         offset += 2;
@@ -329,7 +310,7 @@ void BsplineAxisymSurfaceElement ::giveCompositeExportData( std::vector<VTKPiece
                 for ( GaussPoint *gp : *iRule ) {
                     this->computeNMatrixAt( Nmat, gp );
 
-                    // Get nodal coordinates to the corresponding nodes
+                    // displacements of the element
                     FloatArray u;
                     IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
                     elem->computeVectorOf( VM_Total, tStep, u );
@@ -355,21 +336,12 @@ void BsplineAxisymSurfaceElement ::giveCompositeExportData( std::vector<VTKPiece
         } 
     }
 
-    //// export the pseudo curvatures
-    // for now hardcoded
+    // internal variables: only the curvature, interpolated from the Gauss points of the knot span
     InternalStateType isttype;
-    ////////
-    //IntArray internalVarsToExportTemp(1);
-    //internalVarsToExportTemp.at( 1 ) = 11;
-    //internalVarsToExport.at( 1 ) = 11;
-    ////////
     int n2 = internalVarsToExport.giveSize();
     vtkPieces[0].setNumberOfInternalVarsToExport( internalVarsToExport, nNodes );
-    //int n2 = internalVarsToExportTemp.giveSize();
-    //vtkPieces[0].setNumberOfInternalVarsToExport( internalVarsToExportTemp, nNodes );
     for ( int i = 1; i <= n2; i++ ) {
         isttype = (InternalStateType)internalVarsToExport.at( i );
-        //isttype   = (InternalStateType)internalVarsToExportTemp.at( i );
         int iNode = 1;
         for ( int ir = 0; ir < numberOfIntegrationRules; ir++ ) {
             auto iRule = this->ExportIntegrationRulesArray[ir].get();
@@ -378,7 +350,6 @@ void BsplineAxisymSurfaceElement ::giveCompositeExportData( std::vector<VTKPiece
                     FloatArray lcoords = gp->giveNaturalCoordinates();
                     FloatArray refCurvature;
                     this->computeReferenceCurvature( refCurvature, tStep, lcoords, ir );
-                    //refCurvature.printYourself();
                     vtkPieces[0].setInternalVarInNode( isttype, iNode, refCurvature );
                     iNode++;
                 } else {

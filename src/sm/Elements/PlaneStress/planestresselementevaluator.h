@@ -60,6 +60,7 @@ protected:
      * In case of IGAElements, B is assumed to contain only contribution from nonzero interpolation functions.
      */
     void computeBMatrixAt(FloatMatrix &answer, GaussPoint *gp) override;
+    /// Displacement gradient matrix for nlgeo 1, 4 x (2 nno): rows 11, 22, 12, 21.
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
     double computeVolumeAround(GaussPoint *gp) override;
@@ -77,7 +78,10 @@ public:
 }; // end of PlaneStressStructuralElementEvaluator definition
 
 
-//// Plane strain
+/**
+ * Plane strain evaluator (dofs u, v), small strains (nlgeo 0) or the first Piola-Kirchhoff formulation
+ * (nlgeo 1), the latter also with second gradient materials. The volume includes the cross section thickness.
+ */
 class PlaneStrainStructuralElementEvaluator : public StructuralElementEvaluator
 {
 public:
@@ -95,6 +99,7 @@ protected:
      * In case of IGAElements, B is assumed to contain only contribution from nonzero interpolation functions.
      */
     void computeBMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
+    /// Displacement gradient matrix for nlgeo 1, 5 x (2 nno): rows 11, 22, 33 (zero), 12, 21.
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
     double computeVolumeAround( GaussPoint *gp ) override;
@@ -106,11 +111,11 @@ protected:
     }
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
-    ///////////// Stuff for gradient continuum
-    // Maybe the size should be reduced? 
+    /// Second gradient matrix, 27 x (2 nno) (full 27 component grad F, see StructuralElementEvaluator).
     void computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
-    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override; // SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR, AS IT IS COMMON FOR ALL STRUCTURAL ELEMENTS
+    /// grad F = G x with the current positions x of the control points. @todo The same in all evaluators.
+    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
     /// dA/dF reduced to the plane strain components of F, 27 x 5
     void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
@@ -118,9 +123,14 @@ protected:
 public:
     void initializeFrom( InputRecord &ir ) override;
 
-}; // end of PlaneStressStructuralElementEvaluator definition
+}; // end of PlaneStrainStructuralElementEvaluator definition
 
-////Axisymmetrix 
+/**
+ * Axisymmetric evaluator (dofs u, v; x is the radius, y the axis, z the hoop direction), first
+ * Piola-Kirchhoff formulation only (nlgeo 1), also with second gradient materials. The material is
+ * evaluated in the full 3d mode with the hoop stretch F_33 = 1 + u / r; the volume is per radian
+ * (r dr dz), the cross section thickness is not used.
+ */
 class AxisymStructuralElementEvaluator : public StructuralElementEvaluator
 {
 public:
@@ -133,6 +143,7 @@ protected:
      * In case of IGAElements, N is assumed to contain only nonzero interpolation functions.
      */
     void computeNMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
+    /// Displacement gradient matrix, 9 x (2 nno), with the hoop row 3 (u / r).
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
     double computeVolumeAround( GaussPoint *gp ) override;
     
@@ -142,7 +153,7 @@ protected:
     }
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
-    /////////////////
+    // small strains (nlgeo 0) are not implemented
     void computeBMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override
     {
         OOFEM_ERROR( "This element is only for large strains so far" );
@@ -160,21 +171,16 @@ protected:
         return;
     }
 
-    ///////////// Stuff for gradient continuum
+    /// Second gradient matrix, 27 x (2 nno), including the hoop terms.
     void computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
-    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override; // SHOULD BE MOVED TO STRUCTURAL ELEMENT EVALUATOR, AS IT IS COMMON FOR ALL STRUCTURAL ELEMENTS
-
-    //void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override ; 
-
-    //void computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
-
-    //void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
+    /// grad F = G x with the current positions x of the control points. @todo The same in all evaluators.
+    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
 public:
     void initializeFrom( InputRecord &ir ) override;
 
-}; // end of PlaneStressStructuralElementEvaluator definition
+}; // end of AxisymStructuralElementEvaluator definition
 
 
 

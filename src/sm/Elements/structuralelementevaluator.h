@@ -58,6 +58,7 @@ namespace oofem {
 class StructuralElementEvaluator
 {
 protected:
+    /// The material needs the second gradient (grad F) of the deformation, set by setupEvaluator.
     bool hasSecondGradient = false;
     FloatMatrix rotationMatrix;
     /// Flag indicating if transformation matrix has been already computed
@@ -65,8 +66,6 @@ protected:
 
     /// Flag indicating if geometrical nonlinearities apply (0 small strains, 1 first Piola-Kirchhoff), read by initializeFrom.
     int nlGeometry = 0;
-
-    //void setSecondGradient( bool setTo ) { this->hasSecondGradient = setTo; }; // Not needed anymoer? 
 
     StructuralElementEvaluator();
     virtual ~StructuralElementEvaluator() { }
@@ -121,13 +120,21 @@ protected:
     virtual void computeNMatrixAt(FloatMatrix &answer, GaussPoint *gp) = 0;
 
     virtual void computeBMatrixAt(FloatMatrix &answer, GaussPoint *gp) = 0;
-    
+
+    /**
+     * Displacement gradient matrix for nlgeo 1, H = BH u: the rows are the components of F in the
+     * reduced form of the material mode (9 in 3d, order 11, 22, 33, 23, 13, 12, 32, 31, 21).
+     */
     virtual void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
     {
         OOFEM_ERROR( "method not implemented for this element" );
         return;
     }
 
+    /**
+     * Second gradient matrix, grad F = G x with the nodal positions x (27 rows). The component
+     * (i, j, k) = d F_ij / dX_k has the index 9 (k - 1) + v(i, j), v the 9 component order of F.
+     */
     virtual void computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer )
     {
         OOFEM_ERROR( "method not implemented for this element" );
@@ -168,6 +175,7 @@ protected:
      */
     virtual void computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
+    /// Third order stress A (27 components) conjugate to grad F, for second gradient materials.
     virtual void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
     /**
@@ -191,8 +199,10 @@ protected:
         OOFEM_ERROR( "method not implemented for this element" );
     }
 
+    /// dA/d(grad F), 27 x 27.
     virtual void computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep );
 
+    /// dA/dF, 27 x (rows of BH); dP/d(grad F) is taken as its transpose.
     virtual void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep );
 
     /**
@@ -214,10 +224,12 @@ protected:
      */
     virtual void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
+    /// grad F (27 components) at gp, see computeGMatrixAt.
     virtual void computeGradientOfDeformationGradientVector(FloatArray& answer, GaussPoint* gp, TimeStep* tStep) {
         OOFEM_ERROR( "method not implemented for this element" );
     }
 
+    /// Gradient of the surface identity, grad I (27 components), for surface elements.
     virtual void computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
     {
         OOFEM_ERROR( "method not implemented for this element" );
@@ -249,9 +261,12 @@ protected:
 public:
     virtual void initializeFrom( InputRecord &ir );
 
-    // For the element post-initialization, allowing to set up some services of the evaluator which require element and material information.
-    // This is needed for example for second gradient elements, where the evaluator needs to know if the element supports second gradient or not.
-    // Every element using an evaluator calls it from its postInitialize, after the base class one (integration rules must exist).
+    /**
+     * Sets up the services of the evaluator which need the element and its material: decides whether the
+     * second gradient is used (hasSecondGradient) and stops with an error if only some integration points
+     * have a second gradient material or the element does not support it.
+     * Every element using an evaluator calls it from its postInitialize, after the base class one (integration rules must exist).
+     */
     void setupEvaluator();
 
 };

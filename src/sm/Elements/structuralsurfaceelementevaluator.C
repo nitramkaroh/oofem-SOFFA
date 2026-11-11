@@ -34,7 +34,6 @@
 
 #include "sm/Elements/structuralsurfaceelementevaluator.h"
 #include "sm/Elements/structuralelement.h"
-//#include "sm/CrossSections/structuralcrosssection.h"
 #include "sm/CrossSections/simplesurfacecrosssection.h"
 #include "sm/Materials/structuralmaterial.h"
 #include "sm/Materials/structuralms.h"
@@ -110,30 +109,14 @@ void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dAdF_At( Floa
 
 void StructuralSurfaceElementEvaluator::computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
-    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
+    // Computes the surface deformation gradient in the Voigt format at the Gauss point gp of
     // the receiver at time step tStep.
     // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
 
-    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    // Obtain the current displacement vector of the element
     FloatArray u;
     IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
     elem->computeVectorOf( VM_Total, tStep, u );
-
-
-    ////////////////////////
-    //// to test curvature
-    //u.at( 3 ) = -0.1;
-    //u.at( 4 ) = -0.2;
-    /////////////////////////
-
-
-
-    ///////////////////////////
-    // // Alternative approach
-    //FloatArray nodesCoords;
-    //elem->giveNodalCoordinates( nodesCoords );
-    //FloatArray xDef = nodesCoords + u;
-    ///////////////////////////
 
     // Displacement gradient H = du/dX
     FloatMatrix B;
@@ -145,17 +128,13 @@ void StructuralSurfaceElementEvaluator::computeDeformationGradientVector( FloatA
     this->giveIntegrationElementLocalCodeNumbers( lc, elem, gp->giveIntegrationRule() );
     ur.resize( B.giveNumberOfColumns() );
 
-    //xr.resize( B.giveNumberOfColumns() );
     for ( int i = 1; i <= lc.giveSize(); i++ ) {
         ur.at( i ) = u.at( lc.at( i ) );
-        //xr.at( i ) = xDef.at( lc.at( i ) );
     }
-
-
 
     answer.beProductOf( B, ur );
 
-    // Construct undeformed surface identity
+    // F = H + I_s with the reference surface identity I_s = I - N x N
     FloatArray normal = elem->giveNormal( gp );
     FloatArrayF<9> du( answer );
     Tensor2_3d du_tens( du ), Ftens;
@@ -174,29 +153,22 @@ void StructuralSurfaceElementEvaluator::computeDeformationGradientVector( FloatA
 
 void StructuralSurfaceElementEvaluator::computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
-    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
-    // the receiver at time step tStep.
-    // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
+    // Computes grad F (27 components, see computeGMatrixAt) at the Gauss point gp of
+    // the receiver at time step tStep from the current positions of the control points.
 
-    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    // Obtain the current displacement vector of the element
     FloatArray u;
     IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
     elem->computeVectorOf( VM_Total, tStep, u );
 
-    //// Get nodal coordinates
+    // Get nodal coordinates
     FloatArray nodesCoords;
     elem->giveNodalCoordinates( nodesCoords );
 
     // deformed coordinates
-    ////////////////////////
-    //// to test curvature
-    //u.at( 3 ) = -0.1;
-    //u.at( 4 ) = -0.2;
-    ///////////////////////
-
     FloatArray xDef = nodesCoords + u;
 
-    // Displacement gradient H = du/dX
+    // second gradient matrix, grad F = G x
     FloatMatrix G;
     this->computeGMatrixAt( gp, G );
 
@@ -216,19 +188,16 @@ void StructuralSurfaceElementEvaluator::computeGradientOfDeformationGradientVect
 
 void StructuralSurfaceElementEvaluator::computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
-    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
-    // the receiver at time step tStep.
-    // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
-
-    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    // Computes grad I = G X (27 components) at the Gauss point gp, as grad F with the
+    // reference positions of the control points.
     FloatArray u;
     IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
 
-    //// Get nodal coordinates
+    // Get nodal coordinates
     FloatArray nodesCoords;
     elem->giveNodalCoordinates( nodesCoords );
 
-    // Displacement gradient H = du/dX
+    // second gradient matrix
     FloatMatrix G;
     this->computeGMatrixAt( gp, G );
 

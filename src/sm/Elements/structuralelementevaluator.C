@@ -292,8 +292,8 @@ void StructuralElementEvaluator :: giveInternalForcesVector(FloatArray &answer, 
                 }
             } else if ( nlGeometry == 1 ) { // First Piola-Kirchhoff stress
                 // The second order stress must come first: second gradient materials (surfacetensionmat2)
-                // store grad F, grad I, the bending moment and the curvature in the temporary status and
-                // read them back when they compute the first Piola-Kirchhoff stress.
+                // store F, grad F and grad I in the temporary status and read grad F and grad I back
+                // when they compute the first Piola-Kirchhoff stress.
                 if ( this->hasSecondGradient ) {
                     this->computeGMatrixAt( gp, Gmat );
                     this->computeSecondOrderStressVector( secondOrderStress, gp, tStep );
@@ -304,7 +304,7 @@ void StructuralElementEvaluator :: giveInternalForcesVector(FloatArray &answer, 
                 } else {
                     this->computeFirstPKStressVector( stress, gp, tStep );
 
-                    ///@todo This is actaully inefficient since it constructs B and twice and collects the nodal unknowns over and over.
+                    ///@todo This is actually inefficient since it constructs B twice and collects the nodal unknowns over and over.
                 }
                 this->computeBHmatrixAt( gp, b );
 
@@ -403,8 +403,8 @@ void StructuralElementEvaluator :: updateInternalState(TimeStep *tStep)
                 this->computeStrainVector(strain, gp, tStep, u);
                 this->computeStressVector(stress, strain, gp, tStep);
             } else {
-                // Same order as in giveInternalForcesVector: a second gradient material may need the
-                // values stored by the second order stress when it computes the first Piola-Kirchhoff stress
+                // Same order as in giveInternalForcesVector: a second gradient material needs grad F and
+                // grad I stored by the second order stress when it computes the first Piola-Kirchhoff stress
                 if ( this->hasSecondGradient ) {
                     this->computeSecondOrderStressVector( secondOrderStress, gp, tStep );
                 }
@@ -451,8 +451,9 @@ void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, M
                 this->computeBMatrixAt(bj, gp);
                 this->computeConstitutiveMatrixAt(d, rMode, gp, tStep);
             } else if ( nlGeometry == 1 ) {
-                // needs to be first, in this order: dA/d(grad F) stores d2e/dK2 in the temporary status,
-                // which dA/dF and dP/dF of second gradient materials (surfacetensionmat2) read back
+                // The tangents of second gradient materials (surfacetensionmat2) take F, grad F and grad I
+                // from the temporary status, i.e. from the last evaluation of the second order stress (in
+                // giveInternalForcesVector or updateInternalState); their order does not matter.
                 if ( this->hasSecondGradient ) {
                     this->computeGMatrixAt( gp, Gmat );
                     this->computeConstitutiveMatrix_dAddF_At( dAddF, rMode, gp, tStep ); 
@@ -471,41 +472,23 @@ void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, M
 
 
             if ( this->hasSecondGradient ) {
-
-                /////////////
-                //FloatMatrix temp2;
-                //temp2.beTProductOf( bj, dbj );
-                //temp2.printYourself();
-                /////////////
-
-                dAG.beProductOf( dAddF, Gmat ); // term with derivative wrt dF
+                dAG.beProductOf( dAddF, Gmat ); // G^T dA/d(grad F) G
                 if ( matStiffSymmFlag ) { // the upper triangle is mirrored below, after the loop
                     m->plusProductSymmUpper( Gmat, dAG, dV );
                 } else {
                     m->plusProductUnsym( Gmat, dAG, dV );
                 }
-                /////////////
-                //FloatMatrix temp;
-                //temp.beTProductOf( Gmat, dAG );
-                //temp.printYourself();
-                /////////////
 
                 // dA/dF must be reduced like F (27 x 5 in plane strain); the products below check this only in Debug
                 if ( dAdF.giveNumberOfColumns() != bj.giveNumberOfRows() ) {
                     OOFEM_ERROR( "dA/dF has %d columns but the BH matrix has %d rows", dAdF.giveNumberOfColumns(), bj.giveNumberOfRows() );
                 }
-                dAB.beProductOf( dAdF, bj ); // term with derivative wrt F
+                dAB.beProductOf( dAdF, bj ); // G^T dA/dF BH
                 m->plusProductUnsym( Gmat, dAB, dV );
-
-                ///////////////
-                // FloatMatrix temp;
-                // temp.beTProductOf( Gmat, dAB );
-                // temp.printYourself();
-                ///////////////
 
                 FloatMatrix dAG2, dAdFt;
                 dAdFt.beTranspositionOf( dAdF );
-                dAG2.beProductOf( dAdFt, Gmat ); // term with derivative wrt F
+                dAG2.beProductOf( dAdFt, Gmat ); // BH^T dP/d(grad F) G with dP/d(grad F) = (dA/dF)^T
                 m->plusProductUnsym( bj, dAG2, dV );
             }
         }
@@ -546,7 +529,7 @@ void StructuralElementEvaluator::computeDeformationGradientVector( FloatArray &a
     // the receiver at time step tStep.
     // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
 
-    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    // Obtain the current displacement vector of the element
     FloatArray u;
     Element *elem = this->giveElement();
     elem->computeVectorOf( VM_Total, tStep, u );
@@ -554,8 +537,6 @@ void StructuralElementEvaluator::computeDeformationGradientVector( FloatArray &a
     // Displacement gradient H = du/dX
     FloatMatrix B;
     this->computeBHmatrixAt( gp, B );
-    //answer.beProductOf( B, u );
-
 
     // get local code numbers corresponding to ir
     IntArray lc;

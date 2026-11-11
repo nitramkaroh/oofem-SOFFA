@@ -41,18 +41,15 @@
 
 namespace oofem {
 /**
- * This class represent a new concept on how to define elements.
- * Traditionally, Elements are derived from problem specific class (structural element, for example)
- * define their interpolation and implement methods to evaluate shape function matrix, geometrical matrix, etc.
- * This new concept, here represented by  StructuralElementEvaluator and derived classes allows to
- * define all problem specific methods (including shape function matrix, geometrical matrix evaluation) to be defined
- * once for all elements of the same type (plane stress elements, space3d elements, etc) just relying on
- * services of finite element interpolation classes.
- * Definition of particular element is then done simply by deriving if from evaluator and providing interpolation.
- *
- * StructuralElementEvaluator - base class of all structural elements
- * Individual elements supposed to be derived from StructuralElementEvaluator and IGAElement
- * @todo{Class is missing much documentation.}
+ * Base of the evaluators of IGA surface elements, which carry a surface energy (see StructuralElementEvaluator
+ * for the concept). Only the large strain formulation (nlgeo 1) is implemented.
+ * The surface deformation gradient is F = I_s + H with the displacement gradient H = BH u and the surface
+ * identity I_s = I - N x N of the reference unit normal N (IGAElement::giveNormal), 9 components in the
+ * order 11, 22, 33, 23, 13, 12, 32, 31, 21. The cross section has to be a SimpleSurfaceCrossSection; it
+ * passes F and N (and for second gradient materials grad F and grad I) to the surface material, which
+ * returns the first Piola-Kirchhoff stress P (9 components) and the third order stress A (27 components).
+ * The element must provide the normal and the derived evaluator the BH matrix (9 rows) and, for the
+ * second gradient, the G matrix (27 rows).
  */
 class StructuralSurfaceElementEvaluator : public StructuralElementEvaluator
 {
@@ -63,10 +60,8 @@ protected:
 
 protected:
     /**
-     * Computes the first Piola-Kirchhoff stress tensor on Voigt format. This method will
-     * be called if nlGeo = 1 and mode = TL. This method computes the deformation gradient F and passes
-     * it on to the crossection which then asks for the stress from the material.
-     * @note P is related to S through F*S.
+     * Computes the first Piola-Kirchhoff stress (9 components) from the surface deformation gradient F
+     * and the reference normal of the element, through the SimpleSurfaceCrossSection.
      *
      * @param answer Computed stress vector in Voigt form.
      * @param gp Gauss point at which the stress is evaluated.
@@ -74,6 +69,7 @@ protected:
      */
     virtual void computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
+    /// Third order stress A (27 components) conjugate to grad F, from F, grad F, grad I and the normal.
     void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
     void computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep ) override{
@@ -90,15 +86,18 @@ protected:
         return;
     };
 
+    /// dP/dF, 9 x 9.
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
+    /// dA/d(grad F), 27 x 27.
     void computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
+    /// dA/dF, 27 x 9 (dP/d(grad F) is its transpose).
     void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
     /**
-     * Computes the deformation gradient in Voigt form at integration point ip and at time
-     * step tStep. Computes the displacement gradient and adds an identitiy tensor.
+     * Computes the surface deformation gradient F = I_s + BH u (9 components) at the Gauss point,
+     * with I_s = I - N x N of the reference normal N.
      *
      * @param answer Deformation gradient vector
      * @param gp Gauss point.
@@ -106,17 +105,20 @@ protected:
      */
     void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
+    /// grad F = G x (27 components) with the current positions x = X + u of the control points.
     void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
+    /// Curvature at the local coordinates coords of the integration rule RuleIndex, for the VTK export.
     virtual void computeReferenceCurvature( FloatArray &RefCurvature, TimeStep *tStep, FloatArray &coords, int RuleIndex )
     {
         OOFEM_ERROR( "Not implemented for this element" );
     };
 
+    /// grad I = G X (27 components), as grad F with the reference positions X; it carries the reference curvature.
     void computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
 public:
     virtual void initializeFrom( InputRecord &ir );
 };
 } // end namespace oofem
-#endif // structuralelementevaluator_h
+#endif // structuralsurfaceelementevaluator_h

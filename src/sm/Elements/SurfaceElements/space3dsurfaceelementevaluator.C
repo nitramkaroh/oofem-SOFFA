@@ -33,7 +33,6 @@
  */
 
 #include "sm/Elements/SurfaceElements/space3dsurfaceelementevaluator.h"
-//#include "sm/CrossSections/structuralcrosssection.h"
 #include "sm/CrossSections/simplesurfacecrosssection.h"
 #include "floatarray.h"
 #include "floatmatrix.h"
@@ -56,10 +55,7 @@ void Space3dStructuralSurfaceElementEvaluator::computeNMatrixAt( FloatMatrix &an
     FEInterpolation *interp = element->giveInterpolation();
 
     interp->evalN( N, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( element, gp->giveIntegrationRule()->giveKnotSpan() ) );
-
-    // Transform to global coordinates!!
-
-    answer.beNMatrixOf( N, 3 ); // not sure
+    answer.beNMatrixOf( N, 3 );
 }
 
 
@@ -72,8 +68,6 @@ void Space3dStructuralSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp
     FEInterpolation *interp = element->giveInterpolation();
     FloatMatrix dNdx;
     interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( element, gp->giveIntegrationRule()->giveKnotSpan() ) );
-
-    // Transform to global coordinates!!
 
     answer.resize( 9, dNdx.giveNumberOfRows() * 3 );
     answer.zero();
@@ -101,35 +95,5 @@ void Space3dStructuralSurfaceElementEvaluator ::initializeFrom( InputRecord &ir 
 {
     StructuralSurfaceElementEvaluator::initializeFrom( ir );
 }
-
-//void Space3dStructuralSurfaceElementEvaluator::computeBMatrixAt( FloatMatrix &answer, GaussPoint *gp )
-//{
-//    FloatMatrix d;
-//    Element *element        = this->giveElement();
-//    FEInterpolation *interp = element->giveInterpolation();
-//    // this uses FEInterpolation::nodes2coords - quite inefficient in this case (large num of dofmans)
-//    interp->evaldNdx( d, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( element, gp->giveIntegrationRule()->giveKnotSpan() ) );
-//
-//    // Transform to global coordinates!!
-//
-//    answer.resize( 6, d.giveNumberOfRows() * 3 );
-//    answer.zero();
-//
-//    for ( int i = 1; i <= d.giveNumberOfRows(); i++ ) {
-//        answer.at( 1, i * 3 - 2 ) = d.at( i, 1 );
-//        answer.at( 2, i * 3 - 1 ) = d.at( i, 2 );
-//        answer.at( 3, i * 3 - 0 ) = d.at( i, 3 );
-//
-//        answer.at( 4, 3 * i - 1 ) = d.at( i, 3 );
-//        answer.at( 4, 3 * i - 0 ) = d.at( i, 2 );
-//
-//        answer.at( 5, 3 * i - 2 ) = d.at( i, 3 );
-//        answer.at( 5, 3 * i - 0 ) = d.at( i, 1 );
-//
-//        answer.at( 6, 3 * i - 2 ) = d.at( i, 2 );
-//        answer.at( 6, 3 * i - 1 ) = d.at( i, 1 );
-//    }
-//}
-
 
 } // end namespace oofem

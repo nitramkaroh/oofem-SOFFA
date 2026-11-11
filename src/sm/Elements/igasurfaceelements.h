@@ -39,10 +39,8 @@
 #include "iga/feibspline.h"
 #include "iga/feinurbs.h"
 #include "iga/feitspline.h"
-//#include "sm/Elements/PlaneStress/planestresselementevaluator.h"
 
 #include "sm/Elements/SurfaceElements/space2dsurfaceelementevaluator.h"
-//#include "sm/CrossSections/simplesurfacecrosssection.h"
 
 #include "sm/Elements/3D/space3delementevaluator.h"
 #include "floatarray.h"
@@ -50,14 +48,16 @@
 #include "matresponsemode.h"
 #include "mathfem.h"
 
-//#define _IFT_BsplinePlaneStressElement_Name "bsplineplanestresselement"
-//#define _IFT_NURBSPlaneStressElement_Name "nurbsplanestresselement"
-//#define _IFT_TSplinePlaneStressElement_Name "tsplineplanestresselement"
-//#define _IFT_NURBSSpace3dElement_Name "nurbs3delement"
 #define _IFT_BsplinePlaneStrainSurfaceElement_Name "bsplineplanestrainsurfaceelement"
 #define _IFT_BsplineAxisymSurfaceElement_Name "bsplineaxisymsurfaceelement"
 namespace oofem {
 
+/**
+ * Surface energy on a planar B-spline curve (one parametric direction, control points in the xy plane),
+ * typically the boundary of a plane strain B-spline patch sharing its control points. Per unit length
+ * of the curve and unit thickness. Large strains only (nlgeo 1); the cross section is a
+ * SimpleSurfaceCrossSection with a surface material.
+ */
 class BsplinePlaneStrainSurfaceElement : public IGAElement, public Space2dStructuralSurfaceElementEvaluator
 {
 protected:
@@ -93,8 +93,10 @@ public:
 
     MaterialMode giveMaterialMode() override { return _3dMat; }
 
+    /// Unit normal of the reference curve, (t_y, -t_x, 0) / |t| with the tangent t = dX/dxi.
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
+    /// VTK export of the curve sampled in numexp points per knot span (displacements only).
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
 
     /// The second gradient (bending) needs C1 continuity: degree at least 2 (repeated knots are not checked).
@@ -105,8 +107,11 @@ protected:
 };
 
 
-//// Axisym
-
+/**
+ * Surface energy on the surface of revolution of a B-spline curve in the xy plane (x the radius,
+ * y the axis of rotation), per radian. Large strains only (nlgeo 1); the cross section is a
+ * SimpleSurfaceCrossSection with a surface material.
+ */
 class BsplineAxisymSurfaceElement : public IGAElement, public AxisymSurfaceElementEvaluator
 {
 protected:
@@ -142,8 +147,13 @@ public:
 
     MaterialMode giveMaterialMode() override { return _3dMat; }
 
+    /// Unit normal of the reference curve, (t_y, -t_x, 0) / |t| with the tangent t = dX/dxi.
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
+    /**
+     * VTK export of the curve sampled in numexp points per knot span: displacements and, as the only
+     * internal variable, IST_CurvatureTensor (see computeReferenceCurvature).
+     */
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
 
     /// The second gradient (bending) needs C1 continuity: degree at least 2 (repeated knots are not checked).
@@ -153,10 +163,5 @@ protected:
     int giveNsd() override { return 1; }
 };
 
-//class SecondGradientInterface 
-//{
-//}
-
-
 } // end namespace oofem
-#endif // igaelements_h
+#endif // igasurfaceelements_h
