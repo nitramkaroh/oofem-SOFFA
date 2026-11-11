@@ -222,10 +222,12 @@ void AnisotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputReco
 Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMaterialDirection( GaussPoint *gp, TimeStep *tStep ) const
 {
     FloatArray matdir( 3 ), Naniso(3);
-    NLStructuralSurfaceElement *el = dynamic_cast<NLStructuralSurfaceElement *>( gp->giveElement() );
+    // Only the 3D Lagrange surface elements are supported: the direction is built from the 3D position of the Gauss
+    // point and rotated with the element's local frame. The IGA surfaces have no such frame and the 2D surfaces give
+    // a one-component position and a nodal rotation, which would make the direction wrong (it ends up zero).
+    auto el = dynamic_cast<Structural3DSurfaceElement *>( gp->giveElement() );
     if ( !el ) {
-        // The direction is rotated with the element's local frame, which only the Lagrange surface elements have (not the IGA ones)
-        OOFEM_ERROR( "element %d (%s) is not supported, the anisotropic surface material needs a Lagrange surface element",
+        OOFEM_ERROR( "element %d (%s) is not supported, the anisotropic surface material needs a 3D Lagrange surface element",
             gp->giveElement()->giveNumber(), gp->giveElement()->giveClassName() );
     }
 
