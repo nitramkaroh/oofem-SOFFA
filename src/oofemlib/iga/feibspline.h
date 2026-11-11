@@ -61,7 +61,7 @@ class IntArray;
 class OOFEM_EXPORT BSplineInterpolation : public FEInterpolation
 {
 protected:
-    /// Number of spatial directions.
+    /// Number of parametric directions (one for a curve, even when embedded in the xy plane).
     int nsd;
     /// Degree in each direction.
     std::array<int, 3> degree;                                   // eg. 2
@@ -217,15 +217,15 @@ protected:
      * Computes nonzero basis functions and their derivatives at u.
      *
      * For information on the algorithm, see A2.3 on p72 of
-     * the NURBS book. The result is stored in the ders matrix, where
-     * ders is of size (n+1,p+1) and the derivative
-     * @f{align*}{
-     * N(u)   &= \mathit{ders}(0,span-p+j) \quad\text{where } j=0...p \ \
-     * N'(u)  &= \mathit{ders}(1,span-p+j) \quad\text{where } j=0...p \ \
-     * N''(u) &= \mathit{ders}(2,span-p+j) \quad\text{where } j=0...p
-     * @f}
+     * the NURBS book. The result is a matrix of size (n+1,p+1), using zero-based
+     * derivative rows and local basis columns:
+     * @f[
+     * N^{(r)}_{span-p+j,p}(u) = \mathit{ders}(r,j),
+     * \qquad r=0,\ldots,n,\quad j=0,\ldots,p.
+     * @f]
+     * Thus column j refers to the global basis function with index span-p+j.
      *
-     * @param n Degree of the derivation.
+     * @param n Highest derivative order to compute.
      * @param u Parametric value.
      * @param span Knot span index (zero based).
      * @param p Degree.
@@ -238,16 +238,16 @@ protected:
     /**
      * Determines the knot span index (Algorithm A2.1 from the NURBS book)
      *
-     * Determines the knot span for which there exists non-zero basis
-     * functions. The span is the index k for which the parameter
-     * u is valid in the (u_k,u_{k+1}] range.
+     * Returns the index k such that U[k] <= u < U[k+1]. At an internal knot this
+     * selects the nonzero span on its right. The right endpoint u = U[n+1] is
+     * assigned to the last span, k = n.
      *
      * @param n Number of control points - 1.
      * @param u Parametric value.
      * @param p Degree.
      * @param U Knot vector.
      * @return Span index at u (zero based).
-     * @warning Parameter u must be in a valid range.
+     * @warning Parameters outside [U[p], U[n+1]] are rejected; no endpoint tolerance is applied.
      */
     int findSpan(int n, int p, double u, const FloatArray &U) const;
 
@@ -285,6 +285,13 @@ public:
 
     void evald2Ndx2General( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
 
+    /**
+     * Unit normal of the reference curve, answer = (dY/dxi, -dX/dxi, 0) / |X_,xi|: the tangent
+     * rotated clockwise in the xy plane. The boundary number is ignored; the knot span is taken
+     * from the geometry wrapper when it is given, otherwise it is found from lcoords.
+     * @return Always 1, not the boundary transformation Jacobian |X_,xi| promised by FEInterpolation.
+     * Current callers use only the normal vector.
+     */
     double boundaryEvalNormal( FloatArray &answer, int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
     /// Position on the curve in the xy plane (both coordinates; BSplineInterpolation gives one per parametric dimension).

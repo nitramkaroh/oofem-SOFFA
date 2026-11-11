@@ -195,12 +195,7 @@ int LinePlaneStrainSurface ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
 
 
 void LinePlaneStrainSurface::computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int li, int ui )
-//
-// Returns the [ 6 x (nno*2) ] strain-displacement matrix {B} of the receiver,
-// evaluated at gp.
-// (epsilon_x,epsilon_y,...,Gamma_xy) = B . r
-// r = ( u1,v1,u2,v2)
-// NOT TESTED
+// The small-strain formulation is not implemented; this element requires nlgeo 1.
 {
     OOFEM_ERROR( "THIS FUNCTION IS NOT IMPLEMENTED " );
 }

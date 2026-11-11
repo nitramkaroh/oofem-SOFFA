@@ -52,12 +52,13 @@ class FloatArray;
 class IntArray;
 
 /**
- * Abstract base class for "structural" surace finite elements with geometrical nonlinearities.
+ * Abstract base class for structural surface finite elements with geometrical nonlinearities.
  *
  * The deformation gradient is F = BH * u + I_s with I_s = diag(1, 1, 0): computeBHmatrixAt must
- * return the displacement gradient in the frame in which the surface material works, i.e. with
- * the first two axes in the surface and the third along its normal. F and P are stored in the
- * material status in this frame, so the stored P matches BH (used e.g. for reactions).
+ * return the displacement gradient in the element's reference surface frame: the first two axes
+ * are tangent to the reference surface and the third is its reference normal. The kinematic F
+ * and the work-conjugate P are stored in this frame, so the stored P matches BH (e.g. for reactions).
+ * A constitutive call may use F*F0 to include prestrain; the returned P is then pulled back to F.
  */
 class NLStructuralSurfaceElement : public NLStructuralElement
 {
@@ -77,6 +78,8 @@ public:
 
     void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
+    /// Unit normal to the reference geometry, expressed in global coordinates.
+    /// Its global components must not be interpreted directly as local tensor components.
     virtual FloatArray giveNormal( GaussPoint *gp ) const = 0;
 
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override

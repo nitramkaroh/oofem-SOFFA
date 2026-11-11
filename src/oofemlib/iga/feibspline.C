@@ -909,7 +909,7 @@ double BSpline2dLineInterpolation ::evaldNdxGeneral( FloatMatrix &answer, const 
     dXdXi.at( 2 ) = dydxi;
 
 
-    // Compute covariant metrix coefficient
+    // Inverse (contravariant) metric coefficient g^{11} = 1 / |X_,xi|^2.
     double G_11 = 1. / ( dxdxi * dxdxi + dydxi * dydxi ); // Same as 1/J^2
     Jacob       = 1 / sqrt(G_11);
 
@@ -976,7 +976,7 @@ void BSpline2dLineInterpolation ::evald2Ndx2General( FloatMatrix &answer, const 
 
 
 
-    // Compute covariant metrix coefficient
+    // Inverse (contravariant) metric coefficient g^{11} = 1 / |X_,xi|^2.
     double G_11 = 1. / ( dxdxi * dxdxi + dydxi * dydxi ); // Same as 1/J^2
 
     // Christoffel symbol 
@@ -1084,7 +1084,7 @@ double BSpline2dLineInterpolation::boundaryEvalNormal( FloatArray &answer, int i
 
     answer.normalize();
 
-    return 1.; // Not sure what to return
+    return 1.; // Not the Jacobian |X_,xi| (see the declaration); callers use only the normal.
 }
 
 

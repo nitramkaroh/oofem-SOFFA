@@ -63,13 +63,17 @@ namespace oofem {
 //class IntegrationRule;
 //class Node;
 
+/**
+ * Penalty enforcement of n dot u_,xi = 0 at one parameter value of a planar IGA curve.
+ * The normal and basis derivatives use the same explicitly selected knot span.
+ */
 class OOFEM_EXPORT IGAClampBoundaryCondition : public ActiveBoundaryCondition
 //class OOFEM_EXPORT IGAClampBoundaryCondition : public BoundaryCondition
 {
 protected:
-    int elementNumber; // surface element where the zero derivative is prescribed
-    FloatArray localPosition; // local position where the zero derivative is prescribed
-    IntArray BcKnotSpan;
+    int elementNumber; ///< IGA curve element on which the condition is imposed.
+    FloatArray localPosition; ///< One curve parameter xi, not a physical coordinate.
+    IntArray BcKnotSpan; ///< Zero-based knot-vector index, not the ordinal of the nonzero interval.
     double penalty = 1e6;
     //std ::vector<std ::shared_ptr<DofManager> > lmdm;
 
@@ -87,6 +91,7 @@ public:
      * Checks the clamp location; shared by IGAClampBoundaryCondition and IGAClampBoundaryConditionLagrange.
      * Element elementNumber must be a planar IGA curve element of degree at least 1, and knotSpan
      * (a zero-based knot index) must be a nonzero knot interval containing localPosition.
+     * Both endpoints are included, so an internal knot may be evaluated from either selected span.
      */
     static void checkClampLocation( Domain *d, int elementNumber, double localPosition, int knotSpan );
 
@@ -121,4 +126,4 @@ public:
     //void giveLagrangianMultiplierLocationArray( const UnknownNumberingScheme &r_s, std ::vector<IntArray> &answer );
 };
 } // end namespace oofem
-#endif // node2nodecontact_h
+#endif // igaclampboundarycondition_h

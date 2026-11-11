@@ -83,13 +83,6 @@ void IGAClampBoundaryCondition ::initializeFrom( InputRecord &ir )
 
     IR_GIVE_OPTIONAL_FIELD( ir, this->penalty, _IFT_IGAClampBoundaryCondition_p );
 
-    // these are internal lagrange multipliers used to enforce the no penetration for the contacting bodies
-    //for ( int pos = 0; pos < 1; ++pos ) {
-    //    //lmdm.push_back( std ::unique_ptr<DofManager>( nullptr ) );
-    //    lmdm.push_back( std ::unique_ptr<Node>( new Node( 0, domain ) ) );
-    //    lmdm.at( pos )->appendDof( new MasterDof( this->lmdm.at( pos ).get(), (DofIDItem)( this->giveDomain()->giveNextFreeDofID() ) ) );
-    //}
-
 }
 
 

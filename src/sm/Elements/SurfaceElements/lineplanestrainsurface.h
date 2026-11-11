@@ -57,8 +57,8 @@ protected:
     /// Local vertex coordinates
     std ::vector<FloatArray> lc;
     /**
-     * Transformation Matrix form GtoL(3,3) is stored
-     * at the element level for computation efficiency
+     * Cached 2x2 global-to-local rotation of the nodal components in the plane.
+     * The element vector uses this block once for each node.
      */
     FloatMatrix *GtoLRotationMatrix;
 

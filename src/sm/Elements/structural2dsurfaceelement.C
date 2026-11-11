@@ -150,7 +150,8 @@ double
 AxisymSurfaceElement::computeVolumeAround(GaussPoint *gp)
 // Returns the portion of the receiver which is attached to gp.
 {
-    // note: radius is accounted by interpolation (of Fei2d*Axi type)
+    // Reference surface measure per radian: R * |X_,xi| * weight.
+    // The interpolation supplies only the line Jacobian; R is included below.
     /*double determinant = fabs(static_cast< FEInterpolation1d * >( this->giveInterpolation() )->
                               giveTransformationJacobian(gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() ) );*/
 

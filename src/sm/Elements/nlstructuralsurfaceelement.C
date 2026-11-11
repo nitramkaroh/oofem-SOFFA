@@ -62,7 +62,7 @@ void NLStructuralSurfaceElement::computeFirstPKStressVector( FloatArray &answer,
     FloatArray vF;
     this->computeDeformationGradientVector( vF, gp, tStep );
 
-    // Include prestrain Prestrain
+    // The material sees Fmod = F * F0; the returned stress is pulled back to the kinematic F.
     Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 0. );
     FloatArray vFmod;
     this->PrestrainDeformationGradient( vF, vFmod, F0, gp, tStep );
@@ -71,14 +71,14 @@ void NLStructuralSurfaceElement::computeFirstPKStressVector( FloatArray &answer,
     
 
     auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( cs->giveMaterial( gp ) ); // Get material
-    double J0 = mat->compute_surface_determinant( F0 ); // Compute surface jacobian
+    double J0 = mat->compute_surface_determinant( F0 ); // Reference area change due to prestrain.
 
     FloatArrayF<9> vP( answerTmp );
     Tensor2_3d P( vP ), Pmod;
-    Pmod( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0( j_3, k_3 ); // Modify the answert 
+    Pmod( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0( j_3, k_3 ); // P_element = P_material * F0^T / J0.
     answer = Pmod.to_voigt_form();
 
-    // update status 
+    // Store work-conjugate F and P in the same frame as BH, including for cached reactions.
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
     status->letTempFVectorBe( vF);
     status->letTempPVectorBe( answer );
@@ -102,9 +102,9 @@ void NLStructuralSurfaceElement::computeConstitutiveMatrix_dPdF_At( FloatMatrix 
     FloatArray normal = this->giveNormal( gp );
     FloatMatrix answerTmp = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );// Compute stiffness with updated F
 
-    status->letTempFVectorBe( vF ); // get status to the previous state
+    status->letTempFVectorBe( vF ); // Restore kinematic F after the constitutive evaluation.
 
-    // Modify the stiffness
+    // Chain rule for W(F * F0) / J0: apply F0 to both reference indices.
     FloatMatrixF<9, 9> mA( answerTmp );
     Tensor4_3d A( mA ), Amod;
     double J0 = mat->compute_surface_determinant( F0 );
@@ -129,18 +129,18 @@ void NLStructuralSurfaceElement::computeDeformationGradientVector( FloatArray &a
     // Obtain the current displacement vector of the element and subtract initial displacements (if present).
     // The element's own dof mask is used, so planar (u, v) and spatial (u, v, w) surfaces share this code.
     FloatArray u;
-    this->computeVectorOf( VM_Total, tStep, u ); // solution vector, in the element local frame
+    this->computeVectorOf( VM_Total, tStep, u ); // Element unknowns, rotated to the local frame when provided.
     if ( initialDisplacements ) {
         u.subtract( *initialDisplacements );
     }
 
-    // Displacement gradient H = du/dX
+    // Surface displacement gradient in the element's reference surface frame.
     FloatMatrix B;
     this->computeBHmatrixAt( gp, B );
  
     answer.beProductOf( B, u );
 
-    // Deformation gradient F = H + I
+    // Surface deformation gradient F = H + I_s, where I_s = diag(1, 1, 0).
     answer.at( 1 ) += 1.0;
     answer.at( 2 ) += 1.0;
 
