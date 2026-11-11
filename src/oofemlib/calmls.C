@@ -1832,11 +1832,6 @@ restart:
             ddX.add( eta, deltaX_ );
             dX = dXm1;
             dX.add( ddX );
-            /////////////
-            double temp = dX.computeNorm();
-            OOFEM_LOG_INFO( "dX_norm = %f \n", temp );
-            OOFEM_LOG_INFO( "dX(10) = %.3e \n", dX.at( calm_HPCIndirectDofMask.at(1) ) );
-            ////////////
             X = XInitial;
             X.add( dX );
 
@@ -2169,8 +2164,6 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
                     stabSolver->compute_dx_defl( X );
                     isBifurcationSet = true; // Not sure if correct
                     ///////
-
-                    OOFEM_LOG_INFO( "dX(10) = %.3e \n", dX.at( calm_HPCIndirectDofMask.at( 1 ) ) );
 
                     engngModel->updateComponent( tStep, InternalRhs, domain );
 
