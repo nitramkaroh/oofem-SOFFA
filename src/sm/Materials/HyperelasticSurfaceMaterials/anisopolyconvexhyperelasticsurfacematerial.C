@@ -224,7 +224,12 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
 {
     FloatArray matdir( 3 ), Naniso(3);
     NLStructuralSurfaceElement *el = dynamic_cast<NLStructuralSurfaceElement *>( gp->giveElement() );
-    
+    if ( !el ) {
+        // The direction is rotated with the element's local frame, which only the Lagrange surface elements have (not the IGA ones)
+        OOFEM_ERROR( "element %d (%s) is not supported, the anisotropic surface material needs a Lagrange surface element",
+            gp->giveElement()->giveNumber(), gp->giveElement()->giveClassName() );
+    }
+
     // If the direction of anisotropy is not directly specified, construct it 
     if ( !el->giveIPValue( matdir, gp, IST_AnisotropyDirection, tStep ) ) {
         FloatArray normal = el->giveNormal( gp );
