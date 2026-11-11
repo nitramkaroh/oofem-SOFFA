@@ -1,0 +1,33 @@
+surface-bending-reference.out
+Initial tangent of a curved quadratic bending surface uses the reference gradients
+StaticStructural nsteps 1 deltat 1.0 maxiter 30 manrmsteps 1 rtolv 1.e-11 rtolf 1.e-11 nmodules 1
+errorcheck
+domain 2dPlaneStress
+OutputManager tstep_all dofman_all
+ndofman 3 nelem 1 ncrosssect 1 nmat 1 nbc 3 nic 0 nltf 1 nset 3
+# Quadratic Bezier reference curve X(xi) = (xi, 1.2 xi(1-xi)), extruded through unit width.
+# Only the right control point's horizontal displacement u is free. One midpoint Gauss point is
+# intentional: it gives an analytic test of the INITIAL bending tangent of this discrete element.
+# At the midpoint the current stretch is s=1+u, H=-1.2/s^2 and H0=-1.2, hence
+# E(u) = 0.72 s (1-s^(-2))^2,
+# E'(u) = 0.72 (1 + 2/s^2 - 3/s^4), E''(0)=5.76.
+# The load below is E'(0.1), so the equilibrium is u=0.1. All other dofs are fixed.
+# With G=gradI=0 in a fresh material status, the initial tangent for this dof is zero instead
+# of 5.76. A tangent assembled before the first residual must initialize the reference gradients.
+node 1 coords 2 0.0 0.0
+node 2 coords 2 0.5 0.6
+node 3 coords 2 1.0 0.0
+bsplineplanestrainsurfaceelement 1 nodes 3 1 2 3 crosssect 1 knotvectoru 2 0 1 degree 1 2 nip 1 nlgeo 1
+simplesurfacecs 1 material 1
+surfacetensionmat2 1 gamma1 0.0 omega1 1.0 useh0 1 d 1.0
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 0.0 set 2
+NodalLoad 3 loadTimeFunction 1 dofs 2 1 2 components 2 0.43477358103954694 0.0 set 3
+ConstantFunction 1 f(t) 1.0
+Set 1 nodes 2 1 2
+Set 2 nodes 3 1 2 3
+Set 3 nodes 1 3
+#%BEGIN_CHECK% tolerance 1.e-9
+#NODE tStep 1 number 3 dof 1 unknown d value 0.1
+#NODE tStep 1 number 2 dof 2 unknown d value 0.0
+#%END_CHECK%

@@ -70,11 +70,8 @@ StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g
     KVector.resize( 9 );
     tempKVector = KVector;
 
-    GVector.resize( 27 );
-    tempGVector = GVector;
-
-    dIVector.resize( 27 );
-    tempdIVector = dIVector;
+    // Empty gradients mark a fresh status. The surface evaluator supplies the reference
+    // gradients before the first tangent; on a curved surface they are not zero.
     
     D2eDK2_Matrix.resize( 9, 9 );
     tempD2eDK2_Matrix = D2eDK2_Matrix;

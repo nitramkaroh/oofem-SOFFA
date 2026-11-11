@@ -95,6 +95,9 @@ protected:
     /// dA/dF, 27 x 9 (dP/d(grad F) is its transpose).
     void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
+    /// Initialize the reference grad F = grad I before a tangent is requested on a fresh status.
+    void initializeReferenceGradients( GaussPoint *gp, TimeStep *tStep );
+
     /**
      * Computes the surface deformation gradient F = I_s + BH u (9 components) at the Gauss point,
      * with I_s = I - N x N of the reference normal N.

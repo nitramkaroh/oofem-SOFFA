@@ -37,6 +37,7 @@
 #include "sm/CrossSections/simplesurfacecrosssection.h"
 #include "sm/Materials/structuralmaterial.h"
 #include "sm/Materials/structuralms.h"
+#include "sm/Materials/structuralsurfacems.h"
 
 #include "floatarray.h"
 #include "floatmatrix.h"
@@ -85,6 +86,7 @@ void StructuralSurfaceElementEvaluator::computeSecondOrderStressVector( FloatArr
 
 void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
 {
+    this->initializeReferenceGradients( gp, tStep );
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );
     SimpleSurfaceCrossSection *cs = static_cast<SimpleSurfaceCrossSection *>( elem->giveCrossSection() );
     FloatArray normal = elem->giveNormal( gp );
@@ -93,6 +95,7 @@ void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dPdF_At( Floa
 
 void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
 {
+    this->initializeReferenceGradients( gp, tStep );
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );
     SimpleSurfaceCrossSection *cs = static_cast<SimpleSurfaceCrossSection *>( elem->giveCrossSection() );
     FloatArray normal             = elem->giveNormal( gp );
@@ -101,10 +104,28 @@ void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dAddF_At( Flo
 
 void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
 {
+    this->initializeReferenceGradients( gp, tStep );
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );
     SimpleSurfaceCrossSection *cs = static_cast<SimpleSurfaceCrossSection *>( elem->giveCrossSection() );
     FloatArray normal             = elem->giveNormal( gp );
     answer                        = static_cast<SimpleSurfaceCrossSection *>( this->giveElement()->giveCrossSection() )->giveSurfaceStiffnessMatrix_dAdF_3d( rMode, normal, gp, tStep );
+}
+
+void StructuralSurfaceElementEvaluator::initializeReferenceGradients( GaussPoint *gp, TimeStep *tStep )
+{
+    if ( !this->hasSecondGradient ) {
+        return;
+    }
+    auto cs = static_cast<SimpleSurfaceCrossSection *>( this->giveElement()->giveCrossSection() );
+    auto status = static_cast<StructuralSurfaceMaterialStatus *>( cs->giveMaterial( gp )->giveStatus( gp ) );
+    if ( status->giveTempdIVector().giveSize() == 0 ) {
+        // A fresh status represents the reference configuration F = I_s. Keep the usual
+        // status-based tangent policy after this first initialization.
+        FloatArray gradI;
+        this->computeSurfaceIdentityGradient( gradI, gp, tStep );
+        status->letTempGVectorBe( gradI );
+        status->letTempdIVectorBe( gradI );
+    }
 }
 
 void StructuralSurfaceElementEvaluator::computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
