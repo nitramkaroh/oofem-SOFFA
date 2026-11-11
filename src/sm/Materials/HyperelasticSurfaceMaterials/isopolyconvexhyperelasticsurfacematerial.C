@@ -945,7 +945,10 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveFirstPKSurfaceStressVector_
     gamma_t1 = this->giveGamma( tStep );
     omega_t1 = this->giveOmega( tStep );
     alpha_s_t1 = this->giveAlpha_s( tStep );
-    
+    // also here: Lagrange surface elements never ask for the second order stress, so without
+    // this check their bending part would silently use grad F = 0
+    this->checkBendingSupport( omega_t1, gp );
+
 
     // construct some useful objects
     FloatArrayF<27> vG( status->giveTempGVector() );
@@ -1036,13 +1039,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveSecondOrderSurfaceStressVec
     //}
 
     omega_t1 = this->giveOmega( tStep );
-
-    if ( abs( omega_t1 ) > 1e-8 ) { // check if the interpolation is spline and at least quadratic
-        int intOrd = iga_el->giveInterpolation()->giveInterpolationOrder();
-        if ( !iga_el || iga_el->giveInterpolation()->giveInterpolationOrder() <= 1 ) {
-            OOFEM_ERROR( "For second order surface elements the interpolation must be C1" );
-        }
-    }
+    this->checkBendingSupport( omega_t1, gp );
 
     // construct some useful objects
     Tensor2_3d F( vF ); // deformation gradient
@@ -1475,6 +1472,19 @@ double IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveOmega( TimeStep *tSt
         //}
     }
 };
+
+
+void IsotropicPolyconvexHyperelasticSurfaceMaterial2::checkBendingSupport( double omega, GaussPoint *gp ) const
+{
+    // Only the degree is checked here, not the continuity (repeated knots lower it)
+    if ( std::fabs( omega ) > 1e-8 ) {
+        auto iga_el = dynamic_cast<IGAElement *>( gp->giveElement() );
+        if ( !iga_el || iga_el->giveInterpolation()->giveInterpolationOrder() <= 1 ) {
+            OOFEM_ERROR( "omega1 != 0 needs an IGA surface element of degree at least 2 (element %d is %s)",
+                gp->giveElement()->giveNumber(), gp->giveElement()->giveClassName() );
+        }
+    }
+}
 
 
 double IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveAlpha_s( TimeStep *tStep ) const

@@ -202,6 +202,8 @@ public:
     double giveGamma( TimeStep *tStep ) const;
     double giveOmega( TimeStep *tStep ) const;
     double giveAlpha_s( TimeStep *tStep ) const;
+    /// Bending (omega != 0) needs the second gradient, i.e. an IGA surface element of degree >= 2; errors otherwise.
+    void checkBendingSupport( double omega, GaussPoint *gp ) const;
 
     Interface *giveInterface( InterfaceType t ) override
     {
