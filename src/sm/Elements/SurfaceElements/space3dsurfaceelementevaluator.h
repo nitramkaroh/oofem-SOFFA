@@ -40,6 +40,9 @@
 namespace oofem {
 /**
  * General purpose 3d structural element evaluator.
+ * @note Unfinished: no element uses it yet, and computeBHmatrixAt fills only the derivatives with respect
+ * to x and y, so it would be valid only for a flat surface in the xy plane (a general surface needs the
+ * tangential gradient of the whole 3D position). Not meant for the upstream port in this state.
  */
 class Space3dStructuralSurfaceElementEvaluator : public StructuralSurfaceElementEvaluator
 {
