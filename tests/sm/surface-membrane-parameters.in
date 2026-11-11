@@ -1,0 +1,61 @@
+surface-membrane-parameters.out
+Membrane surface energy terms with their own time functions: analytic reactions of a stretched segment
+StaticStructural nsteps 1 deltat 1.0 rtolv 1.e-11 maxiter 10 nmodules 1
+errorcheck
+domain 2dPlaneStress
+OutputManager tstep_all dofman_all element_all
+ndofman 10 nelem 4 ncrosssect 2 nmat 2 nbc 4 nic 0 nltf 3 nset 4
+# Four unit segments along x, each stretched to length 2 (lambda = 2, plane strain):
+# Lagrange, IGA degree 1, IGA degree 2 with the membrane material, IGA degree 2 with the bending material
+# (omega1 = 0), which has all membrane terms as well.
+node 1 coords 2 0.0 0.0
+node 2 coords 2 1.0 0.0
+node 3 coords 2 0.0 0.0
+node 4 coords 2 1.0 0.0
+node 5 coords 2 0.0 0.0
+node 6 coords 2 0.5 0.0
+node 7 coords 2 1.0 0.0
+node 8 coords 2 0.0 0.0
+node 9 coords 2 0.5 0.0
+node 10 coords 2 1.0 0.0
+lineplanestrainsurface 1 nodes 2 1 2 crosssect 1 nlgeo 1
+bsplineplanestrainsurfaceelement 2 nodes 2 3 4 crosssect 1 knotvectoru 2 0 1 degree 1 1 nip 2 nlgeo 1
+bsplineplanestrainsurfaceelement 3 nodes 3 5 6 7 crosssect 1 knotvectoru 2 0 1 degree 1 2 nip 3 nlgeo 1
+bsplineplanestrainsurfaceelement 4 nodes 3 8 9 10 crosssect 2 knotvectoru 2 0 1 degree 1 2 nip 3 nlgeo 1
+simplesurfacecs 1 material 1
+simplesurfacecs 2 material 2
+# at t = 1: gamma = gaminit + gamma1 f2 = 0.1 + 0.4 * 0.5 = 0.3, alphas = 0.8 f3 = 0.2, lambda = 0.3 f2 = 0.15;
+# alpha1 = 0.2 and mu = 0.1 have no time function and stay constant
+surfacetensionmat 1 gamma1 0.4 gamma_ltf 2 gaminit 0.1 alpha1 0.2 alphas 0.8 alphas_ltf 3 lambda 0.3 lambda_ltf 2 mu 0.1 d 1.
+surfacetensionmat2 2 gamma1 0.4 gamma_ltf 2 gaminit 0.1 alpha1 0.2 alphas 0.8 alphas_ltf 3 lambda 0.3 lambda_ltf 2 mu 0.1 omega1 0. d 1.
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 1 values 1 0.5 set 2
+BoundaryCondition 3 loadTimeFunction 1 dofs 1 1 values 1 1.0 set 3
+BoundaryCondition 4 loadTimeFunction 1 dofs 1 2 values 1 0.0 set 4
+ConstantFunction 1 f(t) 1.0
+ConstantFunction 2 f(t) 0.5
+ConstantFunction 3 f(t) 0.25
+Set 1 nodes 4 1 3 5 8
+Set 2 nodes 2 6 9
+Set 3 nodes 4 2 4 7 10
+Set 4 nodes 10 1 2 3 4 5 6 7 8 9 10
+#
+# F = diag(lambda, 1, 0) in the frame (tangent, out of plane, normal), |F|^2 = lambda^2 + 1, J = lambda.
+# Energy per unit reference length: W = gamma J + alpha |F| + alphas/2 (J-1)^2 + mu (|F|^2/2 - 1 - ln J) + lambda_L/2 (ln J)^2,
+# reaction at the moved end R = dW/dlambda = gamma + alpha lambda/sqrt(lambda^2+1) + alphas (lambda-1)
+#   + mu (lambda - 1/lambda) + lambda_L ln(lambda)/lambda = 0.8808714767419791 for lambda = 2.
+#%BEGIN_CHECK% tolerance 1.e-9
+#REACTION tStep 1 number 1 dof 1 value -0.8808714767419791
+#REACTION tStep 1 number 2 dof 1 value 0.8808714767419791
+#REACTION tStep 1 number 2 dof 2 value 0.0
+#REACTION tStep 1 number 3 dof 1 value -0.8808714767419791
+#REACTION tStep 1 number 4 dof 1 value 0.8808714767419791
+#REACTION tStep 1 number 5 dof 1 value -0.8808714767419791
+#REACTION tStep 1 number 6 dof 1 value 0.0
+#REACTION tStep 1 number 7 dof 1 value 0.8808714767419791
+#REACTION tStep 1 number 7 dof 2 value 0.0
+#REACTION tStep 1 number 8 dof 1 value -0.8808714767419791
+#REACTION tStep 1 number 9 dof 1 value 0.0
+#REACTION tStep 1 number 10 dof 1 value 0.8808714767419791
+#REACTION tStep 1 number 10 dof 2 value 0.0
+#%END_CHECK%

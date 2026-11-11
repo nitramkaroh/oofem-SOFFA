@@ -1,0 +1,74 @@
+surface-prestrain-normal.out
+Prestrained triangle whose original configuration is tilted out of the element plane, with and without the normal
+StaticStructural nsteps 2 deltat 1.0 rtolv 1.e-11 maxiter 20 manrmsteps 1 nmodules 1
+errorcheck
+domain 3d
+OutputManager tstep_all dofman_all element_all
+ndofman 6 nelem 2 ncrosssect 1 nmat 1 nbc 9 nic 0 nltf 2 nset 3
+# Two identical triangles (nodes 1-3 and 4-6) with the prestrain f0, which maps the plane with the normal
+# (0.3, -0.2, 1) of the original configuration, in the element frame, onto the element plane. The material gets
+# F f0 and the normal of the original configuration, which the element computes from f0 (the kernel of f0
+# projected onto the element plane); the given normal of element 1 is only checked against it. The reactions
+# of both triangles are those of the earlier implementation, which needed the normal.
+node 1 coords 3 -0.326099033699941 0.1130495168499705 0.5
+node 2 coords 3 0.04900199203977734 -0.7019960159204452 0.9183300132670378
+node 3 coords 3 0.3 -0.2 0.5
+node 4 coords 3 -0.326099033699941 0.1130495168499705 0.5
+node 5 coords 3 0.04900199203977734 -0.7019960159204452 0.9183300132670378
+node 6 coords 3 0.3 -0.2 0.5
+triangularsurface 1 nodes 3 1 2 3 crossSect 1 nlgeo 1 prestrain 1 f0 9 0.9504662041515332 0.9157697902919751 0.1737048661086384 -0.1896109129692933 -0.1418927723873284 -0.2000947795358195 -0.5438149336827104 -0.1981678804004849 -0.1779812814750393 normal 3 0.1916565026440622 0.234571975960942 0.9530182438379791
+triangularsurface 2 nodes 3 4 5 6 crossSect 1 nlgeo 1 prestrain 1 f0 9 0.9504662041515332 0.9157697902919751 0.1737048661086384 -0.1896109129692933 -0.1418927723873284 -0.2000947795358195 -0.5438149336827104 -0.1981678804004849 -0.1779812814750393
+simplesurfacecs 1 material 1
+surfacetensionmat 1 gamma1 0.5 alpha1 0.3 alphas 0.4 lambda 0.2 mu 0.3 d 1. gamma_ltf 2 alpha_ltf 2 alphas_ltf 2 lambda_ltf 2 mu_ltf 2
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.01999999999999989 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 0.0169574275274956 set 1
+BoundaryCondition 3 loadTimeFunction 1 dofs 1 3 values 1 -0.03826237921249263 set 1
+BoundaryCondition 4 loadTimeFunction 1 dofs 1 1 values 1 -0.0845825033167595 set 2
+BoundaryCondition 5 loadTimeFunction 1 dofs 1 2 values 1 0.06203260291874838 set 2
+BoundaryCondition 6 loadTimeFunction 1 dofs 1 3 values 1 -0.001833001326703755 set 2
+BoundaryCondition 7 loadTimeFunction 1 dofs 1 1 values 1 0.02 set 3
+BoundaryCondition 8 loadTimeFunction 1 dofs 1 2 values 1 -0.03 set 3
+BoundaryCondition 9 loadTimeFunction 1 dofs 1 3 values 1 0.04 set 3
+PiecewiseLinFunction 1 npoints 2 t 2 0 2 f(t) 2 0 1
+PiecewiseLinFunction 2 npoints 2 t 2 0 2 f(t) 2 0.5 1
+Set 1 nodes 2 1 4
+Set 2 nodes 2 2 5
+Set 3 nodes 2 3 6
+#%BEGIN_CHECK% tolerance 1.e-9
+#REACTION tStep 1 number 1 dof 1 value -1.7711852973e-01
+#REACTION tStep 1 number 4 dof 1 value -1.7711852973e-01
+#REACTION tStep 1 number 1 dof 2 value 1.2081068182e-01
+#REACTION tStep 1 number 4 dof 2 value 1.2081068182e-01
+#REACTION tStep 1 number 1 dof 3 value -2.8296131675e-02
+#REACTION tStep 1 number 4 dof 3 value -2.8296131675e-02
+#REACTION tStep 1 number 2 dof 1 value -5.9069286340e-02
+#REACTION tStep 1 number 5 dof 1 value -5.9069286340e-02
+#REACTION tStep 1 number 2 dof 2 value -1.4167485554e-01
+#REACTION tStep 1 number 5 dof 2 value -1.4167485554e-01
+#REACTION tStep 1 number 2 dof 3 value 1.1296230715e-01
+#REACTION tStep 1 number 5 dof 3 value 1.1296230715e-01
+#REACTION tStep 1 number 3 dof 1 value 2.3618781607e-01
+#REACTION tStep 1 number 6 dof 1 value 2.3618781607e-01
+#REACTION tStep 1 number 3 dof 2 value 2.0864173727e-02
+#REACTION tStep 1 number 6 dof 2 value 2.0864173727e-02
+#REACTION tStep 1 number 3 dof 3 value -8.4666175476e-02
+#REACTION tStep 1 number 6 dof 3 value -8.4666175476e-02
+#REACTION tStep 2 number 1 dof 1 value -2.2615536683e-01
+#REACTION tStep 2 number 4 dof 1 value -2.2615536683e-01
+#REACTION tStep 2 number 1 dof 2 value 1.6797846489e-01
+#REACTION tStep 2 number 4 dof 2 value 1.6797846489e-01
+#REACTION tStep 2 number 1 dof 3 value -5.4261760273e-02
+#REACTION tStep 2 number 4 dof 3 value -5.4261760273e-02
+#REACTION tStep 2 number 2 dof 1 value -9.5405803917e-02
+#REACTION tStep 2 number 5 dof 1 value -9.5405803917e-02
+#REACTION tStep 2 number 2 dof 2 value -1.7679973729e-01
+#REACTION tStep 2 number 5 dof 2 value -1.7679973729e-01
+#REACTION tStep 2 number 2 dof 3 value 1.4678470005e-01
+#REACTION tStep 2 number 5 dof 3 value 1.4678470005e-01
+#REACTION tStep 2 number 3 dof 1 value 3.2156117074e-01
+#REACTION tStep 2 number 6 dof 1 value 3.2156117074e-01
+#REACTION tStep 2 number 3 dof 2 value 8.8212723984e-03
+#REACTION tStep 2 number 6 dof 2 value 8.8212723984e-03
+#REACTION tStep 2 number 3 dof 3 value -9.2522939775e-02
+#REACTION tStep 2 number 6 dof 3 value -9.2522939775e-02
+#%END_CHECK%
