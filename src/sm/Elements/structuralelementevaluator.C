@@ -291,6 +291,9 @@ void StructuralElementEvaluator :: giveInternalForcesVector(FloatArray &answer, 
                     this->computeStressVector(stress, strain, gp, tStep);
                 }
             } else if ( nlGeometry == 1 ) { // First Piola-Kirchhoff stress
+                // The second order stress must come first: second gradient materials (surfacetensionmat2)
+                // store grad F, grad I, the bending moment and the curvature in the temporary status and
+                // read them back when they compute the first Piola-Kirchhoff stress.
                 if ( this->hasSecondGradient ) {
                     this->computeGMatrixAt( gp, Gmat );
                     this->computeSecondOrderStressVector( secondOrderStress, gp, tStep );
@@ -386,9 +389,9 @@ void StructuralElementEvaluator :: updateInternalState(TimeStep *tStep)
     }
 #endif
 
-    FloatArray strain, stress;
+    FloatArray strain, stress, secondOrderStress;
 
-    // force updating strains & stresses
+    // force updating strains & stresses (only the temporary status, it is committed elsewhere)
     for ( int i = 0; i < elem->giveNumberOfIntegrationRules(); i++ ) {
 #ifdef __PARALLEL_MODE
         if ( this->giveElement()->giveKnotSpanParallelMode(i) == Element_remote ) {
@@ -396,8 +399,17 @@ void StructuralElementEvaluator :: updateInternalState(TimeStep *tStep)
         }
 #endif
         for ( GaussPoint *gp: *elem->giveIntegrationRule(i) ) {
-            this->computeStrainVector(strain, gp, tStep, u);
-            this->computeStressVector(stress, strain, gp, tStep);
+            if ( nlGeometry == 0 ) {
+                this->computeStrainVector(strain, gp, tStep, u);
+                this->computeStressVector(stress, strain, gp, tStep);
+            } else {
+                // Same order as in giveInternalForcesVector: a second gradient material may need the
+                // values stored by the second order stress when it computes the first Piola-Kirchhoff stress
+                if ( this->hasSecondGradient ) {
+                    this->computeSecondOrderStressVector( secondOrderStress, gp, tStep );
+                }
+                this->computeFirstPKStressVector( stress, gp, tStep );
+            }
         }
     }
 }
@@ -439,7 +451,9 @@ void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, M
                 this->computeBMatrixAt(bj, gp);
                 this->computeConstitutiveMatrixAt(d, rMode, gp, tStep);
             } else if ( nlGeometry == 1 ) {
-                if ( this->hasSecondGradient ) { // needs to be first
+                // needs to be first, in this order: dA/d(grad F) stores d2e/dK2 in the temporary status,
+                // which dA/dF and dP/dF of second gradient materials (surfacetensionmat2) read back
+                if ( this->hasSecondGradient ) {
                     this->computeGMatrixAt( gp, Gmat );
                     this->computeConstitutiveMatrix_dAddF_At( dAddF, rMode, gp, tStep ); 
                     this->computeConstitutiveMatrix_dAdF_At( dAdF, rMode, gp, tStep ); 
@@ -506,6 +520,10 @@ void StructuralElementEvaluator::initializeFrom( InputRecord &ir )
 {
     nlGeometry = 0;
     IR_GIVE_OPTIONAL_FIELD( ir, nlGeometry, _IFT_StructuralElementEvaluator_nlgeoflag );
+    // other values would silently give zero internal forces (no stress is computed for them)
+    if ( nlGeometry != 0 && nlGeometry != 1 ) {
+        throw ValueInputException( ir, _IFT_StructuralElementEvaluator_nlgeoflag, "must be 0 (small strains) or 1 (first Piola-Kirchhoff)" );
+    }
 }
 
 void StructuralElementEvaluator::computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
