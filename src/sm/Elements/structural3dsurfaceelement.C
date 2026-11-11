@@ -141,7 +141,7 @@ void Structural3DSurfaceElement::giveMaterialOrientationAt( FloatArray &x, Float
 void Structural3DSurfaceElement::computeStressVector( FloatArray &answer, const FloatArray &e, GaussPoint *gp, TimeStep *tStep )
 {
     auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    FloatArray normal = this->giveNormal( gp );
+    FloatArray normal = { 0., 0., 1. }; // the reference normal in the frame of the element
 
     if ( this->matRotation ) {
         // MATERIAL ROTATION NOT IMPLEMENTED
@@ -170,7 +170,7 @@ void Structural3DSurfaceElement::computeStressVector( FloatArray &answer, const 
 void Structural3DSurfaceElement::computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
 { 
     auto cs  = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    FloatArray normal = this->giveNormal( gp );
+    FloatArray normal = { 0., 0., 1. }; // the reference normal in the frame of the element
     answer  = cs->giveSurfaceStiffnessMatrix_3d( rMode, normal, gp, tStep );
 
     // MATERIAL ROTATION NOT IMPLEMENTED

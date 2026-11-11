@@ -59,6 +59,11 @@ class IntArray;
  * are tangent to the reference surface and the third is its reference normal. The kinematic F
  * and the work-conjugate P are stored in this frame, so the stored P matches BH (e.g. for reactions).
  * A constitutive call may use F*F0 to include prestrain; the returned P is then pulled back to F.
+ *
+ * The material receives F*F0 together with the unit normal N of the configuration this deformation
+ * gradient starts from, in the same frame and with (F*F0) N = 0 (see giveMaterialKinematics): e3 without
+ * prestrain, the normal of the original configuration with it. These elements interpolate C0 only, so a
+ * material which needs the second gradient (bending stiffness) is rejected in checkConsistency.
  */
 class NLStructuralSurfaceElement : public NLStructuralElement
 {
@@ -78,8 +83,21 @@ public:
 
     void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
-    /// Unit normal to the reference geometry, expressed in global coordinates.
-    /// Its global components must not be interpreted directly as local tensor components.
+    /**
+     * Kinematics handed to the surface material, in the frame of the element.
+     * @param vF Kinematic deformation gradient F = BH u + I_s, F e3 = 0.
+     * @param vFmat F * F0 with the prestrain F0 of the element (none: F0 = diag(1, 1, 0) and vFmat = F).
+     * @param normal Unit normal N of the configuration F * F0 starts from, (F * F0) N = 0: the normal of
+     * F0s = I_s F0, the part of F0 in the element plane, N = cof(F0s)^T e3 / J0 (e3 without prestrain).
+     * @param F0s The part of F0 in the element plane, used to pull the stress and the tangent back to F.
+     * @param J0 Area ratio of F0s, J0 = |cof(F0s)^T e3| (1 without prestrain).
+     */
+    void giveMaterialKinematics( const FloatArray &vF, GaussPoint *gp, TimeStep *tStep, FloatArray &vFmat, FloatArray &normal, Tensor2_3d &F0s, double &J0 );
+
+    int checkConsistency() override;
+
+    /// Unit normal to the reference geometry, expressed in global coordinates (the geometry of the element,
+    /// used e.g. for the anisotropy direction). The material gets the normal of giveMaterialKinematics instead.
     virtual FloatArray giveNormal( GaussPoint *gp ) const = 0;
 
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override

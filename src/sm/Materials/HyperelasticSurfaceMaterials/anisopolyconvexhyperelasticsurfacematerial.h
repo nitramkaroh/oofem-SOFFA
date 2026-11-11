@@ -50,13 +50,19 @@
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2 "p_2"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_beta "beta"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_eta "eta"
-#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_anisoLTF "aniso_ltf"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_betaLTF "beta_ltf"
+#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_etaLTF "eta_ltf"
 
 //@
 
 namespace oofem {
 /**
- * This class implements basic surface tension material for fluids
+ * Anisotropic membrane: the energy of IsotropicPolyconvexHyperelasticSurfaceMaterial plus
+ * eta |F a| + beta sqrt(|C a|) (Horak, Smejkal, Kruzik, JMPS 2025, eq. 97), with the unit fibre direction a
+ * tangent to the reference surface. a is the direction anisodir given by the element, or the tangential part of
+ * (X - p_1) x (X - p_2): for p_1 and p_2 on an axis of revolution the circumferential direction around it.
+ * eta and beta can follow their time functions eta_ltf and beta_ltf, otherwise they are constant.
+ * Only the 3D Lagrange surface elements are supported (the direction is rotated with their frame).
  */
 
 class AnisotropicPolyconvexHyperelasticSurfaceMaterial : public IsotropicPolyconvexHyperelasticSurfaceMaterial
@@ -65,8 +71,7 @@ protected:
     // Material parameters
     //FloatArray matdir;
     FloatArray P1, P2;
-    double beta = 0., eta = 0.;
-    int aniso_ltf = 0;
+    SurfaceMaterialParameter beta, eta;
 
 
 public:
@@ -77,7 +82,8 @@ public:
     FloatMatrixF<9, 9> give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
     FloatArrayF<9> giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
 
-    Tensor1_3d computeLocalMaterialDirection( GaussPoint *gp, TimeStep *tStep ) const;
+    /// Fibre direction in the frame of the element; normal is the reference normal in that frame.
+    Tensor1_3d computeLocalMaterialDirection( GaussPoint *gp, TimeStep *tStep, const FloatArray &normal ) const;
 
     //MaterialStatus *CreateStatus( GaussPoint *gp ) const override;
 

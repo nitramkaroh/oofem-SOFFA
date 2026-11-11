@@ -97,8 +97,8 @@ public:
 
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
 
-    // For second gradient materials, we need to know if the element supports second gradient or not. 
-    virtual bool supportsSecondGradient() const override { return true; }
+    /// The second gradient (bending) needs C1 continuity: degree at least 2 (repeated knots are not checked).
+    bool supportsSecondGradient() const override { return this->interpolation.giveInterpolationOrder() >= 2; }
 
 protected:
     int giveNsd() override { return 1; }
@@ -146,8 +146,8 @@ public:
 
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
 
-    // For second gradient materials, we need to know if the element supports second gradient or not. 
-    virtual bool supportsSecondGradient() const override { return true; }
+    /// The second gradient (bending) needs C1 continuity: degree at least 2 (repeated knots are not checked).
+    bool supportsSecondGradient() const override { return this->interpolation.giveInterpolationOrder() >= 2; }
 
 protected:
     int giveNsd() override { return 1; }

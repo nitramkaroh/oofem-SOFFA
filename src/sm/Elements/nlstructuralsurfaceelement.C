@@ -35,6 +35,7 @@
 #include "sm/Elements/nlstructuralsurfaceelement.h"
 
 #include "sm/Materials/structuralms.h"
+#include "sm/Materials/structuralmaterial.h"
 #include "sm/CrossSections/structuralcrosssection.h"
 #include "feinterpol.h"
 #include "domain.h"
@@ -55,23 +56,37 @@ NLStructuralSurfaceElement::NLStructuralSurfaceElement( int n, Domain *aDomain )
 // Constructor. Creates an element with number n, belonging to aDomain.
 {}
 
+void NLStructuralSurfaceElement::giveMaterialKinematics( const FloatArray &vF, GaussPoint *gp, TimeStep *tStep, FloatArray &vFmat, FloatArray &normal, Tensor2_3d &F0s, double &J0 )
+{
+    Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 0. ); // no prestrain
+    this->PrestrainDeformationGradient( vF, vFmat, F0, gp, tStep ); // vFmat = F * F0
+
+    // F maps e3 to zero, so only the part of F0 in the element plane counts; this part maps the plane
+    // of the original configuration onto the element plane and its normal N to zero: cof(F0s) = J0 e3 x N.
+    F0s = Tensor2_3d( F0( 0, 0 ), F0( 0, 1 ), F0( 0, 2 ), F0( 1, 0 ), F0( 1, 1 ), F0( 1, 2 ), 0., 0., 0. );
+    Tensor2_3d cofF0 = F0s.compute_cofactor();
+    normal           = { cofF0( 2, 0 ), cofF0( 2, 1 ), cofF0( 2, 2 ) };
+    J0               = normal.computeNorm();
+    if ( !( J0 > 0. ) ) {
+        OOFEM_ERROR( "element %d: the prestrain deformation gradient is singular in the element plane", this->giveNumber() );
+    }
+    normal.times( 1. / J0 );
+}
+
+
 void NLStructuralSurfaceElement::computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
     auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    FloatArray normal = this->giveNormal( gp );
-    FloatArray vF;
+    FloatArray vF, vFmod, normal;
     this->computeDeformationGradientVector( vF, gp, tStep );
 
-    // The material sees Fmod = F * F0; the returned stress is pulled back to the kinematic F.
-    Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 0. );
-    FloatArray vFmod;
-    this->PrestrainDeformationGradient( vF, vFmod, F0, gp, tStep );
+    // The material sees Fmod = F * F0 with the normal of its reference configuration; the returned
+    // stress is pulled back to the kinematic F.
+    Tensor2_3d F0;
+    double J0;
+    this->giveMaterialKinematics( vF, gp, tStep, vFmod, normal, F0, J0 );
 
-    FloatArray answerTmp = cs->giveFirstPKSurfaceStresses( vFmod, normal, gp, tStep ); // Compute stress with updated F
-    
-
-    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( cs->giveMaterial( gp ) ); // Get material
-    double J0 = mat->compute_surface_determinant( F0 ); // Reference area change due to prestrain.
+    FloatArray answerTmp = cs->giveFirstPKSurfaceStresses( vFmod, normal, gp, tStep );
 
     FloatArrayF<9> vP( answerTmp );
     Tensor2_3d P( vP ), Pmod;
@@ -79,35 +94,31 @@ void NLStructuralSurfaceElement::computeFirstPKStressVector( FloatArray &answer,
     answer = Pmod.to_voigt_form();
 
     // Store work-conjugate F and P in the same frame as BH, including for cached reactions.
+    auto mat = cs->giveMaterial( gp );
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
-    status->letTempFVectorBe( vF);
+    status->letTempFVectorBe( vF );
     status->letTempPVectorBe( answer );
-    
 }
 
 
 void NLStructuralSurfaceElement::computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
 {
     auto cs  = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( cs->giveMaterial( gp ) );
+    auto mat = cs->giveMaterial( gp );
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
-    FloatArrayF<9> vF( status->giveTempFVector() );
+    FloatArray vF( status->giveTempFVector() ), vFmod, normal;
 
-    Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 0. );
-    FloatArray vFmod;
-    this->PrestrainDeformationGradient( vF, vFmod, F0, gp, tStep ); // Get the prestrain
+    Tensor2_3d F0;
+    double J0;
+    this->giveMaterialKinematics( vF, gp, tStep, vFmod, normal, F0, J0 );
 
-    status->letTempFVectorBe( vFmod ); // Update F in status
-
-    FloatArray normal = this->giveNormal( gp );
-    FloatMatrix answerTmp = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );// Compute stiffness with updated F
-
+    status->letTempFVectorBe( vFmod ); // the material takes F from the status
+    FloatMatrix answerTmp = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );
     status->letTempFVectorBe( vF ); // Restore kinematic F after the constitutive evaluation.
 
     // Chain rule for W(F * F0) / J0: apply F0 to both reference indices.
     FloatMatrixF<9, 9> mA( answerTmp );
     Tensor4_3d A( mA ), Amod;
-    double J0 = mat->compute_surface_determinant( F0 );
     Amod( i_3, j_3, k_3, l_3 ) = 1. / J0 * F0( j_3, m_3 ) * A( i_3, m_3, k_3, n_3 ) * F0( l_3, n_3 );
     answer = Amod.to_voigt_form();
 }
@@ -116,8 +127,25 @@ void NLStructuralSurfaceElement::computeConstitutiveMatrix_dPdF_At( FloatMatrix 
 void NLStructuralSurfaceElement ::computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep )
 {
     auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    FloatArray normal = this->giveNormal( gp );   
+    FloatArray normal = { 0., 0., 1. }; // the reference normal in the frame of the element
     answer = cs->giveRealSurfaceStresses( strain, normal, gp, tStep );
+}
+
+
+int NLStructuralSurfaceElement::checkConsistency()
+{
+    int result = NLStructuralElement::checkConsistency();
+    // C0 interpolation gives no second gradient, which a material with bending stiffness needs
+    for ( auto &iRule : this->integrationRulesArray ) {
+        for ( GaussPoint *gp : *iRule ) {
+            auto mat = dynamic_cast<StructuralMaterial *>( this->giveCrossSection()->giveMaterial( gp ) );
+            if ( mat && mat->supportsSecondGradient() ) {
+                OOFEM_ERROR( "element %d (%s): material %d (%s) needs the second gradient (bending stiffness), which only IGA surface elements of degree >= 2 provide",
+                    this->giveNumber(), this->giveClassName(), mat->giveNumber(), mat->giveClassName() );
+            }
+        }
+    }
+    return result;
 }
 
 void NLStructuralSurfaceElement::computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
