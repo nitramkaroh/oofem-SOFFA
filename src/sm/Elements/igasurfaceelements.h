@@ -67,6 +67,7 @@ public:
     BsplinePlaneStrainSurfaceElement( int n, Domain *aDomain );
 
     void initializeFrom( InputRecord &ir ) override;
+    void postInitialize() override { IGAElement :: postInitialize(); this->setupEvaluator(); }
     int checkConsistency() override;
 
     void giveCharacteristicMatrix( FloatMatrix &answer, CharType mtrx, TimeStep *tStep ) override
@@ -115,6 +116,7 @@ public:
     BsplineAxisymSurfaceElement( int n, Domain *aDomain );
 
     void initializeFrom( InputRecord &ir ) override;
+    void postInitialize() override { IGAElement :: postInitialize(); this->setupEvaluator(); }
     int checkConsistency() override;
 
     void giveCharacteristicMatrix( FloatMatrix &answer, CharType mtrx, TimeStep *tStep ) override
@@ -136,7 +138,7 @@ public:
     void updateInternalState( TimeStep *tStep ) override { AxisymSurfaceElementEvaluator ::updateInternalState( tStep ); }
     // definition & identification
     const char *giveInputRecordName() const override { return _IFT_BsplineAxisymSurfaceElement_Name; }
-    const char *giveClassName() const override { return "BsplineAxisymSurfaceElement_Name"; }
+    const char *giveClassName() const override { return "BsplineAxisymSurfaceElement"; }
 
     MaterialMode giveMaterialMode() override { return _3dMat; }
 

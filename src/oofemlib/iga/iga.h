@@ -123,9 +123,6 @@ public:
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
     Interface *giveInterface( InterfaceType it ) override;
 
-
-    virtual void postInitialize() override;
-
 #ifdef __PARALLEL_MODE
     elementParallelMode giveKnotSpanParallelMode(int) const override;
 #endif

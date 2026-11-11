@@ -565,23 +565,39 @@ void StructuralElementEvaluator::computeDeformationGradientVector( FloatArray &a
 
 void StructuralElementEvaluator::setupEvaluator()
 {
-    Element *elem = this->giveElement();
+    // The second gradient is used if the material needs it; the element must then support it.
+    // The material is resolved through the element's own integration points (they exist after IGAElement::initializeFrom),
+    // because a cross section without its own material takes the one of the element (mat keyword) from the point.
+    Element *elem    = this->giveElement();
     CrossSection *cs = elem->giveCrossSection();
+    this->hasSecondGradient = false;
+    if ( !cs ) {
+        return;
+    }
 
-    // 1. Safety check: Ensure the element actually has a cross-section
-    if ( cs ) {
-        IntegrationPoint dummyIP( nullptr, 1, 0., _3dMat );
-        Material *mat = cs->giveMaterial( &dummyIP );
-
-        if ( mat ) {
-            StructuralMaterial *strmat = dynamic_cast<StructuralMaterial *>( mat );
-
-            if ( strmat ) {
-                bool b1                 = elem->supportsSecondGradient();
-                bool b2                 = strmat->supportsSecondGradient();
-                this->hasSecondGradient = b1 && b2;
+    StructuralMaterial *needs = nullptr; // a material which needs the second gradient
+    bool withoutSecondGradient = false;
+    for ( int ir = 0; ir < elem->giveNumberOfIntegrationRules(); ir++ ) {
+        for ( GaussPoint *gp : *elem->giveIntegrationRule( ir ) ) {
+            auto strmat = dynamic_cast<StructuralMaterial *>( cs->giveMaterial( gp ) );
+            if ( strmat && strmat->supportsSecondGradient() ) {
+                needs = strmat;
+            } else {
+                withoutSecondGradient = true;
             }
         }
+    }
+
+    if ( needs ) {
+        if ( withoutSecondGradient ) {
+            OOFEM_ERROR( "Element %d (%s): material %d (%s) needs the second gradient, but not all integration points have such a material",
+                elem->giveNumber(), elem->giveClassName(), needs->giveNumber(), needs->giveClassName() );
+        }
+        if ( !elem->supportsSecondGradient() ) {
+            OOFEM_ERROR( "Element %d (%s) does not support the second gradient required by material %d (%s)",
+                elem->giveNumber(), elem->giveClassName(), needs->giveNumber(), needs->giveClassName() );
+        }
+        this->hasSecondGradient = true;
     }
 }
 

@@ -63,6 +63,7 @@ public:
     BsplinePlaneStressElement(int n, Domain * aDomain);
 
     void initializeFrom(InputRecord &ir) override;
+    void postInitialize() override { IGAElement :: postInitialize(); this->setupEvaluator(); }
     int checkConsistency() override;
 
     void giveCharacteristicMatrix(FloatMatrix &answer, CharType mtrx, TimeStep *tStep) override {
@@ -107,6 +108,7 @@ public:
     NURBSPlaneStressElement(int n, Domain * aDomain);
 
     void initializeFrom(InputRecord &ir) override;
+    void postInitialize() override { IGAElement :: postInitialize(); this->setupEvaluator(); }
     int checkConsistency() override;
 
     void giveCharacteristicMatrix(FloatMatrix &answer, CharType mtrx, TimeStep *tStep) override {
@@ -157,6 +159,7 @@ public:
         IGATSplineElement :: initializeFrom(ir);
         PlaneStressStructuralElementEvaluator :: initializeFrom(ir);
     }
+    void postInitialize() override { IGATSplineElement :: postInitialize(); this->setupEvaluator(); }
 
     void giveCharacteristicMatrix(FloatMatrix &answer, CharType mtrx, TimeStep *tStep) override {
         PlaneStressStructuralElementEvaluator :: giveCharacteristicMatrix(answer, mtrx, tStep);
@@ -196,6 +199,7 @@ public:
     NURBSSpace3dElement(int n, Domain * aDomain);
 
     void initializeFrom(InputRecord &ir) override;
+    void postInitialize() override { IGAElement :: postInitialize(); this->setupEvaluator(); }
     int checkConsistency() override;
 
     void giveCharacteristicMatrix(FloatMatrix &answer, CharType mtrx, TimeStep *tStep) override {
@@ -239,6 +243,7 @@ public:
     BsplinePlaneStrainElement( int n, Domain *aDomain );
 
     void initializeFrom( InputRecord &ir ) override;
+    void postInitialize() override { IGAElement :: postInitialize(); this->setupEvaluator(); }
     int checkConsistency() override;
 
     void giveCharacteristicMatrix( FloatMatrix &answer, CharType mtrx, TimeStep *tStep ) override
@@ -294,6 +299,7 @@ public:
     BsplineAxisymElement( int n, Domain *aDomain );
 
     void initializeFrom( InputRecord &ir ) override;
+    void postInitialize() override { IGAElement :: postInitialize(); this->setupEvaluator(); }
     int checkConsistency() override;
 
     void giveCharacteristicMatrix( FloatMatrix &answer, CharType mtrx, TimeStep *tStep ) override

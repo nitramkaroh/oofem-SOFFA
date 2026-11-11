@@ -249,9 +249,10 @@ protected:
 public:
     virtual void initializeFrom( InputRecord &ir );
 
-    // For the element post-initialization, allowing to set up some services of the evaluator which require element and material information. 
+    // For the element post-initialization, allowing to set up some services of the evaluator which require element and material information.
     // This is needed for example for second gradient elements, where the evaluator needs to know if the element supports second gradient or not.
-    void setupEvaluator(); // Renamed from postInitialize
+    // Every element using an evaluator calls it from its postInitialize, after the base class one (integration rules must exist).
+    void setupEvaluator();
 
 };
 } // end namespace oofem
