@@ -43,6 +43,11 @@
 namespace oofem {
 /**
  * Base class for planar 2D surface elements.
+ *
+ * The unknowns are rotated to the element local frame, u_t along the tangent e1 and u_n along
+ * the in-plane normal e2 = (-e1_y, e1_x). The displacement gradient BH is assembled directly in
+ * the frame of the surface material (see NLStructuralSurfaceElement): axis 1 = tangent,
+ * axis 2 = out-of-plane direction (circumferential direction for axisymmetry), axis 3 = e2.
  */
 class Structural2DSurfaceElement : public NLStructuralSurfaceElement
 {
@@ -92,12 +97,8 @@ public:
     MaterialMode giveMaterialMode() override { return _3dMat; }
     void computeStressVector(FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep) override;
     void computeConstitutiveMatrixAt(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override;
-    void computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override;
 
     double computeVolumeAround(GaussPoint *gp) override;
-
-    void computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
-    void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
 protected:
     void computeBmatrixAt(GaussPoint *gp, FloatMatrix &answer, int lowerIndx = 1, int upperIndx = ALL_STRAINS) override;

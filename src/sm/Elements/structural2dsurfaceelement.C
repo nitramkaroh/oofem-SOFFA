@@ -177,71 +177,46 @@ AxisymSurfaceElement::computeVolumeAround(GaussPoint *gp)
 
 void
 AxisymSurfaceElement::computeBmatrixAt(GaussPoint *gp, FloatMatrix &answer, int li, int ui)
-//
-// Returns the [ 6 x (nno*2) ] strain-displacement matrix {B} of the receiver,
-// evaluated at gp.
-// (epsilon_x,epsilon_y,...,Gamma_xy) = B . r
-// r = ( u1,v1,u2,v2)
-// NOT TESTED
 {
-    FEInterpolation *interp = this->giveInterpolation();
-
-    FloatArray N;
-    interp->evalN(N, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
-    double r = 0.0;
-    for ( int i = 1; i <= this->giveNumberOfDofManagers(); i++ ) {
-        double x = this->giveNode(i)->giveCoordinate(1);
-        r += x * N.at(i);
-    }
-
-    FloatMatrix dNdx;
-    interp->evaldNdx(dNdx, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
-    answer.resize(6, dNdx.giveNumberOfRows() * 1);
-    answer.zero();
-
-    for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
-        answer.at(1, i * 2 - 1) = dNdx.at(i, 1);
-        answer.at(3, 2 * i - 0) = -N.at(i) / r;
-        answer.at(6, 2 * i - 0) = dNdx.at(i, 1);
-
-    }
-
-    OOFEM_ERROR( "THIS FUNCTION IS NOT TESTED " );
+    OOFEM_ERROR( "small-strain formulation is not implemented, use nlgeo 1" );
 }
 
 
 void
 AxisymSurfaceElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
-// Returns the [ 9 x (nno) ] displacement gradient matrix {BH} of the receiver,
-// evaluated at gp.
-// BH matrix  -  9 rows : du/dx, dv/dy, dw/dz = u/r, 0, 0, du/dy,  0, 0, dv/dx
-///@todo not checked if correct, is dw/dz = u/r for large deformations? /JB
+// Returns the [ 9 x (nno*2) ] displacement gradient matrix {BH} of the receiver, evaluated at gp,
+// in the frame of the surface material (1 = tangent, 2 = circumferential, 3 = in-plane normal)
+// for the local nodal unknowns (u_t, u_n). Voigt rows: 1 (11) = du_t/ds, 8 (31) = du_n/ds,
+// 2 (22) = u_R/R, where the circumferential stretch r/R = 1 + u_R/R holds for large deformations.
 {
     FloatArray n;
-    FloatMatrix dnx;
+    FloatMatrix dnx, Q;
     FEInterpolation1d *interp = static_cast< FEInterpolation1d * >( this->giveInterpolation() );
 
     interp->evalN(n, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
     interp->evaldNdx(dnx, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
 
+    // u_local = Q u_global, so the global radial displacement of node i is
+    // u_R = Q(2i-1, 2i-1) u_t + Q(2i, 2i-1) u_n, whatever the orientation of the element is
+    if ( !this->computeGtoLRotationMatrix(Q) ) {
+        OOFEM_ERROR( "the unknowns are expected in the element local frame" );
+    }
+
+    // reference radius, interpolated from the global radial coordinates of the nodes
+    double r = 0.;
+    for ( int i = 1; i <= this->giveNumberOfDofManagers(); i++ ) {
+        r += this->giveNode(i)->giveCoordinate(1) * n.at(i);
+    }
 
     int nRows = dnx.giveNumberOfRows();
     answer.resize(9, nRows * 2);
     answer.zero();
 
-    double r = 0., x;
-    for ( int i = 1; i <= this->giveNumberOfDofManagers(); i++ ) {
-        x  = this->giveNode(i)->giveCoordinate(1);
-        r += x * n.at(i);
-    }
-    // mode is _3dMat !!!!!! z corresponds to outward normal here!, y is out of plane 
     for ( int i = 1; i <= nRows; i++ ) {
-        answer.at( 1, 2 * i - 1 ) = dnx.at( i, 1 ); // du/dx
-        answer.at( 9, 2 * i ) = dnx.at( i, 1 ); // dv/dx
-    }
-
-    for ( int i = 0; i < this->giveNumberOfDofManagers(); i++ ) {
-        answer.at( 3, 2 * i + 2 ) = -n.at( i + 1 ) / r; // dw/dz // IS THIS CORRECT? Yes, this is in local coordinate system
+        answer.at( 1, 2 * i - 1 ) = dnx.at( i, 1 ); // du_t/ds
+        answer.at( 8, 2 * i )     = dnx.at( i, 1 ); // du_n/ds
+        answer.at( 2, 2 * i - 1 ) = Q.at( 2 * i - 1, 2 * i - 1 ) * n.at( i ) / r; // u_R/R
+        answer.at( 2, 2 * i )     = Q.at( 2 * i, 2 * i - 1 ) * n.at( i ) / r;
     }
 }
 
@@ -276,93 +251,7 @@ AxisymSurfaceElement::computeConstitutiveMatrixAt(FloatMatrix &answer,
     //FloatArray normal = this->giveNormal( gp );
     //answer            = cs->giveSurfaceStiffnessMatrix_3d( rMode, normal, gp, tStep );
     OOFEM_ERROR( "not implemented " );
-        
-}
 
-void
-AxisymSurfaceElement::computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep)
-{
-    auto cs  = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    FloatArray normalTemp = this->giveNormal( gp );
-
-    // surface material law is formulated for coordinate system with z as outward axis, therefore the 2d x-y formulation needs to be tranformed
-    FloatArray normal;
-    normal.resize( 3 );
-    // transform normal
-    normal.at( 1 ) = normalTemp.at( 1 );
-    normal.at( 2 ) = normalTemp.at( 3 );
-    normal.at( 3 ) = normalTemp.at( 2 );
-
-
-    // transformation matrix
-    FloatMatrix T( 9, 9 );
-    T.at( 1, 1 ) = 1;
-    T.at( 2, 3 ) = 1;
-    T.at( 3, 2 ) = 1;
-    T.at( 4, 7 ) = 1;
-    T.at( 5, 6 ) = 1;
-    T.at( 6, 5 ) = 1;
-    T.at( 7, 4 ) = 1;
-    T.at( 8, 9 ) = 1;
-    T.at( 9, 8 ) = 1;
-
-    // tranform stiffness matrix
-    FloatMatrix Ktr = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );
-    FloatMatrix TK;
-    TK.beProductOf( T, Ktr );
-    answer.beProductOf( TK, T );
-}
-
-
-void AxisymSurfaceElement::computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
-{
-    auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-
-    FloatArray normal = this->giveNormal( gp );
-    FloatArray vF;
-    this->computeDeformationGradientVector( vF, gp, tStep );
-
-    // surface material law is formulated for coordinate system with z as outward axis, therefore the 2d x-y formulation needs to be tranformed
-    // transformation matrix
-    FloatMatrix T( 9, 9 );
-    T.at( 1, 1 )      = 1;
-    T.at( 2, 3 )      = 1;
-    T.at( 3, 2 )      = 1;
-    T.at( 4, 7 )      = 1;
-    T.at( 5, 6 )      = 1;
-    T.at( 6, 5 )      = 1;
-    T.at( 7, 4 )      = 1;
-    T.at( 8, 9 )      = 1;
-    T.at( 9, 8 )      = 1;
-
-    FloatArray vFr;
-    vFr.beProductOf( T, vF );
-
-    FloatArray streesTr = cs->giveFirstPKSurfaceStresses( vFr, normal, gp, tStep );
-
-    answer.beProductOf( T, streesTr );
-}
-void AxisymSurfaceElement::computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
-{
-    // Computes the deformation gradient in the Voigt format at the Gauss point gp of
-    // the receiver at time step tStep.
-    // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
-
-    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
-    FloatArray u;
-    this->computeVectorOf( { D_u, D_v }, VM_Total, tStep, u ); // solution vector
-    if ( initialDisplacements ) {
-        u.subtract( *initialDisplacements );
-    }
-
-    // Displacement gradient H = du/dX
-    FloatMatrix B;
-    this->computeBHmatrixAt( gp, B );
-    answer.beProductOf( B, u );
-
-    // Deformation gradient F = H + I
-    answer.at( 1 ) += 1.0;
-    answer.at( 3 ) += 1.0;
 }
 
 } // end namespace oofem

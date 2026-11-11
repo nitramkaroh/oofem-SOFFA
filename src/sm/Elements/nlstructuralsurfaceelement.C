@@ -74,7 +74,8 @@ void NLStructuralSurfaceElement::computeFirstPKStressVector( FloatArray &answer,
     auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( cs->giveMaterial( gp ) ); // Get material
     double J0 = mat->compute_surface_determinant( F0 ); // Compute surface jacobian
 
-    Tensor2_3d P( FloatArrayF<9>::FloatArrayF<9>( answerTmp ) ), Pmod;
+    FloatArrayF<9> vP( answerTmp );
+    Tensor2_3d P( vP ), Pmod;
     Pmod( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0( j_3, k_3 ); // Modify the answert 
     answer = Pmod.to_voigt_form();
 
@@ -83,6 +84,33 @@ void NLStructuralSurfaceElement::computeFirstPKStressVector( FloatArray &answer,
     status->letTempFVectorBe( vF);
     status->letTempPVectorBe( answer );
     
+}
+
+
+void NLStructuralSurfaceElement::computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
+{
+    auto cs  = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
+    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( cs->giveMaterial( gp ) );
+    StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
+    FloatArrayF<9> vF( status->giveTempFVector() );
+
+    Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 0. );
+    FloatArray vFmod;
+    this->PrestrainDeformationGradient( vF, vFmod, F0, gp, tStep ); // Get the prestrain
+
+    status->letTempFVectorBe( vFmod ); // Update F in status
+
+    FloatArray normal = this->giveNormal( gp );
+    FloatMatrix answerTmp = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );// Compute stiffness with updated F
+
+    status->letTempFVectorBe( vF ); // get status to the previous state
+
+    // Modify the stiffness
+    FloatMatrixF<9, 9> mA( answerTmp );
+    Tensor4_3d A( mA ), Amod;
+    double J0 = mat->compute_surface_determinant( F0 );
+    Amod( i_3, j_3, k_3, l_3 ) = 1. / J0 * F0( j_3, m_3 ) * A( i_3, m_3, k_3, n_3 ) * F0( l_3, n_3 );
+    answer = Amod.to_voigt_form();
 }
 
 
@@ -99,9 +127,10 @@ void NLStructuralSurfaceElement::computeDeformationGradientVector( FloatArray &a
     // the receiver at time step tStep.
     // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
 
-    // Obtain the current displacement vector of the element and subtract initial displacements (if present)
+    // Obtain the current displacement vector of the element and subtract initial displacements (if present).
+    // The element's own dof mask is used, so planar (u, v) and spatial (u, v, w) surfaces share this code.
     FloatArray u;
-    this->computeVectorOf( { D_u, D_v, D_w }, VM_Total, tStep, u ); // solution vector
+    this->computeVectorOf( VM_Total, tStep, u ); // solution vector, in the element local frame
     if ( initialDisplacements ) {
         u.subtract( *initialDisplacements );
     }

@@ -53,6 +53,11 @@ class IntArray;
 
 /**
  * Abstract base class for "structural" surace finite elements with geometrical nonlinearities.
+ *
+ * The deformation gradient is F = BH * u + I_s with I_s = diag(1, 1, 0): computeBHmatrixAt must
+ * return the displacement gradient in the frame in which the surface material works, i.e. with
+ * the first two axes in the surface and the third along its normal. F and P are stored in the
+ * material status in this frame, so the stored P matches BH (used e.g. for reactions).
  */
 class NLStructuralSurfaceElement : public NLStructuralElement
 {
@@ -68,6 +73,8 @@ public:
 
     void computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
+    void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
+
     void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
     virtual FloatArray giveNormal( GaussPoint *gp ) const = 0;
@@ -80,9 +87,6 @@ public:
     {
         return 0;
     };
-
-    /*void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;*/
-
 };
 } // end namespace oofem
 #endif // nlstructuralelement_h

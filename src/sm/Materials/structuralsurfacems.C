@@ -37,7 +37,6 @@
 #include "contextioerr.h"
 #include "sm/Elements/nlstructuralelement.h"
 #include "sm/Elements/nlstructuralsurfaceelement.h"
-#include "sm/Elements/structural2dsurfaceelement.h"
 #include "gausspoint.h"
 #include "oofemlib/iga/iga.h"
 
@@ -45,13 +44,12 @@ namespace oofem {
 StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g ) :
     StructuralMaterialStatus( g ), MVector(), tempMVector(), KVector(), tempKVector(), GVector(), tempGVector(), dIVector(), tempdIVector(), D2eDK2_Matrix(), tempD2eDK2_Matrix()
 {
+    // Surface identity in the frame with the normal as the third axis, which all Lagrange
+    // surface elements (NLStructuralSurfaceElement, 2D and 3D) use for F
+    // (StructuralMaterialStatus has already set F = diag(1, 1, 1) for nlgeo 1)
     FVector.resize( 9 );
-    FVector.at( 1 ) = FVector.at( 2 ) = 1.; // True only if coordinate system with outward z is used
-
-    if ( Structural2DSurfaceElement *el = dynamic_cast<Structural2DSurfaceElement *>( gp->giveElement() ) ) {
-        FVector.zero();
-        FVector.at( 1 ) = FVector.at( 3 ) = 1.; // For 2d surface element z is out of plane
-    }
+    FVector.zero();
+    FVector.at( 1 ) = FVector.at( 2 ) = 1.;
 
     if ( IGAElement *el = dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
         // Construct 2d identity
