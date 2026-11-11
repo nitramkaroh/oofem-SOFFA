@@ -51,8 +51,7 @@
 namespace oofem {
 REGISTER_Element( QuadSurface );
 
-FEI2dQuadLin QuadSurface ::interpolation( 1, 2 );
-//FEI3dQuadLin QuadSurface ::interpolation;
+FEI2dQuadLin QuadSurface ::interpolation( 1, 2 ); // x, y of the element frame
 
 QuadSurface ::QuadSurface( int n, Domain *aDomain ) :
     Structural3DSurfaceElement( n, aDomain )
@@ -104,9 +103,7 @@ QuadSurface::giveCellGeometryWrapper()
 
 
 void QuadSurface ::computeLocalNodalCoordinates( std::vector<FloatArray> &lxy )
-// Returns global coordinates given in global vector
-// transformed into local coordinate system of the
-// receiver
+// Returns the nodal coordinates rotated to the element frame, lxy[i] = R X_i (no translation).
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -168,23 +165,13 @@ QuadSurface ::computeGtoLRotationMatrix()
 
 
 bool QuadSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [8,12]
-// r(local) = T * r(global)
-// for one node (r written transposed): {u,v} = T * {u,v,w} NOT NOW
-// for one node (r written transposed): {u,v,w} = T * {u,v,w} 
+// Returns the rotation matrix of the receiver of the size [12,12]
+// r(local) = T * r(global), for each node {u,v,w}(local) = R * {u,v,w}(global)
 {
-    // test if pereviously computed
+    // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
         this->computeGtoLRotationMatrix();
     }
-
-    //answer.resize( 8, 12 );
-    //answer.zero();
-
-    //for ( int i = 1; i <= 3; i++ ) {
-    //    answer.at( 1, i ) = answer.at( 3, i + 3 ) = answer.at( 5, i + 6 ) = answer.at( 7, i + 9 ) = GtoLRotationMatrix->at( 1, i );
-    //    answer.at( 2, i ) = answer.at( 4, i + 3 ) = answer.at( 6, i + 6 ) = answer.at( 8, i + 9 ) = GtoLRotationMatrix->at( 2, i );
-    //}
 
     answer.resize( 12, 12 );
     answer.zero();
@@ -199,8 +186,8 @@ bool QuadSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
     return 1;
 }
 int QuadSurface ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [6,6]
-// f(local) = T * f(global)
+// Returns the rotation matrix of the receiver of the size [6,6], two blocks R
+// f(local) = T * f(global); the anisotropic surface material rotates anisodir with its first block
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -222,15 +209,7 @@ int QuadSurface ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
 
 int QuadSurface ::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
 {
-    //    FEInterpolation *fei = this->giveInterpolation();
-    // #ifdef DEBUG
-    //    if ( !fei ) {
-    //        answer.clear();
-    //        return false;
-    //    }
-    // #endif
-    // fei->local2global3D( answer, lcoords, FEIElementGeometryWrapper( this ) );
-
+    // Bilinear interpolation of the global nodal coordinates (node order of FEI2dQuadLin).
     // Vertex coordinates
     const auto &p1 = this->giveNode( 1 )->giveCoordinates();
     const auto &p2 = this->giveNode( 2 )->giveCoordinates();
@@ -256,148 +235,6 @@ int QuadSurface ::computeGlobalCoordinates( FloatArray &answer, const FloatArray
 
     return true;
 }
-
-
-
-
-
-//
-//FloatMatrixF<3, 3> QuadSurface::giveJacobian( const FloatArrayF<3> &lcoords )
-//{
-//    // derivatives of interpolation functions
-//    auto dn  = interpolation.evaldNdxi( lcoords[{ 0, 1 }] );
-//    auto hk1 = dn.row<0>(); // dh(r1,r2)/dr1
-//    auto hk2 = dn.row<1>(); // dh(r1,r2)/dr2
-//
-//    // interpolation functions - h(r1,r2)
-//    //auto [h1, h2, h3, h4] = interp_lin.evalN(lcoords[{0, 1}]);
-//    auto h    = interpolation.evalN( lcoords[{ 0, 1 }] );
-//    double h1 = h[0];
-//    double h2 = h[1];
-//    double h3 = h[2];
-//    double h4 = h[3];
-//
-//    //auto [a1, a2, a3, a4] = this->giveThickness();
-//    //auto a    = this->giveThickness();
-//    //double a1 = a[0];
-//    //double a2 = a[1];
-//    //double a3 = a[2];
-//    //double a4 = a[3];
-//    double a1 = 1;
-//    double a2 = 1;
-//    double a3 = 1;
-//    double a4 = 1;
-//
-//    // get node coordinates
-//    double r3 = lcoords.at( 3 );
-//    auto c    = this->giveNodeCoordinates();
-//    //auto [x1, y1, z1] = c[0];
-//    //auto [x2, y2, z2] = c[1];
-//    //auto [x3, y3, z3] = c[2];
-//    //auto [x4, y4, z4] = c[3];
-//    double x1 = c[0][0], y1 = c[0][1];
-//    double x2 = c[1][0], y2 = c[1][1];
-//    double x3 = c[2][0], y3 = c[2][1];
-//    double x4 = c[3][0], y4 = c[3][1];
-//
-//    //auto [V1, V2, V3, V4] = this->giveLocalDirectorVectors();
-//    auto V  = this->giveLocalDirectorVectors();
-//    auto V1 = V[0], V2 = V[1], V3 = V[2], V4 = V[3];
-//
-//    // Jacobian Matrix
-//    FloatMatrixF<3, 3> jacobianMatrix;
-//    jacobianMatrix.at( 1, 1 ) = hk1.at( 1 ) * x1 + hk1.at( 2 ) * x2 + hk1.at( 3 ) * x3 + hk1.at( 4 ) * x4 + r3 / 2. * ( a1 * hk1.at( 1 ) * V1.at( 1 ) + a2 * hk1.at( 2 ) * V2.at( 1 ) + a3 * hk1.at( 3 ) * V3.at( 1 ) + a4 * hk1.at( 4 ) * V4.at( 1 ) );
-//    jacobianMatrix.at( 1, 2 ) = hk1.at( 1 ) * y1 + hk1.at( 2 ) * y2 + hk1.at( 3 ) * y3 + hk1.at( 4 ) * y4 + r3 / 2. * ( a1 * hk1.at( 1 ) * V1.at( 2 ) + a2 * hk1.at( 2 ) * V2.at( 2 ) + a3 * hk1.at( 3 ) * V3.at( 2 ) + a4 * hk1.at( 4 ) * V4.at( 2 ) );
-//    jacobianMatrix.at( 1, 3 ) = r3 / 2. * ( a1 * hk1.at( 1 ) * V1.at( 3 ) + a2 * hk1.at( 2 ) * V2.at( 3 ) + a3 * hk1.at( 3 ) * V3.at( 3 ) + a4 * hk1.at( 4 ) * V4.at( 3 ) );
-//    jacobianMatrix.at( 2, 1 ) = hk2.at( 1 ) * x1 + hk2.at( 2 ) * x2 + hk2.at( 3 ) * x3 + hk2.at( 4 ) * x4 + r3 / 2. * ( a1 * hk2.at( 1 ) * V1.at( 1 ) + a2 * hk2.at( 2 ) * V2.at( 1 ) + a3 * hk2.at( 3 ) * V3.at( 1 ) + a4 * hk2.at( 4 ) * V4.at( 1 ) );
-//    jacobianMatrix.at( 2, 2 ) = hk2.at( 1 ) * y1 + hk2.at( 2 ) * y2 + hk2.at( 3 ) * y3 + hk2.at( 4 ) * y4 + r3 / 2. * ( a1 * hk2.at( 1 ) * V1.at( 2 ) + a2 * hk2.at( 2 ) * V2.at( 2 ) + a3 * hk2.at( 3 ) * V3.at( 2 ) + a4 * hk2.at( 4 ) * V4.at( 2 ) );
-//    jacobianMatrix.at( 2, 3 ) = r3 / 2. * ( a1 * hk2.at( 1 ) * V1.at( 3 ) + a2 * hk2.at( 2 ) * V2.at( 3 ) + a3 * hk2.at( 3 ) * V3.at( 3 ) + a4 * hk2.at( 4 ) * V4.at( 3 ) );
-//    jacobianMatrix.at( 3, 1 ) = 1. / 2. * ( a1 * h1 * V1.at( 1 ) + a2 * h2 * V2.at( 1 ) + a3 * h3 * V3.at( 1 ) + a4 * h4 * V4.at( 1 ) );
-//    jacobianMatrix.at( 3, 2 ) = 1. / 2. * ( a1 * h1 * V1.at( 2 ) + a2 * h2 * V2.at( 2 ) + a3 * h3 * V3.at( 2 ) + a4 * h4 * V4.at( 2 ) );
-//    jacobianMatrix.at( 3, 3 ) = 1. / 2. * ( a1 * h1 * V1.at( 3 ) + a2 * h2 * V2.at( 3 ) + a3 * h3 * V3.at( 3 ) + a4 * h4 * V4.at( 3 ) );
-//    return jacobianMatrix;
-//}
-//
-//std::array<FloatArrayF<3>, 4>
-//QuadSurface::giveNodeCoordinates()
-//{
-//    std::array<FloatArrayF<3>, 4> c;
-//    for ( int i = 0; i < 4; ++i ) {
-//        c[i] = this->giveLocalCoordinates( this->giveNode( i + 1 )->giveCoordinates() );
-//    }
-//    return c;
-//}
-//
-//FloatArrayF<3>
-//QuadSurface::giveLocalCoordinates( const FloatArrayF<3> &global )
-//{
-//    auto offset = global - FloatArrayF<3>( this->giveNode( 1 )->giveCoordinates() );
-//    return dot( GtoLRotationMatrix, offset );
-//}
-//
-//void QuadSurface::postInitialize()
-//{
-//    Structural3DSurfaceElement::postInitialize();
-//
-//    auto e = this->computeLocalBaseVectors();
-//
-//    for ( int i = 1; i <= 3; i++ ) {
-//        GtoLRotationMatrix.at( 1, i ) = e[0].at( i );
-//        GtoLRotationMatrix.at( 2, i ) = e[1].at( i );
-//        GtoLRotationMatrix.at( 3, i ) = e[2].at( i );
-//    }
-//}
-//
-//std::array<FloatArrayF<3>, 3>
-//QuadSurface::computeLocalBaseVectors()
-//{
-//    // compute A - (node2+node3)/2
-//    auto coordA = 0.5 * ( FloatArrayF<3>( this->giveNode( 2 )->giveCoordinates() ) + FloatArrayF<3>( this->giveNode( 3 )->giveCoordinates() ) );
-//    // compute B - (node1+node4)/2
-//    auto coordB = 0.5 * ( FloatArrayF<3>( this->giveNode( 1 )->giveCoordinates() ) + FloatArrayF<3>( this->giveNode( 4 )->giveCoordinates() ) );
-//    // compute e1' = [B-A]
-//    auto e1 = normalize( coordB - coordA );
-//
-//    // compute A - (node3+node4)/2
-//    auto coordC = 0.5 * ( FloatArrayF<3>( this->giveNode( 4 )->giveCoordinates() ) + FloatArrayF<3>( this->giveNode( 3 )->giveCoordinates() ) );
-//    // compute B - (node2+node1)/2
-//    auto coordD = 0.5 * ( FloatArrayF<3>( this->giveNode( 1 )->giveCoordinates() ) + FloatArrayF<3>( this->giveNode( 2 )->giveCoordinates() ) );
-//
-//    // compute help = [D-C]
-//    auto help = coordD - coordC;
-//    // compute e3' : vector product of e1' x help
-//    auto e3 = normalize( cross( e1, help ) );
-//    // now from e3' x e1' compute e2'
-//    auto e2 = cross( e3, e1 );
-//    return { e1, e2, e3 };
-//}
-//
-//std::array<FloatArrayF<3>, 4>
-//QuadSurface::giveLocalDirectorVectors()
-//{
-//    auto Vg = this->giveDirectorVectors();
-//    return {
-//        dot( GtoLRotationMatrix, Vg[0] ),
-//        dot( GtoLRotationMatrix, Vg[1] ),
-//        dot( GtoLRotationMatrix, Vg[2] ),
-//        dot( GtoLRotationMatrix, Vg[3] ),
-//    };
-//}
-
-//std::array<FloatArrayF<4>, 2>
-//MITC4Shell::givedNdx( const FloatArrayF<3> &coords )
-//{
-//    auto dn    = interp_lin.evaldNdxi( coords[{ 0, 1 }] );
-//    auto J     = this->giveJacobian( coords );
-//    auto invJ  = inv( J );
-//    auto invJ2 = invJ( { 0, 1 }, { 0, 1 } );
-//    auto dndx  = dot( invJ2, dn );
-//
-//    auto hkx = dndx.row<0>();
-//    auto hky = dndx.row<1>();
-//    return { hkx, hky };
-//}
-
 
 
 } // end namespace oofem

@@ -46,11 +46,16 @@
 #define _IFT_TriangularSurface_anisodir "anisodir"
 
 namespace oofem {
-// class FEI3dQuadLin;
 class FEI2dTrLin;
 
 /**
- * Linear triangular surface element in 3D.
+ * Three-node linear triangular surface element in 3D (FEI2dTrLin), for a surface energy given by a
+ * SimpleSurfaceCrossSection with a surface material.
+ *
+ * The element is planar. Its frame is e1 = (N2 - N1) / |N2 - N1|, the normal e3 = e1 x (N3 - N1) normalized and
+ * e2 = e3 x e1; the interpolation works with the nodal coordinates in this frame (the coordinate along e3 is
+ * not used), and the unknowns D_u, D_v, D_w of each node are rotated to it.
+ * BH is 9 x 9 (see Structural3DSurfaceElement), 1 Gauss point by default (nip).
  *
  * Optional input:
  * - prestrain 1 f0 9 ...: prestrain deformation gradient F0 (global coordinates, one for the element) from the
@@ -58,25 +63,25 @@ class FEI2dTrLin;
  *   original configuration, which follows from F0 (see NLStructuralSurfaceElement::giveMaterialKinematics).
  * - normal 3 ...: that normal (global coordinates), only checked against the one computed from F0.
  * - anisodir 3 ...: fibre direction for the anisotropic material (global coordinates).
+ *
+ * giveIPValue reports IST_PrestrainDeformationGradient (F0 in the element frame, R F0 R^T),
+ * IST_AnisotropyDirection (anisodir as given) and IST_DisplacementVector (global, at the Gauss point).
  */
 class TriangularSurface : public Structural3DSurfaceElement
 {
 protected:
     static FEI2dTrLin interpolation;
 
-    /// Local vertex coordinates
+    /// Nodal coordinates in the element frame (for the geometry wrapper).
     std ::vector<FloatArray> lc;
-    /**
-     * Transformation Matrix form GtoL(3,3) is stored
-     * at the element level for computation efficiency
-     */
+    /// Cached 3x3 rotation from the global to the element frame, rows e1, e2, e3.
     FloatMatrix *GtoLRotationMatrix;
-    FloatArrayF<9> F0; // Prestrain for single GP only
+    FloatArrayF<9> F0; // prestrain deformation gradient f0 (global coordinates, one for the element)
     int prestrain = 0;
     int isReferenceNormalGiven = 0;
     FloatArrayF<3> referenceNormal; // normal of the original configuration, checked against F0
     int anisoDirGiven = 0;
-    FloatArrayF<3> anisoDir; // direction of anisotropuy for single GP only
+    FloatArrayF<3> anisoDir; // direction of anisotropy (global coordinates, one for the element)
 
 
 public:
@@ -113,15 +118,10 @@ public:
 
     int checkConsistency() override;
 
-    //void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
-
-    //void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
-
-
 protected:
     int giveNumberOfIPForMassMtrxIntegration() override { return 3; }
 
 
-}; // end namespace oofem
-} // namespace oofem
-#endif
+};
+} // end namespace oofem
+#endif // triangularsurface_h

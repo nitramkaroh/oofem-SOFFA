@@ -37,8 +37,8 @@
 
 #include "sm/Elements/nlstructuralelement.h"
 
-///@name Input fields for NLStructuralElement
-//@{surfaceEvaldNdx
+///@name Input fields for NLStructuralSurfaceElement
+//@{
 #define _IFT_NLStructuralSurfaceElement_nlgeoflag "nlgeo"
 //@}
 
@@ -59,6 +59,7 @@ class IntArray;
  * are tangent to the reference surface and the third is its reference normal. The kinematic F
  * and the work-conjugate P are stored in this frame, so the stored P matches BH (e.g. for reactions).
  * A constitutive call may use F*F0 to include prestrain; the returned P is then pulled back to F.
+ * F and P are 9-component Voigt vectors (11, 22, 33, 23, 13, 12, 32, 31, 21) and BH has 9 rows.
  *
  * The material receives F*F0 together with the unit normal N of the configuration this deformation
  * gradient starts from, in the same frame and with (F*F0) N = 0 (see giveMaterialKinematics): e3 without
@@ -110,4 +111,4 @@ public:
     };
 };
 } // end namespace oofem
-#endif // nlstructuralelement_h
+#endif // nlstructuralsurfaceelement_h

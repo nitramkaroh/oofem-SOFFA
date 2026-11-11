@@ -102,9 +102,7 @@ TriangularSurfaceQuadratic::giveCellGeometryWrapper()
 
 
 void TriangularSurfaceQuadratic ::computeLocalNodalCoordinates( std::vector<FloatArray> &lxy )
-// Returns global coordinates given in global vector
-// transformed into local coordinate system of the
-// receiver
+// Returns the nodal coordinates rotated to the element frame, lxy[i] = R X_i (no translation).
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -165,12 +163,10 @@ TriangularSurfaceQuadratic ::computeGtoLRotationMatrix()
 
 
 bool TriangularSurfaceQuadratic ::computeGtoLRotationMatrix( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [8,12]
-// r(local) = T * r(global)
-// for one node (r written transposed): {u,v} = T * {u,v,w} NOT NOW
-// for one node (r written transposed): {u,v,w} = T * {u,v,w}
+// Returns the rotation matrix of the receiver of the size [18,18]
+// r(local) = T * r(global), for each node {u,v,w}(local) = R * {u,v,w}(global)
 {
-    // test if pereviously computed
+    // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
         this->computeGtoLRotationMatrix();
     }
@@ -192,8 +188,8 @@ bool TriangularSurfaceQuadratic ::computeGtoLRotationMatrix( FloatMatrix &answer
     return 1;
 }
 int TriangularSurfaceQuadratic ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [6,6]
-// f(local) = T * f(global)
+// Returns the rotation matrix of the receiver of the size [6,6], two blocks R
+// f(local) = T * f(global); the anisotropic surface material rotates anisodir with its first block
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -214,33 +210,7 @@ int TriangularSurfaceQuadratic ::computeLoadGToLRotationMtrx( FloatMatrix &answe
 
 int TriangularSurfaceQuadratic ::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
 {
-    ////    FEInterpolation *fei = this->giveInterpolation();
-    //// #ifdef DEBUG
-    ////    if ( !fei ) {
-    ////        answer.clear();
-    ////        return false;
-    ////    }
-    //// #endif
-    //// fei->local2global3D( answer, lcoords, FEIElementGeometryWrapper( this ) );
-
-    //// Vertex coordinates
-    //const auto &p1 = this->giveNode( 1 )->giveCoordinates();
-    //const auto &p2 = this->giveNode( 2 )->giveCoordinates();
-    //const auto &p3 = this->giveNode( 3 )->giveCoordinates();
-
-    //// Local coordinates
-    //double l1 = lcoords.at( 1 );
-    //double l2 = lcoords.at( 2 );
-    //double l3 = 1.0 - l1 - l2;
-
-    //answer.resize( 3 );
-    //answer.zero();
-    //answer.at( 1 ) = l1 * p1.at( 1 ) + l2 * p2.at( 1 ) + l3 * p3.at( 1 );
-    //answer.at( 2 ) = l1 * p1.at( 2 ) + l2 * p2.at( 2 ) + l3 * p3.at( 2 );
-    //answer.at( 3 ) = l1 * p1.at( 3 ) + l2 * p2.at( 3 ) + l3 * p3.at( 3 );
-
-    //return true;
-
+    // Quadratic interpolation of the global nodal coordinates.
     auto cellgeo = FEIElementGeometryWrapper( this );
     FloatArray n;
 

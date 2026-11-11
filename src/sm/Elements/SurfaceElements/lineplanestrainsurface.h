@@ -37,24 +37,28 @@
 
 #include "sm/Elements/structural2dsurfaceelement.h"
 #include "floatmatrixf.h"
-// #include "sm/ErrorEstimators/huertaerrorestimator.h"
-// #include "zznodalrecoverymodel.h"
-// #include "sprnodalrecoverymodel.h"
-// #include "nodalaveragingrecoverymodel.h"
-// #include "spatiallocalizer.h"
 
 #define _IFT_LinePlaneStrainSurface_Name "lineplanestrainsurface"
 
 namespace oofem {
-// class FEI3dQuadLin;
 class FEI1dLin;
 
+/**
+ * Two-node linear line element (FEI1dLin) carrying a surface energy on the boundary of a plane strain body,
+ * given by a SimpleSurfaceCrossSection with a surface material; per unit length out of the plane.
+ *
+ * The frame is the tangent e1 = (N2 - N1) / |N2 - N1| and the in-plane normal e2 = (-e1_y, e1_x), to the left of
+ * the direction N1 -> N2 (the IGA curves use the normal to the right); the unknowns D_u, D_v of each node are
+ * rotated to (u_t, u_n). BH is 9 x 4 in the frame of the surface material (see Structural2DSurfaceElement),
+ * 2 Gauss points by default (nip). Only the large strain formulation (nlgeo 1) is implemented.
+ * No element specific input.
+ */
 class LinePlaneStrainSurface : public Structural2DSurfaceElement
 {
 protected:
     static FEI1dLin interpolation;
 
-    /// Local vertex coordinates
+    /// Nodal coordinates in the element frame (for the geometry wrapper).
     std ::vector<FloatArray> lc;
     /**
      * Cached 2x2 global-to-local rotation of the nodal components in the plane.
@@ -94,9 +98,6 @@ public:
     void computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep ) override;
     void computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
-    //double computeVolumeAround( GaussPoint *gp ) override;
-
-    // void postInitialize() override;
 protected:
     void computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int lowerIndx = 1, int upperIndx = ALL_STRAINS ) override;
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
@@ -106,6 +107,6 @@ protected:
     int giveNumberOfIPForMassMtrxIntegration() override { return 2; }
 
 
-}; // end namespace oofem
-} // namespace oofem
-#endif
+};
+} // end namespace oofem
+#endif // lineplanestrainsurface_h

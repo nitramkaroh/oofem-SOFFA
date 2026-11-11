@@ -37,29 +37,29 @@
 
 #include "sm/Elements/structural3dsurfaceelement.h"
 #include "floatmatrixf.h"
-//#include "sm/ErrorEstimators/huertaerrorestimator.h"
-//#include "zznodalrecoverymodel.h"
-//#include "sprnodalrecoverymodel.h"
-//#include "nodalaveragingrecoverymodel.h"
-//#include "spatiallocalizer.h"
 
 #define _IFT_QuadSurface_Name "quadsurface"
 
 namespace oofem {
-//class FEI3dQuadLin;
 class FEI2dQuadLin;
 
+/**
+ * Four-node bilinear quadrilateral surface element in 3D (FEI2dQuadLin), for a surface energy given by a
+ * SimpleSurfaceCrossSection with a surface material.
+ *
+ * The element is planar. Its frame is e1 = (N2 - N1) / |N2 - N1|, the normal e3 = e1 x (N3 - N1) normalized and
+ * e2 = e3 x e1; the interpolation works with the nodal coordinates in this frame (the coordinate along e3 is
+ * not used), and the unknowns D_u, D_v, D_w of each node are rotated to it.
+ * BH is 9 x 12 (see Structural3DSurfaceElement), 4 Gauss points by default (nip). No element specific input.
+ */
 class QuadSurface : public Structural3DSurfaceElement
 {
 protected:
     static FEI2dQuadLin interpolation;
 
-    /// Local vertex coordinates
+    /// Nodal coordinates in the element frame (for the geometry wrapper).
     std ::vector<FloatArray> lc;
-    /**
-     * Transformation Matrix form GtoL(3,3) is stored
-     * at the element level for computation efficiency
-     */
+    /// Cached 3x3 rotation from the global to the element frame, rows e1, e2, e3.
     FloatMatrix *GtoLRotationMatrix;
 
 
@@ -78,8 +78,6 @@ public:
     void initializeFrom( InputRecord &ir ) override;
 
     FloatArray giveNormal( GaussPoint *gp ) const override;
-    //void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer) override;
-    //void computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int li, int ui ) override;
 
     FEICellGeometry *giveCellGeometryWrapper() override;
     void computeLocalNodalCoordinates( std::vector<FloatArray> &lxy );
@@ -93,14 +91,11 @@ public:
 
     int computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords ) override;
 
-    //void postInitialize() override;
-
-
 protected:
     int giveNumberOfIPForMassMtrxIntegration() override { return 4; }
     
 
 
-}; // end namespace oofem
-} // namespace oofem
-#endif 
+};
+} // end namespace oofem
+#endif // quadsurface_h

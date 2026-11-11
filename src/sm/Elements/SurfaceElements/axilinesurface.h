@@ -37,29 +37,29 @@
 
 #include "sm/Elements/structural2dsurfaceelement.h"
 #include "floatmatrixf.h"
-// #include "sm/ErrorEstimators/huertaerrorestimator.h"
-// #include "zznodalrecoverymodel.h"
-// #include "sprnodalrecoverymodel.h"
-// #include "nodalaveragingrecoverymodel.h"
-// #include "spatiallocalizer.h"
 
 #define _IFT_AxiLineSurface_Name "axilinesurface"
 
 namespace oofem {
-// class FEI3dQuadLin;
 class FEI1dLinAxi;
 
+/**
+ * Two-node linear line element (FEI1dLinAxi) in the (r, z) plane, x = radius, y = axis, carrying a surface energy
+ * on the surface of revolution, given by a SimpleSurfaceCrossSection with a surface material; per radian.
+ *
+ * The frame is the tangent e1 = (N2 - N1) / |N2 - N1| and the in-plane normal e2 = (-e1_y, e1_x), to the left of
+ * the direction N1 -> N2 (the IGA curves use the normal to the right); the unknowns D_u, D_v of each node are
+ * rotated to (u_t, u_n). BH is 9 x 4 with the hoop stretch 1 + u_R / R (see AxisymSurfaceElement),
+ * 2 Gauss points by default (nip). No element specific input.
+ */
 class AxiLineSurface : public AxisymSurfaceElement
 {
 protected:
     static FEI1dLinAxi interpolation;
 
-    /// Local vertex coordinates
+    /// Nodal coordinates in the element frame (for the geometry wrapper).
     std ::vector<FloatArray> lc;
-    /**
-     * Transformation Matrix form GtoL(3,3) is stored
-     * at the element level for computation efficiency
-     */
+    /// Cached 2x2 rotation from the global to the element frame, rows e1 (tangent) and e2 (in-plane normal).
     FloatMatrix *GtoLRotationMatrix;
 
 
@@ -89,13 +89,10 @@ public:
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override;
     int computeLoadGToLRotationMtrx( FloatMatrix &answer ) override;
 
-    // void postInitialize() override;
-
-
 protected:
     int giveNumberOfIPForMassMtrxIntegration() override { return 2; }
 
 
-}; // end namespace oofem
-} // namespace oofem
-#endif
+};
+} // end namespace oofem
+#endif // axilinesurface_h

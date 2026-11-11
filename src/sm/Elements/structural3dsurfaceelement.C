@@ -64,11 +64,9 @@ void Structural3DSurfaceElement::initializeFrom( InputRecord &ir )
 
 void Structural3DSurfaceElement ::computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int li, int ui )
 //
-// Returns the [6x (nno * 3) ] strain-displacement matrix {B} of the receiver,
-// evaluated at gp.
-// (epsilon_x,epsilon_y,gamma_xy) = B . r
-// r = ( u1,v1,w1,u2,v2,w2,...)
-// Note that three rows are zero, equivalent to plane strain
+// Returns the [ 6 x (nno * 3) ] small-strain matrix {B} of the receiver in the element frame,
+// evaluated at gp: rows 1, 2, 6 = (epsilon_x, epsilon_y, gamma_xy) for r = ( u1, v1, w1, u2, v2, w2, ... );
+// the other three rows are zero.
 {
     FloatMatrix dnx;
     FEInterpolation *interp = this->giveInterpolation();
@@ -87,9 +85,9 @@ void Structural3DSurfaceElement ::computeBmatrixAt( GaussPoint *gp, FloatMatrix 
 
 void Structural3DSurfaceElement ::computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
 //
-// Returns the [9x(nno * 3)] displacement gradient matrix {BH} of the receiver,
-// evaluated at gp.
-// @todo not checked if correct
+// Returns the [ 9 x (nno * 3) ] displacement gradient matrix {BH} of the receiver, evaluated at gp, in the
+// element frame (x, y in the plane, z = normal) for the rotated nodal unknowns (u, v, w). Voigt rows
+// 11, 22, 33, 23, 13, 12, 32, 31, 21; the derivatives with respect to z (rows 3, 4, 5) are zero.
 {
     FloatMatrix dNdx;
     FEInterpolation *interp = this->giveInterpolation();
@@ -144,23 +142,7 @@ void Structural3DSurfaceElement::computeStressVector( FloatArray &answer, const 
     FloatArray normal = { 0., 0., 1. }; // the reference normal in the frame of the element
 
     if ( this->matRotation ) {
-        // MATERIAL ROTATION NOT IMPLEMENTED
-        /////@todo This won't work properly with "useUpdatedGpRecord" (!)
-        //FloatArray x, y, z;
-
-        //this->giveMaterialOrientationAt( x, y, gp->giveNaturalCoordinates() );
-        //// Transform from global c.s. to material c.s.
-        //FloatArrayF<3> rotStrain = {
-        //    e[0] * x[0] * x[0] + e[2] * x[0] * x[1] + e[1] * x[1] * x[1],
-        //    e[0] * y[0] * y[0] + e[2] * y[0] * y[1] + e[1] * y[1] * y[1],
-        //    2 * e[0] * x[0] * y[0] + 2 * e[1] * x[1] * y[1] + e[2] * ( x[1] * y[0] + x[0] * y[1] )
-        //};
-        //auto s = cs->giveRealSurfaceStress_3d( rotStrain, normal, gp, tStep );
-        //answer = {
-        //    s[0] * x[0] * x[0] + 2 * s[2] * x[0] * y[0] + s[1] * y[0] * y[0],
-        //    s[0] * x[1] * x[1] + 2 * s[2] * x[1] * y[1] + s[1] * y[1] * y[1],
-        //    s[1] * y[0] * y[1] + s[0] * x[0] * x[1] + s[2] * ( x[1] * y[0] + x[0] * y[1] )
-        //};
+        ///@todo Material rotation (matcs) is not implemented; the stress is not computed then.
     } else {
         answer = cs->giveRealSurfaceStress_3d( e, normal, gp, tStep );
     }
@@ -172,21 +154,7 @@ void Structural3DSurfaceElement::computeConstitutiveMatrixAt( FloatMatrix &answe
     auto cs  = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
     FloatArray normal = { 0., 0., 1. }; // the reference normal in the frame of the element
     answer  = cs->giveSurfaceStiffnessMatrix_3d( rMode, normal, gp, tStep );
-
-    // MATERIAL ROTATION NOT IMPLEMENTED
-    //if ( this->matRotation ) {
-    //    FloatArray x, y;
-    //    FloatMatrix Q;
-
-    //    this->giveMaterialOrientationAt( x, y, gp->giveNaturalCoordinates() );
-
-    //    Q = {
-    //        { x( 0 ) * x( 0 ), x( 1 ) * x( 1 ), x( 0 ) * x( 1 ) },
-    //        { y( 0 ) * y( 0 ), y( 1 ) * y( 1 ), y( 0 ) * y( 1 ) },
-    //        { 2 * x( 0 ) * y( 0 ), 2 * x( 1 ) * y( 1 ), x( 1 ) * y( 0 ) + x( 0 ) * y( 1 ) }
-    //    };
-    //    answer.rotatedWith( Q, 't' );
-    //}
+    ///@todo Material rotation (matcs) is not implemented and ignored here.
 }
 
 
@@ -198,17 +166,8 @@ void Structural3DSurfaceElement::giveDofManDofIDMask( int inode, IntArray &answe
 }
 
 
-//int Structural3DSurfaceElement::computeNumberOfDofs()
-//{
-//    ///@todo move one hiearchy up and generalize
-//    IntArray dofIdMask;
-//    this->giveDofManDofIDMask( -1, dofIdMask ); // ok for standard elements
-//    return this->giveInterpolation()->giveNumberOfNodes() * dofIdMask.giveSize();
-//}
-
-
 void Structural3DSurfaceElement::computeGaussPoints()
-// Sets up the array containing the four Gauss points of the receiver.
+// Sets up one Gauss integration rule with numberOfGaussPoints points (the element default, or nip).
 {
     if ( integrationRulesArray.size() == 0 ) {
         integrationRulesArray.resize( 1 );
@@ -220,7 +179,7 @@ void Structural3DSurfaceElement::computeGaussPoints()
 
 double
 Structural3DSurfaceElement::computeVolumeAround( GaussPoint *gp )
-// Returns the portion of the receiver which is attached to gp.
+// Returns the area of the receiver attached to gp (no thickness).
 {
     double determinant = fabs( this->giveInterpolation()->giveTransformationJacobian( gp->giveNaturalCoordinates(),*this->giveCellGeometryWrapper() ) );
     double weight = gp->giveWeight();

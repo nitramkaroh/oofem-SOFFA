@@ -50,8 +50,7 @@
 namespace oofem {
 REGISTER_Element( QuadSurfaceQuadratic );
 
-FEI2dQuadQuad QuadSurfaceQuadratic ::interpolation( 1, 2 );
-// FEI3dQuadLin QuadSurface ::interpolation;
+FEI2dQuadQuad QuadSurfaceQuadratic ::interpolation( 1, 2 ); // x, y of the element frame
 
 QuadSurfaceQuadratic ::QuadSurfaceQuadratic( int n, Domain *aDomain ) :
     Structural3DSurfaceElement( n, aDomain )
@@ -102,9 +101,7 @@ QuadSurfaceQuadratic::giveCellGeometryWrapper()
 
 
 void QuadSurfaceQuadratic ::computeLocalNodalCoordinates( std::vector<FloatArray> &lxy )
-// Returns global coordinates given in global vector
-// transformed into local coordinate system of the
-// receiver
+// Returns the nodal coordinates rotated to the element frame, lxy[i] = R X_i (no translation).
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -165,23 +162,13 @@ QuadSurfaceQuadratic ::computeGtoLRotationMatrix()
 
 
 bool QuadSurfaceQuadratic ::computeGtoLRotationMatrix( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [8,12]
-// r(local) = T * r(global)
-// for one node (r written transposed): {u,v} = T * {u,v,w} NOT NOW
-// for one node (r written transposed): {u,v,w} = T * {u,v,w}
+// Returns the rotation matrix of the receiver of the size [24,24]
+// r(local) = T * r(global), for each node {u,v,w}(local) = R * {u,v,w}(global)
 {
-    // test if pereviously computed
+    // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
         this->computeGtoLRotationMatrix();
     }
-
-    // answer.resize( 8, 12 );
-    // answer.zero();
-
-    // for ( int i = 1; i <= 3; i++ ) {
-    //     answer.at( 1, i ) = answer.at( 3, i + 3 ) = answer.at( 5, i + 6 ) = answer.at( 7, i + 9 ) = GtoLRotationMatrix->at( 1, i );
-    //     answer.at( 2, i ) = answer.at( 4, i + 3 ) = answer.at( 6, i + 6 ) = answer.at( 8, i + 9 ) = GtoLRotationMatrix->at( 2, i );
-    // }
 
     answer.resize( 24, 24 );
     answer.zero();
@@ -200,8 +187,8 @@ bool QuadSurfaceQuadratic ::computeGtoLRotationMatrix( FloatMatrix &answer )
     return 1;
 }
 int QuadSurfaceQuadratic ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [6,6]
-// f(local) = T * f(global)
+// Returns the rotation matrix of the receiver of the size [6,6], two blocks R
+// f(local) = T * f(global); the anisotropic surface material rotates anisodir with its first block
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -223,7 +210,7 @@ int QuadSurfaceQuadratic ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
 
 int QuadSurfaceQuadratic ::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
 {
-    
+    // Interpolation of the global nodal coordinates.
     auto cellgeo = FEIElementGeometryWrapper( this );
     FloatArray n;
 

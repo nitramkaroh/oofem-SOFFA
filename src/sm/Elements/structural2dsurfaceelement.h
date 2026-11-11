@@ -38,7 +38,7 @@
 #include "sm/Elements/nlstructuralsurfaceelement.h"
 #include "feinterpol2d.h"
 
-#define _IFT_Structural2DSurfaceElement_materialCoordinateSystem "matcs" ///< [optional] Support for material directions based on element orientation.
+#define _IFT_Structural2DSurfaceElement_materialCoordinateSystem "matcs" ///< [optional] Material directions from the element orientation (not implemented, ignored).
 
 namespace oofem {
 /**
@@ -48,15 +48,16 @@ namespace oofem {
  * the in-plane normal e2 = (-e1_y, e1_x). The displacement gradient BH is assembled directly in
  * the frame of the surface material (see NLStructuralSurfaceElement): axis 1 = tangent,
  * axis 2 = out-of-plane direction (circumferential direction for axisymmetry), axis 3 = e2.
+ * Unknowns D_u, D_v per node; F, P and BH have 9 Voigt components (BH is 9 x 2 nno). The surface
+ * measure has no thickness (per unit length out of the plane, per radian for axisymmetry).
  */
 class Structural2DSurfaceElement : public NLStructuralSurfaceElement
 {
 protected:
-    /**
-
-     */
+    /// Geometry of the element for the interpolation, created on demand (see giveCellGeometryWrapper).
     FEICellGeometry *cellGeometryWrapper;
 
+    /// Set by matcs; material rotation is not implemented for the surface elements.
     bool matRotation;
 
 public:
@@ -71,7 +72,7 @@ public:
     void postInitialize() override;
     int giveNumberOfNodes() const override;
     /**
-     * Returns the Cell Geometry Wrapper. Default inplementation creates FEIElementGeometryWrapper.
+     * Returns the Cell Geometry Wrapper. Default implementation creates FEIElementGeometryWrapper.
      */
     virtual FEICellGeometry *giveCellGeometryWrapper();
 
@@ -88,7 +89,13 @@ protected:
 };
 
 
-
+/**
+ * Base class for axisymmetric surface elements: a line in the (r, z) plane, x = radius, y = axis of
+ * rotation, describing a surface of revolution. The surface material frame is 1 = tangent,
+ * 2 = circumferential, 3 = in-plane normal; the circumferential stretch is 1 + u_R / R (exact for
+ * large deformations). The material mode is _3dMat and the surface measure is per radian, R |dX/ds| ds.
+ * Only the large strain formulation (nlgeo 1) is implemented.
+ */
 class AxisymSurfaceElement : public Structural2DSurfaceElement
 {
 public:
@@ -106,4 +113,4 @@ protected:
     void computeGaussPoints() override;
 };
 } // end namespace oofem
-#endif // structural2delement_h
+#endif // structural2dsurfaceelement_h

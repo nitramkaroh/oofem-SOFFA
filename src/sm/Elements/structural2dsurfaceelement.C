@@ -35,7 +35,6 @@
 #include "sm/Elements/structural2dsurfaceelement.h"
 #include "feinterpol1d.h"
 #include "gausspoint.h"
-//#include "sm/CrossSections/structuralcrosssection.h"
 #include "sm/CrossSections/simplesurfacecrosssection.h"
 #include "gaussintegrationrule.h"
 #include "mathfem.h"
@@ -60,7 +59,7 @@ void
 Structural2DSurfaceElement::initializeFrom(InputRecord &ir)
 {
     NLStructuralSurfaceElement::initializeFrom(ir);
-    matRotation = ir.hasField(_IFT_Structural2DSurfaceElement_materialCoordinateSystem); //|| this->elemLocalCS.isNotEmpty();
+    matRotation = ir.hasField(_IFT_Structural2DSurfaceElement_materialCoordinateSystem);
 }
 
 
@@ -113,7 +112,7 @@ Structural2DSurfaceElement::giveDofManDofIDMask(int inode, IntArray &answer) con
 double
 Structural2DSurfaceElement::computeVolumeAround(GaussPoint *gp)
 {
-    // Computes the volume element dV associated with the given gp.
+    // Surface measure of the gp: |dX/ds| * weight (per unit length out of the plane, no thickness).
 
     double weight = gp->giveWeight();
     const FloatArray &lCoords = gp->giveNaturalCoordinates(); // local/natural coords of the gp (parent domain)
@@ -151,10 +150,7 @@ AxisymSurfaceElement::computeVolumeAround(GaussPoint *gp)
 // Returns the portion of the receiver which is attached to gp.
 {
     // Reference surface measure per radian: R * |X_,xi| * weight.
-    // The interpolation supplies only the line Jacobian; R is included below.
-    /*double determinant = fabs(static_cast< FEInterpolation1d * >( this->giveInterpolation() )->
-                              giveTransformationJacobian(gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() ) );*/
-
+    // The interpolation supplies only the line Jacobian; R is interpolated from the global nodal radii.
     FloatArray N;
     FloatArray lcoords = gp->giveNaturalCoordinates();
     FEInterpolation1d* interpolation = static_cast<FEInterpolation1d *>( this->giveInterpolation() );
@@ -236,11 +232,8 @@ AxisymSurfaceElement::computeGaussPoints()
 void
 AxisymSurfaceElement::computeStressVector(FloatArray &answer, const FloatArray &e, GaussPoint *gp, TimeStep *tStep)
 {
-    //auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    //FloatArray normal = this->giveNormal( gp );
-    //answer = cs->giveRealSurfaceStress_3d( e, normal, gp, tStep );
+    // small-strain formulation is not implemented (see computeBmatrixAt)
     OOFEM_ERROR( "not implemented " );
-
 }
 
 void
@@ -248,11 +241,8 @@ AxisymSurfaceElement::computeConstitutiveMatrixAt(FloatMatrix &answer,
                                            MatResponseMode rMode, GaussPoint *gp,
                                            TimeStep *tStep)
 {
-    //auto cs           = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    //FloatArray normal = this->giveNormal( gp );
-    //answer            = cs->giveSurfaceStiffnessMatrix_3d( rMode, normal, gp, tStep );
+    // small-strain formulation is not implemented (see computeBmatrixAt)
     OOFEM_ERROR( "not implemented " );
-
 }
 
 } // end namespace oofem

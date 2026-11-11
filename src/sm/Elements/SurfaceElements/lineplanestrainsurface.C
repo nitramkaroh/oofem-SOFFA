@@ -33,7 +33,6 @@
  */
 
 #include "sm/Elements/SurfaceElements/lineplanestrainsurface.h"
-// #include "fei3dquadlin.h"
 #include "fei1dlin.h"
 #include "node.h"
 #include "gausspoint.h"
@@ -101,9 +100,7 @@ LinePlaneStrainSurface::giveCellGeometryWrapper()
 
 
 void LinePlaneStrainSurface ::computeLocalNodalCoordinates( std::vector<FloatArray> &lxy )
-// Returns global coordinates given in global vector
-// transformed into local coordinate system of the
-// receiver
+// Returns the nodal coordinates rotated to the element frame, lxy[i] = R X_i (no translation).
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -121,9 +118,9 @@ void LinePlaneStrainSurface ::computeLocalNodalCoordinates( std::vector<FloatArr
 
 const FloatMatrix *
 LinePlaneStrainSurface ::computeGtoLRotationMatrix()
-// Returns the rotation matrix of the receiver of the size [2,2]
+// Returns the rotation matrix of the receiver of the size [2,2], rows e1 = (N2 - N1) / |N2 - N1| and
+// the in-plane normal e2 = (-e1_y, e1_x)
 // coords(local) = T * coords(global)
-//
 {
     if ( GtoLRotationMatrix == NULL ) {
         FloatArray e1, e2;
@@ -153,10 +150,9 @@ LinePlaneStrainSurface ::computeGtoLRotationMatrix()
 
 bool LinePlaneStrainSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
 // Returns the rotation matrix of the receiver of the size [4,4]
-// r(local) = T * r(global)
-// for one node (r written transposed): {u,v} = T * {u,v}
+// r(local) = T * r(global), for each node {u_t, u_n} = R * {u, v}
 {
-    // test if pereviously computed
+    // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
         this->computeGtoLRotationMatrix();
     }
@@ -225,9 +221,7 @@ void LinePlaneStrainSurface::computeBHmatrixAt( GaussPoint *gp, FloatMatrix &ans
 
 void LinePlaneStrainSurface::computeStressVector( FloatArray &answer, const FloatArray &e, GaussPoint *gp, TimeStep *tStep )
 {
-    // auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    // FloatArray normal = this->giveNormal( gp );
-    // answer = cs->giveRealSurfaceStress_3d( e, normal, gp, tStep );
+    // small-strain formulation is not implemented (see computeBmatrixAt)
     OOFEM_ERROR( "not implemented " );
 }
 
@@ -235,9 +229,7 @@ void LinePlaneStrainSurface::computeConstitutiveMatrixAt( FloatMatrix &answer,
     MatResponseMode rMode, GaussPoint *gp,
     TimeStep *tStep )
 {
-    // auto cs           = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    // FloatArray normal = this->giveNormal( gp );
-    // answer            = cs->giveSurfaceStiffnessMatrix_3d( rMode, normal, gp, tStep );
+    // small-strain formulation is not implemented (see computeBmatrixAt)
     OOFEM_ERROR( "not implemented " );
 }
 

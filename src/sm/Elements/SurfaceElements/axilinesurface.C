@@ -33,7 +33,6 @@
  */
 
 #include "sm/Elements/SurfaceElements/axilinesurface.h"
-//#include "fei3dquadlin.h"
 #include "fei1dlin.h"
 #include "node.h"
 #include "gausspoint.h"
@@ -100,9 +99,7 @@ AxiLineSurface::giveCellGeometryWrapper()
 
 
 void AxiLineSurface ::computeLocalNodalCoordinates( std::vector<FloatArray> &lxy )
-// Returns global coordinates given in global vector
-// transformed into local coordinate system of the
-// receiver
+// Returns the nodal coordinates rotated to the element frame, lxy[i] = R X_i (no translation).
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -120,9 +117,9 @@ void AxiLineSurface ::computeLocalNodalCoordinates( std::vector<FloatArray> &lxy
 
 const FloatMatrix *
 AxiLineSurface ::computeGtoLRotationMatrix()
-// Returns the rotation matrix of the receiver of the size [2,2]
+// Returns the rotation matrix of the receiver of the size [2,2], rows e1 = (N2 - N1) / |N2 - N1| and
+// the in-plane normal e2 = (-e1_y, e1_x)
 // coords(local) = T * coords(global)
-//
 {
     if ( GtoLRotationMatrix == NULL ) {
         FloatArray e1, e2;
@@ -152,10 +149,9 @@ AxiLineSurface ::computeGtoLRotationMatrix()
 
 bool AxiLineSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
 // Returns the rotation matrix of the receiver of the size [4,4]
-// r(local) = T * r(global)
-// for one node (r written transposed): {u,v} = T * {u,v}
+// r(local) = T * r(global), for each node {u_t, u_n} = R * {u, v}
 {
-    // test if pereviously computed
+    // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
         this->computeGtoLRotationMatrix();
     }
