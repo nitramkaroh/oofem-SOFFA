@@ -1,0 +1,53 @@
+iga-element-material.out
+IGA material lookup: element mat fallback and a cross-section material give the same uniaxial solution
+LinearStatic nsteps 1 nmodules 1
+errorcheck
+domain 2dPlaneStress
+OutputManager tstep_all dofman_all element_all
+ndofman 8 nelem 2 ncrosssect 2 nmat 1 nbc 3 nic 0 nltf 1 nset 3
+node 1 coords 3 0. 0. 0.
+node 2 coords 3 10. 0. 0.
+node 3 coords 3 10. 2. 0.
+node 4 coords 3 0. 2. 0.
+node 5 coords 3 12. 0. 0.
+node 6 coords 3 22. 0. 0.
+node 7 coords 3 22. 2. 0.
+node 8 coords 3 12. 2. 0.
+# Element 1 gets its material through mat; SimpleCS 1 deliberately has no material field.
+# Element 2 is an identical, translated reference patch with the material assigned to SimpleCS 2.
+bsplineplanestresselement 1 nodes 4 1 2 4 3 crosssect 1 mat 1 knotvectoru 2 0 1 knotvectorv 2 0 1 degree 2 1 1 nip 4
+bsplineplanestresselement 2 nodes 4 5 6 8 7 crosssect 2 knotvectoru 2 0 1 knotvectorv 2 0 1 degree 2 1 1 nip 4
+SimpleCS 1 thick 0.15
+SimpleCS 2 thick 0.15 material 1
+IsoLE 1 d 0. E 15. n 0.25 tAlpha 0.
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0. set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 0. set 2
+BoundaryCondition 3 loadTimeFunction 1 dofs 1 1 values 1 1. set 3
+ConstantFunction 1 f(t) 1.
+Set 1 nodes 4 1 4 5 8
+Set 2 nodes 4 1 2 5 6
+Set 3 nodes 4 2 3 6 7
+# Exact solution on each 10 x 2 patch: eps_x = 0.1, eps_y = -0.025, sigma_x = 1.5.
+# Each vertical edge carries 1.5 * 0.15 * 2 = 0.45, split equally between its two nodes.
+#%BEGIN_CHECK% tolerance 1.e-8
+#NODE tStep 1 number 2 dof 1 unknown d value 1.0
+#NODE tStep 1 number 3 dof 2 unknown d value -0.05
+#NODE tStep 1 number 4 dof 2 unknown d value -0.05
+#NODE tStep 1 number 6 dof 1 unknown d value 1.0
+#NODE tStep 1 number 7 dof 2 unknown d value -0.05
+#NODE tStep 1 number 8 dof 2 unknown d value -0.05
+#REACTION tStep 1 number 1 dof 1 value -0.225
+#REACTION tStep 1 number 2 dof 1 value 0.225
+#REACTION tStep 1 number 3 dof 1 value 0.225
+#REACTION tStep 1 number 4 dof 1 value -0.225
+#REACTION tStep 1 number 5 dof 1 value -0.225
+#REACTION tStep 1 number 6 dof 1 value 0.225
+#REACTION tStep 1 number 7 dof 1 value 0.225
+#REACTION tStep 1 number 8 dof 1 value -0.225
+#ELEMENT tStep 1 number 1 gp 1 keyword 1 component 1 value 1.5
+#ELEMENT tStep 1 number 1 gp 1 keyword 1 component 2 value 0.0
+#ELEMENT tStep 1 number 1 gp 1 keyword 1 component 6 value 0.0
+#ELEMENT tStep 1 number 2 gp 1 keyword 1 component 1 value 1.5
+#ELEMENT tStep 1 number 2 gp 1 keyword 1 component 2 value 0.0
+#ELEMENT tStep 1 number 2 gp 1 keyword 1 component 6 value 0.0
+#%END_CHECK%

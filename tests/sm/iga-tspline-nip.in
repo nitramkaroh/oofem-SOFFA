@@ -1,0 +1,75 @@
+iga-tspline-nip.out
+T-spline plane stress patch: anisotropic degree (2,3), two spans, prescribed extension
+LinearStatic nsteps 1 nmodules 1
+errorcheck
+domain 2dPlaneStress
+OutputManager tstep_all dofman_all element_all
+ndofman 16 nelem 1 ncrosssect 1 nmat 1 nbc 3 nic 0 nltf 1 nset 3
+# A tensor-product T-spline (all weights one), equivalent to the corresponding B-spline.
+# Greville control points give the identity geometry on the unit square.
+# The analytic solution is ux = 0.1*x, uy = -0.025*y, sigma_xx = 1.5.
+# nip is the total number of Gauss points per span: 16 = 4 by 4.
+# This exercises reading nlgeo=0, honoring nip, and sizing local knots by each degree.
+node 1 coords 2 0.0000000000000000 0.0000000000000000
+node 2 coords 2 0.25000000000000000 0.0000000000000000
+node 3 coords 2 0.75000000000000000 0.0000000000000000
+node 4 coords 2 1.0000000000000000 0.0000000000000000
+node 5 coords 2 0.0000000000000000 0.33333333333333331
+node 6 coords 2 0.25000000000000000 0.33333333333333331
+node 7 coords 2 0.75000000000000000 0.33333333333333331
+node 8 coords 2 1.0000000000000000 0.33333333333333331
+node 9 coords 2 0.0000000000000000 0.66666666666666663
+node 10 coords 2 0.25000000000000000 0.66666666666666663
+node 11 coords 2 0.75000000000000000 0.66666666666666663
+node 12 coords 2 1.0000000000000000 0.66666666666666663
+node 13 coords 2 0.0000000000000000 1.0000000000000000
+node 14 coords 2 0.25000000000000000 1.0000000000000000
+node 15 coords 2 0.75000000000000000 1.0000000000000000
+node 16 coords 2 1.0000000000000000 1.0000000000000000
+tsplineplanestresselement 1 nodes 16 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 crossSect 1 degree 2 2 3 knotvectoru 3 0 0.5 1 knotvectorv 2 0 1 nip 16 nlgeo 0 localindexknotvectoru 64 1 1 1 2 1 1 2 3 1 2 3 3 2 3 3 3 1 1 1 2 1 1 2 3 1 2 3 3 2 3 3 3 1 1 1 2 1 1 2 3 1 2 3 3 2 3 3 3 1 1 1 2 1 1 2 3 1 2 3 3 2 3 3 3 localindexknotvectorv 80 1 1 1 1 2 1 1 1 1 2 1 1 1 1 2 1 1 1 1 2 1 1 1 2 2 1 1 1 2 2 1 1 1 2 2 1 1 1 2 2 1 1 2 2 2 1 1 2 2 2 1 1 2 2 2 1 1 2 2 2 1 2 2 2 2 1 2 2 2 2 1 2 2 2 2 1 2 2 2 2 weights 16 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+SimpleCS 1 thick 1.0 material 1
+IsoLE 1 d 0. E 15.0 n 0.25 tAlpha 0.0
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 0.0 set 2
+BoundaryCondition 3 loadTimeFunction 1 dofs 1 1 values 1 0.1 set 3
+ConstantFunction 1 f(t) 1.0
+Set 1 nodes 4 1 5 9 13
+Set 2 nodes 4 1 2 3 4
+Set 3 nodes 4 4 8 12 16
+#
+#%BEGIN_CHECK% tolerance 1.e-8
+#NODE tStep 1 number 6 dof 1 unknown d value 0.025000000000000001
+#NODE tStep 1 number 6 dof 2 unknown d value -0.0083333333333333332
+#NODE tStep 1 number 7 dof 1 unknown d value 0.075000000000000011
+#NODE tStep 1 number 7 dof 2 unknown d value -0.0083333333333333332
+#NODE tStep 1 number 10 dof 1 unknown d value 0.025000000000000001
+#NODE tStep 1 number 10 dof 2 unknown d value -0.016666666666666666
+#NODE tStep 1 number 11 dof 1 unknown d value 0.075000000000000011
+#NODE tStep 1 number 11 dof 2 unknown d value -0.016666666666666666
+#NODE tStep 1 number 14 dof 1 unknown d value 0.025000000000000001
+#NODE tStep 1 number 14 dof 2 unknown d value -0.025000000000000001
+#NODE tStep 1 number 15 dof 1 unknown d value 0.075000000000000011
+#NODE tStep 1 number 15 dof 2 unknown d value -0.025000000000000001
+#NODE tStep 1 number 16 dof 1 unknown d value 0.10000000000000001
+#NODE tStep 1 number 16 dof 2 unknown d value -0.025000000000000001
+## Each cubic boundary basis integrates to 1/4, so each end reaction is +/-1.5/4.
+#REACTION tStep 1 number 1 dof 1 value -0.375
+#REACTION tStep 1 number 5 dof 1 value -0.375
+#REACTION tStep 1 number 9 dof 1 value -0.375
+#REACTION tStep 1 number 13 dof 1 value -0.375
+#REACTION tStep 1 number 4 dof 1 value 0.375
+#REACTION tStep 1 number 8 dof 1 value 0.375
+#REACTION tStep 1 number 12 dof 1 value 0.375
+#REACTION tStep 1 number 16 dof 1 value 0.375
+## Check the last point of the first span as well as the first: nip must not be shadowed.
+#ELEMENT tStep 1 number 1 gp 1 keyword 4 component 1 value 0.1
+#ELEMENT tStep 1 number 1 gp 1 keyword 4 component 2 value -0.025
+#ELEMENT tStep 1 number 1 gp 1 keyword 4 component 6 value 0.0
+#ELEMENT tStep 1 number 1 gp 1 keyword 1 component 1 value 1.5
+#ELEMENT tStep 1 number 1 gp 1 keyword 1 component 2 value 0.0
+#ELEMENT tStep 1 number 1 gp 16 keyword 4 component 1 value 0.1
+#ELEMENT tStep 1 number 1 gp 16 keyword 4 component 2 value -0.025
+#ELEMENT tStep 1 number 1 gp 16 keyword 4 component 6 value 0.0
+#ELEMENT tStep 1 number 1 gp 16 keyword 1 component 1 value 1.5
+#ELEMENT tStep 1 number 1 gp 16 keyword 1 component 2 value 0.0
+#%END_CHECK%
