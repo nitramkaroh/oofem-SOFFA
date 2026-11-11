@@ -385,6 +385,14 @@ void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, Int
 
 
 
+int IGAElement::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
+{
+    // lcoords are patch parameters; without a given knot span the interpolation finds it
+    this->giveInterpolation()->local2global( answer, lcoords, FEIIGAElementGeometryWrapper( this ) );
+    return 1;
+}
+
+
 void IGAElement::giveNodalCoordinates( FloatArray &NodalCoordinates ) const
 {
     NodalCoordinates.zero();

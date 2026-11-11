@@ -1146,8 +1146,12 @@ double BSpline2dLineInterpolation ::evaldNds( FloatMatrix &answer, const FloatAr
     return Jacob;
 }
 
-void BSpline2dLineInterpolation::computePosition( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+void BSpline2dLineInterpolation::local2global( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
+    if ( nsd != 1 ) {
+        OOFEM_ERROR( "This class is only for line in 2D" );
+    };
+
     std ::vector<FloatArray> N( nsd );
     const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
 
@@ -1164,24 +1168,14 @@ void BSpline2dLineInterpolation::computePosition( FloatArray &answer, const Floa
         this->basisFuns( N[i], span[i], lcoords[i], degree[i], knotVector[i] );
     }
 
-    int count = giveNumberOfKnotSpanBasisFunctions( span );
-
-    FloatArray dXdXi( degree[0] + 1 ); // array of first derivative of basis function
-    double Px    = 0.;
-    double Py = 0.;
-    
-    int uind = span[0] - degree[0];
-    int ind  = uind + 1;
+    answer.resize( 2 );
+    answer.zero();
+    int ind = span[0] - degree[0] + 1;
     for ( int k = 0; k <= degree[0]; k++ ) {
         const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        // jacobian( 0, 0 ) += ders[0]( 1, k ) * vertexCoords[0]; // dx/du=sum(dNu/du*x)
-        Px += N[0]( k ) * vertexCoords[0];
-        Py += N[0]( k ) * vertexCoords[1];
+        answer[0] += N[0][k] * vertexCoords[0];
+        answer[1] += N[0][k] * vertexCoords[1];
     }
-    
-    answer.at( 1 ) = Px;
-    answer.at( 2 ) = Py;
-
 }
 
 

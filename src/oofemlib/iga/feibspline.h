@@ -287,7 +287,8 @@ public:
 
     double boundaryEvalNormal( FloatArray &answer, int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
-    void computePosition( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+    /// Position on the curve in the xy plane (both coordinates; BSplineInterpolation gives one per parametric dimension).
+    void local2global( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
     void giveJacobianMatrixAt( FloatMatrix &jacobianMatrix, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 

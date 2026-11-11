@@ -116,6 +116,8 @@ public:
 
     virtual void giveNodalCoordinates( FloatArray &NodalCoordinates ) const;
 
+    /// The IGA interpolations need FEIIGAElementGeometryWrapper (Element's version passes FEIElementGeometryWrapper).
+    int computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords ) override;
 
     // composite type - so we can do the postprocessing in the next function
     Element_Geometry_Type giveGeometryType() const override { return EGT_Composite; }
