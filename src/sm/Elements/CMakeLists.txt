@@ -150,7 +150,6 @@ set (sm_element
 	SurfaceElements/quadsurfacequadratic.C
 	SurfaceElements/triangularsurface.C
 	SurfaceElements/triangularsurfacequadratic.C
-	SurfaceElements/linesurface.C
 	SurfaceElements/axilinesurface.C
 	SurfaceElements/lineplanestrainsurface.C
 	SurfaceElements/space3dsurfaceelementevaluator.C
