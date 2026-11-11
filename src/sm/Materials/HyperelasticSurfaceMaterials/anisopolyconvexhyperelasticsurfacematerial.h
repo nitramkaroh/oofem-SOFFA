@@ -50,7 +50,6 @@
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2 "p_2"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_beta "beta"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_eta "eta"
-#define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_zeta "zeta"
 #define _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_anisoLTF "aniso_ltf"
 
 //@
@@ -66,7 +65,7 @@ protected:
     // Material parameters
     //FloatArray matdir;
     FloatArray P1, P2;
-    double beta = 0., eta = 0., zeta = 0.;
+    double beta = 0., eta = 0.;
     int aniso_ltf = 0;
 
 

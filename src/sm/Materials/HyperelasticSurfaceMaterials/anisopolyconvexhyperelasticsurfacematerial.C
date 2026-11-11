@@ -208,7 +208,6 @@ void AnisotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputReco
 
     IR_GIVE_OPTIONAL_FIELD( ir, beta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_beta );
     IR_GIVE_OPTIONAL_FIELD( ir, eta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_eta );
-    IR_GIVE_OPTIONAL_FIELD( ir, zeta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_zeta );
 
     IR_GIVE_OPTIONAL_FIELD( ir, aniso_ltf, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_anisoLTF );
 

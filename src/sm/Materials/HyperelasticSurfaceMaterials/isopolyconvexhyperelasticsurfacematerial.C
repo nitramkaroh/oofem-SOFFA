@@ -49,11 +49,8 @@ REGISTER_Material( IsotropicPolyconvexHyperelasticSurfaceMaterial );
 IsotropicPolyconvexHyperelasticSurfaceMaterial::IsotropicPolyconvexHyperelasticSurfaceMaterial( int n, Domain *d ) :
     HyperElasticSurfaceMaterial( n, d ),
     gamma1( 0. ),
-    gamma2( 0. ),
     alpha1( 0. ),
-    alpha2( 0. ),
     alpha_s1( 0. ),
-    delta( 0. ),
     gaminit( 0. ),
     omega1(0.)
 {
@@ -66,7 +63,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3
     StructuralSurfaceMaterialStatus *status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
     FloatArrayF<9> indent            = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
     FloatArrayF<9> indent3d          = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d F, Fcurrent( vF ), P, Pfull, S, Identity3d( indent3d ), Identity( indent ), Pgamma1, Pgamma2, Palpha1, Palpha2, Pdelta, Pnh, Pnh2, dJdF;
+    Tensor2_3d F, Fcurrent( vF ), P, Pfull, S, Identity3d( indent3d ), Identity( indent ), Pgamma1, Palpha1, Pnh, Pnh2, dJdF;
     Tensor2_3d IdentityUD( indent );
 
     FloatArrayF<3> UDn( normal );
@@ -539,11 +536,8 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord
 {
     HyperElasticSurfaceMaterial::initializeFrom( ir );
     IR_GIVE_OPTIONAL_FIELD( ir, gamma1, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma1 );
-    IR_GIVE_OPTIONAL_FIELD( ir, gamma2, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma2 );
     IR_GIVE_OPTIONAL_FIELD( ir, alpha1, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha1 );
-    IR_GIVE_OPTIONAL_FIELD( ir, alpha2, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha2 );
     IR_GIVE_OPTIONAL_FIELD( ir, alpha_s1, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha_s1 );
-    IR_GIVE_OPTIONAL_FIELD( ir, delta, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_delta );
     IR_GIVE_OPTIONAL_FIELD( ir, gamma_ltf, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF );
     IR_GIVE_OPTIONAL_FIELD( ir, gaminit, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gaminit );
     IR_GIVE_OPTIONAL_FIELD( ir, omega1, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_omega1 );
@@ -560,40 +554,13 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord
     gammaTemp = 0.;
     IR_GIVE_OPTIONAL_FIELD( ir, alphaTemp, "alpha" );
     IR_GIVE_OPTIONAL_FIELD( ir, gammaTemp, "gamma" );
-    if ( alphaTemp != 0 && alpha1 == 0 && alpha2 == 0 ) {
+    if ( alphaTemp != 0 && alpha1 == 0 ) {
         alpha1 = alphaTemp;
     };
-    if ( gammaTemp != 0 && gamma1 == 0 && gamma2 == 0 ) {
+    if ( gammaTemp != 0 && gamma1 == 0 ) {
         gamma1 = gammaTemp;
     };
 }
-
-double IsotropicPolyconvexHyperelasticSurfaceMaterial::computeEnergy( const Tensor2_3d &F, GaussPoint *gp, TimeStep *tStep ) const
-{
-    double gamma_t1, gamma_t2, alpha_t1, alpha_t2, delta_t, beta_t;
-    if ( this->gamma_ltf == 0 ) {
-        gamma_t1 = this->gamma1;
-        alpha_t1 = this->alpha1;
-        delta_t  = this->delta;
-    } else {
-        gamma_t1 = this->gamma1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
-        alpha_t1 = this->alpha1 * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
-        delta_t  = this->delta * domain->giveFunction( gamma_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
-    }
-
-    Tensor2_3d C;
-    C( j_3, k_3 ) = F( i_3, j_3 ) * F( i_3, k_3 );
-
-    FloatMatrix Cmat, Uc, Sc, Vc;
-    C.toFloatMatrix( Cmat );
-    Cmat.resizeWithData( 2, 2 );
-    Cmat.computeSVD2x2( Uc, Sc, Vc );
-    double trU = sqrt( Sc.at( 1, 1 ) ) + sqrt( Sc.at( 2, 2 ) );
-
-    double energyIso = gamma_t1 * this->compute_surface_determinant( F ) + alpha_t1 * this->compute_surface_NormF( F ) + delta_t * trU;
-    return energyIso;
-}
-
 
 Tensor2_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::DoRTRtTransform( const Tensor2_3d &T, const FloatMatrix &R ) const
 {
@@ -906,7 +873,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveFirstPKSurfaceStressVector_
     StructuralSurfaceMaterialStatus *status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
     FloatArrayF<9> indent                   = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
     FloatArrayF<9> indent3d                 = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d F, Fcurrent( vF ), P, Pfull, S, Identity3d( indent3d ), Identity( indent ), Pgamma1, Pgamma2, Palpha1, Palpha2, Pdelta, Pnh, Pnh2, dJdF;
+    Tensor2_3d F, Fcurrent( vF ), P, Pfull, S, Identity3d( indent3d ), Identity( indent ), Pgamma1, Palpha1, Pnh, Pnh2, dJdF;
     Tensor2_3d IdentityUD( indent );
 
     FloatArrayF<3> UDn( normal );

@@ -47,11 +47,8 @@
 //@{
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_Name "surfacetensionmat"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma1 "gamma1"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gamma2 "gamma2"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha1 "alpha1"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha2 "alpha2"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha_s1 "alphas"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_delta "delta"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gammaLTF "gamma_ltf"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gaminit "gaminit"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_omega1 "omega1"
@@ -103,11 +100,10 @@ class IsotropicPolyconvexHyperelasticSurfaceMaterial : public HyperElasticSurfac
 protected:
     // Material parameters
     /*double gamma;*/
-    double gamma1, gamma2, gaminit;
+    double gamma1, gaminit;
     int gamma_ltf = 0;
-    double alpha1, alpha2; 
+    double alpha1;
     double alpha_s1; // material parameter for term (Js-1)^2
-    double delta; 
     double omega1; // For second order stress tensor
     double lambda = 0., mu = 0.; // Neo-Hookean model
 
@@ -136,8 +132,6 @@ public:
 
 
     MaterialStatus *CreateStatus( GaussPoint *gp ) const override;
-
-    double computeEnergy( const Tensor2_3d &F, GaussPoint *gp, TimeStep *tStep ) const;
 
     const char *giveInputRecordName() const override { return _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_Name; }
     const char *giveClassName() const override { return "IsotropicPolyconvexHyperelasticSurfaceMaterial"; }
