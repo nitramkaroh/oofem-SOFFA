@@ -787,11 +787,6 @@ int BSplineInterpolation :: findSpan(int n, int p, double u, const FloatArray &U
     return mid;
 }
 
-int BSplineInterpolation ::giveStartIndex( double u, int isd) const
-{
-    return this->findSpan( numberOfControlPoints[isd] - 1, degree[isd], u, knotVector[isd] ) - degree[isd];
-}
-
 int BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
     const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
@@ -1090,62 +1085,6 @@ double BSpline2dLineInterpolation::boundaryEvalNormal( FloatArray &answer, int i
 
 
 
-double BSpline2dLineInterpolation ::evaldNds( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
-{
-    const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
-    FloatMatrix jacobian( nsd, nsd );
-    IntArray span( nsd );
-    double Jacob = 0.;
-    std ::vector<FloatMatrix> ders( nsd );
-
-    if ( gw.knotSpan ) {
-        span = *gw.knotSpan;
-    } else {
-        for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
-        }
-    }
-
-    for ( int i = 0; i < nsd; i++ ) {
-        this->dersBasisFuns( 1, lcoords[i], span[i], degree[i], knotVector[i], ders[i] );
-    }
-
-    int count = giveNumberOfKnotSpanBasisFunctions( span );
-    answer.resize( count, nsd );
-    jacobian.zero();
-
-    double dXdxi = 0.;
-    double dYdxi = 0.;
-    if ( nsd == 1 ) {
-        int uind = span[0] - degree[0];
-        int ind  = uind + 1;
-        for ( int k = 0; k <= degree[0]; k++ ) {
-            const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-            // dX/dxi and dY/dxi
-            dXdxi += ders[0]( 1, k ) * vertexCoords[0];
-            dYdxi += ders[0]( 1, k ) * vertexCoords[1];
-            // jacobian( 0, 0 ) += ders[0]( 1, k ) * vertexCoords[0]; // dx/du=sum(dNu/du*x)
-        }
-
-        // Jacob = jacobian.giveDeterminant();
-        Jacob = sqrt( dXdxi * dXdxi + dYdxi * dYdxi ); // Compute ds/dxi
-
-        if ( fabs( Jacob ) < 1.0e-10 ) {
-            OOFEM_ERROR( "evaldNdx - zero Jacobian" );
-        }
-
-        int cnt = 0;
-        for ( int k = 0; k <= degree[0]; k++ ) {
-            answer( cnt, 0 ) = ders[0]( 1, k ) / Jacob; // dN/dx=dN/du / dx/du
-            cnt++;
-        }
-    } else {
-        OOFEM_ERROR( "This class is only for line in 2D" );
-    }
-
-    return Jacob;
-}
-
 void BSpline2dLineInterpolation::local2global( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
     if ( nsd != 1 ) {
@@ -1206,59 +1145,6 @@ int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answ
     int indexStart = uind + 1;
     return indexStart;
 
-};
-
-int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords) const
-{
-    if ( nsd != 1 ) {
-        OOFEM_ERROR( "This class is only for line in 2D" );
-    };
-
-    IntArray span( nsd );
-    // std ::vector<FloatMatrix> ders( nsd );
-
-
-    for ( int i = 0; i < nsd; i++ ) {
-        span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
-    }
-
-
-    for ( int i = 0; i < nsd; i++ ) {
-        this->dersBasisFuns( maxOrder, lcoords[i], span[i], degree[i], knotVector[i], answer );
-    }
-
-    // Return index where nonzero basis functions start
-    int uind       = span[0] - degree[0];
-    int indexStart = uind + 1;
-    return indexStart;
-};
-
-int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const IntArray &span ) const
-{
-    if ( nsd != 1 ) {
-        OOFEM_ERROR( "This class is only for line in 2D" );
-    };
-
-    if ( span.giveSize() != nsd ) {
-        OOFEM_ERROR( "Size mismatch" );
-    };
-
-    // std ::vector<FloatMatrix> ders( nsd );
-
-
-    //for ( int i = 0; i < nsd; i++ ) {
-    //    span[i] = this->findSpan( numberOfControlPoints[i], degree[i], lcoords[i], knotVector[i] );
-    //}
-
-
-    for ( int i = 0; i < nsd; i++ ) {
-        this->dersBasisFuns( maxOrder, lcoords[i], span[i], degree[i], knotVector[i], answer );
-    }
-
-    // Return index where nonzero basis functions start
-    int uind       = span[0] - degree[0];
-    int indexStart = uind + 1;
-    return indexStart;
 };
 
 } // end namespace oofem

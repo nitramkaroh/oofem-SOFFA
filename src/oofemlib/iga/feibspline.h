@@ -195,8 +195,6 @@ public:
     std::unique_ptr<IntegrationRule> giveBoundaryEdgeIntegrationRule(int order, int boundary) const override
     { OOFEM_ERROR("Not supported."); return nullptr; }
 
-    int giveStartIndex( double u, int isd ) const;
-
     //////////////////////
     // Evaluate up to second derivatives of basis functions
     int evalSecondDerivatives(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
@@ -274,12 +272,6 @@ public:
     void evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
     int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
-
-    int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords ) const override;
-
-    int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const IntArray &knotspan ) const override;
-
-    double evaldNds( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
 
     double evaldNdxGeneral( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
 
