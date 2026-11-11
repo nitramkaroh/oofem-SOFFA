@@ -3,6 +3,7 @@
 # - the normal of TriangularSurface only checks the prestrain f0 (which determines the normal), so it needs prestrain
 #   and has to be the normal that f0 maps to zero (up to the sign);
 # - f0 has 9 components;
+# - f0 and the normal have finite components, and the prestrain has a finite nonzero area ratio;
 # - the keywords fixgamma, fixomega, fixalphas and aniso_ltf of earlier versions stop the analysis, because gamma_ltf
 #   no longer scales all parameters (every parameter has its own <name>_ltf);
 # - arclenghtpar 2 (omega as the load parameter) needs the bending material surfacetensionmat2.
@@ -84,9 +85,17 @@ expect_error() {
 expect_run   prestrain                 "$TRIANGLE $F0"                    "$MEMBRANE"
 expect_run   prestrain-normal          "$TRIANGLE $F0 normal 3 0. 0. 1."  "$MEMBRANE"
 expect_run   prestrain-normal-opposite "$TRIANGLE $F0 normal 3 0. 0. -2." "$MEMBRANE"
+expect_run   prestrain-normal-large    "$TRIANGLE $F0 normal 3 0. 0. 1e308" "$MEMBRANE"
+expect_run   prestrain-normal-small    "$TRIANGLE $F0 normal 3 0. 0. 1e-308" "$MEMBRANE"
 expect_error prestrain-normal-wrong    "$TRIANGLE $F0 normal 3 1. 0. 1."  "$MEMBRANE" 'does not belong to the prestrain'
+expect_error normal-zero               "$TRIANGLE $F0 normal 3 0. 0. 0."  "$MEMBRANE" 'finite nonzero vector'
+expect_error normal-nan                "$TRIANGLE $F0 normal 3 nan 0. 1." "$MEMBRANE" 'finite nonzero vector'
+expect_error normal-inf                "$TRIANGLE $F0 normal 3 inf 0. 1." "$MEMBRANE" 'finite nonzero vector'
 expect_error normal-without-prestrain  "$TRIANGLE normal 3 0. 0. 1."      "$MEMBRANE" 'it needs prestrain'
 expect_error f0-size                   "$TRIANGLE prestrain 1 f0 3 1.2 0.9 0." "$MEMBRANE" 'must have 9 components'
+expect_error f0-nan                    "$TRIANGLE prestrain 1 f0 9 nan 0.9 0. 0. 0. 0. 0. 0. 0." "$MEMBRANE" 'must have finite components'
+expect_error f0-inf                    "$TRIANGLE prestrain 1 f0 9 inf 0.9 0. 0. 0. 0. 0. 0. 0." "$MEMBRANE" 'must have finite components'
+expect_error f0-area-overflow          "$TRIANGLE prestrain 1 f0 9 1e155 0.9 0. 0. 0. 0. 0. 0. 0." "$MEMBRANE" 'non-finite area ratio'
 expect_error removed-fixgamma          "$TRIANGLE"                        "$MEMBRANE gamma_ltf 1 fixgamma 0" 'removed'
 expect_error removed-fixalphas         "$TRIANGLE"                        "$MEMBRANE fixalphas 1"  'removed'
 expect_error membrane-arclength-omega  "$TRIANGLE"                        "$MEMBRANE arclenghtpar 2" 'only surfacetensionmat2'

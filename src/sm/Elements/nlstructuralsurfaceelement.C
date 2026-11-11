@@ -50,6 +50,8 @@
 #include "engngm.h"
 #include "mathfem.h"
 
+#include <cmath>
+
 namespace oofem {
 NLStructuralSurfaceElement::NLStructuralSurfaceElement( int n, Domain *aDomain ) :
     NLStructuralElement( n, aDomain )
@@ -67,8 +69,8 @@ void NLStructuralSurfaceElement::giveMaterialKinematics( const FloatArray &vF, G
     Tensor2_3d cofF0 = F0s.compute_cofactor();
     normal           = { cofF0( 2, 0 ), cofF0( 2, 1 ), cofF0( 2, 2 ) };
     J0               = normal.computeNorm();
-    if ( !( J0 > 0. ) ) {
-        OOFEM_ERROR( "element %d: the prestrain deformation gradient is singular in the element plane", this->giveNumber() );
+    if ( !std::isfinite( J0 ) || !( J0 > 0. ) ) {
+        OOFEM_ERROR( "element %d: the prestrain deformation gradient is singular in the element plane or has a non-finite area ratio", this->giveNumber() );
     }
     normal.times( 1. / J0 );
 }

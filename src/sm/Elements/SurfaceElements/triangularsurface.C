@@ -48,6 +48,9 @@
 #include "crosssection.h"
 #include "classfactory.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace oofem {
 REGISTER_Element( TriangularSurface );
 
@@ -77,17 +80,36 @@ void TriangularSurface ::initializeFrom( InputRecord &ir )
         if ( F0_temp.giveSize() != 9 ) {
             throw ValueInputException( ir, _IFT_TriangularSurface_f0, "must have 9 components" );
         }
+        for ( double component : F0_temp ) {
+            if ( !std::isfinite( component ) ) {
+                throw ValueInputException( ir, _IFT_TriangularSurface_f0, "must have finite components" );
+            }
+        }
         this->F0 = FloatArrayF<9>( F0_temp );
     }
 
     FloatArray normal;
     IR_GIVE_OPTIONAL_FIELD( ir, normal, _IFT_TriangularSurface_normal );
     if ( normal.giveSize() > 0 ) {
-        if ( normal.giveSize() != 3 || normal.computeNorm() == 0. ) {
-            throw ValueInputException( ir, _IFT_TriangularSurface_normal, "must be a nonzero vector with 3 components" );
+        if ( normal.giveSize() != 3 ) {
+            throw ValueInputException( ir, _IFT_TriangularSurface_normal, "must be a finite nonzero vector with 3 components" );
+        }
+        double normalScale = 0.;
+        for ( double component : normal ) {
+            if ( !std::isfinite( component ) ) {
+                throw ValueInputException( ir, _IFT_TriangularSurface_normal, "must be a finite nonzero vector with 3 components" );
+            }
+            normalScale = std::max( normalScale, std::fabs( component ) );
+        }
+        if ( normalScale == 0. ) {
+            throw ValueInputException( ir, _IFT_TriangularSurface_normal, "must be a finite nonzero vector with 3 components" );
         }
         if ( !this->prestrain ) {
             throw ValueInputException( ir, _IFT_TriangularSurface_normal, "is the normal of the original configuration of the prestrain, it needs prestrain and f0" );
+        }
+        // Scale before taking the norm, so finite very large or very small vectors can be normalized.
+        for ( double &component : normal ) {
+            component /= normalScale;
         }
         normal.normalize();
         this->referenceNormal        = FloatArrayF<3>( normal );
