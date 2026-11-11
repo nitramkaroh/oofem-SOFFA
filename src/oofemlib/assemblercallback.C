@@ -36,6 +36,7 @@
 #include "floatarray.h"
 #include "floatmatrix.h"
 #include "element.h"
+#include "integrationrule.h"
 #include "dofmanager.h"
 #include "activebc.h"
 
@@ -345,17 +346,16 @@ void EffectiveTangentAssembler :: assembleFromActiveBC(SparseMtrx &k, ActiveBoun
 // for arc-length method
 void ArcLengthInternalForceAssembler ::vectorFromElement( FloatArray &vec, Element &element, TimeStep *tStep, ValueModeType mode ) const
 {
-    //IntegrationRule ir( 1, &element );
-    //int n = 1;
-    //double w = 0.;
-    //GaussPoint gpdummy( &ir, n, w, _PlaneStrain );
-    //auto mat = element.giveCrossSection()->giveMaterial( &gpdummy );
-
-    auto mat = element.giveCrossSection()->giveMaterial( NULL );
-
-        //giveMaterial();
-    auto iface = dynamic_cast<ArcLengthMaterialInterface *>( mat->giveInterface( ArcLengthMaterialInterfaceType ) );
-    if ( iface ) {
+    // The caller reuses vec between elements, including those with no material load parameter.
+    vec.clear();
+    auto *rule = element.giveDefaultIntegrationRulePtr();
+    if ( !rule || rule->giveNumberOfIntegrationPoints() == 0 ) {
+        return;
+    }
+    // A real Gauss point is needed when the cross section obtains the material from the element.
+    auto *mat = element.giveCrossSection()->giveMaterial( rule->getIntegrationPoint( 0 ) );
+    auto *iface = dynamic_cast<ArcLengthMaterialInterface *>( mat->giveInterface( ArcLengthMaterialInterfaceType ) );
+    if ( iface && iface->hasArcLengthParameter() ) {
         element.giveCharacteristicVector( vec, InternalForcesVector, mode, tStep );
     }
 }
