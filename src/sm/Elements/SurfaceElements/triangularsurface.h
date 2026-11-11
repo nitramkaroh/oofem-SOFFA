@@ -43,13 +43,22 @@
 #define _IFT_TriangularSurface_f0 "f0"
 #define _IFT_TriangularSurface_prestrain "prestrain"
 #define _IFT_TriangularSurface_normal "normal"
-#define _IFT_TriangularSurface_g2l "g2l"
 #define _IFT_TriangularSurface_anisodir "anisodir"
 
 namespace oofem {
 // class FEI3dQuadLin;
 class FEI2dTrLin;
 
+/**
+ * Linear triangular surface element in 3D.
+ *
+ * Optional input:
+ * - prestrain 1 f0 9 ...: prestrain deformation gradient F0 (global coordinates, one for the element) from the
+ *   original, stress-free configuration to the mesh; the material works with F * F0 and the normal of the
+ *   original configuration, which follows from F0 (see NLStructuralSurfaceElement::giveMaterialKinematics).
+ * - normal 3 ...: that normal (global coordinates), only checked against the one computed from F0.
+ * - anisodir 3 ...: fibre direction for the anisotropic material (global coordinates).
+ */
 class TriangularSurface : public Structural3DSurfaceElement
 {
 protected:
@@ -64,10 +73,8 @@ protected:
     FloatMatrix *GtoLRotationMatrix;
     FloatArrayF<9> F0; // Prestrain for single GP only
     int prestrain = 0;
-    int isReferenceNormalGiven = 0; 
-    FloatArrayF<3> referenceNormal; // reference normal prescribed
-    int prescribedOrientation = 0;
-    FloatArrayF<9> G2L_prescribed; // prescribed orientation
+    int isReferenceNormalGiven = 0;
+    FloatArrayF<3> referenceNormal; // normal of the original configuration, checked against F0
     int anisoDirGiven = 0;
     FloatArrayF<3> anisoDir; // direction of anisotropuy for single GP only
 
@@ -104,15 +111,7 @@ public:
 
     int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
 
-    bool givePrescribedRotation( FloatMatrix &Rotation ){
-        if ( prescribedOrientation ) {
-            FloatArray Rmat( G2L_prescribed );
-            Rotation.beMatrixForm( Rmat );
-            return 1;
-        } else {
-            return 0;
-        }
-    };
+    int checkConsistency() override;
 
     //void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 

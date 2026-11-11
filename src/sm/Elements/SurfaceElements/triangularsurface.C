@@ -73,31 +73,63 @@ void TriangularSurface ::initializeFrom( InputRecord &ir )
     IR_GIVE_OPTIONAL_FIELD( ir, this->prestrain, _IFT_TriangularSurface_prestrain );
     if ( this->prestrain ) {
         FloatArray F0_temp;
-        IR_GIVE_OPTIONAL_FIELD( ir, F0_temp, _IFT_TriangularSurface_f0 );
+        IR_GIVE_FIELD( ir, F0_temp, _IFT_TriangularSurface_f0 );
+        if ( F0_temp.giveSize() != 9 ) {
+            throw ValueInputException( ir, _IFT_TriangularSurface_f0, "must have 9 components" );
+        }
         this->F0 = FloatArrayF<9>( F0_temp );
-    }  
+    }
 
     FloatArray normal;
     IR_GIVE_OPTIONAL_FIELD( ir, normal, _IFT_TriangularSurface_normal );
-    if ( normal.giveSize()>0) {
-        this->referenceNormal = FloatArrayF<3>( normal );
+    if ( normal.giveSize() > 0 ) {
+        if ( normal.giveSize() != 3 || normal.computeNorm() == 0. ) {
+            throw ValueInputException( ir, _IFT_TriangularSurface_normal, "must be a nonzero vector with 3 components" );
+        }
+        if ( !this->prestrain ) {
+            throw ValueInputException( ir, _IFT_TriangularSurface_normal, "is the normal of the original configuration of the prestrain, it needs prestrain and f0" );
+        }
+        normal.normalize();
+        this->referenceNormal        = FloatArrayF<3>( normal );
         this->isReferenceNormalGiven = 1;
-    }
-
-    FloatArray G2L;
-    IR_GIVE_OPTIONAL_FIELD( ir, G2L, _IFT_TriangularSurface_g2l );
-    if ( G2L.giveSize() > 0 ) {
-        this->G2L_prescribed        = FloatArrayF<9>( G2L );
-        this->prescribedOrientation = 1;
     }
 
     FloatArray adir;
     IR_GIVE_OPTIONAL_FIELD( ir, adir, _IFT_TriangularSurface_anisodir );
     if ( adir.giveSize() > 0 ) {
-        this->anisoDir = FloatArrayF<3>( adir );
-        this->anisoDirGiven  = 1;
+        if ( adir.giveSize() != 3 ) {
+            throw ValueInputException( ir, _IFT_TriangularSurface_anisodir, "must have 3 components" );
+        }
+        this->anisoDir      = FloatArrayF<3>( adir );
+        this->anisoDirGiven = 1;
     }
-    
+}
+
+
+int TriangularSurface::checkConsistency()
+{
+    int result = Structural3DSurfaceElement::checkConsistency();
+    if ( this->isReferenceNormalGiven ) {
+        // the given normal must be the one the prestrain implies (up to the sign, which the energy does not see)
+        GaussPoint *gp = this->giveDefaultIntegrationRulePtr()->getIntegrationPoint( 0 );
+        FloatArray vF = { 1., 1., 0., 0., 0., 0., 0., 0., 0. }, vFmat, N;
+        Tensor2_3d F0s;
+        double J0;
+        this->giveMaterialKinematics( vF, gp, nullptr, vFmat, N, F0s, J0 );
+        FloatMatrix R;
+        FloatArray given( this->referenceNormal );
+        if ( this->giveRotationMatrix( R ) ) {
+            IntArray pos( { 1, 2, 3 } );
+            FloatMatrix R3x3;
+            R3x3.beSubMatrixOf( R, pos, pos );
+            given.beProductOf( R3x3, FloatArray( this->referenceNormal ) );
+        }
+        if ( 1. - std::fabs( given.dotProduct( N ) ) > 1.e-8 ) {
+            OOFEM_ERROR( "element %d: the given normal does not belong to the prestrain f0, which maps the normal (%g %g %g) of the element frame to zero",
+                this->giveNumber(), N.at( 1 ), N.at( 2 ), N.at( 3 ) );
+        }
+    }
+    return result;
 }
 
 
@@ -162,73 +194,32 @@ TriangularSurface ::computeGtoLRotationMatrix()
 // e2'    : e3' x e1'
 {
     if ( GtoLRotationMatrix == NULL ) {
-        //if ( this->prescribedOrientation ) {
-        //    ////GtoLRotationMatrix = new FloatMatrix( 3, 3 );
-        //    //FloatArray g2l( this->G2L_prescribed );
-        //    //FloatMatrix g2l_test;
-        //    //GtoLRotationMatrix = new FloatMatrix( 3, 3 );
-        //    //GtoLRotationMatrix->beMatrixForm( g2l );
+        FloatArray e1, e2, e3, help;
 
-        //    ////////////////////////////////////
-        //    //g2l_test = *GtoLRotationMatrix;
-        //    FloatArray e1, e2, e3, help;
+        // compute e1' = [N2-N1]  and  help = [N3-N1]
+        e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+        help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
 
-        //    // compute e1' = [N2-N1]  and  help = [N3-N1]
-        //    e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
-        //    help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+        // let us normalize e1'
+        e1.normalize();
 
-        //    // let us normalize e1'
-        //    e1.normalize();
+        // compute e3' : vector product of e1' x help
+        e3.beVectorProductOf( e1, help );
+        // let us normalize
+        e3.normalize();
 
-        //    // compute e3' : vector product of e1' x help
-        //    e3.beVectorProductOf( e1, help );
-        //    // let us normalize
-        //    e3.normalize();
+        // now from e3' x e1' compute e2'
+        e2.beVectorProductOf( e3, e1 );
 
-        //    // now from e3' x e1' compute e2'
-        //    e2.beVectorProductOf( e3, e1 );
+        //
+        GtoLRotationMatrix = new FloatMatrix( 3, 3 );
 
-        //    //
-        //    GtoLRotationMatrix = new FloatMatrix( 3, 3 );
-
-        //    for ( int i = 1; i <= 3; i++ ) {
-        //        GtoLRotationMatrix->at( 1, i ) = e1.at( i );
-        //        GtoLRotationMatrix->at( 2, i ) = e2.at( i );
-        //        GtoLRotationMatrix->at( 3, i ) = e3.at( i );
-        //    }
-
-        //    /////////////
-        //    //FloatMatrix err = g2l_test - *GtoLRotationMatrix;
-
-        //} else {
-            FloatArray e1, e2, e3, help;
-
-            // compute e1' = [N2-N1]  and  help = [N3-N1]
-            e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
-            help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
-
-            // let us normalize e1'
-            e1.normalize();
-
-            // compute e3' : vector product of e1' x help
-            e3.beVectorProductOf( e1, help );
-            // let us normalize
-            e3.normalize();
-
-            // now from e3' x e1' compute e2'
-            e2.beVectorProductOf( e3, e1 );
-
-            //
-            GtoLRotationMatrix = new FloatMatrix( 3, 3 );
-
-            for ( int i = 1; i <= 3; i++ ) {
-                GtoLRotationMatrix->at( 1, i ) = e1.at( i );
-                GtoLRotationMatrix->at( 2, i ) = e2.at( i );
-                GtoLRotationMatrix->at( 3, i ) = e3.at( i );
-            }
-        //}
+        for ( int i = 1; i <= 3; i++ ) {
+            GtoLRotationMatrix->at( 1, i ) = e1.at( i );
+            GtoLRotationMatrix->at( 2, i ) = e2.at( i );
+            GtoLRotationMatrix->at( 3, i ) = e3.at( i );
+        }
     }
-    //GtoLRotationMatrix->printYourself();
     return GtoLRotationMatrix;
 }
 
@@ -337,26 +328,7 @@ int TriangularSurface::giveIPValue( FloatArray &answer, GaussPoint *gp, Internal
         } else {
             return 0;
         }  
-    } else if ( type == IST_ElementReferenceNormal ) {
-        if ( this->isReferenceNormalGiven ) {
-            answer = FloatArray( this->referenceNormal );
-            
-            FloatMatrix R;
-            if ( this->giveRotationMatrix( R ) ) {
-                IntArray pos( { 1, 2, 3 } );
-                FloatMatrix R3x3;
-                R3x3.beSubMatrixOf( R, pos, pos );
-
-                FloatArray RN;
-                RN.beProductOf( R3x3, answer );
-                answer = RN;
-            }
-            return 1;
-        } else {
-            return 0;
-        }
-
-    }else if ( type == IST_DisplacementVector ) {
+    } else if ( type == IST_DisplacementVector ) {
         FloatArray u;
         FloatMatrix N, G2L;
         this->computeVectorOf( VM_Total, tStep, u );
