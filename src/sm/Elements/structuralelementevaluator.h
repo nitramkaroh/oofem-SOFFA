@@ -148,9 +148,6 @@ protected:
     void computeVectorOf(ValueModeType u, TimeStep *tStep, FloatArray &answer) {
         this->giveElement()->computeVectorOf(u, tStep, answer);
     }
-    void computeVectorOf(PrimaryField &field, const IntArray &dofIdMask, ValueModeType u, TimeStep *tStep, FloatArray &answer) {
-        this->giveElement()->computeVectorOf(field, dofIdMask, u, tStep, answer);
-    }
     bool isActivated(TimeStep *tStep) { return true; }
     void updateInternalState(TimeStep *tStep);
 

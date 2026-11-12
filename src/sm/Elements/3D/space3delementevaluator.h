@@ -70,8 +70,6 @@ protected:
         answer = { D_u, D_v, D_w };
     }
 
-public:
-    void initializeFrom( InputRecord &ir ) override;
 };
 } // end namespace oofem
 #endif //space3delementevaluator_h

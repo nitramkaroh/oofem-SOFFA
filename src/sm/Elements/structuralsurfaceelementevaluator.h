@@ -120,8 +120,6 @@ protected:
     /// grad I = G X (27 components), as grad F with the reference positions X; it carries the reference curvature.
     void computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
-public:
-    virtual void initializeFrom( InputRecord &ir );
 };
 } // end namespace oofem
 #endif // structuralsurfaceelementevaluator_h

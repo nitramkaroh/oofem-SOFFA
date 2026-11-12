@@ -126,11 +126,6 @@ double Space2dStructuralSurfaceElementEvaluator ::computeVolumeAround( GaussPoin
 }
 
 
-void Space2dStructuralSurfaceElementEvaluator ::initializeFrom( InputRecord &ir )
-{
-    StructuralSurfaceElementEvaluator::initializeFrom( ir );
-}
-
 int Space2dStructuralSurfaceElementEvaluator ::giveIntegrationElementLocalCodeNumbers( IntArray &answer, Element *elem,
     IntegrationRule *ie )
 {
@@ -384,13 +379,6 @@ double AxisymSurfaceElementEvaluator ::computeVolumeAround( GaussPoint *gp )
 
     return volume*R;
 }
-
-
-void AxisymSurfaceElementEvaluator ::initializeFrom( InputRecord &ir )
-{
-    Space2dStructuralSurfaceElementEvaluator::initializeFrom( ir );
-}
-
 
 
 } // end namespace oofem

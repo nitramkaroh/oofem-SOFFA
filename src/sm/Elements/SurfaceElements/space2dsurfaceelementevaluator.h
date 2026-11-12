@@ -80,8 +80,6 @@ protected:
     }
 
 public:
-    void initializeFrom( InputRecord &ir ) override;
-
     /// Code numbers of the knot span ie; a curve has nsd 1 but two dofs per control point.
     int giveIntegrationElementLocalCodeNumbers( IntArray &answer, Element *elem, IntegrationRule *ie ) override;
 
@@ -114,8 +112,6 @@ protected:
     /// Area per radian around gp, r times the length.
     double computeVolumeAround( GaussPoint *gp ) override;
 
-public:
-    void initializeFrom( InputRecord &ir ) override;
 };
 
 

@@ -71,10 +71,6 @@ protected:
     }
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
-public:
-    void initializeFrom( InputRecord &ir ) override;
-
-
 }; // end of PlaneStressStructuralElementEvaluator definition
 
 
@@ -119,9 +115,6 @@ protected:
 
     /// dA/dF reduced to the plane strain components of F, 27 x 5
     void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
-
-public:
-    void initializeFrom( InputRecord &ir ) override;
 
 }; // end of PlaneStrainStructuralElementEvaluator definition
 
@@ -176,9 +169,6 @@ protected:
 
     /// grad F = G x with the current positions x of the control points. @todo The same in all evaluators.
     void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
-
-public:
-    void initializeFrom( InputRecord &ir ) override;
 
 }; // end of AxisymStructuralElementEvaluator definition
 

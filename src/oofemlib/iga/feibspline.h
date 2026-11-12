@@ -278,13 +278,6 @@ class OOFEM_EXPORT BSpline2dLineInterpolation : public BSplineInterpolation
 public:
     BSpline2dLineInterpolation( int nsd ) :
         BSplineInterpolation( nsd ){}
-    void initializeFrom( InputRecord &ir ) override {BSplineInterpolation::initializeFrom( ir );}
-    /// Same as evaldNdxGeneral.
-    double evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
-
-    /// Same as evald2Ndx2General.
-    void evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
-
     /**
      * Basis functions and their derivatives with respect to xi up to maxOrder: answer is
      * (maxOrder+1) x (p+1), row r holds the r-th derivatives of the nonzero functions of the span.
@@ -296,13 +289,13 @@ public:
      * Surface gradient of the basis functions, dN/dX = N' g^11 X_,xi: answer is (p+1) x 2 (x, y).
      * @return |X_,xi|.
      */
-    double evaldNdxGeneral( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+    double evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
     /**
      * Second surface derivatives of the basis functions, d2N/dX2 = d2N/ds2 t x t with
      * d2N/ds2 = ( N'' - Gamma N' ) g^11 and Gamma = g^11 X_,xi . X_,xixi: answer is (p+1) x 3 (xx, yy, xy).
      */
-    void evald2Ndx2General( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+    void evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
     /**
      * Unit normal of the reference curve, answer = (dY/dxi, -dX/dxi, 0) / |X_,xi|: the tangent

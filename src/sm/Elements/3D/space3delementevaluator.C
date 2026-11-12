@@ -139,11 +139,5 @@ void Space3dStructuralElementEvaluator :: computeConstitutiveMatrix_dPdF_At(Floa
 {
 answer = static_cast< StructuralCrossSection * >( this->giveElement()->giveCrossSection() )->giveStiffnessMatrix_dPdF_3d(rMode, gp, tStep);
 }
- 
-void Space3dStructuralElementEvaluator ::initializeFrom( InputRecord &ir )
-{
-    StructuralElementEvaluator::initializeFrom( ir );
-}
-
 
 } // end namespace oofem

@@ -91,9 +91,4 @@ double Space3dStructuralSurfaceElementEvaluator::computeVolumeAround( GaussPoint
     return determinant * gp->giveWeight();
 }
 
-void Space3dStructuralSurfaceElementEvaluator ::initializeFrom( InputRecord &ir )
-{
-    StructuralSurfaceElementEvaluator::initializeFrom( ir );
-}
-
 } // end namespace oofem

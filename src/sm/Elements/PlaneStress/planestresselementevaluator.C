@@ -126,11 +126,6 @@ void PlaneStressStructuralElementEvaluator :: computeConstitutiveMatrixAt(FloatM
     answer = static_cast< StructuralCrossSection * >( this->giveElement()->giveCrossSection() )->giveStiffnessMatrix_PlaneStress(rMode, gp, tStep);
 }
 
-void PlaneStressStructuralElementEvaluator ::initializeFrom( InputRecord &ir )
-{
-    StructuralElementEvaluator::initializeFrom( ir );
-}
-
 void PlaneStressStructuralElementEvaluator::computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
 {
     answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveStiffnessMatrix_dPdF_PlaneStress( rMode, gp, tStep );
@@ -213,11 +208,6 @@ void PlaneStrainStructuralElementEvaluator ::computeStressVector( FloatArray &an
 void PlaneStrainStructuralElementEvaluator ::computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
 {
     answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveStiffnessMatrix_PlaneStrain( rMode, gp, tStep );
-}
-
-void PlaneStrainStructuralElementEvaluator ::initializeFrom( InputRecord &ir )
-{
-    StructuralElementEvaluator::initializeFrom( ir );
 }
 
 void PlaneStrainStructuralElementEvaluator::computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
@@ -508,11 +498,6 @@ double AxisymStructuralElementEvaluator ::computeVolumeAround( GaussPoint *gp )
 }
 
 
-
-void AxisymStructuralElementEvaluator ::initializeFrom( InputRecord &ir )
-{
-    StructuralElementEvaluator::initializeFrom( ir );
-}
 
 void AxisymStructuralElementEvaluator::computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
 {

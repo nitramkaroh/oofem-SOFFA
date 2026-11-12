@@ -55,11 +55,6 @@ StructuralSurfaceElementEvaluator ::StructuralSurfaceElementEvaluator():
 {}
 
 
-void StructuralSurfaceElementEvaluator::initializeFrom( InputRecord &ir )
-{
-    StructuralElementEvaluator::initializeFrom( ir );
-}
-
 void StructuralSurfaceElementEvaluator::computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );

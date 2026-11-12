@@ -840,24 +840,11 @@ int BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const Floa
 
 double BSpline2dLineInterpolation ::evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
-    double J = this->evaldNdxGeneral( answer, lcoords, cellgeo );
-    return J;
-}
-
-void BSpline2dLineInterpolation ::evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
-{
-    this->evald2Ndx2General( answer, lcoords, cellgeo );
-}
-
-
-double BSpline2dLineInterpolation ::evaldNdxGeneral( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
-{
     if ( nsd != 1 ){
         OOFEM_ERROR( "This class is only for line in 2D" );
     };
 
     const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
-    FloatMatrix jacobian( nsd, nsd );
     IntArray span( nsd );
     double Jacob = 0.;
     std ::vector<FloatMatrix> ders( nsd );
@@ -876,7 +863,6 @@ double BSpline2dLineInterpolation ::evaldNdxGeneral( FloatMatrix &answer, const 
 
     int count = giveNumberOfKnotSpanBasisFunctions( span );
     answer.resize( count, 2 );
-    jacobian.zero();
 
     FloatArray dXdXi(2 ); // tangent X_,xi of the reference curve
     double dxdxi = 0.;
@@ -907,7 +893,7 @@ double BSpline2dLineInterpolation ::evaldNdxGeneral( FloatMatrix &answer, const 
     return Jacob;
 }
 
-void BSpline2dLineInterpolation ::evald2Ndx2General( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+void BSpline2dLineInterpolation ::evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
     if ( nsd != 1 ) {
         OOFEM_ERROR( "This class is only for line in 2D" );
@@ -932,8 +918,6 @@ void BSpline2dLineInterpolation ::evald2Ndx2General( FloatMatrix &answer, const 
     int count = giveNumberOfKnotSpanBasisFunctions( span );
     answer.resize( count, 3 );
 
-    FloatArray dXdXi(2 ); // tangent X_,xi
-    FloatArray d2XdXi2(2); // X_,xixi
     FloatArray dXprod( 3 ); // (x_,xi^2, y_,xi^2, x_,xi y_,xi), i.e. |X_,xi|^2 t x t in the order xx, yy, xy
     double dxdxi = 0., dydxi = 0., d2xdxi2 = 0., d2ydxi2 = 0.;
 
@@ -947,12 +931,6 @@ void BSpline2dLineInterpolation ::evald2Ndx2General( FloatMatrix &answer, const 
         d2xdxi2 += ders[0]( 2, k ) * vertexCoords[0];
         d2ydxi2 += ders[0]( 2, k ) * vertexCoords[1];
     }
-    dXdXi.at( 1 ) = dxdxi;
-    dXdXi.at( 2 ) = dydxi;
-
-    d2XdXi2.at( 1 ) = d2xdxi2;
-    d2XdXi2.at( 2 ) = d2ydxi2;
-
     dXprod.at( 1 ) = dxdxi * dxdxi;
     dXprod.at( 2 ) = dydxi * dydxi;
     dXprod.at( 3 ) = dydxi * dxdxi;
