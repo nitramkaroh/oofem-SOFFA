@@ -48,7 +48,8 @@ class Domain;
 /**
  * Status of the surface materials. Besides F, P and the Cauchy stress of StructuralMaterialStatus it holds, for the
  * second gradient, grad F and the gradient of the reference surface identity (27 components each, as left by the
- * last evaluation of the second order stress; the stress and the tangents of the bending material read them), and
+ * last evaluation of the second order stress; the stress and the tangents of the bending material read them; empty
+ * in a fresh status until the IGA surface evaluator sets both to the reference grad I before the first tangent), and
  * for postprocessing the curvature K = -n . grad F and the moment M = de/dK (9 components each, stored by the
  * bending material; the 2D surface evaluator interpolates K between Gauss points). The initial F is the
  * surface identity of the element frame: diag(1, 1, 0) for the Lagrange elements, I - N x N for the IGA elements.

@@ -33,8 +33,11 @@ The energy of the material :param:`surfacetensionmat` is
 
 The terms :math:`\gamma J` (surface tension) and :math:`\alpha |\mathbf{F}|` form the
 surface-polyconvex model of M. Horák, M. Šmejkal, M. Kružík, Surface-polyconvex models for
-soft elastic solids, arXiv:2503.24294 (2025), eq. (90); they are positively one-homogeneous in
-:math:`\mathbf{F}`, which the existence theory of that model needs. The area term with
+soft elastic solids, arXiv:2503.24294 (2025), eq. (90): as a function of the independent
+variables :math:`\mathbf{F} \times \mathbf{N}` and :math:`\mathrm{cof}(\mathbf{F}) \mathbf{N}`
+they are convex and positively one-homogeneous (surface polyconvexity), which the existence
+theory of that model needs (as a function of :math:`\mathbf{F}` alone, :math:`J` is
+homogeneous of degree 2). The area term with
 :math:`\alpha_s` and the neo-Hookean membrane with :math:`\mu, \lambda` are not, so they lie
 outside that theory. This material has no bending stiffness and rejects a nonzero
 :param:`omega1`; bending needs :param:`surfacetensionmat2`.
