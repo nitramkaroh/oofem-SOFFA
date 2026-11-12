@@ -1,0 +1,33 @@
+material-calm-psi.out
+Material arc length: the Psi term uses the surface load direction with HPC
+StaticStructural solverType "matcalm" loadlevelguess 1.0 nsteps 1 deltat 1.0 stepLength 0.02 Psi 1. hpc 2 2 1 MaxIter 30 rtolv 1.e-11 rtolf 1.e-11 manrmsteps 1 nmodules 1
+errorcheck
+domain 2dPlaneStress
+OutputManager tstep_all dofman_all
+ndofman 2 nelem 2 ncrosssect 2 nmat 2 nbc 2 nic 0 nltf 1 nset 2
+# Both membranes share the unit segment; only the right horizontal displacement u is free.
+# Their combined energy is W(s,Lambda) = 0.5 Lambda s - 0.5 s + 0.5 (s^2 - 1) - ln(s), s=1+u.
+# Equilibrium gives Lambda = 1 - 2 (s - 1/s), with the exact initial equilibrium u=0, Lambda=1.
+# The material load vector on the free dof is q=d(f_int)/dLambda=0.5. Therefore Psi=1 and
+# stepLength=0.02 require u^2 + 0.25 (Lambda-1)^2 = 0.02^2, also when this dof is selected by HPC.
+# Solving these two scalar equations on the contracting branch gives the values checked below.
+# Selecting the only free dof by HPC must give the same result as using the full displacement norm.
+# Using the external reference load (zero here) instead of q makes u=-0.02 and fails these checks.
+node 1 coords 2 0 0
+node 2 coords 2 1 0
+lineplanestrainsurface 1 nodes 2 1 2 crosssect 1 nlgeo 1
+lineplanestrainsurface 2 nodes 2 1 2 crosssect 2 nlgeo 1
+simplesurfacecs 1 material 1
+simplesurfacecs 2 material 2
+surfacetensionmat 1 gamma1 0.5 d 1 arclenghtpar 1
+surfacetensionmat 2 gamma1 -0.5 mu 1 d 1
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 0 set 2
+ConstantFunction 1 f(t) 1
+Set 1 nodes 1 1
+Set 2 nodes 2 1 2
+#%BEGIN_CHECK% tolerance 1.e-10
+#NODE tStep 1 number 2 dof 1 unknown d value -0.008912200923257271
+#NODE tStep 1 number 2 dof 2 unknown d value 0.0
+#LOADLEVEL tStep 1 value 1.035809086819046
+#%END_CHECK%

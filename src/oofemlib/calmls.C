@@ -33,6 +33,7 @@
  */
 
 #include "calmls.h"
+#include <cmath>
 #include "verbose.h"
 #include "timestep.h"
 #include "floatmatrix.h"
@@ -402,7 +403,7 @@ restart:
 
         converged = this->checkConvergence(R, R0, F, X, ddX, Lambda, RR0, RR, drProduct,
                                            internalForcesEBENorm, nite, errorOutOfRangeFlag);
-        if ( ( nite >= nsmax ) || errorOutOfRangeFlag ) {
+        if ( ( nite >= nsmax && !( converged && nite >= minIterations ) ) || errorOutOfRangeFlag ) {
             irest++;
             if ( irest <= maxRestarts ) {
                 // convergence problems
@@ -446,6 +447,17 @@ restart:
 #ifdef VERBOSE
     // printf ("\nCALM - step iteration finished") ;
 #endif
+
+    // A failed attempt must not advance the accepted load level or displacement history.
+    if ( status == CR_DIVERGED_ITS ) {
+        X = XInitial;
+        dX.zero();
+        solved = 0;
+        engngModel->initStepIncrements();
+        tStep->incrementStateCounter();
+        engngModel->updateComponent( tStep, InternalRhs, domain );
+        return status;
+    }
 
     // Seems to be completely unused / Mikael
 #if 0
@@ -1085,10 +1097,15 @@ CylindricalALM :: computeDeltaLambda(double &deltaLambda, const FloatArray &dX, 
 
         // solution of quadratic eqn.
         double discr = a2 * a2 - 4.0 * a1 * a3;
+        if ( !std::isfinite( a1 ) || a1 <= 0. || !std::isfinite( discr ) ) {
+            OOFEM_WARNING("invalid arc-length constraint, restarting the step");
+            deltaLambda = 0.;
+            return 1;
+        }
         if ( discr < 0.0 ) {
             OOFEM_WARNING("discriminant is negative, restarting the step");
             deltaLambda = 0;
-            return 0;
+            return 1;
             //OOFEM_ERROR("discriminant is negative, solution failed");
         }
 
@@ -1558,26 +1575,29 @@ MaterialCylindricalALM ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
     //
     
     /////////////
-    this->setMaterialLambda( ReachedLambda ); // set material to current lambda
     FloatArray Fint_lam;
     Fint_lam.resize( neq );
-    // array of vector of lambda dependent internal forces, role of -Fext in classical arc-length
-    engngModel->updateArcLengthInternalForces( Fint_lam, tStep, InternalRhs, domain );
-
-    RR = parallel_context->localNorm( Fint_lam );
-    /////////////
-    // RR = parallel_context->localNorm( R );
-    RR *= RR;
 
 restart:
     //
     // A.1. calculation of (0)VarRt
     //
+    // Every attempt starts at the same displacement and material load level. In particular,
+    // do not reuse the material load vector or status left by an unsuccessful iteration.
+    X = XInitial;
     dX.zero();
-    // engngModel->updateComponent(tStep, InternalRhs, domain); // By not updating this, one obtains the old equilibrated tangent.
-
+    ddX.zero();
+    DeltaLambda = 0.;
+    drProduct = 0.;
+    Lambda = ReachedLambda;
+    this->setMaterialLambda( ReachedLambda );
+    tStep->incrementStateCounter();
+    engngModel->updateArcLengthInternalForces( Fint_lam, tStep, InternalRhs, domain );
+    RR = parallel_context->localNorm( Fint_lam );
+    RR *= RR;
+    // The material load-vector evaluation changes temporary stresses; restore the full state.
+    engngModel->updateComponent( tStep, InternalRhs, domain );
     engngModel->updateComponent( tStep, NonLinearLhs, domain );
-    /*linSolver->solve( k, R, deltaXt );*/
     FloatArray negFint( Fint_lam ); // solve() takes a non-const right-hand side, so no temporary here
     negFint.times( -1. );
     linSolver->solve( k, negFint, deltaXt );
@@ -1602,7 +1622,7 @@ restart:
         for ( i = 1; i <= HPsize; i++ ) {
             if ( ( ind = calm_HPCIndirectDofMask.at( i ) ) != 0 ) {
                 _XX += deltaXt.at( ind ) * deltaXt.at( ind );
-                _RR += R.at( ind ) * R.at( ind );
+                _RR += Fint_lam.at( ind ) * Fint_lam.at( ind );
             }
         }
 
@@ -1626,6 +1646,9 @@ restart:
         p = parallel_context->accumulate( p );
     }
 
+    if ( !std::isfinite( p ) || p == 0. ) {
+        OOFEM_ERROR( "material arc-length control has no nonzero direction in the selected degrees of freedom; check the controlled material parameter and the initial equilibrium" );
+    }
     Lambda = ReachedLambda;
     if ( rootselectiontype == RST_Cos ) {
         /* XR is unscaled Bergan's param of current stiffness XR = deltaXt^T k deltaXt
@@ -1760,7 +1783,7 @@ restart:
         //
         // B.3.
         //
-        if ( this->computeDeltaLambda( deltaLambda, dX, deltaXt, deltaX_, R, RR, eta, deltaL, DeltaLambda, neq ) ) {
+        if ( this->computeDeltaLambda( deltaLambda, dX, deltaXt, deltaX_, Fint_lam, RR, eta, deltaL, DeltaLambda, neq ) ) {
             irest++;
             if ( irest <= maxRestarts ) {
                 // convergence problems
@@ -1772,12 +1795,7 @@ restart:
                     deltaL = minStepLength;
                 }
 
-                // restore previous total displacement vector
-                X = XInitial;
-                // reset all changes fro previous equilibrium state
-                dX.zero();
-                // restore initial stiffness
-                engngModel->updateComponent( tStep, NonLinearLhs, domain );
+                engngModel->initStepIncrements();
 
                 OOFEM_LOG_INFO( "CALMLS:       Iteration Reset ...\n" );
 
@@ -1787,7 +1805,8 @@ restart:
                 goto restart;
             } else {
                 status = CR_DIVERGED_ITS;
-                OOFEM_ERROR( "can't continue further" );
+                OOFEM_WARNING( "material arc-length constraint could not be satisfied after %d restarts", maxRestarts );
+                break;
             }
         }
 
@@ -1870,7 +1889,7 @@ restart:
             errorOutOfRangeFlag, stabSolver, isBifurcationSet, alphamax, alphaStability, ddX, bifurcTypes, postBifurcationLineSearch, Lambda, RR0, RR, drProduct );
         ////////////////// 
 
-        if ( ( nite >= nsmax ) || errorOutOfRangeFlag ) {
+        if ( ( nite >= nsmax && !( converged && nite >= minIterations ) ) || errorOutOfRangeFlag ) {
             irest++;
             if ( irest <= maxRestarts ) {
                 // convergence problems
@@ -1882,13 +1901,7 @@ restart:
                     deltaL = minStepLength;
                 }
 
-                // restore previous total displacement vector
-                X = XInitial;
-                // reset all changes from previous equilibrium state
                 engngModel->initStepIncrements();
-                dX.zero();
-                // restore initial stiffness
-                engngModel->updateComponent( tStep, NonLinearLhs, domain );
 
                 OOFEM_LOG_INFO( "CALMLS:       Iteration Reset ...\n" );
 
@@ -1914,6 +1927,19 @@ restart:
 #ifdef VERBOSE
     // printf ("\nCALM - step iteration finished") ;
 #endif
+
+    // Do not publish or adapt a failed material step. The engineering model can retry it
+    // or stop, but must receive the old equilibrium and the actual failure reason.
+    if ( status == CR_DIVERGED_ITS ) {
+        X = XInitial;
+        dX.zero();
+        solved = 0;
+        this->setMaterialLambda( ReachedLambda );
+        engngModel->initStepIncrements();
+        tStep->incrementStateCounter();
+        engngModel->updateComponent( tStep, InternalRhs, domain );
+        return status;
+    }
 
     // Seems to be completely unused / Mikael
 #if 0
@@ -3433,7 +3459,7 @@ restart:
             }
         }
 
-        if ( ( nite >= nsmax ) || errorOutOfRangeFlag ) {
+        if ( ( nite >= nsmax && !( converged && nite >= minIterations ) ) || errorOutOfRangeFlag ) {
             if ( this->timeAsArcLength ) {
                 // deltaL is owned by the TimeStepController, so the solver must not
                 // shrink it behind the controller's back - that would desynchronise
@@ -3496,6 +3522,17 @@ restart:
 #ifdef VERBOSE
     // printf ("\nCALM - step iteration finished") ;
 #endif
+
+    // A failed attempt must not advance the accepted load level or displacement history.
+    if ( status == CR_DIVERGED_ITS ) {
+        X = XInitial;
+        dX.zero();
+        solved = 0;
+        engngModel->initStepIncrements();
+        tStep->incrementStateCounter();
+        engngModel->updateComponent( tStep, InternalRhs, domain );
+        return status;
+    }
 
     // Seems to be completely unused / Mikael
 #if 0

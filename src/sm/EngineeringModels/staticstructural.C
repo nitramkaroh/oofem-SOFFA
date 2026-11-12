@@ -55,6 +55,8 @@
 #include "classfactory.h"
 #include "assemblercallback.h"
 #include "outputmanager.h"
+#include "convergenceexception.h"
+#include "timestepcontroller.h"
 
 
 #include "sm/Materials/arclengthmaterialinterface.h"
@@ -355,11 +357,14 @@ void StaticStructural :: solveYourselfAt(TimeStep *tStep)
                                             currentIterations,
                                             tStep);
     }
-    if (status != CR_CONVERGED) {
-      OOFEM_WARNING("No success in solving problem at step %d", tStep->giveNumber());
-    }
     tStep->numberOfIterations = currentIterations;
     tStep->convergedReason = status;
+    if (status != CR_CONVERGED) {
+        if ( this->timeStepController->giveCurrentMetaStep()->giveTimeStepReductionStrategy()->giveReductionFlag() ) {
+            throw ConvergenceException("Nonlinear solver failed to converge at step " + std::to_string(tStep->giveNumber()));
+        }
+        OOFEM_ERROR("Nonlinear solver failed to converge at step %d", tStep->giveNumber());
+    }
 }
 
 void StaticStructural :: terminate(TimeStep *tStep)
@@ -387,10 +392,12 @@ double StaticStructural :: giveUnknownComponent(ValueModeType mode, TimeStep *tS
 {
     if (mode == VM_Residual) {
         // evaluate the residual of momentum balance for specific unknown
-        // evaluate the residual of momentum balance for specific unknown
         int eq = dof->__giveEquationNumber();
         if (eq && internalForces.isNotEmpty()) {
-            double ans = loadLevel*referenceForces.at(eq)-internalForces.at(eq);
+            double ans = -internalForces.at(eq);
+            if (referenceForces.isNotEmpty()) {
+                ans += nMethod->giveReferenceLoadScale(loadLevel) * referenceForces.at(eq);
+            }
             if (externalForces.isNotEmpty()) {
                 ans += externalForces.at(eq);
             }
@@ -484,7 +491,7 @@ StaticStructural :: computeExternalLoadReactionContribution(FloatArray &reaction
       reactions.zero();
       this->assembleVector( reactions, tStep, ReferenceForceAssembler(), VM_Total,
                             EModelDefaultPrescribedEquationNumbering(), this->giveDomain(di) );
-      reactions.times(loadLevel);
+      reactions.times(nMethod->giveReferenceLoadScale(loadLevel));
       this->assembleVector( reactions, tStep, ExternalForceAssembler(), VM_Total,
                             EModelDefaultPrescribedEquationNumbering(), this->giveDomain(di) );
     } else {

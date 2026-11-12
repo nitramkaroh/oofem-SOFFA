@@ -225,6 +225,29 @@ level :math:`\lambda` multiplies the surface tension, :math:`\gamma = \lambda \g
 values; the time functions are not used then. :param:`arclenghtpar` 0
 (default) switches it off.
 
+All materials with a nonzero :param:`arclenghtpar` share the same global load level.
+The time functions of materials without this setting are still evaluated normally.
+External loads, including loads marked ``reference``, remain fixed in ``matcalm``;
+the same convention is used for the equilibrium residual and the reported reactions.
+The ordinary ``calm`` solver instead scales its external reference loads by its load level.
+
+The material load vector is the derivative of the internal forces with respect to the
+load level. It generally depends on the current geometry. With ``Psi`` zero, the step
+length is measured in the displacement increments; ``hpc`` selects the degrees of freedom
+used for this measure. For nonzero ``Psi``, its parameter contribution uses the material
+load vector, also when ``hpc`` is given.
+
+Continuing in :math:`\omega` changes the bending stiffness, whereas continuing in
+:math:`\gamma` changes the surface tension. The former is useful for stiffness studies,
+but needs a nonzero initial material load direction. In particular, when :math:`H=H_0`
+the bending contribution and its load derivative vanish, so a stress-free reference
+configuration is not a valid starting point for bending-only continuation. Such a zero
+direction is rejected rather than producing an undefined predictor.
+
+A failed step is not accepted as an equilibrium: after exhausting the internal restarts,
+the solver restores its starting state and returns failure. The static structural model
+then uses its configured time-step reduction strategy, or stops if no such strategy is active.
+
 Check of the tangent stiffness
 ------------------------------
 

@@ -1,0 +1,28 @@
+surface-arclength-reference-classic.out
+Ordinary arc length continues to scale external reference loads by its load level
+StaticStructural solverType "calm" nsteps 1 deltat 1.0 stepLength 0.02 Psi 0. hpc 2 2 1 MaxIter 30 rtolv 1.e-11 rtolf 1.e-11 manrmsteps 1 nmodules 1
+errorcheck
+domain 2dPlaneStress
+OutputManager tstep_all dofman_all
+ndofman 2 nelem 1 ncrosssect 1 nmat 1 nbc 3 nic 0 nltf 1 nset 3
+# A unit membrane with mu=1 and no surface tension has axial force P=s-1/s, s=1+u_right.
+# The unit reference force on the free right end is multiplied by Lambda. HPC selects u_right=0.02,
+# hence Lambda=1.02-1/1.02=0.03960784313725496, and the fixed-end reaction is -Lambda.
+node 1 coords 2 0 0
+node 2 coords 2 1 0
+lineplanestrainsurface 1 nodes 2 1 2 crosssect 1 nlgeo 1
+simplesurfacecs 1 material 1
+surfacetensionmat 1 mu 1 d 1
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 0 set 2
+NodalLoad 3 loadTimeFunction 1 dofs 1 1 components 1 1.0 set 3 reference
+ConstantFunction 1 f(t) 1
+Set 1 nodes 1 1
+Set 2 nodes 2 1 2
+Set 3 nodes 1 2
+#%BEGIN_CHECK% tolerance 1.e-9
+#NODE tStep 1 number 2 dof 1 unknown d value 0.02
+#NODE tStep 1 number 2 dof 2 unknown d value 0.0
+#LOADLEVEL tStep 1 value 0.03960784313725496
+#REACTION tStep 1 number 1 dof 1 value -0.03960784313725496
+#%END_CHECK%

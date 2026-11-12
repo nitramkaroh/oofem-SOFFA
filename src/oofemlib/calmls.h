@@ -340,6 +340,9 @@ public:
     const char *giveClassName() const override { return "MaterialCylindricalALM"; }
     const char *giveInputRecordName() const { return _IFT_MaterialCylindricalALM_Name; }
 
+    /// Lambda controls the material; both external load vectors remain fixed.
+    double giveReferenceLoadScale( double ) const override { return 1.; }
+
     void setCALMmaterial( bool returnAll); // determines if the arclength material evaluates all internal forces or just the lambda part
     void setMaterialLambda( double lambdaSet ); // determines if the arclength material evaluates all internal forces or just the lambda part
 

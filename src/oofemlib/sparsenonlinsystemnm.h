@@ -140,6 +140,11 @@ public:
      */
     virtual bool referenceLoad() const { return false; }
     /**
+     * Scale of externally assembled reference forces. Ordinary arc-length methods use the load level;
+     * a material-driven method may keep these forces fixed while scaling an internal material term.
+     */
+    virtual double giveReferenceLoadScale(double loadLevel) const { return loadLevel; }
+    /**
      * Prints status message of receiver to output stream.
      * Prints the message corresponding to last solve.
      * @param outputStream Stream to print state to.
