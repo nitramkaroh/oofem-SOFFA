@@ -78,7 +78,14 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord
     readParameter( ir, this->alphaS, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha_s1, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha_sLTF );
     readParameter( ir, this->lambda, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_lambda, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_lambdaLTF );
     readParameter( ir, this->mu, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_mu, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_muLTF );
-    IR_GIVE_OPTIONAL_FIELD( ir, this->gaminit, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gaminit );
+
+    // gaminit of the earlier versions was added to gamma with gamma_ltf; an initial value belongs to the time function
+    // now. 0 is accepted, so the older inputs which give gaminit 0 run unchanged.
+    double gaminit = 0.;
+    IR_GIVE_OPTIONAL_FIELD( ir, gaminit, "gaminit" );
+    if ( gaminit != 0. ) {
+        throw ValueInputException( ir, "gaminit", "removed; gamma is gamma1 times the time function gamma_ltf, put the initial value into that function" );
+    }
 
     // older inputs with a single alpha and gamma
     double alphaTemp = 0., gammaTemp = 0.;
@@ -144,16 +151,6 @@ double IsotropicPolyconvexHyperelasticSurfaceMaterial::giveParameter( const Surf
 }
 
 
-double IsotropicPolyconvexHyperelasticSurfaceMaterial::giveGamma( TimeStep *tStep ) const
-{
-    double g = this->giveParameter( this->gamma, calm_par_gamma, tStep );
-    if ( !this->hasArcLengthParameter() && this->gamma.ltf ) {
-        g += this->gaminit;
-    }
-    return g;
-}
-
-
 Tensor2_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::giveSurfaceIdentity( const FloatArray &normal )
 {
     FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
@@ -167,7 +164,7 @@ Tensor2_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::giveSurfaceIdentity( 
 
 Tensor2_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::computeMembraneStress( const Tensor2_3d &F, const Tensor2_3d &Is, TimeStep *tStep ) const
 {
-    double gamma_t  = this->giveGamma( tStep );
+    double gamma_t  = this->giveParameter( this->gamma, calm_par_gamma, tStep );
     double alpha_t  = this->giveParameter( this->alpha, calm_par_no, tStep );
     double alphaS_t = this->giveParameter( this->alphaS, calm_par_no, tStep );
     double lambda_t = this->giveParameter( this->lambda, calm_par_no, tStep );
@@ -192,7 +189,7 @@ Tensor2_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::computeMembraneStress
 
 Tensor4_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::computeMembraneTangent( const Tensor2_3d &F, const Tensor2_3d &Is, TimeStep *tStep ) const
 {
-    double gamma_t  = this->giveGamma( tStep );
+    double gamma_t  = this->giveParameter( this->gamma, calm_par_gamma, tStep );
     double alpha_t  = this->giveParameter( this->alpha, calm_par_no, tStep );
     double alphaS_t = this->giveParameter( this->alphaS, calm_par_no, tStep );
     double lambda_t = this->giveParameter( this->lambda, calm_par_no, tStep );

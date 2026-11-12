@@ -24,10 +24,10 @@ bsplineplanestrainsurfaceelement 3 nodes 3 5 6 7 crosssect 1 knotvectoru 2 0 1 d
 bsplineplanestrainsurfaceelement 4 nodes 3 8 9 10 crosssect 2 knotvectoru 2 0 1 degree 1 2 nip 3 nlgeo 1
 simplesurfacecs 1 material 1
 simplesurfacecs 2 material 2
-# at t = 1: gamma = gaminit + gamma1 f2 = 0.1 + 0.4 * 0.5 = 0.3, alphas = 0.8 f3 = 0.2, lambda = 0.3 f2 = 0.15;
+# at t = 1: gamma = gamma1 f2 = 0.6 * 0.5 = 0.3, alphas = 0.8 f3 = 0.2, lambda = 0.3 f2 = 0.15;
 # alpha1 = 0.2 and mu = 0.1 have no time function and stay constant
-surfacetensionmat 1 gamma1 0.4 gamma_ltf 2 gaminit 0.1 alpha1 0.2 alphas 0.8 alphas_ltf 3 lambda 0.3 lambda_ltf 2 mu 0.1 d 1.
-surfacetensionmat2 2 gamma1 0.4 gamma_ltf 2 gaminit 0.1 alpha1 0.2 alphas 0.8 alphas_ltf 3 lambda 0.3 lambda_ltf 2 mu 0.1 omega1 0. d 1.
+surfacetensionmat 1 gamma1 0.6 gamma_ltf 2 alpha1 0.2 alphas 0.8 alphas_ltf 3 lambda 0.3 lambda_ltf 2 mu 0.1 d 1.
+surfacetensionmat2 2 gamma1 0.6 gamma_ltf 2 alpha1 0.2 alphas 0.8 alphas_ltf 3 lambda 0.3 lambda_ltf 2 mu 0.1 omega1 0. d 1.
 BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 1
 BoundaryCondition 2 loadTimeFunction 1 dofs 1 1 values 1 0.5 set 2
 BoundaryCondition 3 loadTimeFunction 1 dofs 1 1 values 1 1.0 set 3

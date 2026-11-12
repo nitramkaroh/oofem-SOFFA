@@ -6,6 +6,7 @@
 # - f0 and the normal have finite components, and the prestrain has a finite nonzero area ratio;
 # - the keywords fixgamma, fixomega, fixalphas and aniso_ltf of earlier versions stop the analysis, because gamma_ltf
 #   no longer scales all parameters (every parameter has its own <name>_ltf);
+# - gaminit of earlier versions is accepted only as 0: an initial value of gamma belongs to its time function;
 # - arclenghtpar 2 (omega as the load parameter) needs the bending material surfacetensionmat2.
 # The inputs are generated into a temporary directory, so nothing is written to tests/sm.
 # All displacements are prescribed; the material is evaluated for the reactions.
@@ -98,6 +99,8 @@ expect_error f0-inf                    "$TRIANGLE prestrain 1 f0 9 inf 0.9 0. 0.
 expect_error f0-area-overflow          "$TRIANGLE prestrain 1 f0 9 1e155 0.9 0. 0. 0. 0. 0. 0. 0." "$MEMBRANE" 'non-finite area ratio'
 expect_error removed-fixgamma          "$TRIANGLE"                        "$MEMBRANE gamma_ltf 1 fixgamma 0" 'removed'
 expect_error removed-fixalphas         "$TRIANGLE"                        "$MEMBRANE fixalphas 1"  'removed'
+expect_run   gaminit-zero              "$TRIANGLE"                        "$MEMBRANE gamma_ltf 1 gaminit 0."
+expect_error removed-gaminit           "$TRIANGLE"                        "$MEMBRANE gamma_ltf 1 gaminit 0.1" 'into that function'
 expect_error membrane-arclength-omega  "$TRIANGLE"                        "$MEMBRANE arclenghtpar 2" 'only surfacetensionmat2'
 
 [ "$failures" -eq 0 ]

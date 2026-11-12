@@ -50,7 +50,7 @@ outside that theory. This material has no bending stiffness and rejects a nonzer
    | Description        | Isotropic surface membrane (surface tension and surface elasticity)                          |
    +--------------------+----------------------------------------------------------------------------------------------+
    | Record Format      | :descitem:`surfacetensionmat` :elemparam:`num{in}` :elemparam:`d{rn}`                        |
-   |                    | :optelemparam:`gamma1{rn}` :optelemparam:`gamma_ltf{in}` :optelemparam:`gaminit{rn}`         |
+   |                    | :optelemparam:`gamma1{rn}` :optelemparam:`gamma_ltf{in}`                                     |
    |                    | :optelemparam:`alpha1{rn}` :optelemparam:`alpha_ltf{in}` :optelemparam:`alphas{rn}`          |
    |                    | :optelemparam:`alphas_ltf{in}` :optelemparam:`mu{rn}` :optelemparam:`mu_ltf{in}`             |
    |                    | :optelemparam:`lambda{rn}` :optelemparam:`lambda_ltf{in}` :optelemparam:`arclenghtpar{in}`   |
@@ -59,8 +59,6 @@ outside that theory. This material has no bending stiffness and rejects a nonzer
    | Parameters         | - material number                                                                            |
    |                    | - :param:`d` material density                                                                |
    |                    | - :param:`gamma1` surface tension :math:`\gamma` (also :param:`gamma`, the older name)       |
-   |                    | - :param:`gaminit` surface tension :math:`\gamma_0` added when :param:`gamma_ltf` is given,  |
-   |                    |   :math:`\gamma(t) = \gamma_0 + \gamma_1 f(t)`                                               |
    |                    | - :param:`alpha1` coefficient :math:`\alpha` of :math:`|\mathbf{F}|` (also :param:`alpha`,   |
    |                    |   the older name)                                                                            |
    |                    | - :param:`alphas` coefficient :math:`\alpha_s` of the area term                              |
@@ -114,7 +112,7 @@ reject it, even with :math:`\omega = 0`.
    | Description        | Isotropic surface membrane with bending stiffness                                            |
    +--------------------+----------------------------------------------------------------------------------------------+
    | Record Format      | :descitem:`surfacetensionmat2` :elemparam:`num{in}` :elemparam:`d{rn}`                       |
-   |                    | :optelemparam:`gamma1{rn}` :optelemparam:`gamma_ltf{in}` :optelemparam:`gaminit{rn}`         |
+   |                    | :optelemparam:`gamma1{rn}` :optelemparam:`gamma_ltf{in}`                                     |
    |                    | :optelemparam:`alpha1{rn}` :optelemparam:`alpha_ltf{in}` :optelemparam:`alphas{rn}`          |
    |                    | :optelemparam:`alphas_ltf{in}` :optelemparam:`mu{rn}` :optelemparam:`mu_ltf{in}`             |
    |                    | :optelemparam:`lambda{rn}` :optelemparam:`lambda_ltf{in}` :optelemparam:`omega1{rn}`         |
@@ -177,7 +175,7 @@ error.
    | Description        | Surface membrane with one family of fibres                                                   |
    +--------------------+----------------------------------------------------------------------------------------------+
    | Record Format      | :descitem:`anisosurfacetensionmat` :elemparam:`num{in}` :elemparam:`d{rn}`                   |
-   |                    | :optelemparam:`gamma1{rn}` :optelemparam:`gamma_ltf{in}` :optelemparam:`gaminit{rn}`         |
+   |                    | :optelemparam:`gamma1{rn}` :optelemparam:`gamma_ltf{in}`                                     |
    |                    | :optelemparam:`alpha1{rn}` :optelemparam:`alpha_ltf{in}` :optelemparam:`alphas{rn}`          |
    |                    | :optelemparam:`alphas_ltf{in}` :optelemparam:`mu{rn}` :optelemparam:`mu_ltf{in}`             |
    |                    | :optelemparam:`lambda{rn}` :optelemparam:`lambda_ltf{in}` :elemparam:`p_1{ra}`               |
@@ -212,9 +210,9 @@ Each of the parameters :param:`gamma1`, :param:`alpha1`, :param:`alphas`, :param
 function, given by the parameter of the same name with the suffix ``_ltf`` (e.g.
 :param:`mu_ltf` for :param:`mu`); the value :math:`p` of the parameter is then
 :math:`p\,f(t)` with the value :math:`f(t)` of the time function, otherwise it is constant.
-The surface tension is the exception: with :param:`gamma_ltf` it is
-:math:`\gamma(t) = \gamma_0 + \gamma_1 f(t)` with :math:`\gamma_0` = :param:`gaminit` and
-:math:`\gamma_1` = :param:`gamma1`.
+An initial value belongs to the time function: for example,
+:math:`\gamma(t) = \gamma_0 + \gamma_1 t` is :param:`gamma1` 1 with the time function
+:math:`f(t) = \gamma_0 + \gamma_1 t` (``PiecewiseLinFunction`` or ``UsrDefLTF``).
 
 Material arc-length method
 --------------------------
@@ -224,7 +222,7 @@ material arc-length method (solver ``matcalm`` of the static structural analysis
 level :math:`\lambda` multiplies the surface tension, :math:`\gamma = \lambda \gamma_1`
 (:param:`arclenghtpar` 1), or the bending modulus, :math:`\omega = \lambda \omega_1`
 (:param:`arclenghtpar` 2, only :param:`surfacetensionmat2`). All other parameters keep their
-values; the time functions and :param:`gaminit` are not used then. :param:`arclenghtpar` 0
+values; the time functions are not used then. :param:`arclenghtpar` 0
 (default) switches it off.
 
 Check of the tangent stiffness

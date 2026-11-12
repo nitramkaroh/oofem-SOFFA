@@ -53,7 +53,6 @@
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha_sLTF "alphas_ltf"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_lambdaLTF "lambda_ltf"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_muLTF "mu_ltf"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_gaminit "gaminit"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_ArcLengthParameter "arclenghtpar"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_checkTangent "checktangent"
 //@}
@@ -91,9 +90,9 @@ struct SurfaceMaterialParameter {
  *
  * Parameters (keyword, time function), all optional with the default 0: gamma1 (or gamma) with gamma_ltf, alpha1
  * (or alpha) with alpha_ltf, alphas with alphas_ltf, lambda with lambda_ltf, mu with mu_ltf. A parameter without its
- * time function is constant, with it the value times the function; gamma(t) = gaminit + gamma1 f(t) (gaminit is
- * used only with gamma_ltf). With arclenghtpar 1, gamma is the load parameter of the material arc-length method
- * (matcalm); the time functions and gaminit are not used then.
+ * time function is constant, with it the value times the function, e.g. gamma(t) = gamma1 f(t); an initial value
+ * belongs to the time function. With arclenghtpar 1, gamma is the load parameter of the material arc-length method
+ * (matcalm); the time functions are not used then.
  * checktangent tol > 0 compares the tangents with central finite differences at every evaluation of dP/dF and stops
  * when the relative difference exceeds tol; tol < 0 only prints the differences.
  */
@@ -101,7 +100,6 @@ class IsotropicPolyconvexHyperelasticSurfaceMaterial : public HyperElasticSurfac
 {
 protected:
     SurfaceMaterialParameter gamma, alpha, alphaS, lambda, mu;
-    double gaminit = 0.;
 
     /// Material parameter which is the load parameter of the material arc-length method, if any.
     enum CALM_parameter {
@@ -135,7 +133,6 @@ protected:
     static Tensor2_3d giveSurfaceIdentity( const FloatArray &normal );
     /// Value of a parameter at the time step, or its arc-length share when the arc-length method drives the material.
     double giveParameter( const SurfaceMaterialParameter &p, CALM_parameter role, TimeStep *tStep ) const;
-    double giveGamma( TimeStep *tStep ) const;
     static void readParameter( InputRecord &ir, SurfaceMaterialParameter &p, const char *name, const char *ltfName );
 
     /// First Piola-Kirchhoff stress of the membrane energy.
