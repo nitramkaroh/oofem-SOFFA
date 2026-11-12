@@ -39,12 +39,6 @@ HyperElasticSurfaceMaterial::HyperElasticSurfaceMaterial( int n, Domain *d ) :
     StructuralMaterial( n, d )
 {}
 
-void HyperElasticSurfaceMaterial::initializeFrom( InputRecord &ir )
-{
-    StructuralMaterial::initializeFrom( ir );
-}
-
-
 FloatMatrixF<9, 9>
 HyperElasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {

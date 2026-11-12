@@ -42,7 +42,7 @@
 
 namespace oofem {
 StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g ) :
-    StructuralMaterialStatus( g ), MVector(), tempMVector(), KVector(), tempKVector(), GVector(), tempGVector(), dIVector(), tempdIVector(), D2eDK2_Matrix(), tempD2eDK2_Matrix()
+    StructuralMaterialStatus( g ), MVector(), tempMVector(), KVector(), tempKVector(), GVector(), tempGVector(), dIVector(), tempdIVector()
 {
     // Surface identity in the frame with the normal as the third axis, which all Lagrange
     // surface elements (NLStructuralSurfaceElement, 2D and 3D) use for F
@@ -72,9 +72,6 @@ StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g
 
     // Empty gradients mark a fresh status. The surface evaluator supplies the reference
     // gradients before the first tangent; on a curved surface they are not zero.
-    
-    D2eDK2_Matrix.resize( 9, 9 );
-    tempD2eDK2_Matrix = D2eDK2_Matrix;
 }
 
 
@@ -86,7 +83,6 @@ void StructuralSurfaceMaterialStatus ::updateYourself( TimeStep *tStep )
     KVector       = tempKVector;
     GVector = tempGVector;
     dIVector    = tempdIVector;
-    D2eDK2_Matrix = tempD2eDK2_Matrix;
 }
 
 
@@ -102,7 +98,6 @@ void StructuralSurfaceMaterialStatus ::initTempStatus()
     tempKVector       = KVector;
     tempGVector = GVector;
     tempdIVector = dIVector;
-    tempD2eDK2_Matrix = D2eDK2_Matrix;
 }
 
 
@@ -123,9 +118,6 @@ void StructuralSurfaceMaterialStatus ::copyStateVariables( const MaterialStatus 
 
     dIVector     = structStatus.givedIVector();
     tempdIVector = structStatus.giveTempdIVector();
-
-    D2eDK2_Matrix     = structStatus.giveD2eDK2_Matrix();
-    tempD2eDK2_Matrix = structStatus.giveTempD2eDK2_Matrix();
 }
 
 } // end namespace oofem

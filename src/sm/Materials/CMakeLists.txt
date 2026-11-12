@@ -98,7 +98,6 @@ set (sm_material
 	
 	#Hyperelastic surface material
 	HyperelasticSurfaceMaterials/hyperelasticsurfacematerial.C
-	HyperelasticSurfaceMaterials/hyperelasticsurfacematerial.C
 	linearelasticsurfacematerial.C
 	isolinearelasticsurfacematerial.C
 	HyperelasticSurfaceMaterials/isopolyconvexhyperelasticsurfacematerial.C

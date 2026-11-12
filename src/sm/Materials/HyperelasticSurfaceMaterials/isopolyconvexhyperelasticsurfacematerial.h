@@ -197,7 +197,6 @@ protected:
         double J = 0., H = 0., H0 = 0., omega = 0.;
     };
 
-    double giveOmega( TimeStep *tStep ) const;
     /// Reference mean curvature H0 according to useh0; gradIt is the gradient of the reference surface identity.
     double giveH0( const Tensor1_3d &N, const Tensor3_3d &gradIt ) const;
     /// grad F and the gradient of the reference surface identity, which the second order stress left in the temporary status.

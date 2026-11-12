@@ -69,9 +69,6 @@ protected:
     FloatArray dIVector; ///< Gradient of the reference surface identity
     FloatArray tempdIVector;
 
-    FloatMatrix D2eDK2_Matrix; ///< d2e/dK2 (9 x 9); no longer written by the materials, stays zero
-    FloatMatrix tempD2eDK2_Matrix;
-
 public:
     /// Constructor. Creates new StructuralSurfaceMaterialStatus with IntegrationPoint g.
     StructuralSurfaceMaterialStatus( GaussPoint *g );
@@ -87,8 +84,6 @@ public:
     const FloatArray &giveTempGVector() const { return tempGVector; }
     const FloatArray &givedIVector() const { return dIVector; }
     const FloatArray &giveTempdIVector() const { return tempdIVector; }
-    const FloatMatrix &giveD2eDK2_Matrix() const { return D2eDK2_Matrix; }
-    const FloatMatrix &giveTempD2eDK2_Matrix() const { return tempD2eDK2_Matrix; }
 
     void letMVectorBe( const FloatArray &v ) { MVector = v; }
     void letTempMVectorBe( const FloatArray &v ) { tempMVector = v; }
@@ -98,8 +93,6 @@ public:
     void letTempGVectorBe( const FloatArray &v ) { tempGVector = v; }
     void letdIVectorBe( const FloatArray &v ) { dIVector = v; }
     void letTempdIVectorBe( const FloatArray &v ) { tempdIVector = v; }
-    void letD2eDK2_MatrixBe( const FloatMatrix &v ) { D2eDK2_Matrix = v; }
-    void lettempD2eDK2_MatrixBe( const FloatMatrix &v ) { tempD2eDK2_Matrix = v; }
 
     const char *giveClassName() const override { return "StructuralSurfaceMaterialStatus"; }
 

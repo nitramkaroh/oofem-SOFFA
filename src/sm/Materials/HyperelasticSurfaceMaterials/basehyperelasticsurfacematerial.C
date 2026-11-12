@@ -68,38 +68,6 @@ Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_pseudoinverse( const
 };
 
 
-Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_cofactor( const Tensor2_3d &F ) const
-{
-    // Explicit formula for N = e3 (F with a zero third column)
-    Tensor2_3d cofF;
-    double F11, F12, F21, F22, F31, F32;
-    F11 = F( 0, 0 );
-    F12 = F( 0, 1 );
-    F21 = F( 1, 0 );
-    F22 = F( 1, 1 );
-    F31 = F( 2, 0 );
-    F32 = F( 2, 1 );
-
-    cofF( 0, 0 ) = F11 * ( pow( F12, 2 ) + pow( F22, 2 ) + pow( F32, 2 ) ) - F12 * ( F11 * F12 + F21 * F22 + F31 * F32 );
-    cofF( 0, 1 ) = F12 * ( pow( F11, 2 ) + pow( F21, 2 ) + pow( F31, 2 ) ) - F11 * ( F11 * F12 + F21 * F22 + F31 * F32 );
-    cofF( 1, 0 ) = F21 * ( pow( F12, 2 ) + pow( F22, 2 ) + pow( F32, 2 ) ) - F22 * ( F11 * F12 + F21 * F22 + F31 * F32 );
-    cofF( 1, 1 ) = F22 * ( pow( F11, 2 ) + pow( F21, 2 ) + pow( F31, 2 ) ) - F21 * ( F11 * F12 + F21 * F22 + F31 * F32 );
-    cofF( 2, 0 ) = F31 * ( pow( F12, 2 ) + pow( F22, 2 ) + pow( F32, 2 ) ) - F32 * ( F11 * F12 + F21 * F22 + F31 * F32 );
-    cofF( 2, 1 ) = F32 * ( pow( F11, 2 ) + pow( F21, 2 ) + pow( F31, 2 ) ) - F31 * ( F11 * F12 + F21 * F22 + F31 * F32 );
-
-    // cofF2 (the general formula of the version with I, for I = diag(1, 1, 0)) is computed but not used
-    Tensor2_3d C, cofF2;
-    C( i_3, j_3 )         = F( k_3, i_3 ) * F( k_3, j_3 );
-    FloatArrayF<9> indent = { 1., 1., 0., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d I( indent );
-    auto trC          = C( i_3, i_3 );
-    cofF2( i_3, k_3 ) = F( i_3, j_3 ) * ( trC * I( j_3, k_3 ) - C( j_3, k_3 ) );
-
-    cofF( i_3, j_3 ) = 1. / this->compute_surface_determinant( F ) * cofF( i_3, j_3 );
-
-    return cofF;
-};
-
 Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_cofactor( const Tensor2_3d &F, const Tensor2_3d &I ) const
 {
     Tensor2_3d cofF, C, cofF2;
@@ -109,67 +77,6 @@ Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_cofactor( const Tens
     cofF( i_3, j_3 )  = 1. / this->compute_surface_determinant( F ) * cofF2( i_3, j_3 );
 
     return cofF;
-};
-
-Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_dCof_dF( const Tensor2_3d &F ) const
-{
-    // Explicit formula for N = e3 (F with a zero third column); the version with I below is the general form
-    Tensor4_3d A1, A2, A;
-    double F11, F12, F21, F22, F31, F32;
-    F11 = F( 0, 0 );
-    F12 = F( 0, 1 );
-    F21 = F( 1, 0 );
-    F22 = F( 1, 1 );
-    F31 = F( 2, 0 );
-    F32 = F( 2, 1 );
-
-    A1( 0, 0, 0, 0 ) = pow( F22, 2 ) + pow( F32, 2 );
-    A1( 0, 1, 0, 0 ) = -F21 * F22 - F31 * F32;
-    A1( 1, 0, 0, 0 ) = -F12 * F22;
-    A1( 1, 1, 0, 0 ) = 2 * F11 * F22 - F12 * F21;
-    A1( 2, 0, 0, 0 ) = -F12 * F32;
-    A1( 2, 1, 0, 0 ) = 2 * F11 * F32 - F12 * F31;
-
-    A1( 0, 0, 1, 0 ) = -F12 * F22;
-    A1( 0, 1, 1, 0 ) = 2 * F12 * F21 - F11 * F22;
-    A1( 1, 0, 1, 0 ) = pow( F12, 2 ) + pow( F32, 2 );
-    A1( 1, 1, 1, 0 ) = -F11 * F12 - F31 * F32;
-    A1( 2, 0, 1, 0 ) = -F22 * F32;
-    A1( 2, 1, 1, 0 ) = 2 * F21 * F32 - F22 * F31;
-
-    A1( 0, 0, 2, 0 ) = -F12 * F32;
-    A1( 0, 1, 2, 0 ) = 2 * F12 * F31 - F11 * F32;
-    A1( 1, 0, 2, 0 ) = -F22 * F32;
-    A1( 1, 1, 2, 0 ) = 2 * F22 * F31 - F21 * F32;
-    A1( 2, 0, 2, 0 ) = pow( F12, 2 ) + pow( F22, 2 );
-    A1( 2, 1, 2, 0 ) = -F11 * F12 - F21 * F22;
-
-    A1( 0, 0, 0, 1 ) = -F21 * F22 - F31 * F32;
-    A1( 0, 1, 0, 1 ) = pow( F21, 2 ) + pow( F31, 2 );
-    A1( 1, 0, 0, 1 ) = 2 * F12 * F21 - F11 * F22;
-    A1( 1, 1, 0, 1 ) = -F11 * F21;
-    A1( 2, 0, 0, 1 ) = 2 * F12 * F31 - F11 * F32;
-    A1( 2, 1, 0, 1 ) = -F11 * F31;
-
-    A1( 0, 0, 1, 1 ) = 2 * F11 * F22 - F12 * F21;
-    A1( 0, 1, 1, 1 ) = -F11 * F21;
-    A1( 1, 0, 1, 1 ) = -F11 * F12 - F31 * F32;
-    A1( 1, 1, 1, 1 ) = pow( F11, 2 ) + pow( F31, 2 );
-    A1( 2, 0, 1, 1 ) = 2 * F22 * F31 - F21 * F32;
-    A1( 2, 1, 1, 1 ) = -F21 * F31;
-
-    A1( 0, 0, 2, 1 ) = 2 * F11 * F32 - F12 * F31;
-    A1( 0, 1, 2, 1 ) = -F11 * F31;
-    A1( 1, 0, 2, 1 ) = 2 * F21 * F32 - F22 * F31;
-    A1( 1, 1, 2, 1 ) = -F21 * F31;
-    A1( 2, 0, 2, 1 ) = -F11 * F12 - F21 * F22;
-    A1( 2, 1, 2, 1 ) = pow( F11, 2 ) + pow( F21, 2 );
-
-    Tensor2_3d cofF          = this->compute_surface_cofactor( F );
-    A2( i_3, j_3, k_3, l_3 ) = -cofF( i_3, j_3 ) * cofF( k_3, l_3 );
-    A( i_3, j_3, k_3, l_3 )  = 1. / this->compute_surface_determinant( F ) * ( A1( i_3, j_3, k_3, l_3 ) + A2( i_3, j_3, k_3, l_3 ) );
-
-    return A;
 };
 
 Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_dCof_dF( const Tensor2_3d &F, const Tensor2_3d &I ) const
@@ -211,29 +118,6 @@ double BaseHyperElasticSurfaceMaterial::compute_surface_NormF( const Tensor2_3d 
     return sqrt( F( i_3, j_3 ) * F( i_3, j_3 ) );
 }
 
-Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_normF_dF2( const Tensor2_3d &F ) const
-{
-    Tensor4_3d answer, part1, part2;
-    double normF = this->compute_surface_NormF( F );
-
-    part1( 0, 0, 0, 0 ) = 1;
-    part1( 1, 0, 1, 0 ) = 1;
-    part1( 2, 0, 2, 0 ) = 1;
-    part1( 0, 1, 0, 1 ) = 1;
-    part1( 1, 1, 1, 1 ) = 1;
-    part1( 2, 1, 2, 1 ) = 1;
-    part1( 0, 2, 0, 2 ) = 1;
-    part1( 1, 2, 1, 2 ) = 1;
-    part1( 2, 2, 2, 2 ) = 1;
-
-    part1( i_3, j_3, k_3, l_3 ) = 1 / normF * part1( i_3, j_3, k_3, l_3 );
-
-    part2( i_3, j_3, k_3, l_3 ) = -1 / pow( normF, 3 ) * F( i_3, j_3 ) * F( k_3, l_3 );
-
-    answer( i_3, j_3, k_3, l_3 ) = part1( i_3, j_3, k_3, l_3 ) + part2( i_3, j_3, k_3, l_3 );
-    return answer;
-};
-
 Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_normF_dF2( const Tensor2_3d &F, const Tensor2_3d &I ) const
 {
     Tensor4_3d answer, part1, part2;
@@ -249,21 +133,6 @@ Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_normF_dF2( const 
 
     return answer;
 };
-
-FloatArray BaseHyperElasticSurfaceMaterial::compute_deformed_normal( const Tensor2_3d &F ) const
-{
-    FloatArray normal( 3 );
-    FloatMatrix Fm;
-    F.toFloatMatrix( Fm );
-    // Compute cross product of first two columns
-    normal.at( 1 ) = Fm.at( 2, 1 ) * Fm.at( 3, 2 ) - Fm.at( 3, 1 ) * Fm.at( 2, 2 );
-    normal.at( 2 ) = Fm.at( 3, 1 ) * Fm.at( 1, 2 ) - Fm.at( 1, 1 ) * Fm.at( 3, 2 );
-    normal.at( 3 ) = Fm.at( 1, 1 ) * Fm.at( 2, 2 ) - Fm.at( 2, 1 ) * Fm.at( 1, 2 );
-
-    normal = 1 / this->compute_surface_determinant( F ) * normal;
-
-    return normal;
-}
 
 Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_d_normFa_dF( const Tensor2_3d &F, const Tensor1_3d &a ) const
 {

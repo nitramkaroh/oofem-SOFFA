@@ -391,12 +391,6 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial2::initializeFrom( InputRecor
 }
 
 
-double IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveOmega( TimeStep *tStep ) const
-{
-    return this->giveParameter( this->omega, calm_par_omega, tStep );
-}
-
-
 double IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveH0( const Tensor1_3d &N, const Tensor3_3d &gradIt ) const
 {
     if ( this->use_H0 == 1 ) {
@@ -425,7 +419,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::BendingState
 IsotropicPolyconvexHyperelasticSurfaceMaterial2::computeBendingState( const Tensor2_3d &F, const Tensor2_3d &Is, const Tensor1_3d &N, const Tensor3_3d &G, const Tensor3_3d &gradIt, TimeStep *tStep ) const
 {
     BendingState s;
-    s.omega = this->giveOmega( tStep );
+    s.omega = this->giveParameter( this->omega, calm_par_omega, tStep );
     s.J     = this->compute_surface_determinant( F );
 
     Tensor2_3d Finv = this->compute_surface_pseudoinverse( F, Is );
