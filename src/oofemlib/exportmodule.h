@@ -36,6 +36,7 @@
 #define exportmodule_h
 
 #include "oofemcfg.h"
+#include "floatarray.h"
 #include "intarray.h"
 #include "inputrecord.h"
 #include "range.h"
@@ -48,6 +49,7 @@
 #define _IFT_ExportModule_tstepall "tstep_all"
 #define _IFT_ExportModule_tstepstep "tstep_step"
 #define _IFT_ExportModule_tstepsout "tsteps_out"
+#define _IFT_ExportModule_forceoutputtimes "forceoutputtimes"
 #define _IFT_ExportModule_subtstepsout "subtsteps_out"
 #define _IFT_ExportModule_domainall "domain_all"
 #define _IFT_ExportModule_domainmask "domain_mask"
@@ -82,6 +84,11 @@ protected:
     int tstep_step_out;
     /// List of user selected step numbers.
     std :: list< Range >tsteps_out;
+    /// Physical times (already scaled by timeScale) at which output is always
+    /// forced, independent of adaptive step numbering. Used to guarantee that
+    /// user-specified required times (e.g. magnetized / fully loaded states)
+    /// are exported even when the module thins output with tstep_step.
+    FloatArray forceOutputTimes;
     /**
      * Flag turning output in solution step substeps/itarations. Allows to visualize the
      * varibles during equilibrium iterations, etc. Usefull for debugging.

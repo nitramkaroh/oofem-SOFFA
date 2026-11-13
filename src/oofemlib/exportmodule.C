@@ -68,6 +68,9 @@ ExportModule :: initializeFrom(InputRecord &ir)
     tstep_substeps_out_flag = 0;
     IR_GIVE_OPTIONAL_FIELD(ir, tstep_substeps_out_flag, _IFT_ExportModule_subtstepsout);
 
+    forceOutputTimes.clear();
+    IR_GIVE_OPTIONAL_FIELD(ir, forceOutputTimes, _IFT_ExportModule_forceoutputtimes);
+
     IR_GIVE_OPTIONAL_FIELD(ir, pythonExport, _IFT_ExportModule_pythonexport);
     
     domain_all_flag = ir.hasField(_IFT_ExportModule_domainall);
@@ -161,6 +164,32 @@ ExportModule :: testTimeStepOutput(TimeStep *tStep)
         // test if INCLUDED
         if ( step.test( tStep->giveNumber() ) ) {
             return true;
+        }
+    }
+
+    // Forced output at user-specified physical times. This is independent of
+    // adaptive step numbering, so it reliably captures required times (e.g.
+    // the magnetized and fully loaded configurations) even when output is
+    // thinned with tstep_step. The clamp in MetaStep::giveTimeIncrement lands
+    // a step exactly on the required time, so the tolerance is only a
+    // floating-point margin.
+    if ( !forceOutputTimes.isEmpty() ) {
+        double targetTime = tStep->giveTargetTime() * this->timeScale;
+        // FloatArray::at() is 1-based: with at(i) the loop read out-of-bounds
+        // at(0) and never compared the LAST forced time (t=110 silently dropped).
+        for ( int i = 1; i <= forceOutputTimes.giveSize(); i++ ) {
+            double t = forceOutputTimes.at(i);
+            double scale = ( t < 0 ? -t : t );
+            if ( scale < 1.0 ) {
+                scale = 1.0;
+            }
+            double diff = targetTime - t;
+            if ( diff < 0 ) {
+                diff = -diff;
+            }
+            if ( diff <= 1e-8 * scale ) {
+                return true;
+            }
         }
     }
 
