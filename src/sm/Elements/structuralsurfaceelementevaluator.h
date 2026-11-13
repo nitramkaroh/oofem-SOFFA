@@ -58,6 +58,10 @@ protected:
     StructuralSurfaceElementEvaluator();
     virtual ~StructuralSurfaceElementEvaluator(){}
 
+public:
+    /// Reads nlgeo like StructuralElementEvaluator and rejects everything but 1 (only large strains are implemented).
+    void initializeFrom( InputRecord &ir ) override;
+
 protected:
     /**
      * Computes the first Piola-Kirchhoff stress (9 components) from the surface deformation gradient F
@@ -108,17 +112,17 @@ protected:
      */
     void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
-    /// grad F = G x (27 components) with the current positions x = X + u of the control points.
-    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
-
-    /// Curvature at the local coordinates coords of the integration rule RuleIndex, for the VTK export.
-    virtual void computeReferenceCurvature( FloatArray &RefCurvature, TimeStep *tStep, FloatArray &coords, int RuleIndex )
+    /**
+     * Current curvature K (the temporary value stored by the material at the Gauss points) at the local
+     * coordinates coords of the integration rule RuleIndex, for the VTK export.
+     */
+    virtual void computeCurvatureAt( FloatArray &answer, TimeStep *tStep, const FloatArray &coords, int RuleIndex )
     {
         OOFEM_ERROR( "Not implemented for this element" );
     };
 
     /// grad I = G X (27 components), as grad F with the reference positions X; it carries the reference curvature.
-    void computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
+    void computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
 };
 } // end namespace oofem

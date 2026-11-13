@@ -52,11 +52,13 @@ namespace oofem {
 class OOFEM_EXPORT NURBSInterpolation : public BSplineInterpolation
 {
 protected:
+    /// Weight of each control point (finite and positive).
     FloatArray weights;
 
 public:
     NURBSInterpolation(int nsd) : BSplineInterpolation(nsd) { }
 
+    /// Reads the B-spline data and one weight per control point.
     void initializeFrom(InputRecord &ir) override;
 
     void evalN(FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
@@ -67,6 +69,9 @@ public:
         return 0;
     }
     void giveJacobianMatrixAt(FloatMatrix &jacobianMatrix, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
+    /// Not implemented (the B-spline version would ignore the weights).
+    void evalSecondDerivatives(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override
+    { OOFEM_ERROR("second derivatives of NURBS basis functions are not implemented"); }
 
     const char *giveClassName() const { return "NURBSInterpolation"; }
 };

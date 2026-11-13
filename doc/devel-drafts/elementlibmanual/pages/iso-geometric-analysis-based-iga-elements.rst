@@ -19,6 +19,9 @@ degree in coresponding direction (determined by :param:`degree` parameter, see f
 The knot multiplicity can be set using optional parameters :param:`knotmultiplicityu`,
 :param:`knotmultiplicityv`, and :param:`knotmultiplicityw`. By default, the open knot
 vector is assumed and multiplicity of internal knots is assumed to be equal to one.
+The knot values are divided by the length of the knot vector but not shifted, so the
+parameter range is :math:`[0, 1]` when the first knot is 0 (which also gives the scale of
+the clamp parameter :param:`locpos`).
 Note, that total number of knots in particular direction (including multiplicity) must
 be equal to number of control points in this direction increased by degree in this
 direction plus 1.  The degree of approximation for each parametric direction is
@@ -42,9 +45,11 @@ The supported **IGAElement** values are following:
 
 **Keyword**: :param:`bsplineplanestresselement`  **Parameters**: None.
 
-**Keyword**: :param:`nurbsplanestresselement`  **Parameters**: None.
+**Keyword**: :param:`nurbsplanestresselement`  **Parameters**: :elemparam:`weights{ra}`
+One weight per control point, finite and positive.
 
-**Keyword**: :param:`nurbs3delement`  **Parameters**: None.
+**Keyword**: :param:`nurbs3delement`  **Parameters**: :elemparam:`weights{ra}`
+One weight per control point, finite and positive.
 
 **Keyword**: :param:`tsplineplanestresselement`  **Parameters**:
 :elemparam:`localindexknotvectoru{ia}` :elemparam:`localindexknotvectorv{ia}`
@@ -56,7 +61,7 @@ parameters, i.e. to their distinct knots) specify the local knot vectors for eac
 control point of T-mesh (node) in the same order as the nodes have been specified for
 the element. The local knot vector in a particular direction has :math:`p+2` entries,
 where the :math:`p` is the polynomial degree in that direction. :param:`weights` holds
-one weight per control point.
+one weight per control point (finite and positive).
 
 **Keyword**: :param:`bsplineplanestrainelement`  **Parameters**: None.
 B-spline patch in plane strain (material mode PlaneStrain, two dofs
@@ -68,7 +73,7 @@ Axisymmetric B-spline patch: :math:`x` is the radius and :math:`y` the axis of r
 as for the other axisymmetric elements. The hoop stretch is :math:`1 + u/r`, the
 material is evaluated in the full 3d mode and the volume is taken per radian
 (:math:`r \, \mathrm{d}r \, \mathrm{d}z`, the cross section thickness is not used).
-Only the large strain formulation is implemented (:param:`nlgeo` 1).
+Only the large strain formulation is implemented, so :param:`nlgeo` has to be 1.
 
 IGA surface elements
 --------------------
@@ -111,19 +116,23 @@ support materials depending also on the gradient of the deformation gradient (e.
 :param:`surfacetensionmat2` on the surfaces). Such a material is detected automatically
 from the cross section of the element; an element that does not support the second
 gradient stops with an error. The second gradient needs :math:`C^1` continuity of the
-interpolation, i.e. degree at least 2 without repeated internal knots. The surface
-elements check the degree (repeated knots are not checked); the bulk elements
-:param:`bsplineplanestrainelement` and :param:`bsplineaxisymelement` do not check it, and
-with degree 1 their second gradient is zero without any message.
+interpolation, i.e. degree at least 2 and internal knot multiplicities at most degree
+minus 1 in every parametric direction; the four elements check it and stop with an error
+otherwise. It is implemented only for :param:`nlgeo` 1.
 
 Export to VTK
 -------------
 
-The composite VTK export (:param:`vtkxml`) is implemented for
-:param:`bsplineplanestrainelement`, :param:`bsplineaxisymelement` and both surface
-elements: every knot span is sampled in :param:`numexp` points per parametric
-direction. Gauss point values (:param:`ipvars`) are exported at the true positions of
-the integration points.
+The composite VTK export (:param:`vtkxml`) is implemented for the B-spline and NURBS
+elements with one or two parametric dimensions (not for :param:`nurbs3delement` and
+:param:`tsplineplanestresselement`): every knot span is sampled in :param:`numexp`
+points per parametric direction, connected by lines on the curves and by quadrilaterals
+on the patches. Exported are the positions, the primary variable DisplacementVector and,
+for the surface elements with a bending material, the internal variable
+IST_CurvatureTensor (the current curvature, interpolated linearly between the Gauss
+points of the knot span). Other primary and internal variables and cell variables stop
+with an error. Gauss point values (:param:`ipvars`) are exported at the true positions
+of the integration points.
 
 Tests/Examples: `tests/regression/sm/ex-bspline-01.in
 <https://github.com/oofem/oofem/blob/devel/tests/regression/sm/ex-bspline-01.in>`_,

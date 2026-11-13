@@ -40,6 +40,7 @@
 #include "feinterpol.h"
 #include "gaussintegrationrule.h"
 #include "vtkxmlexportmodule.h"
+#include "internalstatetype.h"
 
 ///@name Input fields for IGAElement
 //@{
@@ -54,11 +55,16 @@ void drawIGAPatchDeformedGeometry(Element *elem, StructuralElementEvaluator *se,
 #endif
 
 /**
- * Geometry wrapper for IGA elements.
+ * Geometry wrapper for IGA elements: the control points are the element nodes.
  */
 class OOFEM_EXPORT FEIIGAElementGeometryWrapper : public FEICellGeometry
 {
 public:
+    /**
+     * Knot span in each parametric direction, as the zero based index into the knot vector with
+     * multiplicities (see BSplineInterpolation::findSpan); nullptr = the interpolation finds the span
+     * from the local coordinates (at an interior knot the span on its right).
+     */
     const IntArray *knotSpan;
     Element *elem;
 public:
@@ -81,7 +87,6 @@ public:
         GaussIntegrationRule(_n, e, 0, 0, false),
         knotSpan(std::move(knotSpan)) { }
     const IntArray *giveKnotSpan() override { return & this->knotSpan; }
-    void setKnotSpan1(const IntArray &src) { this->knotSpan = src; }
 
     /**
      * Creates nPoints points (on a line) or floor(sqrt(nPoints))^2 points (on a square) with zero
@@ -119,6 +124,9 @@ public:
      */
     void initializeFrom(InputRecord &ir) override;
 
+    /// Element and the VTK export interface both declare it, so the IGAElement code needs this override; the elements give their own names.
+    const char *giveClassName() const override { return "IGAElement"; }
+
     /// Unit normal of the reference geometry at the Gauss point (surface elements).
     virtual FloatArray giveNormal( GaussPoint *gp ) const {
         OOFEM_ERROR( "method not implemented for this element" );
@@ -126,18 +134,25 @@ public:
         return normal;
     };
 
-    virtual Element *giveElement() { return this; };
-
-    /// Coordinates of all control points, for each one the components of its displacement directions.
-    virtual void giveNodalCoordinates( FloatArray &NodalCoordinates ) const;
-
     /// The IGA interpolations need FEIIGAElementGeometryWrapper (Element's version passes FEIElementGeometryWrapper).
     int computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords ) override;
 
     /// Composite geometry, exported by giveCompositeExportData.
     Element_Geometry_Type giveGeometryType() const override { return EGT_Composite; }
-    /// VTK export sampled at the export points of every knot span; stops with an error unless implemented by the element.
+    /**
+     * VTK export of a curve (nsd 1) or a 2D patch (nsd 2) sampled at the export points: numexp points per
+     * knot span and parametric direction, u index fastest, giving numexp - 1 lines or (numexp - 1)^2 quads per
+     * knot span. The positions and DisplacementVector (padded to 3 components) are interpolated from the
+     * control points of the span, the internal variables come from giveExportPointValue. Other primary
+     * variables, unsupported internal variables and cell variables stop with an error.
+     */
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
+    /**
+     * Value of the internal variable type at the export point gp of the knot span ir (index into the export
+     * rules), as written to the VTK file (tensors as 9 components, row by row).
+     * @return false if the element does not export the variable (the default for all).
+     */
+    virtual bool giveExportPointValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, int ir, TimeStep *tStep ) { return false; }
     Interface *giveInterface( InterfaceType it ) override;
 
 #ifdef __PARALLEL_MODE
@@ -149,7 +164,8 @@ public:
 #endif
 
 protected:
-    virtual int giveNsd() = 0; // this info is available also from interpolation. Do we need it here ???
+    /// Number of parametric directions (the nsd of the interpolation).
+    virtual int giveNsd() = 0;
 };
 
 

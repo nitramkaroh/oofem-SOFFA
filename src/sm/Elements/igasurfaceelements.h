@@ -37,12 +37,9 @@
 
 #include "iga/iga.h"
 #include "iga/feibspline.h"
-#include "iga/feinurbs.h"
-#include "iga/feitspline.h"
 
 #include "sm/Elements/SurfaceElements/space2dsurfaceelementevaluator.h"
 
-#include "sm/Elements/3D/space3delementevaluator.h"
 #include "floatarray.h"
 #include "floatmatrix.h"
 #include "matresponsemode.h"
@@ -96,11 +93,17 @@ public:
     /// Unit normal of the reference curve, (t_y, -t_x, 0) / |t| with the tangent t = dX/dxi.
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
-    /// VTK export of the curve sampled in numexp points per knot span (displacements only).
-    void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
+    /// IST_CurvatureTensor for the VTK export of IGAElement (bending materials only).
+    bool giveExportPointValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, int ir, TimeStep *tStep ) override
+    {
+        return this->giveCurvatureExportValue( answer, type, gp, ir, tStep );
+    }
 
-    /// The second gradient (bending) needs C1 continuity: degree at least 2 (repeated knots are not checked).
-    bool supportsSecondGradient() const override { return this->interpolation.giveInterpolationOrder() >= 2; }
+    /// The second gradient (bending) needs C1 continuity: degree >= 2 and interior knot multiplicities <= degree - 1.
+    bool supportsSecondGradient() const override
+    {
+        return this->interpolation.giveInterpolationOrder() >= 2 && this->interpolation.giveMinimalContinuity( 1 ) >= 1;
+    }
 
 protected:
     int giveNsd() override { return 1; }
@@ -150,14 +153,17 @@ public:
     /// Unit normal of the reference curve, (t_y, -t_x, 0) / |t| with the tangent t = dX/dxi.
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
-    /**
-     * VTK export of the curve sampled in numexp points per knot span: displacements and, as the only
-     * internal variable, IST_CurvatureTensor (see computeReferenceCurvature).
-     */
-    void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
+    /// IST_CurvatureTensor for the VTK export of IGAElement (bending materials only).
+    bool giveExportPointValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, int ir, TimeStep *tStep ) override
+    {
+        return this->giveCurvatureExportValue( answer, type, gp, ir, tStep );
+    }
 
-    /// The second gradient (bending) needs C1 continuity: degree at least 2 (repeated knots are not checked).
-    bool supportsSecondGradient() const override { return this->interpolation.giveInterpolationOrder() >= 2; }
+    /// The second gradient (bending) needs C1 continuity: degree >= 2 and interior knot multiplicities <= degree - 1.
+    bool supportsSecondGradient() const override
+    {
+        return this->interpolation.giveInterpolationOrder() >= 2 && this->interpolation.giveMinimalContinuity( 1 ) >= 1;
+    }
 
 protected:
     int giveNsd() override { return 1; }

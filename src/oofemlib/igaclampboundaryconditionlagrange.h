@@ -44,7 +44,7 @@
 //@{
 #define _IFT_IGAClampBoundaryConditionLagrange_Name "igaclampboundaryconditionlagrange"
 #define _IFT_IGAClampBoundaryConditionLagrange_ElementNumber "numel" ///< Number of the clamped IGA curve element.
-#define _IFT_IGAClampBoundaryConditionLagrange_LocalPosition "locpos" ///< Curve parameter xi of the clamp.
+#define _IFT_IGAClampBoundaryConditionLagrange_LocalPosition "locpos" ///< Curve parameter xi of the clamp (in the scaled knot range, see IGAClampBoundaryCondition).
 #define _IFT_IGAClampBoundaryConditionLagrange_BcKnotSpan "bcknotspan" ///< Zero-based knot index of the span containing locpos.
 //@}
 
@@ -87,9 +87,6 @@ public:
 
     const char *giveClassName() const override { return "IGAClampBoundaryConditionLagrange"; }
     const char *giveInputRecordName() const override { return _IFT_IGAClampBoundaryConditionLagrange_Name; }
-
-    /// Same as IGAClampBoundaryCondition::giveLocalCodeNumbers.
-    int giveLocalCodeNumbers( IntArray &answer, Element *elem, IntArray &span );
 
     int giveNumberOfInternalDofManagers() override { return 1; }
     DofManager *giveInternalDofManager( int i ) override { return this->lmdm.get(); }

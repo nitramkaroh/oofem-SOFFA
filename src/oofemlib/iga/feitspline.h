@@ -65,11 +65,8 @@ protected:
     /// Local index knot vector of the dimensions [totalNumberOfControlPoints][nsd][degree+2].
     std::vector< std::array<IntArray, 3> > localIndexKnotVector;
     int totalNumberOfControlPoints = 0;
+    /// Weight of each control point (finite and positive).
     FloatArray weights;
-    /**
-     * Temporary open local knot vector to enable use of BSpline algorithms (common for all directions) [3*max_degree+2].
-     */
-    //FloatArray openLocalKnotVector;
 public:
     TSplineInterpolation(int nsd) : BSplineInterpolation(nsd) { }
 
@@ -83,6 +80,9 @@ public:
         return 0;
     }
     void giveJacobianMatrixAt(FloatMatrix &jacobianMatrix, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override;
+    /// Not implemented (the B-spline version would use the wrong basis functions).
+    void evalSecondDerivatives(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const override
+    { OOFEM_ERROR("second derivatives of T-spline basis functions are not implemented"); }
 
     int giveKnotSpanBasisFuncMask(const IntArray &knotSpan, IntArray &mask) const override;
     int giveNumberOfKnotSpanBasisFunctions(const IntArray &knotSpan) const override;
@@ -131,7 +131,7 @@ protected:
      */
     void createLocalKnotVector(FloatArray& answer, int p, const FloatArray &U, const IntArray &I, int &prepend, int &append) const;
     /**
-     * Returns indices (zero based) of nonzero basis functions for given knot span interval.
+     * Returns indices (one based) of nonzero basis functions for given knot span interval.
      */
     int giveKnotSpanBasisFuncMask(const IntArray &startKnotSpan, const IntArray &endKnotSpan, IntArray &mask) const;
     /** Returns the number of nonzero basis functions at given knot span interval. */

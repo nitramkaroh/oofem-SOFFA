@@ -37,26 +37,40 @@
 #include "floatmatrix.h"
 #include "iga.h"
 
+#include <cmath>
+
 namespace oofem {
-// optimized version of A4.4 for d=1
-#define OPTIMIZED_VERSION_A4dot4
 
 void
 NURBSInterpolation :: initializeFrom(InputRecord &ir)
 {
     BSplineInterpolation :: initializeFrom(ir);
-    
+
     IR_GIVE_FIELD(ir, weights, _IFT_NURBSInterpolation_weights);
+
+    int numberOfWeights = 1;
+    for ( int i = 0; i < nsd; i++ ) {
+        numberOfWeights *= numberOfControlPoints [ i ];
+    }
+    if ( weights.giveSize() != numberOfWeights ) {
+        throw ValueInputException(ir, _IFT_NURBSInterpolation_weights, "the number of weights must equal the number of control points");
+    }
+    // the rational basis functions are divided by sum(N*w)
+    for ( double w : weights ) {
+        if ( !std::isfinite(w) || w <= 0. ) {
+            throw ValueInputException(ir, _IFT_NURBSInterpolation_weights, "weights must be finite and positive");
+        }
+    }
 }
 
-    
+
 void NURBSInterpolation :: evalN(FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo) const
 {
     const FEIIGAElementGeometryWrapper &gw = static_cast< const FEIIGAElementGeometryWrapper& >(cellgeo);
     IntArray span(nsd);
     double sum = 0.0, val;
     int count, c = 1;
-    std :: vector< FloatArray >N;
+    std :: vector< FloatArray > N(nsd);
 
     if ( gw.knotSpan ) {
         span = * gw.knotSpan;
@@ -143,164 +157,6 @@ double NURBSInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &lco
     count = giveNumberOfKnotSpanBasisFunctions(span);
     answer.resize(count, nsd);
 
-#if 0                       // code according NURBS book (too general allowing higher derivatives)
-    if ( nsd == 2 ) {
-        FloatArray tmp1(nsd + 1), tmp2(nsd + 1);    // allow for weight
-
-        FloatMatrix Aders [ 2 ];      // derivatives in each coordinate direction on BSpline
- #ifndef OPTIMIZED_VERSION_A4dot4
-        FloatMatrix Sders [ 2 ];      // derivatives in each coordinate direction on NURBS
- #endif
-        FloatMatrix wders;              // derivatives in w direction on BSpline
-        /*
-         * IntArray Bin(2,2);      // binomial coefficients from 0 to d=1
-         *                            // Bin(n,k)=(n above k)=n!/k!(n-k)! for n>=k>=0
-         *                                                                                              // lower triangle corresponds to Pascal triangle
-         *                                                                                              // according to A4.4 it seems that only coefficients in lower triangle except the first column are used
-         */
-        // resizing to (2,2) has nothing common with nsd
-        // it is related to the fact that 0th and 1st derivatives are computed in each direction
-        for ( int i = 0; i < nsd; i++ ) {
-            Aders [ i ].resize(2, 2);
-            Aders [ i ].zero();
- #ifndef OPTIMIZED_VERSION_A4dot4
-            Sders [ i ].resize(2, 2);
- #endif
-        }
-
-        wders.resize(2, 2);
-        wders.zero();
-
-        // calculation of jacobian matrix according to A4.4
-        // calculate values and derivatives of nonrational Bspline surface with weights at first (Aders, wders)
-        int uind = span[0] - degree [ 0 ];
-        int vind = span[1] - degree [ 1 ];
-        int ind = vind * numberOfControlPoints [ 0 ] + uind + 1;
-        for ( int l = 0; l <= degree [ 1 ]; l++ ) {
-            tmp1.zero();
-            tmp2.zero();
-            for ( int k = 0; k <= degree [ 0 ]; k++ ) {
-                const auto &vertexCoords = cellgeo.giveVertexCoordinates(ind + k);
-                double w = this->weights.at(ind + k);
-
-                tmp1[0] += ders [ 0 ](0, k) * vertexCoords[0] * w; // sum(Nu*x*w)
-                tmp1[1] += ders [ 0 ](0, k) * vertexCoords[1] * w; // sum(Nu*y*w)
-                tmp1[2] += ders [ 0 ](0, k) * w;           // sum(Nu*w)
-
-                tmp2[0] += ders [ 0 ](1, k) * vertexCoords[0] * w; // sum(dNu/du*x*w)
-                tmp2[1] += ders [ 0 ](1, k) * vertexCoords[1] * w; // sum(dNu/du*y*w)
-                tmp2[2] += ders [ 0 ](1, k) * w;           // sum(dNu/du*w)
-            }
-
-            ind += numberOfControlPoints [ 0 ];
-
-            Aders [ 0 ](0, 0) += ders [ 1 ](0, l) * tmp1[0]; // xw=sum(Nv*sum(Nu*x*w))
-            Aders [ 1 ](0, 0) += ders [ 1 ](0, l) * tmp1[1]; // yw=sum(Nv*sum(Nu*y*w))
-            wders(0, 0)    += ders [ 1 ](0, l) * tmp1[2]; // w=sum(Nv*sum(Nu*w))
-
-            Aders [ 0 ](0, 1) += ders [ 1 ](1, l) * tmp1[0]; // dxw/dv=sum(dNv/dv*sum(Nu*x*w))
-            Aders [ 1 ](0, 1) += ders [ 1 ](1, l) * tmp1[1]; // dyw/dv=sum(dNv/dv*sum(Nu*y*w))
-            wders(0, 1)    += ders [ 1 ](1, l) * tmp1[2]; // dw/dv=sum(dNv/dv*sum(Nu*w))
-
-            Aders [ 0 ](1, 0) += ders [ 1 ](0, l) * tmp2[0]; // dxw/du=sum(Nv*sum(dNu/du*x*w))
-            Aders [ 1 ](1, 0) += ders [ 1 ](0, l) * tmp2[1]; // dyw/du=sum(Nv*sum(dNu/du*y*w))
-            wders(1, 0)    += ders [ 1 ](0, l) * tmp2[2];       // dw/du=sum(Nv*sum(dNu/du*w))
-        }
-
-        double weight = wders(0, 0);
-
- #ifndef OPTIMIZED_VERSION_A4dot4
-        const int d = 1;
-        // calculate values and derivatives of NURBS surface (A4.4)
-        // since all entries in Pascal triangle up to d=1 are 1, binomial coefficients are ignored
-        for ( int k = 0; k <= d; k++ ) {
-            for ( int l = 0; l <= d - k; l++ ) {
-                tmp1[0] = Aders [ 0 ](k, l);
-                tmp1[1] = Aders [ 1 ](k, l);
-                for ( j = 1; j <= l; j++ ) {
-                    tmp1[0] -= wders(0, j) * Sders [ 0 ](k, l - j);            // *Bin(l,j)
-                    tmp1[1] -= wders(0, j) * Sders [ 1 ](k, l - j);            // *Bin(l,j)
-                }
-
-                for ( int i = 1; i <= k; i++ ) {
-                    tmp1[0] -= wders(i, 0) * Sders [ 0 ](k - i, l);            // *Bin(k,i)
-                    tmp1[1] -= wders(i, 0) * Sders [ 1 ](k - i, l);            // *Bin(k,i)
-                    tmp2.zero();
-                    for ( int j = 1; j <= l; j++ ) {
-                        tmp2[0] += wders(i, j) * Sders [ 0 ](k - i, l - j);              // *Bin(l,j)
-                        tmp2[1] += wders(i, j) * Sders [ 1 ](k - i, l - j);              // *Bin(l,j)
-                    }
-
-                    tmp1[0] -= tmp2[0];                     // *Bin(k,i)
-                    tmp1[1] -= tmp2[1];                     // *Bin(k,i)
-                }
-
-                Sders [ 0 ](k, l) = tmp1[0] / weight;
-                Sders [ 1 ](k, l) = tmp1[1] / weight;
-            }
-        }
-
-        jacobian(0, 0) = Sders [ 0 ](1, 0);      // dx/du
-        jacobian(0, 1) = Sders [ 1 ](1, 0);      // dy/du
-        jacobian(1, 0) = Sders [ 0 ](0, 1);      // dx/dv
-        jacobian(1, 1) = Sders [ 1 ](0, 1);      // dy/dv
- #else
-        // optimized version of A4.4 for d=1, binomial coefficients ignored
-
-        /*
-         * // k=0 l=0 loop
-         * Sders[0](0,0) = Aders[0](0,0) / weight;
-         * Sders[1](0,0) = Aders[1](0,0) / weight;
-         * // k=1 l=0 loop
-         * Sders[0](1,0) = (Aders[0](1,0)-wders(1,0)*Sders[0](0,0)) / weight;
-         * Sders[1](1,0) = (Aders[1](1,0)-wders(1,0)*Sders[1](0,0)) / weight;
-         * // k=0 l=1 loop
-         * Sders[0](0,1) = (Aders[0](0,1)-wders(0,1)*Sders[0](0,0)) / weight;
-         * Sders[1](0,1) = (Aders[1](0,1)-wders(0,1)*Sders[1](0,0)) / weight;
-         *
-         * jacobian(0,0) = Sders[0](1,0);   // dx/du
-         * jacobian(0,1) = Sders[1](1,0);   // dy/du
-         * jacobian(1,0) = Sders[0](0,1);   // dx/dv
-         * jacobian(1,1) = Sders[1](0,1);   // dy/dv
-         */
-
-        // k=0 l=0 loop
-        tmp1[0] = Aders [ 0 ](0, 0) / weight;
-        tmp1[1] = Aders [ 1 ](0, 0) / weight;
-        // k=1 l=0 loop
-        jacobian(0, 0) = ( Aders [ 0 ](1, 0) - wders(1, 0) * tmp1[0] ) / weight; // dx/du
-        jacobian(0, 1) = ( Aders [ 1 ](1, 0) - wders(1, 0) * tmp1[1] ) / weight; // dy/du
-        // k=0 l=1 loop
-        jacobian(1, 0) = ( Aders [ 0 ](0, 1) - wders(0, 1) * tmp1[0] ) / weight; // dx/dv
-        jacobian(1, 1) = ( Aders [ 1 ](0, 1) - wders(0, 1) * tmp1[1] ) / weight; // dy/dv
- #endif
-
-        Jacob = jacobian.giveDeterminant();
-
-        //calculation of derivatives of NURBS basis functions with respect to local parameters is not covered by NURBS book
-        double product = Jacob * weight * weight;
-        int cnt = 0;
-        ind = vind * numberOfControlPoints [ 0 ] + uind + 1;
-        for ( int l = 0; l <= degree [ 1 ]; l++ ) {
-            for ( int k = 0; k <= degree [ 0 ]; k++ ) {
-                double w = weights.at(ind + k);
-                // dNu/du*Nv*w*sum(Nv*Nu*w) - Nu*Nv*w*sum(dNu/du*Nv*w)
-                tmp1[0] = ders [ 0 ](1, k) * ders [ 1 ](0, l) * w * weight - ders [ 0 ](0, k) * ders [ 1 ](0, l) * w * wders(1, 0);
-                // Nu*dNv/dv*w*sum(Nv*Nu*w) - Nu*Nv*w*sum(Nu*dNv/dv*w)
-                tmp1[1] = ders [ 0 ](0, k) * ders [ 1 ](1, l) * w * weight - ders [ 0 ](0, k) * ders [ 1 ](0, l) * w * wders(0, 1);
-
-                answer(cnt, 0) = ( +jacobian(1, 1) * tmp1[0] - jacobian(0, 1) * tmp1[1] ) / product;
-                answer(cnt, 1) = ( -jacobian(1, 0) * tmp1[0] + jacobian(0, 0) * tmp1[1] ) / product;
-                cnt++;
-            }
-
-            ind += numberOfControlPoints [ 0 ];
-        }
-    } else {
-        OOFEM_ERROR("not implemented for nsd = %d", nsd);
-    }
-
-#else
     std :: vector< FloatArray > Aders(nsd);
     FloatArray wders;          // 0th and 1st derivatives in w direction on BSpline
 
@@ -341,7 +197,7 @@ double NURBSInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &lco
         for ( int k = 0; k <= degree [ 0 ]; k++ ) {
             double w = this->weights.at(ind + k);
             // [dNu/du*w*sum(Nu*w) - Nu*w*sum(dNu/du*w)] / [J*sum(Nu*w)^2]
-            answer(cnt, 0) = ders [ 0 ](1, k) * w * weight - ders [ 0 ](0, k) * w * wders[1] / product;
+            answer(cnt, 0) = ( ders [ 0 ](1, k) * w * weight - ders [ 0 ](0, k) * w * wders[1] ) / product;
             cnt++;
         }
     } else if ( nsd == 2 ) {
@@ -467,22 +323,22 @@ double NURBSInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &lco
 
             Aders [ 0 ][0] += ders [ 2 ](0, m) * temp1[0];     // x=sum(Nt*sum(Nv*sum(Nu*x*w)))
             Aders [ 1 ][0] += ders [ 2 ](0, m) * temp1[1];     // y=sum(Nt*sum(Nv*sum(Nu*y*w)))
-            Aders [ 2 ][0] += ders [ 2 ](0, m) * temp1[2];     // y=sum(Nt*sum(Nv*sum(Nu*y*w)))
+            Aders [ 2 ][0] += ders [ 2 ](0, m) * temp1[2];     // z=sum(Nt*sum(Nv*sum(Nu*z*w)))
             wders[0]    += ders [ 2 ](0, m) * temp1[3];        // w=sum(Nt*sum(Nv*sum(Nu*w)))
 
             Aders [ 0 ][1] += ders [ 2 ](0, m) * temp2[0];     // dx/du=sum(Nt*sum(Nv*sum(dNu/du*x*w)))
             Aders [ 1 ][1] += ders [ 2 ](0, m) * temp2[1];     // dy/du=sum(Nt*sum(Nv*sum(dNu/du*y*w)))
-            Aders [ 2 ][1] += ders [ 2 ](0, m) * temp2[2];     // dy/du=sum(Nt*sum(Nv*sum(dNu/du*y*w)))
+            Aders [ 2 ][1] += ders [ 2 ](0, m) * temp2[2];     // dz/du=sum(Nt*sum(Nv*sum(dNu/du*z*w)))
             wders[1]    += ders [ 2 ](0, m) * temp2[3];        // dw/du=sum(Nt*sum(Nv*sum(dNu/du*w)))
 
             Aders [ 0 ][2] += ders [ 2 ](0, m) * temp3[0];     // dx/dv=sum(Nt*sum(dNv/dv*sum(Nu*x*w)))
             Aders [ 1 ][2] += ders [ 2 ](0, m) * temp3[1];     // dy/dv=sum(Nt*sum(dNv/dv*sum(Nu*y*w)))
-            Aders [ 2 ][2] += ders [ 2 ](0, m) * temp3[2];     // dy/dv=sum(Nt*sum(dNv/dv*sum(Nu*y*w)))
+            Aders [ 2 ][2] += ders [ 2 ](0, m) * temp3[2];     // dz/dv=sum(Nt*sum(dNv/dv*sum(Nu*z*w)))
             wders[2]    += ders [ 2 ](0, m) * temp3[3];        // dw/dv=sum(Nt*sum(dNv/dv*sum(Nu*w)))
 
             Aders [ 0 ][3] += ders [ 2 ](1, m) * temp1[0];     // dx/dt=sum(dNt/dt*sum(Nv*sum(Nu*x*w)))
             Aders [ 1 ][3] += ders [ 2 ](1, m) * temp1[1];     // dy/dt=sum(dNt/dt*sum(Nv*sum(Nu*y*w)))
-            Aders [ 2 ][3] += ders [ 2 ](1, m) * temp1[2];     // dy/dt=sum(dNt/dt*sum(Nv*sum(Nu*y*w)))
+            Aders [ 2 ][3] += ders [ 2 ](1, m) * temp1[2];     // dz/dt=sum(dNt/dt*sum(Nv*sum(Nu*z*w)))
             wders[3]    += ders [ 2 ](1, m) * temp1[3];        // dw/dt=sum(dNt/dt*sum(Nv*sum(Nu*w)))
         }
 
@@ -541,7 +397,6 @@ double NURBSInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &lco
         OOFEM_ERROR("not implemented for nsd = %d", nsd);
     }
 
-#endif
 
     return Jacob;
 }
@@ -637,7 +492,7 @@ void NURBSInterpolation :: local2global(FloatArray &answer, const FloatArray &lc
             weight    += N [ 2 ][m] * temp[3]; // w=sum(Nv*Nu*Nt*w)
         }
     } else {
-        OOFEM_ERROR("lnot implemented for nsd = %d", nsd);
+        OOFEM_ERROR("not implemented for nsd = %d", nsd);
     }
 
     answer.times(1.0 / weight);
@@ -666,142 +521,6 @@ void NURBSInterpolation :: giveJacobianMatrixAt(FloatMatrix &jacobian, const Flo
         this->dersBasisFuns(1, lcoords[i], span[i], degree [ i ], knotVector [ i ], ders [ i ]);
     }
 
-#if 0                       // code according NURBS book (too general allowing higher derivatives)
-    if ( nsd == 2 ) {
-        FloatArray tmp1(nsd + 1), tmp2(nsd + 1);    // allow for weight
-
-        FloatMatrix Aders [ 2 ];      // derivatives in each coordinate direction on BSpline
- #ifndef OPTIMIZED_VERSION_A4dot4
-        FloatMatrix Sders [ 2 ];      // derivatives in each coordinate direction on NURBS
- #endif
-        FloatMatrix wders;              // derivatives in w direction on BSpline
-        /*
-         * IntArray Bin(2,2);      // binomial coefficients from 0 to d=1
-         *          // Bin(n,k)=(n above k)=n!/k!(n-k)! for n>=k>=0
-         *                                                                                              // lower triangle corresponds to Pascal triangle
-         *                                                                                              // according to A4.4 it seems that only coefficients in lower triangle except the first column are used
-         */
-        // resizing to (2,2) has nothing common with nsd
-        // it is related to the fact that 0th and 1st derivatives are computed
-        for ( int i = 0; i < nsd; i++ ) {
-            Aders [ i ].resize(2, 2);
-            Aders [ i ].zero();
- #ifndef OPTIMIZED_VERSION_A4dot4
-            Sders [ i ].resize(2, 2);
- #endif
-        }
-
-        wders.resize(2, 2);
-        wders.zero();
-
-        // calculation of jacobian matrix according to A4.4
-        // calculate values and derivatives of nonrational Bspline surface with weights at first (Aders, wders)
-        int uind = span[0] - degree [ 0 ];
-        int vind = span[1] - degree [ 1 ];
-        int ind = vind * numberOfControlPoints [ 0 ] + uind + 1;
-        for ( int l = 0; l <= degree [ 1 ]; l++ ) {
-            tmp1.zero();
-            tmp2.zero();
-            for ( int k = 0; k <= degree [ 0 ]; k++ ) {
-                const auto &vertexCoords = cellgeo.giveVertexCoordinates(ind + k);
-                double w = this->weights.at(ind + k);
-
-                tmp1[0] += ders [ 0 ](0, k) * vertexCoords[0] * w; // sum(Nu*x*w)
-                tmp1[1] += ders [ 0 ](0, k) * vertexCoords[1] * w; // sum(Nu*y*w)
-                tmp1[2] += ders [ 0 ](0, k) * w;           // sum(Nu*w)
-
-                tmp2[0] += ders [ 0 ](1, k) * vertexCoords[0] * w; // sum(dNu/du*x*w)
-                tmp2[1] += ders [ 0 ](1, k) * vertexCoords[1] * w; // sum(dNu/du*y*w)
-                tmp2[2] += ders [ 0 ](1, k) * w;           // sum(dNu/du*w)
-            }
-
-            ind += numberOfControlPoints [ 0 ];
-
-            Aders [ 0 ](0, 0) += ders [ 1 ](0, l) * tmp1[0]; // xw=sum(Nv*sum(Nu*x*w))
-            Aders [ 1 ](0, 0) += ders [ 1 ](0, l) * tmp1[1]; // yw=sum(Nv*sum(Nu*y*w))
-            wders(0, 0)    += ders [ 1 ](0, l) * tmp1[2]; // w=sum(Nv*sum(Nu*w))
-
-            Aders [ 0 ](0, 1) += ders [ 1 ](1, l) * tmp1[0]; // dxw/dv=sum(dNv/dv*sum(Nu*x*w))
-            Aders [ 1 ](0, 1) += ders [ 1 ](1, l) * tmp1[1]; // dyw/dv=sum(dNv/dv*sum(Nu*y*w))
-            wders(0, 1)    += ders [ 1 ](1, l) * tmp1[2]; // dw/dv=sum(dNv/dv*sum(Nu*w))
-
-            Aders [ 0 ](1, 0) += ders [ 1 ](0, l) * tmp2[0]; // dxw/du=sum(Nv*sum(dNu/du*x*w))
-            Aders [ 1 ](1, 0) += ders [ 1 ](0, l) * tmp2[1]; // dyw/du=sum(Nv*sum(dNu/du*y*w))
-            wders(1, 0)    += ders [ 1 ](0, l) * tmp2[2];       // dw/du=sum(Nv*sum(dNu/du*w))
-        }
-
-        double weight = wders(0, 0);
-
- #ifndef OPTIMIZED_VERSION_A4dot4
-        const int d = 1;
-        // calculate values and derivatives of NURBS surface (A4.4)
-        // since all entries in Pascal triangle up to d=1 are 1, binomial coefficients are ignored
-        for ( int k = 0; k <= d; k++ ) {
-            for ( int l = 0; l <= d - k; l++ ) {
-                tmp1[0] = Aders [ 0 ](k, l);
-                tmp1[1] = Aders [ 1 ](k, l);
-                for ( j = 1; j <= l; j++ ) {
-                    tmp1[0] -= wders(0, j) * Sders [ 0 ](k, l - j);            // *Bin(l,j)
-                    tmp1[1] -= wders(0, j) * Sders [ 1 ](k, l - j);            // *Bin(l,j)
-                }
-
-                for ( int i = 1; i <= k; i++ ) {
-                    tmp1[0] -= wders(i, 0) * Sders [ 0 ](k - i, l);            // *Bin(k,i)
-                    tmp1[1] -= wders(i, 0) * Sders [ 1 ](k - i, l);            // *Bin(k,i)
-                    tmp2.zero();
-                    for ( int j = 1; j <= l; j++ ) {
-                        tmp2[0] += wders(i, j) * Sders [ 0 ](k - i, l - j);              // *Bin(l,j)
-                        tmp2[1] += wders(i, j) * Sders [ 1 ](k - i, l - j);              // *Bin(l,j)
-                    }
-
-                    tmp1[0] -= tmp2[0];                     // *Bin(k,i)
-                    tmp1[1] -= tmp2[1];                     // *Bin(k,i)
-                }
-
-                Sders [ 0 ](k, l) = tmp1[0] / weight;
-                Sders [ 1 ](k, l) = tmp1[1] / weight;
-            }
-        }
-
-        jacobian(0, 0) = Sders [ 0 ](1, 0);      // dx/du
-        jacobian(0, 1) = Sders [ 1 ](1, 0);      // dy/du
-        jacobian(1, 0) = Sders [ 0 ](0, 1);      // dx/dv
-        jacobian(1, 1) = Sders [ 1 ](0, 1);      // dy/dv
- #else
-        // optimized version of A4.4 for d=1, binomial coefficients ignored
-
-        /*
-         * // k=0 l=0 loop
-         * Sders[0](0,0) = Aders[0](0,0) / weight;
-         * Sders[1](0,0) = Aders[1](0,0) / weight;
-         * // k=1 l=0 loop
-         * Sders[0](1,0) = (Aders[0](1,0)-wders(1,0)*Sders[0](0,0)) / weight;
-         * Sders[1](1,0) = (Aders[1](1,0)-wders(1,0)*Sders[1](0,0)) / weight;
-         * // k=0 l=1 loop
-         * Sders[0](0,1) = (Aders[0](0,1)-wders(0,1)*Sders[0](0,0)) / weight;
-         * Sders[1](0,1) = (Aders[1](0,1)-wders(0,1)*Sders[1](0,0)) / weight;
-         *
-         * jacobian(0,0) = Sders[0](1,0);   // dx/du
-         * jacobian(0,1) = Sders[1](1,0);   // dy/du
-         * jacobian(1,0) = Sders[0](0,1);   // dx/dv
-         * jacobian(1,1) = Sders[1](0,1);   // dy/dv
-         */
-
-        // k=0 l=0 loop
-        tmp1[0] = Aders [ 0 ](0, 0) / weight;
-        tmp1[1] = Aders [ 1 ](0, 0) / weight;
-        // k=1 l=0 loop
-        jacobian(0, 0) = ( Aders [ 0 ](1, 0) - wders(1, 0) * tmp1[0] ) / weight; // dx/du
-        jacobian(0, 1) = ( Aders [ 1 ](1, 0) - wders(1, 0) * tmp1[1] ) / weight; // dy/du
-        // k=0 l=1 loop
-        jacobian(1, 0) = ( Aders [ 0 ](0, 1) - wders(0, 1) * tmp1[0] ) / weight; // dx/dv
-        jacobian(1, 1) = ( Aders [ 1 ](0, 1) - wders(0, 1) * tmp1[1] ) / weight; // dy/dv
- #endif
-    }     else {
-        OOFEM_ERROR("not implemented for nsd = %d", nsd);
-    }
-
-#else
     std :: vector< FloatArray > Aders(nsd);
     FloatArray wders;          // 0th and 1st derivatives in w direction on BSpline
 
@@ -933,22 +652,22 @@ void NURBSInterpolation :: giveJacobianMatrixAt(FloatMatrix &jacobian, const Flo
 
             Aders [ 0 ][0] += ders [ 2 ](0, m) * temp1[0];     // x=sum(Nt*sum(Nv*sum(Nu*x*w)))
             Aders [ 1 ][0] += ders [ 2 ](0, m) * temp1[1];     // y=sum(Nt*sum(Nv*sum(Nu*y*w)))
-            Aders [ 2 ][0] += ders [ 2 ](0, m) * temp1[2];     // y=sum(Nt*sum(Nv*sum(Nu*y*w)))
+            Aders [ 2 ][0] += ders [ 2 ](0, m) * temp1[2];     // z=sum(Nt*sum(Nv*sum(Nu*z*w)))
             wders[0]    += ders [ 2 ](0, m) * temp1[3];        // w=sum(Nt*sum(Nv*sum(Nu*w)))
 
             Aders [ 0 ][1] += ders [ 2 ](0, m) * temp2[0];     // dx/du=sum(Nt*sum(Nv*sum(dNu/du*x*w)))
             Aders [ 1 ][1] += ders [ 2 ](0, m) * temp2[1];     // dy/du=sum(Nt*sum(Nv*sum(dNu/du*y*w)))
-            Aders [ 2 ][1] += ders [ 2 ](0, m) * temp2[2];     // dy/du=sum(Nt*sum(Nv*sum(dNu/du*y*w)))
+            Aders [ 2 ][1] += ders [ 2 ](0, m) * temp2[2];     // dz/du=sum(Nt*sum(Nv*sum(dNu/du*z*w)))
             wders[1]    += ders [ 2 ](0, m) * temp2[3];        // dw/du=sum(Nt*sum(Nv*sum(dNu/du*w)))
 
             Aders [ 0 ][2] += ders [ 2 ](0, m) * temp3[0];     // dx/dv=sum(Nt*sum(dNv/dv*sum(Nu*x*w)))
             Aders [ 1 ][2] += ders [ 2 ](0, m) * temp3[1];     // dy/dv=sum(Nt*sum(dNv/dv*sum(Nu*y*w)))
-            Aders [ 2 ][2] += ders [ 2 ](0, m) * temp3[2];     // dy/dv=sum(Nt*sum(dNv/dv*sum(Nu*y*w)))
+            Aders [ 2 ][2] += ders [ 2 ](0, m) * temp3[2];     // dz/dv=sum(Nt*sum(dNv/dv*sum(Nu*z*w)))
             wders[2]    += ders [ 2 ](0, m) * temp3[3];        // dw/dv=sum(Nt*sum(dNv/dv*sum(Nu*w)))
 
             Aders [ 0 ][3] += ders [ 2 ](1, m) * temp1[0];     // dx/dt=sum(dNt/dt*sum(Nv*sum(Nu*x*w)))
             Aders [ 1 ][3] += ders [ 2 ](1, m) * temp1[1];     // dy/dt=sum(dNt/dt*sum(Nv*sum(Nu*y*w)))
-            Aders [ 2 ][3] += ders [ 2 ](1, m) * temp1[2];     // dy/dt=sum(dNt/dt*sum(Nv*sum(Nu*y*w)))
+            Aders [ 2 ][3] += ders [ 2 ](1, m) * temp1[2];     // dz/dt=sum(dNt/dt*sum(Nv*sum(Nu*z*w)))
             wders[3]    += ders [ 2 ](1, m) * temp1[3];        // dw/dt=sum(dNt/dt*sum(Nv*sum(Nu*w)))
         }
 
@@ -971,6 +690,5 @@ void NURBSInterpolation :: giveJacobianMatrixAt(FloatMatrix &jacobian, const Flo
         OOFEM_ERROR("not implemented for nsd = %d", nsd);
     }
 
-#endif
 }
 } // end namespace oofem

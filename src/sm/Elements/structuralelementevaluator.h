@@ -53,7 +53,13 @@ namespace oofem {
  *
  * StructuralElementEvaluator - base class of all structural elements
  * Individual elements supposed to be derived from StructuralElementEvaluator and IGAElement
- * @todo{Class is missing much documentation.}
+ *
+ * The integration rules are the knot spans (IGAIntegrationElement); the B, BH and G matrices have the columns
+ * of the nonzero basis functions of the span only and are assembled through giveIntegrationElementLocalCodeNumbers.
+ * nlgeo 0: small strains, stress from B u. nlgeo 1: total Lagrangian formulation with the first Piola-Kirchhoff
+ * stress P(F), F = I + BH u. A second gradient material, W(F, grad F), adds the third order stress A conjugate
+ * to grad F = G x (x the current positions of the control points); the internal forces are then
+ * int( BH^T P + G^T A ) dV (nlgeo 1 only).
  */
 class StructuralElementEvaluator
 {
@@ -113,6 +119,9 @@ protected:
 
 protected:
     virtual Element *giveElement() = 0;
+
+    /// The element provides the G matrix of a second gradient material (checked by setupEvaluator).
+    virtual bool supportsSecondGradient() const { return false; }
 
     /**
      * Computes the matrix for which the unknown field is obtained, typically [N1, 0, N2, 0, ...; 0, N1, 0, N2, ...].
@@ -221,17 +230,22 @@ protected:
      */
     virtual void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
-    /// grad F (27 components) at gp, see computeGMatrixAt.
-    virtual void computeGradientOfDeformationGradientVector(FloatArray& answer, GaussPoint* gp, TimeStep* tStep) {
-        OOFEM_ERROR( "method not implemented for this element" );
-    }
+    /// grad F = G x (27 components, see computeGMatrixAt) with the current positions x = X + u of the control points of the knot span.
+    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
-    /// Gradient of the surface identity, grad I (27 components), for surface elements.
-    virtual void computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
-    {
-        OOFEM_ERROR( "method not implemented for this element" );
-    }
+    /**
+     * Reference coordinates of the control points of the knot span of gp, in the order of the local code
+     * numbers (giveIntegrationElementLocalCodeNumbers): for each nonzero basis function the coordinates of
+     * its displacement directions.
+     */
+    void giveSpanCoordinates( FloatArray &answer, GaussPoint *gp );
+    /// Total displacements of the control points of the knot span of gp, in the order of giveSpanCoordinates.
+    void giveSpanDisplacements( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
+    /// Stops with an error unless the radius r at gp (axisymmetric evaluators, axis x = 0) is positive and finite.
+    static void checkRadius( double r, GaussPoint *gp );
+    /// Reference radius (x coordinate) at gp for the axisymmetric evaluators, checked by checkRadius.
+    double computeRadiusAt( GaussPoint *gp );
 
     /*
      * Assembles the code numbers of given integration element (sub-patch)

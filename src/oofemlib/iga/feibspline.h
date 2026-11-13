@@ -65,8 +65,8 @@ protected:
     int nsd;
     /// Degree in each direction.
     std::array<int, 3> degree;                                   // eg. 2
-    /// Knot values [nsd]
-    std::array<FloatArray, 3> knotValues;                        // eg. 0 1 2 3 4 5
+    /// Distinct knot values [nsd], divided by the length of the knot vector (not shifted)
+    std::array<FloatArray, 3> knotValues;                        // eg. 0 0.2 0.4 0.6 0.8 1
     /// Knot multiplicity [nsd]
     std::array<IntArray, 3> knotMultiplicity;                    // eg. 3 1 1 1 2 3
     /// numberOfControlPoints[nsd]
@@ -75,8 +75,8 @@ protected:
      * (i.e. TSpline = BSpline)
      */
     std::array<int, 3> numberOfControlPoints;
-    /// Knot vectors [nsd][knot_vector_size]
-    std::array<FloatArray, 3> knotVector;                           // eg. 0 0 0 1 2 3 4 4 5 5 5
+    /// Knot vectors with the multiplicities [nsd][knot_vector_size]
+    std::array<FloatArray, 3> knotVector;                        // eg. 0 0 0 0.2 0.4 0.6 0.8 0.8 1 1 1
     /// Nonzero spans in each directions [nsd]
     std::array<int, 3> numberOfKnotSpans;                        // eg. 5 (0-1,1-2,2-3,3-4,4-5)
 public:
@@ -199,9 +199,17 @@ public:
      * Nonzero basis functions of the knot span with their first and second derivatives with respect
      * to the parameters (nsd = 2 only): answer is count x 6 with the columns N, N_,u, N_,v, N_,uu,
      * N_,vv, N_,uv. The knot span is taken from the geometry wrapper when given, otherwise found from lcoords.
-     * @return One-based patch index of the first nonzero basis function.
+     * The control points of the rows are given by giveKnotSpanBasisFuncMask.
+     * NURBS and T-splines stop with an error (the rational functions are not implemented).
      */
-    int evalSecondDerivatives(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+    virtual void evalSecondDerivatives(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+
+    /**
+     * Lowest continuity C^k of the basis inside the patch in parametric direction dim (one based):
+     * the degree minus the largest multiplicity of an interior knot (the degree when there is none).
+     * The second gradient needs C^1, i.e. interior knot multiplicities at most degree - 1.
+     */
+    int giveMinimalContinuity(int dim) const;
 
 
 protected:
@@ -252,57 +260,60 @@ protected:
      * @warning Parameters outside [U[p], U[n+1]] are rejected; no endpoint tolerance is applied.
      */
     int findSpan(int n, int p, double u, const FloatArray &U) const;
-
-    
-
-    /**
-     * Returns the range of nonzero basis functions for given knot span and given degree.
-     */
-    void giveNonzeroBasisFuncInterval(int span, int deg, int &s, int &e) const {
-        s = span - deg;
-        e = span;
-    }
 };
 
 
 /**
- * B-spline curve in the xy plane: one parametric direction xi (nsd = 1, all methods stop otherwise) with
- * the control points (element nodes) in the xy plane. Used by the IGA surface elements and the IGA clamp.
+ * B-spline curve in the xy plane: one parametric direction xi (nsd = 1) of degree p >= 1 with the control
+ * points (element nodes) in the xy plane. Used by the IGA surface elements and the IGA clamp.
  * Derivatives with respect to x, y are the surface (tangential) derivatives along the reference curve,
  * with the tangent X_,xi, the metric g_11 = |X_,xi|^2, g^11 = 1/g_11 and the unit tangent t.
- * Unless stated otherwise, the knot span is taken from the geometry wrapper when given, otherwise
- * found from lcoords, and the rows of the answers are the p+1 nonzero basis functions of the span.
+ * The cell geometry must be an FEIIGAElementGeometryWrapper. Its knot span is used when given (at an
+ * interior knot it selects the left or right derivative), otherwise the span is found from lcoords.
+ * The rows of the answers are the p+1 nonzero basis functions of the span (giveKnotSpanBasisFuncMask).
+ * The methods that need the tangent stop with an error for a degenerate curve (|X_,xi|^2 zero, not finite
+ * or outside the normal range of doubles, e.g. coinciding control points).
  */
 class OOFEM_EXPORT BSpline2dLineInterpolation : public BSplineInterpolation
 {
 public:
-    BSpline2dLineInterpolation( int nsd ) :
-        BSplineInterpolation( nsd ){}
-    /**
-     * Basis functions and their derivatives with respect to xi up to maxOrder: answer is
-     * (maxOrder+1) x (p+1), row r holds the r-th derivatives of the nonzero functions of the span.
-     * @return One-based patch index of the first nonzero basis function.
-     */
-    int evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+    BSpline2dLineInterpolation() : BSplineInterpolation( 1 ) {}
+
+    /// Reads the B-spline data and requires degree >= 1 (a curve with a tangent).
+    void initializeFrom( InputRecord &ir ) override;
 
     /**
-     * Surface gradient of the basis functions, dN/dX = N' g^11 X_,xi: answer is (p+1) x 2 (x, y).
+     * Basis functions and their derivatives with respect to xi up to maxOrder >= 0: answer is
+     * (maxOrder+1) x (p+1), row r holds the r-th derivatives of the nonzero functions of the span.
+     */
+    void evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+
+    /**
+     * Surface gradient of the basis functions, dN/dX = N' g^11 X_,xi = (N'/|X_,xi|) t: answer is (p+1) x 2 (x, y).
      * @return |X_,xi|.
      */
     double evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
     /**
-     * Second surface derivatives of the basis functions, d2N/dX2 = d2N/ds2 t x t with
-     * d2N/ds2 = ( N'' - Gamma N' ) g^11 and Gamma = g^11 X_,xi . X_,xixi: answer is (p+1) x 3 (xx, yy, xy).
+     * Intrinsic (covariant) Hessian of the basis functions along the curve, d2N/ds2 t x t with
+     * d2N/ds2 = ( N'' - Gamma N' ) g^11 and Gamma = g^11 X_,xi . X_,xixi: answer is (p+1) x 3 (xx, yy, xy,
+     * no engineering factor 2). Both slots are tangential. The full derivative of the vector field grad N
+     * along the curve has the additional term (N'/|X_,xi|) dt/ds x t, which is not included; the IGA surface
+     * elements build their second gradient from this projected Hessian.
      */
     void evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
     /**
-     * Unit normal of the reference curve, answer = (dY/dxi, -dX/dxi, 0) / |X_,xi|: the tangent
-     * rotated clockwise in the xy plane. The boundary number is ignored; the knot span is taken
-     * from the geometry wrapper when it is given, otherwise it is found from lcoords.
-     * @return Always 1, not the boundary transformation Jacobian |X_,xi| promised by FEInterpolation.
-     * Current callers use only the normal vector.
+     * Unit normal of the whole reference curve at xi, answer = (Y_,xi, -X_,xi) / |X_,xi| (two components):
+     * the tangent rotated clockwise in the xy plane, i.e. opposite to LinePlaneStrainSurface::giveNormal.
+     * @return |X_,xi|.
+     */
+    double evalCurveNormal( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+
+    /**
+     * Adapter of FEInterpolation: the normal of the whole curve (evalCurveNormal) with a third, zero
+     * component, not the normal at an end point of the curve. The boundary number is ignored.
+     * @return |X_,xi|.
      */
     double boundaryEvalNormal( FloatArray &answer, int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
@@ -312,6 +323,15 @@ public:
     /// 1 x 1 matrix with |X_,xi|.
     void giveJacobianMatrixAt( FloatMatrix &jacobianMatrix, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
+private:
+    /// Knot span of lcoords: the one of the geometry wrapper when given, otherwise found from lcoords.
+    int giveSpan( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+    /**
+     * Derivatives of the nonzero basis functions up to order nder (1 or 2) into ders, the tangent a = X_,xi and,
+     * for nder = 2, b = X_,xixi of the reference curve. Stops for a degenerate curve (see the class description).
+     */
+    void evalTangent( int nder, const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &ders,
+        std::array<double, 2> &a, std::array<double, 2> &b ) const;
 };
 
 } // end namespace oofem

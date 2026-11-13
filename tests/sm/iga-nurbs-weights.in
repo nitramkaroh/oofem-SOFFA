@@ -1,0 +1,84 @@
+iga-nurbs-weights.out
+Patch test of nurbsplanestresselement with non-unit weights: affine control point displacements give constant strain
+LinearStatic nsteps 1 nmodules 1
+errorcheck
+domain 2dPlaneStress
+OutputManager tstep_all dofman_all element_all
+ndofman 9 nelem 1 ncrosssect 1 nmat 1 nbc 9 nic 0 nltf 1 nset 10
+node 1 coords 2 0.0 0.0
+node 2 coords 2 0.5 0.05
+node 3 coords 2 1.0 0.0
+node 4 coords 2 0.1 0.45
+node 5 coords 2 0.55 0.5
+node 6 coords 2 1.05 0.4
+node 7 coords 2 0.15 0.9
+node 8 coords 2 0.6 1.0
+node 9 coords 2 1.1 0.85
+nurbsplanestresselement 1 nodes 9 1 2 3 4 5 6 7 8 9 crosssect 1 degree 2 2 2 nip 9 knotvectoru 2 0 1 knotmultiplicityu 2 3 3 knotvectorv 2 0 1 knotmultiplicityv 2 3 3 weights 9 1.0 0.7 1.0 0.8 1.3 0.9 1.0 0.6 1.2
+SimpleCS 1 thick 1.0 material 1 set 10
+IsoLE 1 d 0. E 1.0 n 0.25 tAlpha 0.
+BoundaryCondition 1 loadTimeFunction 1 dofs 2 1 2 values 2 0.1 -0.2 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 2 1 2 values 2 0.1051 -0.19815 set 2
+BoundaryCondition 3 loadTimeFunction 1 dofs 2 1 2 values 2 0.11 -0.196 set 3
+BoundaryCondition 4 loadTimeFunction 1 dofs 2 1 2 values 2 0.1019 -0.20095 set 4
+BoundaryCondition 5 loadTimeFunction 1 dofs 2 1 2 values 2 0.1065 -0.1993 set 5
+BoundaryCondition 6 loadTimeFunction 1 dofs 2 1 2 values 2 0.1113 -0.197 set 6
+BoundaryCondition 7 loadTimeFunction 1 dofs 2 1 2 values 2 0.1033 -0.2021 set 7
+BoundaryCondition 8 loadTimeFunction 1 dofs 2 1 2 values 2 0.108 -0.2006 set 8
+BoundaryCondition 9 loadTimeFunction 1 dofs 2 1 2 values 2 0.1127 -0.19815 set 9
+ConstantFunction 1 f(t) 1.0
+Set 1 nodes 1 1
+Set 2 nodes 1 2
+Set 3 nodes 1 3
+Set 4 nodes 1 4
+Set 5 nodes 1 5
+Set 6 nodes 1 6
+Set 7 nodes 1 7
+Set 8 nodes 1 8
+Set 9 nodes 1 9
+Set 10 elements 1 1
+#
+# Biquadratic NURBS patch (one knot span, 3 x 3 control points, weights 0.6 to 1.3) of a distorted square.
+# All control points get u = A X + b with A = [0.01 0.002; 0.004 -0.003], b = (0.1, -0.2). The rational
+# basis functions are a partition of unity, so the displacement field is affine for any positive weights
+# and the strain is constant: e_xx = 0.01, e_yy = -0.003, gamma_xy = 0.006 at every Gauss point.
+# Plane stress, E = 1, nu = 0.25: s_xx = (e_xx + nu e_yy)/(1 - nu^2), s_yy = (e_yy + nu e_xx)/(1 - nu^2),
+# s_xy = gamma_xy/(2 (1 + nu)).
+#
+#%BEGIN_CHECK% tolerance 1.e-12
+## strains at all Gauss points
+#ELEMENT tStep 1 number 1 gp 1 keyword 4 component 1 value 0.01
+#ELEMENT tStep 1 number 1 gp 1 keyword 4 component 2 value -0.003
+#ELEMENT tStep 1 number 1 gp 1 keyword 4 component 6 value 0.006
+#ELEMENT tStep 1 number 1 gp 2 keyword 4 component 1 value 0.01
+#ELEMENT tStep 1 number 1 gp 2 keyword 4 component 2 value -0.003
+#ELEMENT tStep 1 number 1 gp 2 keyword 4 component 6 value 0.006
+#ELEMENT tStep 1 number 1 gp 3 keyword 4 component 1 value 0.01
+#ELEMENT tStep 1 number 1 gp 3 keyword 4 component 2 value -0.003
+#ELEMENT tStep 1 number 1 gp 3 keyword 4 component 6 value 0.006
+#ELEMENT tStep 1 number 1 gp 4 keyword 4 component 1 value 0.01
+#ELEMENT tStep 1 number 1 gp 4 keyword 4 component 2 value -0.003
+#ELEMENT tStep 1 number 1 gp 4 keyword 4 component 6 value 0.006
+#ELEMENT tStep 1 number 1 gp 5 keyword 4 component 1 value 0.01
+#ELEMENT tStep 1 number 1 gp 5 keyword 4 component 2 value -0.003
+#ELEMENT tStep 1 number 1 gp 5 keyword 4 component 6 value 0.006
+#ELEMENT tStep 1 number 1 gp 6 keyword 4 component 1 value 0.01
+#ELEMENT tStep 1 number 1 gp 6 keyword 4 component 2 value -0.003
+#ELEMENT tStep 1 number 1 gp 6 keyword 4 component 6 value 0.006
+#ELEMENT tStep 1 number 1 gp 7 keyword 4 component 1 value 0.01
+#ELEMENT tStep 1 number 1 gp 7 keyword 4 component 2 value -0.003
+#ELEMENT tStep 1 number 1 gp 7 keyword 4 component 6 value 0.006
+#ELEMENT tStep 1 number 1 gp 8 keyword 4 component 1 value 0.01
+#ELEMENT tStep 1 number 1 gp 8 keyword 4 component 2 value -0.003
+#ELEMENT tStep 1 number 1 gp 8 keyword 4 component 6 value 0.006
+#ELEMENT tStep 1 number 1 gp 9 keyword 4 component 1 value 0.01
+#ELEMENT tStep 1 number 1 gp 9 keyword 4 component 2 value -0.003
+#ELEMENT tStep 1 number 1 gp 9 keyword 4 component 6 value 0.006
+## stresses at the first and the last Gauss point
+#ELEMENT tStep 1 number 1 gp 1 keyword 1 component 1 value 0.0098666666666666659
+#ELEMENT tStep 1 number 1 gp 1 keyword 1 component 2 value -0.00053333333333333336
+#ELEMENT tStep 1 number 1 gp 1 keyword 1 component 6 value 0.0024000000000000002
+#ELEMENT tStep 1 number 1 gp 9 keyword 1 component 1 value 0.0098666666666666659
+#ELEMENT tStep 1 number 1 gp 9 keyword 1 component 2 value -0.00053333333333333336
+#ELEMENT tStep 1 number 1 gp 9 keyword 1 component 6 value 0.0024000000000000002
+#%END_CHECK%

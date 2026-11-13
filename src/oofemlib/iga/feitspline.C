@@ -39,9 +39,6 @@
 #include "iga.h"
 
 namespace oofem {
-// optimized version of A4.4 for d=1
-#define OPTIMIZED_VERSION_A4dot4
-
 
 void TSplineInterpolation :: initializeFrom(InputRecord &ir)
 {
@@ -54,14 +51,6 @@ void TSplineInterpolation :: initializeFrom(InputRecord &ir)
         _IFT_TSplineInterpolation_localIndexKnotVectorV,
         _IFT_TSplineInterpolation_localIndexKnotVectorW
     };
-    int max_deg = 0;
-    for ( int i = 0; i < nsd; i++ ) {
-        if ( degree [ i ] > max_deg ) {
-            max_deg = degree [ i ];
-        }
-    }
-
-    //openLocalKnotVector.resize( 3 * max_deg + 2 );
 
     localIndexKnotVector.resize( totalNumberOfControlPoints );
 
@@ -110,6 +99,15 @@ void TSplineInterpolation :: initializeFrom(InputRecord &ir)
     }
 
     IR_GIVE_FIELD(ir, this->weights, _IFT_TSplineInterpolation_weights);
+    if ( this->weights.giveSize() != totalNumberOfControlPoints ) {
+        throw ValueInputException(ir, _IFT_TSplineInterpolation_weights, "the number of weights must equal the number of control points");
+    }
+    // the rational basis functions are divided by sum(N*w)
+    for ( double w : this->weights ) {
+        if ( !std::isfinite(w) || w <= 0. ) {
+            throw ValueInputException(ir, _IFT_TSplineInterpolation_weights, "weights must be finite and positive");
+        }
+    }
 }
 
 
@@ -211,7 +209,7 @@ double TSplineInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &l
 
         for ( int k = 0; k < count; k++ ) {
             for ( int i = 0; i < nsd; i++ ) {
-                // it would be simpler if I could pass k-th column of ders[i] directly to dersBasisFunction HUHU array
+                // value and first derivative of the k-th nonzero function, copied into column k of ders[i]
                 this->dersBasisFunction(1, lcoords[i], degree [ i ], * giveKnotValues(i + 1), localIndexKnotVector [ mask[k] - 1 ] [ i ], tmp_ders [ i ]);
                 ders [ i ](0, k) = tmp_ders [ i ][0];
                 ders [ i ](1, k) = tmp_ders [ i ][1];
@@ -420,20 +418,6 @@ void TSplineInterpolation :: giveJacobianMatrixAt(FloatMatrix &jacobian, const F
         double weight = wders(0, 0);
 
         // optimized version of A4.4 for d=1, binomial coefficients ignored
-#if 0
-        Sders[0](0,0) = Aders[0](0,0) / weight;
-        Sders[1](0,0) = Aders[1](0,0) / weight;
-        Sders[0](0,1) = (Aders[0](0,1)-wders(0,1)*Sders[0](0,0)) / weight;
-        Sders[1](0,1) = (Aders[1](0,1)-wders(0,1)*Sders[1](0,0)) / weight;
-        Sders[0](1,0) = (Aders[0](1,0)-wders(1,0)*Sders[0](0,0)) / weight;
-        Sders[1](1,0) = (Aders[1](1,0)-wders(1,0)*Sders[1](0,0)) / weight;
-
-        jacobian(0,0) = Sders[0](1,0);   // dx/du
-        jacobian(0,1) = Sders[1](1,0);   // dy/du
-        jacobian(1,0) = Sders[0](0,1);   // dx/dv
-        jacobian(1,1) = Sders[1](0,1);   // dy/dv
-#endif
-
         temp[0] = Aders [ 0 ](0, 0) / weight;
         temp[1] = Aders [ 1 ](0, 0) / weight;
         jacobian(1, 0) = ( Aders [ 0 ](0, 1) - wders(0, 1) * temp[0] ) / weight; // dx/dv
@@ -453,8 +437,9 @@ int TSplineInterpolation :: giveKnotSpanBasisFuncMask(const IntArray &knotSpan, 
 {
     FloatArray knotStart(nsd), knotEnd(nsd);
 
-    // resize the mask initially to the size corresponding to BSpline case
+    // reserve the size corresponding to BSpline case
     // but there may be more nonzero basis functions
+    mask.clear();
     if ( nsd == 2 ) {
         mask.preallocate( ( degree [ 0 ] + 1 ) * ( degree [ 1 ] + 1 ) );
     } else {
@@ -533,8 +518,9 @@ int TSplineInterpolation :: giveKnotSpanBasisFuncMask(const IntArray &startKnotS
     int nonzero;
     FloatArray knotStart(nsd), knotEnd(nsd);
 
-    // resize the mask initially to the size corresponding to BSpline case
+    // reserve the size corresponding to BSpline case
     // but there may be more nonzero basis functions
+    mask.clear();
     if ( nsd == 2 ) {
         mask.preallocate( ( degree [ 0 ] + 1 ) * ( degree [ 1 ] + 1 ) );
     } else {

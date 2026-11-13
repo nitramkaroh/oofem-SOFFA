@@ -268,10 +268,12 @@ public:
     const char *giveInputRecordName() const override { return _IFT_BsplinePlaneStrainElement_Name; }
     const char *giveClassName() const override { return "BsplinePlaneStrainElement"; }
 
-    /// VTK export of the patch sampled in numexp x numexp points per knot span (displacements only).
-    void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
-    /// Second gradient materials are accepted; they need C1 continuity (degree at least 2), which is not checked.
-    virtual bool supportsSecondGradient() const override { return true; }
+    /// The second gradient needs C1 continuity in both directions: degree >= 2 and interior knot multiplicities <= degree - 1.
+    bool supportsSecondGradient() const override
+    {
+        return this->interpolation.giveInterpolationOrder() >= 2 && this->interpolation.giveMinimalContinuity( 1 ) >= 1 &&
+               this->interpolation.giveMinimalContinuity( 2 ) >= 1;
+    }
 
 
 #ifdef __OOFEG
@@ -324,13 +326,15 @@ public:
     const char *giveInputRecordName() const override { return _IFT_BsplineAxisymElement_Name; }
     const char *giveClassName() const override { return "BsplineAxisymElement"; }
 
-    /// VTK export of the patch sampled in numexp x numexp points per knot span (displacements only).
-    void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
 
     MaterialMode giveMaterialMode() override { return _3dMat; }
 
-    /// Second gradient materials are accepted; they need C1 continuity (degree at least 2), which is not checked.
-    virtual bool supportsSecondGradient() const override { return true; }
+    /// The second gradient needs C1 continuity in both directions: degree >= 2 and interior knot multiplicities <= degree - 1.
+    bool supportsSecondGradient() const override
+    {
+        return this->interpolation.giveInterpolationOrder() >= 2 && this->interpolation.giveMinimalContinuity( 1 ) >= 1 &&
+               this->interpolation.giveMinimalContinuity( 2 ) >= 1;
+    }
 
 protected:
     int giveNsd() override { return 2; }

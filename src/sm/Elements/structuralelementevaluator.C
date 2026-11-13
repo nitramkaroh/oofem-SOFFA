@@ -81,15 +81,12 @@ StructuralElementEvaluator :: StructuralElementEvaluator()
 int StructuralElementEvaluator :: giveIntegrationElementLocalCodeNumbers(IntArray &answer, Element *elem,
                                                                          IntegrationRule *ie)
 {
-    int nsd;
     IntArray mask, nodeDofIDMask, nodalArray;
     int dofmandof;
 
-    // get number of dofs in node
+    // get number of dofs in node (all nodes have the same dofs; a curve has nsd 1 but two dofs per node)
     elem->giveDofManDofIDMask(1, nodeDofIDMask);
     dofmandof = nodeDofIDMask.giveSize();
-
-    nsd = elem->giveInterpolation()->giveNsd();
 
     // first evaluate nonzero basis function mask
     if ( elem->giveInterpolation()->hasSubPatchFormulation() ) {
@@ -98,8 +95,8 @@ int StructuralElementEvaluator :: giveIntegrationElementLocalCodeNumbers(IntArra
         // loop over nonzero shape functions and assemble localization array
         answer.clear();
         for ( int i = 1; i <= mask.giveSize(); i++ ) {
-            nodalArray.resize( nodeDofIDMask.giveSize() );
-            for ( int j = 1; j <= nsd; j++ ) {
+            nodalArray.resize( dofmandof );
+            for ( int j = 1; j <= dofmandof; j++ ) {
                 nodalArray.at(j) = dofmandof * ( mask.at(i) - 1 ) + j;
             }
 
@@ -206,8 +203,7 @@ void StructuralElementEvaluator :: computeLumpedMassMatrix(FloatMatrix &answer, 
 void StructuralElementEvaluator :: computeConsistentMassMatrix(FloatMatrix &answer, TimeStep *tStep, double &mass)
 // Computes numerically the consistent (full) mass matrix of the receiver.
 {
-    //Element *elem = this->giveElement();
-    StructuralElement *elem = static_cast< StructuralElement * >( this->giveElement() );
+    Element *elem = this->giveElement();
     int ndofs = elem->computeNumberOfDofs();
     FloatMatrix n;
     IntegrationRule *iRule;
@@ -215,20 +211,20 @@ void StructuralElementEvaluator :: computeConsistentMassMatrix(FloatMatrix &answ
 
     answer.resize(ndofs, ndofs);
     answer.zero();
+    mass = 0.;
     if ( !this->isActivated(tStep) ) {
         return;
     }
 
-    if ( ( iRule = this->giveMassMtrxIntegrationRule() ) ) {
-        OOFEM_ERROR("no integration rule available");
+    // none of the IGA elements provides it (the knot span rules would have to be assembled like the stiffness)
+    if ( !( iRule = this->giveMassMtrxIntegrationRule() ) ) {
+        OOFEM_ERROR("element %d (%s): the mass matrix is not implemented (no mass integration rule)", elem->giveNumber(), elem->giveClassName());
     }
 
     this->giveMassMtrxIntegrationMask(mask);
 
-    mass = 0.;
-
     for ( GaussPoint *gp: *iRule ) {
-        double density = elem->giveStructuralCrossSection()->give('d', gp);
+        double density = elem->giveCrossSection()->give('d', gp);
         double dV      = this->computeVolumeAround(gp);
         mass   += density * dV;
         this->computeNMatrixAt(n, gp);
@@ -300,11 +296,12 @@ void StructuralElementEvaluator :: giveInternalForcesVector(FloatArray &answer, 
                 }
 
                 if ( useUpdatedGpRecord == 1 ) {
+                    // P from the status; A (second gradient) is recomputed above from the displacements of
+                    // tStep, which gives the stored value for a converged step (reactions)
                     stress = matStat->givePVector();
                 } else {
+                    ///@todo BH is evaluated twice, in computeFirstPKStressVector and below.
                     this->computeFirstPKStressVector( stress, gp, tStep );
-
-                    ///@todo This is actually inefficient since it constructs B twice and collects the nodal unknowns over and over.
                 }
                 this->computeBHmatrixAt( gp, b );
 
@@ -529,26 +526,12 @@ void StructuralElementEvaluator::computeDeformationGradientVector( FloatArray &a
     // the receiver at time step tStep.
     // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
 
-    // Obtain the current displacement vector of the element
-    FloatArray u;
-    Element *elem = this->giveElement();
-    elem->computeVectorOf( VM_Total, tStep, u );
-
-    // Displacement gradient H = du/dX
+    // Displacement gradient H = du/dX from the control points of the knot span
     FloatMatrix B;
-    this->computeBHmatrixAt( gp, B );
-
-    // get local code numbers corresponding to ir
-    IntArray lc;
     FloatArray ur;
-    this->giveIntegrationElementLocalCodeNumbers( lc, elem, gp->giveIntegrationRule() );
-    ur.resize( B.giveNumberOfColumns() );
-    for ( int i = 1; i <= lc.giveSize(); i++ ) {
-        ur.at( i ) = u.at( lc.at( i ) );
-    }
-
+    this->computeBHmatrixAt( gp, B );
+    this->giveSpanDisplacements( ur, gp, tStep );
     answer.beProductOf( B, ur );
-
 
     // Deformation gradient F = H + I
     MaterialMode matMode = gp->giveMaterialMode();
@@ -596,8 +579,14 @@ void StructuralElementEvaluator::setupEvaluator()
             OOFEM_ERROR( "Element %d (%s): material %d (%s) needs the second gradient, but not all integration points have such a material",
                 elem->giveNumber(), elem->giveClassName(), needs->giveNumber(), needs->giveClassName() );
         }
-        if ( !elem->supportsSecondGradient() ) {
-            OOFEM_ERROR( "Element %d (%s) does not support the second gradient required by material %d (%s)",
+        if ( this->nlGeometry != 1 ) {
+            OOFEM_ERROR( "Element %d (%s): material %d (%s) needs the second gradient, which is implemented only for nlgeo 1",
+                elem->giveNumber(), elem->giveClassName(), needs->giveNumber(), needs->giveClassName() );
+        }
+        if ( !this->supportsSecondGradient() ) {
+            OOFEM_ERROR( "Element %d (%s) does not support the second gradient required by material %d (%s); it is provided by the B-spline "
+                "elements bsplineplanestrainelement, bsplineaxisymelement, bsplineplanestrainsurfaceelement and bsplineaxisymsurfaceelement "
+                "with C1 continuity (degree >= 2, interior knot multiplicities <= degree - 1)",
                 elem->giveNumber(), elem->giveClassName(), needs->giveNumber(), needs->giveClassName() );
         }
         this->hasSecondGradient = true;
@@ -612,6 +601,71 @@ void StructuralElementEvaluator::computeSecondOrderStressVector( FloatArray &ans
     this->computeDeformationGradientVector( vF, gp, tStep );
     this->computeGradientOfDeformationGradientVector( vG, gp, tStep );
     answer = static_cast<StructuralCrossSection *>( this->giveElement()->giveCrossSection() )->giveSecondOrderStresses( vF, vG, gp, tStep );
+}
+
+
+void StructuralElementEvaluator::computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
+{
+    // grad F = G x with the current positions x = X + u of the control points of the knot span
+    FloatMatrix G;
+    FloatArray x, u;
+    this->computeGMatrixAt( gp, G );
+    this->giveSpanCoordinates( x, gp );
+    this->giveSpanDisplacements( u, gp, tStep );
+    x.add( u );
+    answer.beProductOf( G, x );
+}
+
+
+void StructuralElementEvaluator::giveSpanCoordinates( FloatArray &answer, GaussPoint *gp )
+{
+    Element *elem = this->giveElement();
+    IntArray mask, dofIDMask;
+    elem->giveInterpolation()->giveKnotSpanBasisFuncMask( *gp->giveIntegrationRule()->giveKnotSpan(), mask );
+    answer.clear();
+    for ( int node : mask ) {
+        const auto &coords = elem->giveNode( node )->giveCoordinates();
+        elem->giveDofManDofIDMask( node, dofIDMask );
+        for ( int dofid : dofIDMask ) {
+            answer.append( coords.at( dofid ) ); // the displacement directions D_u, D_v, D_w are 1, 2, 3
+        }
+    }
+}
+
+
+void StructuralElementEvaluator::giveSpanDisplacements( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
+{
+    // the same values as Element::computeVectorOf, which IGA elements do not rotate
+    Element *elem = this->giveElement();
+    IntArray mask, dofIDMask;
+    FloatArray u;
+    elem->giveInterpolation()->giveKnotSpanBasisFuncMask( *gp->giveIntegrationRule()->giveKnotSpan(), mask );
+    answer.clear();
+    for ( int node : mask ) {
+        elem->giveDofManDofIDMask( node, dofIDMask );
+        elem->giveDofManager( node )->giveUnknownVector( u, dofIDMask, VM_Total, tStep, true );
+        answer.append( u );
+    }
+}
+
+
+void StructuralElementEvaluator::checkRadius( double r, GaussPoint *gp )
+{
+    if ( !( r > 0. ) || !std::isfinite( r ) ) {
+        OOFEM_ERROR( "element %d: the radius at a Gauss point is %g, it must be positive (the axis of rotation is x = 0)",
+            gp->giveElement()->giveNumber(), r );
+    }
+}
+
+
+double StructuralElementEvaluator::computeRadiusAt( GaussPoint *gp )
+{
+    FloatArray gcoords;
+    gp->giveElement()->giveInterpolation()->local2global( gcoords, gp->giveNaturalCoordinates(),
+        FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
+    double r = gcoords.at( 1 );
+    checkRadius( r, gp );
+    return r;
 }
 
 

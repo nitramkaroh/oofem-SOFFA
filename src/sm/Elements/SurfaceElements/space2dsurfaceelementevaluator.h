@@ -36,6 +36,7 @@
 #define space2dstructuraleurfaceelementevaluator_h
 
 #include "sm/Elements/structuralsurfaceelementevaluator.h"
+#include "internalstatetype.h"
 
 namespace oofem {
 
@@ -80,15 +81,19 @@ protected:
     }
 
 public:
-    /// Code numbers of the knot span ie; a curve has nsd 1 but two dofs per control point.
-    int giveIntegrationElementLocalCodeNumbers( IntArray &answer, Element *elem, IntegrationRule *ie ) override;
-
     /**
-     * Curvature K (temporary value stored by the material at the Gauss points of the integration rule
+     * Current curvature K (temporary value stored by the material at the Gauss points of the integration rule
      * RuleIndex) at lcoords, interpolated linearly between the two nearest Gauss points; used for the VTK
      * export. A rule with one point gives its value.
      */
-    void computeReferenceCurvature( FloatArray &RefCurvature, TimeStep *tStep, FloatArray &lcoords, int RuleIndex ) override;
+    void computeCurvatureAt( FloatArray &answer, TimeStep *tStep, const FloatArray &lcoords, int RuleIndex ) override;
+
+    /**
+     * IST_CurvatureTensor at the VTK export point gp of the knot span RuleIndex (see computeCurvatureAt), as
+     * 9 components row by row; stops with an error unless the element has a bending material (only those
+     * compute the curvature). @return false for the other types.
+     */
+    bool giveCurvatureExportValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, int RuleIndex, TimeStep *tStep );
 };
 
 /**
@@ -103,13 +108,13 @@ public:
         Space2dStructuralSurfaceElementEvaluator() {}
 
 protected:
-    /// As the plane version, with row 3 (hoop, u / r) added.
+    /// The plane version with row 3 (hoop, u / r) added.
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
     /// Second gradient matrix 27 x (2 nno) including the hoop terms (Christoffel symbols of the surface of revolution).
     virtual void computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
-    /// Area per radian around gp, r times the length.
+    /// Area per radian around gp, the length of the plane version times the radius r.
     double computeVolumeAround( GaussPoint *gp ) override;
 
 };

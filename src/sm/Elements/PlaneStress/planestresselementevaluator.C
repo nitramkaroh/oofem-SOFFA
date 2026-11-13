@@ -45,6 +45,7 @@
 #include "crosssection.h"
 #include "mathfem.h"
 #include "iga/iga.h"
+#include "iga/feibspline.h"
 
 namespace oofem {
 void PlaneStressStructuralElementEvaluator :: computeNMatrixAt(FloatMatrix &answer, GaussPoint *gp)
@@ -60,7 +61,6 @@ void PlaneStressStructuralElementEvaluator :: computeBMatrixAt(FloatMatrix &answ
     FloatMatrix d;
 
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-    // this uses FEInterpolation::nodes2coords - quite inefficient in this case (large num of dofmans)
     interp->evaldNdx( d, gp->giveNaturalCoordinates(),
                      FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
 
@@ -84,7 +84,6 @@ void PlaneStressStructuralElementEvaluator::computeBHmatrixAt( GaussPoint *gp, F
 
     FloatMatrix dNdx;
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-    // this uses FEInterpolation::nodes2coords - quite inefficient in this case (large num of dofmans)
     interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(),
     FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
 
@@ -146,7 +145,6 @@ void PlaneStrainStructuralElementEvaluator ::computeBMatrixAt( FloatMatrix &answ
     FloatMatrix d;
 
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-    // this uses FEInterpolation::nodes2coords - quite inefficient in this case (large num of dofmans)
     interp->evaldNdx( d, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
     
@@ -169,7 +167,6 @@ void PlaneStrainStructuralElementEvaluator::computeBHmatrixAt( GaussPoint *gp, F
 
     FloatMatrix dNdx;
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-    // this uses FEInterpolation::nodes2coords - quite inefficient in this case (large num of dofmans)
     interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
 
@@ -222,19 +219,16 @@ void PlaneStrainStructuralElementEvaluator::computeConstitutiveMatrix_dPdF_At( F
 void PlaneStrainStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer )
 {
     FloatMatrix ders;
-    FEInterpolation *interp = gp->giveElement()->giveInterpolation();
+    auto interp = dynamic_cast< const BSplineInterpolation * >( gp->giveElement()->giveInterpolation() );
+    if ( !interp ) {
+        OOFEM_ERROR( "element %d: the second gradient needs a B-spline interpolation", gp->giveElement()->giveGlobalNumber() );
+    }
 
-    // returns index where nonzero basis functions start (1-based)
     // ders is a matrix of size [nno x 6] where nno is the number of nonzero basis functions at the gauss point, the columns are: [N, dN/drho, dN/dxi, d2N/drho2, d2N/dxi2, d2N/drhodxi]
     // (rho, xi the two parametric coordinates; R, Y below are the reference coordinates x, y)
-    auto knotSpan  = gp->giveIntegrationRule()->giveKnotSpan();
-    int indexStart = interp->evalSecondDerivatives( ders, gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( gp->giveElement(), knotSpan ) );
-
-    // Get nodal coordinates
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-    FloatArray nodesCoords;
-    elem->giveNodalCoordinates( nodesCoords );
+    auto knotSpan = gp->giveIntegrationRule()->giveKnotSpan();
+    FEIIGAElementGeometryWrapper cellgeo( gp->giveElement(), knotSpan );
+    interp->evalSecondDerivatives( ders, gp->giveNaturalCoordinates(), cellgeo );
 
     double R_rho = 0., R_xi = 0., Y_rho = 0., Y_xi = 0.; // 1st derivatives
     double R_rho_rho = 0., R_xi_xi = 0., R_rho_xi = 0., Y_rho_rho = 0., Y_xi_xi = 0., Y_rho_xi = 0.; // 2nd derivatives
@@ -242,11 +236,11 @@ void PlaneStrainStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, Fl
     IntArray mask;
     interp->giveKnotSpanBasisFuncMask( *knotSpan, mask );
 
-    // Evaluate reference coordinate derivatives
+    // Evaluate reference coordinate derivatives from the control points of the knot span
     for ( int k = 0; k < ders.giveNumberOfRows(); k++ ) {
-        int indCords         = mask.at( k + 1 );
-        double vertexCoord_1 = nodesCoords.at( 2 * indCords - 1 );
-        double vertexCoord_2 = nodesCoords.at( 2 * indCords );
+        const auto &vertexCoords = cellgeo.giveVertexCoordinates( mask.at( k + 1 ) );
+        double vertexCoord_1     = vertexCoords[0];
+        double vertexCoord_2     = vertexCoords[1];
         // first derivatives
         R_rho += ders( k, 1 ) * vertexCoord_1;
         Y_rho += ders( k, 1 ) * vertexCoord_2;
@@ -274,7 +268,6 @@ void PlaneStrainStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, Fl
     Tensor3_3d dFcyl_r_xi_xi;
     Tensor3_3d dFcyl_r_rho;
     Tensor3_3d dFcyl_r_xi;
-    Tensor3_3d dFcyl_r;
     Tensor3_3d dFcyl_y_rho_rho;
     Tensor3_3d dFcyl_y_xi_rho;
     Tensor3_3d dFcyl_y_xi_xi;
@@ -350,7 +343,6 @@ void PlaneStrainStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, Fl
     FloatArray dFcyl_r_xi_rho_v  = dFcyl_r_xi_rho.to_voigt_form_27();
     FloatArray dFcyl_r_rho_v     = dFcyl_r_rho.to_voigt_form_27();
     FloatArray dFcyl_r_xi_v      = dFcyl_r_xi.to_voigt_form_27();
-    FloatArray dFcyl_r_v         = dFcyl_r.to_voigt_form_27();
 
     FloatArray dFcyl_y_rho_rho_v = dFcyl_y_rho_rho.to_voigt_form_27();
     FloatArray dFcyl_y_xi_xi_v   = dFcyl_y_xi_xi.to_voigt_form_27();
@@ -362,10 +354,10 @@ void PlaneStrainStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, Fl
     answer.resize( 27, nRows * 2 );
     answer.zero();
 
-    double N, N_rho, N_xi, N_rho_rho, N_xi_xi, N_rho_xi, N_xi_rho;
+    double N_rho, N_xi, N_rho_rho, N_xi_xi, N_rho_xi, N_xi_rho;
     FloatArray col1, col2;
     for ( int i = 1; i <= nRows; i++ ) {
-        // basis and its derivatives
+        // derivatives of the basis function (the plane G has no term with N itself)
         N_rho     = ders( i - 1, 1 );
         N_xi      = ders( i - 1, 2 );
         N_rho_rho = ders( i - 1, 3 );
@@ -388,38 +380,6 @@ void PlaneStrainStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, Fl
         answer.setColumn( col1, 2 * i - 1 );
         answer.setColumn( col2, 2 * i );
     }
-}
-
-void PlaneStrainStructuralElementEvaluator::computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
-{
-    // Computes grad F (27 components, see computeGMatrixAt) at the Gauss point gp of
-    // the receiver at time step tStep from the current positions of the control points.
-
-    // Obtain the current displacement vector of the element
-    FloatArray u;
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-    elem->computeVectorOf( VM_Total, tStep, u );
-
-    // Get nodal coordinates
-    FloatArray nodesCoords;
-    elem->giveNodalCoordinates( nodesCoords );
-
-    FloatArray xDef = nodesCoords + u;
-
-    // second gradient matrix, grad F = G x
-    FloatMatrix G;
-    this->computeGMatrixAt( gp, G );
-
-    // get local code numbers corresponding to ir
-    IntArray lc;
-    FloatArray xr;
-    this->giveIntegrationElementLocalCodeNumbers( lc, elem, gp->giveIntegrationRule() );
-    xr.resize( G.giveNumberOfColumns() );
-    for ( int i = 1; i <= lc.giveSize(); i++ ) {
-        xr.at( i ) = xDef.at( lc.at( i ) );
-    }
-
-    answer.beProductOf( G, xr );
 }
 
 void PlaneStrainStructuralElementEvaluator ::computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
@@ -446,19 +406,12 @@ void AxisymStructuralElementEvaluator::computeBHmatrixAt( GaussPoint *gp, FloatM
     FloatArray n;
     FloatMatrix dNdx;
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-    // this uses FEInterpolation::nodes2coords - quite inefficient in this case (large num of dofmans)
     interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-    interp->evalN( n, gp->giveNaturalCoordinates(), 
+    interp->evalN( n, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
+    double r = this->computeRadiusAt( gp );
 
-
-    FloatArray gcoords;
-    interp->local2global( gcoords, gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-    double r = gcoords.at( 1 ); 
-
-    
     answer.resize( 9, dNdx.giveNumberOfRows() * 2 );
     answer.zero();
 
@@ -486,12 +439,7 @@ double AxisymStructuralElementEvaluator ::computeVolumeAround( GaussPoint *gp )
     determinant = fabs( interp->giveTransformationJacobian( gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( this->giveElement(),gp->giveIntegrationRule()->giveKnotSpan() ) ) );
     weight      = gp->giveWeight();
-
-    FloatArray gcoords;
-    interp->local2global( gcoords, gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-    double r = gcoords.at( 1 );
-
+    double r    = this->computeRadiusAt( gp );
     volume      = determinant * weight * r;
 
     return volume;
@@ -510,20 +458,17 @@ void AxisymStructuralElementEvaluator::computeConstitutiveMatrix_dPdF_At( FloatM
 
 void AxisymStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer )
 {
-    FloatMatrix ders; 
-    FEInterpolation *interp = gp->giveElement()->giveInterpolation();
+    FloatMatrix ders;
+    auto interp = dynamic_cast< const BSplineInterpolation * >( gp->giveElement()->giveInterpolation() );
+    if ( !interp ) {
+        OOFEM_ERROR( "element %d: the second gradient needs a B-spline interpolation", gp->giveElement()->giveGlobalNumber() );
+    }
 
-    // returns index where nonzero basis functions start (1-based)
     // ders is a matrix of size [nno x 6] where nno is the number of nonzero basis functions at the gauss point, the columns are: [N, dN/drho, dN/dxi, d2N/drho2, d2N/dxi2, d2N/drhodxi]
     // (rho, xi the two parametric coordinates; R, Y below are the reference radius and axial coordinate)
-    auto knotSpan  = gp->giveIntegrationRule()->giveKnotSpan();
-    int indexStart = interp->evalSecondDerivatives( ders, gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( gp->giveElement(), knotSpan ) );
-
-    // Get nodal coordinates
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-    FloatArray nodesCoords;
-    elem->giveNodalCoordinates( nodesCoords );
+    auto knotSpan = gp->giveIntegrationRule()->giveKnotSpan();
+    FEIIGAElementGeometryWrapper cellgeo( gp->giveElement(), knotSpan );
+    interp->evalSecondDerivatives( ders, gp->giveNaturalCoordinates(), cellgeo );
 
     double R = 0.; // undeformed radius (X1)
     double R_rho = 0., R_xi = 0., Y_rho = 0., Y_xi = 0.; // 1st derivatives
@@ -531,12 +476,12 @@ void AxisymStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMa
 
     IntArray mask;
     interp->giveKnotSpanBasisFuncMask( *knotSpan, mask );
-    
-    // Evaluate reference coordinate derivatives
+
+    // Evaluate reference coordinate derivatives from the control points of the knot span
     for ( int k = 0; k < ders.giveNumberOfRows(); k++ ) {
-        int indCords         = mask.at(k+1);
-        double vertexCoord_1 = nodesCoords.at( 2 * indCords - 1 );
-        double vertexCoord_2 = nodesCoords.at( 2 * indCords );
+        const auto &vertexCoords = cellgeo.giveVertexCoordinates( mask.at( k + 1 ) );
+        double vertexCoord_1     = vertexCoords[0];
+        double vertexCoord_2     = vertexCoords[1];
         // position
         R += vertexCoord_1 * ders( k, 0 ); // compute radial coordinate at the gauss point
         // first derivatives
@@ -553,8 +498,9 @@ void AxisymStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMa
         Y_xi_xi += ders( k, 4 ) * vertexCoord_2;
 
         R_rho_xi += ders( k, 5 ) * vertexCoord_1;
-        Y_rho_xi += ders( k, 5 ) * vertexCoord_2; 
+        Y_rho_xi += ders( k, 5 ) * vertexCoord_2;
     }
+    checkRadius( R, gp );
     double R_xi_rho = R_rho_xi;
     double Y_xi_rho = Y_rho_xi;
 
@@ -702,36 +648,13 @@ void AxisymStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMa
     }
 }
 
-void AxisymStructuralElementEvaluator::computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
+
+void AxisymStructuralElementEvaluator::initializeFrom( InputRecord &ir )
 {
-    // Computes grad F (27 components, see computeGMatrixAt) at the Gauss point gp of
-    // the receiver at time step tStep from the current positions of the control points.
-
-    // Obtain the current displacement vector of the element
-    FloatArray u;
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-    elem->computeVectorOf( VM_Total, tStep, u );
-
-    // Get nodal coordinates
-    FloatArray nodesCoords;
-    elem->giveNodalCoordinates( nodesCoords );
-
-    FloatArray xDef = nodesCoords + u;
-
-    // second gradient matrix, grad F = G x
-    FloatMatrix G;
-    this->computeGMatrixAt( gp, G );
-
-    // get local code numbers corresponding to ir
-    IntArray lc;
-    FloatArray xr;
-    this->giveIntegrationElementLocalCodeNumbers( lc, elem, gp->giveIntegrationRule() );
-    xr.resize( G.giveNumberOfColumns() );
-    for ( int i = 1; i <= lc.giveSize(); i++ ) {
-        xr.at( i ) = xDef.at( lc.at( i ) );
+    StructuralElementEvaluator::initializeFrom( ir );
+    if ( this->nlGeometry != 1 ) {
+        throw ValueInputException( ir, _IFT_StructuralElementEvaluator_nlgeoflag, "only nlgeo 1 is implemented for the axisymmetric element" );
     }
-
-    answer.beProductOf( G, xr );
 }
 
 

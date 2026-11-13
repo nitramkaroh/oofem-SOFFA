@@ -38,6 +38,9 @@
 #include "feibspline.h"
 #include "mathfem.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace oofem {
 
 void
@@ -82,6 +85,12 @@ BSplineInterpolation :: initializeFrom(InputRecord &ir)
             throw ValueInputException(ir, IFT_knotVector [ n ], "invalid size of knot vector");
         }
 
+        for ( int i = 1; i <= size; i++ ) {
+            if ( !std::isfinite( knotValues [ n ].at(i) ) ) {
+                throw ValueInputException(ir, IFT_knotVector [ n ], "knot values must be finite");
+            }
+        }
+
         // check for monotonicity of knot vector without multiplicity
         double knotVal = knotValues [ n ].at(1);
         for ( int i = 1; i < size; i++ ) {
@@ -92,7 +101,8 @@ BSplineInterpolation :: initializeFrom(InputRecord &ir)
             knotVal = knotValues [ n ].at(i + 1);
         }
 
-        // transform knot vector to interval <0;1>
+        // divide the knot values by the length of the knot vector (they are not shifted: the parametric
+        // interval is <0;1> only when the first knot is 0, otherwise <u0/L; u0/L + 1>)
         double span = knotVal - knotValues [ n ].at(1);
         for ( int i = 1; i <= size; i++ ) {
             knotValues [ n ].at(i) /= span;
@@ -311,7 +321,7 @@ double BSplineInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &l
 
                     tmp2[0] += ders [ 0 ](0, k) * vertexCoords[0];                // sum(Nu*x)
                     tmp2[1] += ders [ 0 ](0, k) * vertexCoords[1];                // sum(Nu*y)
-                    tmp2[2] += ders [ 0 ](0, k) * vertexCoords[2];                // sum(Nu*y)
+                    tmp2[2] += ders [ 0 ](0, k) * vertexCoords[2];                // sum(Nu*z)
                 }
 
                 ind += numberOfControlPoints [ 0 ];
@@ -322,11 +332,11 @@ double BSplineInterpolation :: evaldNdx(FloatMatrix &answer, const FloatArray &l
 
                 temp2[0] += ders [ 1 ](1, l) * tmp2[0];            // sum(dNv/dv*sum(Nu*x))
                 temp2[1] += ders [ 1 ](1, l) * tmp2[1];            // sum(dNv/dv*sum(Nu*y))
-                temp2[2] += ders [ 1 ](1, l) * tmp2[1];            // sum(dNv/dv*sum(Nu*z))
+                temp2[2] += ders [ 1 ](1, l) * tmp2[2];            // sum(dNv/dv*sum(Nu*z))
 
                 temp3[0] += ders [ 1 ](0, l) * tmp2[0];            // sum(Nv*sum(Nu*x))
                 temp3[1] += ders [ 1 ](0, l) * tmp2[1];            // sum(Nv*sum(Nu*y))
-                temp3[2] += ders [ 1 ](0, l) * tmp2[1];            // sum(Nv*sum(Nu*z))
+                temp3[2] += ders [ 1 ](0, l) * tmp2[2];            // sum(Nv*sum(Nu*z))
             }
 
             ind = indx + numberOfControlPoints [ 0 ] * numberOfControlPoints [ 1 ];
@@ -606,8 +616,7 @@ int BSplineInterpolation :: giveKnotSpanBasisFuncMask(const IntArray &knotSpan, 
 int BSplineInterpolation :: giveNumberOfKnotSpanBasisFunctions(const IntArray &knotSpan) const
 {
     int answer = 1;
-    // there are always degree+1 nonzero basis functions on each knot span
-    ///@todo This loop seems meaningless. It just returns degree[nsd-1]+1 in the end ?
+    // degree+1 nonzero basis functions in each direction, their tensor product on the knot span
     for ( int i = 0; i < nsd; i++ ) {
         answer *= ( degree [ i ] + 1 );
     }
@@ -750,14 +759,12 @@ void BSplineInterpolation :: dersBasisFuns(int n, double u, int span, int p, con
 // and can be retrieved for given spatial dimension;
 // however in such a case this function could not be used for span localization in local knot vector of TSpline
 
-// jaky ma vyznam const = ve funkci se objekt nesmi zmenit
-
 int BSplineInterpolation :: findSpan(int n, int p, double u, const FloatArray &U) const
 {
-    // Reject parameters outside the knot domain to prevent the bisection from stalling.
+    // Reject parameters outside the knot domain (and NaN) to prevent the bisection from stalling.
     double uStart = U [ p ];
     double uEnd   = U [ n + 1 ];
-    if ( u < uStart || u > uEnd ) {
+    if ( !( u >= uStart && u <= uEnd ) ) {
         OOFEM_ERROR("Parameter %g lies outside the knot vector <%g, %g>", u, uStart, uEnd);
     }
 
@@ -782,8 +789,12 @@ int BSplineInterpolation :: findSpan(int n, int p, double u, const FloatArray &U
     return mid;
 }
 
-int BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+void BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
+    if ( nsd != 2 ) {
+        OOFEM_ERROR( "evalSecondDerivatives not implemented for nsd = %d", nsd );
+    }
+
     const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
     IntArray span( nsd );
     std ::vector<FloatMatrix> ders( nsd ); // vector of derivatives of basis functions in each parametric direction
@@ -803,308 +814,187 @@ int BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const Floa
         this->dersBasisFuns( 2, lcoords[i], span[i], degree[i], knotVector[i], ders[i] );
     }
 
-    if ( nsd == 2 )
-    {
-        answer.resize( count, 6 ); // 6 columns for all derivatives, 1 - N, 2 - dN/du, 3 - dN/dv, 4 - d2N/du2, 5 - d2N/dv2,6 - d2N/dudv
+    answer.resize( count, 6 ); // 6 columns for all derivatives, 1 - N, 2 - dN/du, 3 - dN/dv, 4 - d2N/du2, 5 - d2N/dv2,6 - d2N/dudv
 
-        int cnt = 0;
-        for ( int l = 0; l <= degree[1]; l++ ) {
-            for ( int k = 0; k <= degree[0]; k++ ) {
-                // N
-                answer( cnt, 0 ) = ders[0]( 0, k ) * ders[1]( 0, l ); // N
-                // 1st derivatives
-                answer( cnt, 1 ) = ders[0]( 1, k ) * ders[1]( 0, l ); // dN/du
-                answer( cnt, 2 ) = ders[0]( 0, k ) * ders[1]( 1, l ); // dN/dv
-                // 2nd derivatives
-                answer( cnt, 3 ) = ders[0]( 2, k ) * ders[1]( 0, l ); // d2N/duu = d2Nu/duu*Nv
-                answer( cnt, 4 ) = ders[0]( 0, k ) * ders[1]( 2, l ); // d2N/dvv = Nu*d2Nv/dvv
-                answer( cnt, 5 ) = ders[0]( 1, k ) * ders[1]( 1, l ); // d2N/duv = dNu/du*dNv/dv
-                cnt++;
-            }
+    int cnt = 0;
+    for ( int l = 0; l <= degree[1]; l++ ) {
+        for ( int k = 0; k <= degree[0]; k++ ) {
+            // N
+            answer( cnt, 0 ) = ders[0]( 0, k ) * ders[1]( 0, l ); // N
+            // 1st derivatives
+            answer( cnt, 1 ) = ders[0]( 1, k ) * ders[1]( 0, l ); // dN/du
+            answer( cnt, 2 ) = ders[0]( 0, k ) * ders[1]( 1, l ); // dN/dv
+            // 2nd derivatives
+            answer( cnt, 3 ) = ders[0]( 2, k ) * ders[1]( 0, l ); // d2N/duu = d2Nu/duu*Nv
+            answer( cnt, 4 ) = ders[0]( 0, k ) * ders[1]( 2, l ); // d2N/dvv = Nu*d2Nv/dvv
+            answer( cnt, 5 ) = ders[0]( 1, k ) * ders[1]( 1, l ); // d2N/duv = dNu/du*dNv/dv
+            cnt++;
         }
     }
-    else
-    {
-        OOFEM_ERROR( "evaldNdx not implemented for nsd = %d", nsd );
-    }
+}
 
-    // one-based patch index of the first nonzero basis function (control point) of the span
-    int uind = span[0] - degree[0];
-    int vind = span[1] - degree[1];
-    int ind  = vind * numberOfControlPoints[0] + uind + 1;
-    return ind;
-};
+
+int BSplineInterpolation::giveMinimalContinuity( int dim ) const
+{
+    // the first and the last knot are the ends of the patch, the others are interior
+    const IntArray &mult = this->knotMultiplicity[dim - 1];
+    int maxInterior      = 0;
+    for ( int i = 2; i < mult.giveSize(); i++ ) {
+        maxInterior = std::max( maxInterior, mult.at( i ) );
+    }
+    return this->degree[dim - 1] - maxInterior;
+}
 
 ///////////////////////
 // BSpline2dLineInterpolation
 
-double BSpline2dLineInterpolation ::evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+void BSpline2dLineInterpolation::initializeFrom( InputRecord &ir )
 {
-    if ( nsd != 1 ){
-        OOFEM_ERROR( "This class is only for line in 2D" );
-    };
+    BSplineInterpolation::initializeFrom( ir );
+    if ( this->degree[0] < 1 ) {
+        throw ValueInputException( ir, _IFT_BSplineInterpolation_degree, "a curve needs degree >= 1" );
+    }
+}
 
+
+int BSpline2dLineInterpolation::giveSpan( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
     const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
-    IntArray span( nsd );
-    double Jacob = 0.;
-    std ::vector<FloatMatrix> ders( nsd );
-
     if ( gw.knotSpan ) {
-        span = *gw.knotSpan;
-    } else {
-        for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
+        return gw.knotSpan->at( 1 );
+    }
+    return this->findSpan( numberOfControlPoints[0] - 1, degree[0], lcoords[0], knotVector[0] );
+}
+
+
+void BSpline2dLineInterpolation::evalTangent( int nder, const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &ders,
+    std::array<double, 2> &a, std::array<double, 2> &b ) const
+{
+    int span = this->giveSpan( lcoords, cellgeo );
+    this->dersBasisFuns( nder, lcoords[0], span, degree[0], knotVector[0], ders );
+
+    // X_,xi and X_,xixi summed over the p+1 control points of the span
+    a = { 0., 0. };
+    b = { 0., 0. };
+    int ind = span - degree[0] + 1;
+    for ( int k = 0; k <= degree[0]; k++ ) {
+        const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
+        a[0] += ders( 1, k ) * vertexCoords[0];
+        a[1] += ders( 1, k ) * vertexCoords[1];
+        if ( nder >= 2 ) {
+            b[0] += ders( 2, k ) * vertexCoords[0];
+            b[1] += ders( 2, k ) * vertexCoords[1];
         }
     }
 
-    for ( int i = 0; i < nsd; i++ ) {
-        this->dersBasisFuns( 1, lcoords[i], span[i], degree[i], knotVector[i], ders[i] );
+    // |X_,xi|^2 and its inverse enter the formulas: a normal double keeps both finite and positive
+    double g = a[0] * a[0] + a[1] * a[1];
+    if ( !std::isnormal( g ) ) {
+        OOFEM_ERROR( "degenerate curve at xi = %g (knot span %d): |X,xi|^2 = %g (coinciding control points?)", lcoords[0], span, g );
     }
+}
 
-    int count = giveNumberOfKnotSpanBasisFunctions( span );
-    answer.resize( count, 2 );
 
-    FloatArray dXdXi(2 ); // tangent X_,xi of the reference curve
-    double dxdxi = 0.;
-    double dydxi = 0.;
-
-    int uind = span[0] - degree[0];
-    int ind  = uind + 1;
-    for ( int k = 0; k <= degree[0]; k++ ) {
-        const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        dxdxi += ders[0]( 1, k ) * vertexCoords[0];
-        dydxi += ders[0]( 1, k ) * vertexCoords[1];
+void BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    if ( maxOrder < 0 ) {
+        OOFEM_ERROR( "negative derivative order %d", maxOrder );
     }
-    dXdXi.at( 1 ) = dxdxi;
-    dXdXi.at( 2 ) = dydxi;
+    this->dersBasisFuns( maxOrder, lcoords[0], this->giveSpan( lcoords, cellgeo ), degree[0], knotVector[0], answer );
+}
 
 
-    // Inverse (contravariant) metric coefficient g^{11} = 1 / |X_,xi|^2.
-    double G_11 = 1. / ( dxdxi * dxdxi + dydxi * dydxi ); // Same as 1/J^2
-    Jacob       = 1 / sqrt(G_11);
+double BSpline2dLineInterpolation::evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    FloatMatrix ders;
+    std::array<double, 2> a, b;
+    this->evalTangent( 1, lcoords, cellgeo, ders, a, b );
+
+    // inverse (contravariant) metric coefficient g^11 = 1 / |X_,xi|^2
+    double G_11 = 1. / ( a[0] * a[0] + a[1] * a[1] );
 
     // surface gradient dN_k/dX = N_k' g^11 X_,xi
+    answer.resize( degree[0] + 1, 2 );
     for ( int k = 0; k <= degree[0]; k++ ) {
-        for ( int l = 0; l <= 1; l++ ) {
-            answer( k, l ) = dXdXi( l ) *ders[0]( 1, k ) * G_11;
+        for ( int l = 0; l < 2; l++ ) {
+            answer( k, l ) = a[l] * ders( 1, k ) * G_11;
         }
     }
 
-    return Jacob;
+    return 1. / sqrt( G_11 ); // |X_,xi|
 }
 
-void BSpline2dLineInterpolation ::evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+
+void BSpline2dLineInterpolation::evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
-    if ( nsd != 1 ) {
-        OOFEM_ERROR( "This class is only for line in 2D" );
-    };
+    FloatMatrix ders;
+    std::array<double, 2> a, b;
+    this->evalTangent( 2, lcoords, cellgeo, ders, a, b );
 
-    const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
-    IntArray span( nsd );
-    std ::vector<FloatMatrix> ders( nsd );
+    // (x_,xi^2, y_,xi^2, x_,xi y_,xi), i.e. |X_,xi|^2 t x t in the order xx, yy, xy
+    double dXprod[3] = { a[0] * a[0], a[1] * a[1], a[1] * a[0] };
 
-    if ( gw.knotSpan ) {
-        span = *gw.knotSpan;
-    } else {
-        for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
-        }
-    }
-
-    for ( int i = 0; i < nsd; i++ ) {
-        this->dersBasisFuns( 2, lcoords[i], span[i], degree[i], knotVector[i], ders[i] );
-    }
-
-    int count = giveNumberOfKnotSpanBasisFunctions( span );
-    answer.resize( count, 3 );
-
-    FloatArray dXprod( 3 ); // (x_,xi^2, y_,xi^2, x_,xi y_,xi), i.e. |X_,xi|^2 t x t in the order xx, yy, xy
-    double dxdxi = 0., dydxi = 0., d2xdxi2 = 0., d2ydxi2 = 0.;
-
-    int uind = span[0] - degree[0];
-    int ind  = uind + 1;
-    for ( int k = 0; k <= degree[0]; k++ ) {
-        const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        dxdxi += ders[0]( 1, k ) * vertexCoords[0];
-        dydxi += ders[0]( 1, k ) * vertexCoords[1];
-
-        d2xdxi2 += ders[0]( 2, k ) * vertexCoords[0];
-        d2ydxi2 += ders[0]( 2, k ) * vertexCoords[1];
-    }
-    dXprod.at( 1 ) = dxdxi * dxdxi;
-    dXprod.at( 2 ) = dydxi * dydxi;
-    dXprod.at( 3 ) = dydxi * dxdxi;
-
-
-
-    // Inverse (contravariant) metric coefficient g^{11} = 1 / |X_,xi|^2.
-    double G_11 = 1. / ( dxdxi * dxdxi + dydxi * dydxi ); // Same as 1/J^2
+    // inverse (contravariant) metric coefficient g^11 = 1 / |X_,xi|^2
+    double G_11 = 1. / ( a[0] * a[0] + a[1] * a[1] );
 
     // Christoffel symbol Gamma^1_11 = g^11 X_,xi . X_,xixi; d2N/ds2 = ( N'' - Gamma N' ) g^11 along the arc length s
-    double Gamma = G_11 * ( dxdxi * d2xdxi2 + dydxi * d2ydxi2 );
+    double Gamma = G_11 * ( a[0] * b[0] + a[1] * b[1] );
 
     // d2N_k/dX2 = d2N_k/ds2 t x t (xx, yy, xy)
+    answer.resize( degree[0] + 1, 3 );
     for ( int k = 0; k <= degree[0]; k++ ) {
-        for ( int l = 0; l <= 2; l++ ) {
-            answer( k, l ) = dXprod( l ) * ( ders[0]( 2, k ) - ders[0]( 1, k ) * Gamma ) * G_11 * G_11;
+        for ( int l = 0; l < 3; l++ ) {
+            answer( k, l ) = dXprod[l] * ( ders( 2, k ) - ders( 1, k ) * Gamma ) * G_11 * G_11;
         }
     }
-
 }
 
-void BSpline2dLineInterpolation ::giveJacobianMatrixAt( FloatMatrix &jacobian, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+
+void BSpline2dLineInterpolation::giveJacobianMatrixAt( FloatMatrix &jacobian, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
-    if ( nsd != 1 ) {
-        OOFEM_ERROR( "This class is only for line in 2D" );
-    };
+    FloatMatrix ders;
+    std::array<double, 2> a, b;
+    this->evalTangent( 1, lcoords, cellgeo, ders, a, b );
 
-    const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
-    jacobian.resize( nsd, nsd );
-    IntArray span( nsd );
-    std ::vector<FloatMatrix> ders( nsd );
-
-    if ( gw.knotSpan ) {
-        span = *gw.knotSpan;
-    } else {
-        for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
-        }
-    }
-
-    for ( int i = 0; i < nsd; i++ ) {
-        this->dersBasisFuns( 1, lcoords[i], span[i], degree[i], knotVector[i], ders[i] );
-    }
-
-
-    double dxdxi = 0.;
-    double dydxi = 0.;
-
-    int uind = span[0] - degree[0];
-    int ind  = uind + 1;
-    for ( int k = 0; k <= degree[0]; k++ ) {
-        const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        dxdxi += ders[0]( 1, k ) * vertexCoords[0];
-        dydxi += ders[0]( 1, k ) * vertexCoords[1];
-    }
-
-    jacobian.at(1,1) = sqrt( dxdxi * dxdxi + dydxi * dydxi );
-
-
+    jacobian.resize( 1, 1 );
+    jacobian.at( 1, 1 ) = sqrt( a[0] * a[0] + a[1] * a[1] );
 }
 
 
-
-double BSpline2dLineInterpolation::boundaryEvalNormal( FloatArray &answer, int isurf, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+double BSpline2dLineInterpolation::evalCurveNormal( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
-    if ( nsd != 1 ) {
-        OOFEM_ERROR( "This class is only for line in 2D" );
-    };
+    FloatMatrix ders;
+    std::array<double, 2> a, b;
+    this->evalTangent( 1, lcoords, cellgeo, ders, a, b );
 
-    const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
-    IntArray span( nsd );
-    std ::vector<FloatMatrix> ders( nsd );
-
-    if ( gw.knotSpan ) {
-        span = *gw.knotSpan;
-    } else {
-        for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
-        }
-    }
-
-    for ( int i = 0; i < nsd; i++ ) {
-        this->dersBasisFuns( 1, lcoords[i], span[i], degree[i], knotVector[i], ders[i] );
-    }
-
-
-    double dxdxi = 0.;
-    double dydxi = 0.;
-
-    int uind = span[0] - degree[0];
-    int ind  = uind + 1;
-    for ( int k = 0; k <= degree[0]; k++ ) {
-        const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        dxdxi += ders[0]( 1, k ) * vertexCoords[0];
-        dydxi += ders[0]( 1, k ) * vertexCoords[1];
-    }
-
-    FloatArray dXdXi( degree[0] + 1 ); // tangent X_,xi (first two entries)
-    dXdXi.at( 1 ) = dxdxi;
-    dXdXi.at( 2 ) = dydxi;
-
-    // normal = tangent rotated clockwise
-    answer.resize( 3 );
-    answer.at( 1 ) = dXdXi.at( 2 );
-    answer.at( 2 ) = -dXdXi.at( 1 );
-    answer.at( 3 ) = 0.; // the curve lies in the xy plane
-
-    answer.normalize();
-
-    return 1.; // Not the Jacobian |X_,xi| (see the declaration); callers use only the normal.
+    // the tangent rotated clockwise in the xy plane
+    answer = FloatArray{ a[1], -a[0] };
+    return answer.normalize(); // |X_,xi|
 }
 
 
+double BSpline2dLineInterpolation::boundaryEvalNormal( FloatArray &answer, int boundary, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    double J = this->evalCurveNormal( answer, lcoords, cellgeo );
+    answer.resizeWithValues( 3 ); // zero third component: the curve lies in the xy plane
+    return J;
+}
 
 
 void BSpline2dLineInterpolation::local2global( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
-    if ( nsd != 1 ) {
-        OOFEM_ERROR( "This class is only for line in 2D" );
-    };
-
-    std ::vector<FloatArray> N( nsd );
-    const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
-
-    IntArray span( nsd );
-    if ( gw.knotSpan ) {
-        span = *gw.knotSpan;
-    } else {
-        for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
-        }
-    }
-
-    for ( int i = 0; i < nsd; i++ ) {
-        this->basisFuns( N[i], span[i], lcoords[i], degree[i], knotVector[i] );
-    }
+    int span = this->giveSpan( lcoords, cellgeo );
+    FloatArray N;
+    this->basisFuns( N, span, lcoords[0], degree[0], knotVector[0] );
 
     answer.resize( 2 );
     answer.zero();
-    int ind = span[0] - degree[0] + 1;
+    int ind = span - degree[0] + 1;
     for ( int k = 0; k <= degree[0]; k++ ) {
         const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
-        answer[0] += N[0][k] * vertexCoords[0];
-        answer[1] += N[0][k] * vertexCoords[1];
+        answer[0] += N[k] * vertexCoords[0];
+        answer[1] += N[k] * vertexCoords[1];
     }
 }
-
-
-int BSpline2dLineInterpolation::evalDerivatives( int maxOrder, FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const 
-{
-    if ( nsd != 1 ) {
-        OOFEM_ERROR( "This class is only for line in 2D" );
-    };
-
-    const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
-    IntArray span( nsd );
-
-    if ( gw.knotSpan ) {
-        span = *gw.knotSpan;
-    } else {
-        for ( int i = 0; i < nsd; i++ ) {
-            span[i] = this->findSpan( numberOfControlPoints[i] - 1, degree[i], lcoords[i], knotVector[i] );
-        }
-    }
-
-    for ( int i = 0; i < nsd; i++ ) {
-        this->dersBasisFuns( maxOrder, lcoords[i], span[i], degree[i], knotVector[i], answer );
-    }
-
-    // Return index where nonzero basis functions start
-    int uind = span[0] - degree[0];
-    int indexStart = uind + 1;
-    return indexStart;
-
-};
 
 } // end namespace oofem

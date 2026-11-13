@@ -1,0 +1,80 @@
+iga-surface-rigid.out
+Rigid motions of curved three-span IGA bending surfaces give zero reactions
+StaticStructural nsteps 1 deltat 1.0 maxiter 10 manrmsteps 1 rtolv 1.e-11 rtolf 1.e-11 nmodules 1
+errorcheck
+domain 2dPlaneStress
+OutputManager tstep_all dofman_all
+ndofman 10 nelem 2 ncrosssect 1 nmat 1 nbc 20 nic 0 nltf 1 nset 10
+# Element 1: planar quadratic curve with three knot spans (knots 0 1 2 3, scaled to 0 1/3 2/3 1),
+# rotated by 30 degrees about the origin and translated by (0.1, -0.2). Element 2: axisymmetric
+# surface of revolution with three knot spans, translated by 0.25 along the axis. The bending
+# material has H0 = the reference mean curvature (useh0 1) and no membrane part (gamma1 0), so the
+# energy (H - H0)^2 and all reactions stay zero: the current curvature grad F = G x must follow
+# the rigid motion on every span (in-plane components) and keep the hoop curvature (axial shift).
+node 1 coords 2 0.0 0.0
+node 2 coords 2 0.2 0.4
+node 3 coords 2 0.5 0.6
+node 4 coords 2 0.8 0.3
+node 5 coords 2 1.0 0.0
+node 6 coords 2 1.0 0.0
+node 7 coords 2 1.3 0.3
+node 8 coords 2 1.2 0.6
+node 9 coords 2 1.4 0.9
+node 10 coords 2 1.1 1.2
+bsplineplanestrainsurfaceelement 1 nodes 5 1 2 3 4 5 crosssect 1 knotvectoru 4 0 1 2 3 degree 1 2 nip 3 nlgeo 1
+bsplineaxisymsurfaceelement 2 nodes 5 6 7 8 9 10 crosssect 1 knotvectoru 4 0 1 2 3 degree 1 2 nip 3 nlgeo 1
+simplesurfacecs 1 material 1
+surfacetensionmat2 1 gamma1 0.0 omega1 1.0 useh0 1 d 1.0
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.1 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 -0.2 set 1
+BoundaryCondition 3 loadTimeFunction 1 dofs 1 1 values 1 -0.12679491924311223 set 2
+BoundaryCondition 4 loadTimeFunction 1 dofs 1 2 values 1 -0.15358983848622454 set 2
+BoundaryCondition 5 loadTimeFunction 1 dofs 1 1 values 1 -0.26698729810778055 set 3
+BoundaryCondition 6 loadTimeFunction 1 dofs 1 2 values 1 -0.030384757729336687 set 3
+BoundaryCondition 7 loadTimeFunction 1 dofs 1 1 values 1 -0.15717967697244906 set 4
+BoundaryCondition 8 loadTimeFunction 1 dofs 1 2 values 1 0.15980762113533165 set 4
+BoundaryCondition 9 loadTimeFunction 1 dofs 1 1 values 1 -0.033974596215561315 set 5
+BoundaryCondition 10 loadTimeFunction 1 dofs 1 2 values 1 0.29999999999999993 set 5
+BoundaryCondition 11 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 6
+BoundaryCondition 12 loadTimeFunction 1 dofs 1 2 values 1 0.25 set 6
+BoundaryCondition 13 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 7
+BoundaryCondition 14 loadTimeFunction 1 dofs 1 2 values 1 0.25 set 7
+BoundaryCondition 15 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 8
+BoundaryCondition 16 loadTimeFunction 1 dofs 1 2 values 1 0.25 set 8
+BoundaryCondition 17 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 9
+BoundaryCondition 18 loadTimeFunction 1 dofs 1 2 values 1 0.25 set 9
+BoundaryCondition 19 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 10
+BoundaryCondition 20 loadTimeFunction 1 dofs 1 2 values 1 0.25 set 10
+ConstantFunction 1 f(t) 1.0
+Set 1 nodes 1 1
+Set 2 nodes 1 2
+Set 3 nodes 1 3
+Set 4 nodes 1 4
+Set 5 nodes 1 5
+Set 6 nodes 1 6
+Set 7 nodes 1 7
+Set 8 nodes 1 8
+Set 9 nodes 1 9
+Set 10 nodes 1 10
+#%BEGIN_CHECK% tolerance 1.e-10
+#REACTION tStep 1 number 1 dof 1 value 0.0
+#REACTION tStep 1 number 1 dof 2 value 0.0
+#REACTION tStep 1 number 2 dof 1 value 0.0
+#REACTION tStep 1 number 2 dof 2 value 0.0
+#REACTION tStep 1 number 3 dof 1 value 0.0
+#REACTION tStep 1 number 3 dof 2 value 0.0
+#REACTION tStep 1 number 4 dof 1 value 0.0
+#REACTION tStep 1 number 4 dof 2 value 0.0
+#REACTION tStep 1 number 5 dof 1 value 0.0
+#REACTION tStep 1 number 5 dof 2 value 0.0
+#REACTION tStep 1 number 6 dof 1 value 0.0
+#REACTION tStep 1 number 6 dof 2 value 0.0
+#REACTION tStep 1 number 7 dof 1 value 0.0
+#REACTION tStep 1 number 7 dof 2 value 0.0
+#REACTION tStep 1 number 8 dof 1 value 0.0
+#REACTION tStep 1 number 8 dof 2 value 0.0
+#REACTION tStep 1 number 9 dof 1 value 0.0
+#REACTION tStep 1 number 9 dof 2 value 0.0
+#REACTION tStep 1 number 10 dof 1 value 0.0
+#REACTION tStep 1 number 10 dof 2 value 0.0
+#%END_CHECK%

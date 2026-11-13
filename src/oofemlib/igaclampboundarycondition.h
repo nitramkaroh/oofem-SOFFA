@@ -44,9 +44,9 @@
 //@{
 #define _IFT_IGAClampBoundaryCondition_Name "igaclampboundarycondition"
 #define _IFT_IGAClampBoundaryCondition_ElementNumber "numel" ///< Number of the clamped IGA curve element.
-#define _IFT_IGAClampBoundaryCondition_LocalPosition "locpos" ///< Curve parameter xi of the clamp.
+#define _IFT_IGAClampBoundaryCondition_LocalPosition "locpos" ///< Curve parameter xi of the clamp (in the scaled knot range).
 #define _IFT_IGAClampBoundaryCondition_BcKnotSpan "bcknotspan" ///< Zero-based knot index of the span containing locpos.
-#define _IFT_IGAClampBoundaryCondition_p "p" ///< Penalty factor (optional, default 1e6).
+#define _IFT_IGAClampBoundaryCondition_p "p" ///< Penalty factor (optional, positive, default 1e6).
 //@}
 
 namespace oofem {
@@ -61,9 +61,10 @@ namespace oofem {
  * The normal and the basis derivatives are evaluated in the explicitly given knot span, so a clamp at
  * an internal knot uses the side chosen in the input. The location is checked in postInitialize.
  *
- * Input: numel (element number), locpos (curve parameter, not a physical coordinate), bcknotspan
- * (zero-based index into the full knot vector including the repeated end knots; the span
- * [knot(k), knot(k+1)] must have nonzero length), optional p (penalty, default 1e6).
+ * Input: numel (element number), locpos (curve parameter, not a physical coordinate; the knot values of the
+ * element are divided by the length of its knot vector, so e.g. the middle knot of knotvectoru 3 0 2 4 is
+ * locpos 0.5), bcknotspan (zero-based index into the full knot vector including the repeated end knots;
+ * the span [knot(k), knot(k+1)] must have nonzero length), optional p (penalty, positive, default 1e6).
  * @see IGAClampBoundaryConditionLagrange for the same condition with a Lagrange multiplier.
  */
 class OOFEM_EXPORT IGAClampBoundaryCondition : public ActiveBoundaryCondition
@@ -91,6 +92,19 @@ public:
      */
     static void checkClampLocation( Domain *d, int elementNumber, double localPosition, int knotSpan );
 
+    /**
+     * The clamp vector c of the knot span: n . du/dxi (localPosition) = c . u_span, with the unit normal n of
+     * the reference curve in the span and u_span the u, v displacements of the control points of the span
+     * (2 per point, in the order of the nonzero basis functions). The element is checked by checkClampLocation.
+     */
+    static void computeClampVector( FloatArray &answer, Element *elem, const FloatArray &localPosition, const IntArray &knotSpan );
+    /// Element-local code numbers of u_span (the first two dofs, u and v, of each control point of the knot span).
+    static void giveSpanCodeNumbers( IntArray &answer, Element *elem, const IntArray &knotSpan );
+    /// Equation numbers of u_span in the numbering s.
+    static void giveSpanLocationArray( IntArray &answer, Element *elem, const IntArray &knotSpan, const UnknownNumberingScheme &s );
+    /// Total displacements u_span of the knot span.
+    static void giveSpanDisplacements( FloatArray &answer, Element *elem, const IntArray &knotSpan, TimeStep *tStep );
+
     /// Assembles the penalty matrix for the tangent, secant and elastic stiffness; other types are ignored.
     void assemble( SparseMtrx &answer, TimeStep *tStep,
         CharType type, const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s, double scale = 1.0,
@@ -105,13 +119,6 @@ public:
 
     const char *giveClassName() const override { return "IGAClampBoundaryCondition"; }
     const char *giveInputRecordName() const override { return _IFT_IGAClampBoundaryCondition_Name; }
-
-    /**
-     * Gives the element-local code numbers of the u, v dofs of the control points whose basis functions
-     * are nonzero in the knot span (two per control point; further dofs of a node give 0).
-     * @return 1 if the interpolation has a sub-patch (knot span) formulation, 0 otherwise (answer untouched).
-     */
-    int giveLocalCodeNumbers( IntArray &answer, Element *elem, IntArray &span );
 };
 } // end namespace oofem
 #endif // igaclampboundarycondition_h

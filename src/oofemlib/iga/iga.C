@@ -38,6 +38,9 @@
 #include "mathfem.h"
 #include "iga.h"
 #include "gausspoint.h"
+#include "dofmanager.h"
+#include "unknowntype.h"
+#include "internalstatetype.h"
 #include "feitspline.h"
 
 #ifdef __OOFEG
@@ -305,7 +308,7 @@ void IGAElement ::initializeFrom( InputRecord &ir )
                 int countTot = 0;
                 for ( auto &gp : *ExportIntegrationRulesArray[indx] ) {
                     countX              = countTot % ( numExportPoints );
-                    countY              = std::floor( countTot / ( numExportPoints ) );
+                    countY              = countTot / numExportPoints;
                     newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du / ( numExportPoints - 1 ) * ( countX );
                     newgpcoords.at( 2 ) = knotValuesV->at( vi ) + dv / ( numExportPoints - 1 ) * ( countY );
 
@@ -362,9 +365,100 @@ Interface *IGAElement ::giveInterface( InterfaceType it )
 
 void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep )
 {
-    OOFEM_ERROR( "Not yet implemented for this element" );
-}
+    const int nsd = this->giveNsd();
+    if ( this->ExportIntegrationRulesArray.empty() || ( nsd != 1 && nsd != 2 ) ) {
+        OOFEM_ERROR( "element %d (%s) has no VTK export points (only B-spline and NURBS curves and 2D patches have them)",
+            this->giveNumber(), this->giveClassName() );
+    }
+    for ( int type : primaryVarsToExport ) {
+        if ( type != DisplacementVector ) {
+            OOFEM_ERROR( "element %d (%s): the VTK export supports only the primary variable DisplacementVector, not %s",
+                this->giveNumber(), this->giveClassName(), __UnknownTypeToString( (UnknownType)type ) );
+        }
+    }
+    if ( cellVarsToExport.giveSize() > 0 ) {
+        OOFEM_ERROR( "element %d (%s): cell variables are not supported by the VTK export", this->giveNumber(), this->giveClassName() );
+    }
 
+    const int n             = this->numExportPoints;
+    const int numSpans      = (int)this->ExportIntegrationRulesArray.size();
+    const int pointsPerSpan = nsd == 1 ? n : n * n;
+    const int cellsPerSpan  = nsd == 1 ? n - 1 : ( n - 1 ) * ( n - 1 );
+    const int numPoints     = pointsPerSpan * numSpans;
+
+    vtkPieces.resize( 1 );
+    VTKPiece &piece = vtkPieces[0];
+    piece.setNumberOfNodes( numPoints );
+    piece.setNumberOfCells( cellsPerSpan * numSpans );
+    piece.setNumberOfPrimaryVarsToExport( primaryVarsToExport, numPoints );
+    piece.setNumberOfInternalVarsToExport( internalVarsToExport, numPoints );
+
+    // cells: VTK_LINE (3) between neighbouring points of a span, VTK_QUAD (9) of the n x n grid of a span
+    int cell = 1, offset = 0;
+    for ( int s = 0; s < numSpans; s++ ) {
+        const int first = s * pointsPerSpan + 1;
+        if ( nsd == 1 ) {
+            for ( int i = 0; i < n - 1; i++ ) {
+                IntArray nodes = { first + i, first + i + 1 };
+                offset += 2;
+                piece.setConnectivity( cell, nodes );
+                piece.setOffset( cell, offset );
+                piece.setCellType( cell, 3 );
+                cell++;
+            }
+        } else {
+            for ( int j = 0; j < n - 1; j++ ) {
+                for ( int i = 0; i < n - 1; i++ ) {
+                    const int p    = first + j * n + i;
+                    IntArray nodes = { p, p + 1, p + n + 1, p + n };
+                    offset += 4;
+                    piece.setConnectivity( cell, nodes );
+                    piece.setOffset( cell, offset );
+                    piece.setCellType( cell, 9 );
+                    cell++;
+                }
+            }
+        }
+    }
+
+    // points: position and displacements interpolated from the control points of the knot span
+    const IntArray uvMask        = { D_u, D_v };
+    const bool exportDisplacement = primaryVarsToExport.giveSize() > 0;
+    FEInterpolation *interp       = this->giveInterpolation();
+    int point = 1;
+    for ( int s = 0; s < numSpans; s++ ) {
+        IGAIntegrationElement *rule = this->ExportIntegrationRulesArray[s].get();
+        IntArray mask;
+        interp->giveKnotSpanBasisFuncMask( *rule->giveKnotSpan(), mask );
+        for ( GaussPoint *gp : *rule ) {
+            FloatArray N, X( 2 ), u( 3 ), nodeU;
+            interp->evalN( N, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( this, rule->giveKnotSpan() ) );
+            for ( int k = 1; k <= mask.giveSize(); k++ ) {
+                const auto &coords = this->giveNode( mask.at( k ) )->giveCoordinates();
+                X.at( 1 ) += N.at( k ) * coords.at( 1 );
+                X.at( 2 ) += N.at( k ) * coords.at( 2 );
+                if ( exportDisplacement ) {
+                    this->giveDofManager( mask.at( k ) )->giveUnknownVector( nodeU, uvMask, VM_Total, tStep );
+                    u.at( 1 ) += N.at( k ) * nodeU.at( 1 );
+                    u.at( 2 ) += N.at( k ) * nodeU.at( 2 );
+                }
+            }
+            piece.setNodeCoords( point, X );
+            if ( exportDisplacement ) {
+                piece.setPrimaryVarInNode( DisplacementVector, point, u );
+            }
+            for ( int type : internalVarsToExport ) {
+                FloatArray value;
+                if ( !this->giveExportPointValue( value, (InternalStateType)type, gp, s, tStep ) ) {
+                    OOFEM_ERROR( "element %d (%s): internal variable %s is not supported by the VTK export",
+                        this->giveNumber(), this->giveClassName(), __InternalStateTypeToString( (InternalStateType)type ) );
+                }
+                piece.setInternalVarInNode( (InternalStateType)type, point, value );
+            }
+            point++;
+        }
+    }
+}
 
 
 int IGAElement::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
@@ -375,24 +469,7 @@ int IGAElement::computeGlobalCoordinates( FloatArray &answer, const FloatArray &
 }
 
 
-void IGAElement::giveNodalCoordinates( FloatArray &NodalCoordinates ) const
-{
-    NodalCoordinates.zero();
-    IntArray dofIDMask;
-    FloatArray pos_i, pos_i_cut;
-    for ( int i = 1; i <= this->giveNumberOfDofManagers(); i++ ) {
-        pos_i = this->giveNode( i )->giveCoordinates();
-        this->giveDofManDofIDMask( i, dofIDMask );
-        // keep the coordinates of the displacement directions (D_u, D_v, D_w = 1, 2, 3)
-        pos_i_cut.resize( dofIDMask.giveSize() );
-        for ( auto &dofid : dofIDMask ) {
-            pos_i_cut.at( dofid ) = pos_i.at( dofid );
-        }
-        NodalCoordinates.append( pos_i_cut );
-    }
-}
-
-// integration elements are setup in the same way as for IGAElement for now HUHU
+// The integration rules are set up as in IGAElement: one per nonzero knot span of the knot vectors (nsd = 2 only).
 
 void IGATSplineElement :: initializeFrom(InputRecord &ir)
 {
@@ -405,7 +482,7 @@ void IGATSplineElement :: initializeFrom(InputRecord &ir)
 
     // set number of dofmanagers
     this->numberOfDofMans = dofManArray.giveSize();
-    // set number of control points before initialization HUHU HAHA
+    // the interpolation reads the local knot vectors and weights of all control points (= nodes)
     interpol->setNumberOfControlPoints(this->numberOfDofMans);
     this->giveInterpolation()->initializeFrom(ir); // read geometry
 
@@ -437,7 +514,7 @@ void IGATSplineElement :: initializeFrom(InputRecord &ir)
                 knotSpan.at(1) += knotMultiplicityU->at(ui);
 
                 integrationRulesArray [ indx ] = std::make_unique<IGAIntegrationElement>(indx, this, knotSpan);
-                integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // HUHU _PlaneStress, rectangle
+                integrationRulesArray [ indx ]->SetUpPointsOnSquare(numberOfGaussPoints, _PlaneStress); // TSplinePlaneStressElement is the only T-spline element
 
                 // remap local subelement gp coordinates into knot span coordinates and update integration weight
                 for ( auto &gp: *integrationRulesArray [ indx ] ) {

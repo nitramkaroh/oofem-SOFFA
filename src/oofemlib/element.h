@@ -1165,9 +1165,6 @@ public:
     virtual void recalculateCoordinates(int nodeNumber, FloatArray &coords){;}
 
 
-    //  For second gradient elements
-    virtual bool supportsSecondGradient() const { return false; }
-
  protected:
     /**
      * Initializes the array of integration rules member variable.

@@ -65,7 +65,6 @@ void Space2dStructuralSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp
 
     FloatMatrix dNdx;
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-    // this uses FEInterpolation::nodes2coords - quite inefficient in this case (large num of dofmans)
     interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
 
@@ -85,11 +84,10 @@ void Space2dStructuralSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp,
 {
     // Returns the [ 27 x (nno*2) ] second gradient matrix of the receiver, evaluated at gp.
     // d2Ndx2 has the columns xx, yy, xy of d^2 N / dS^2 (t x t).
-    /// @todo No patch test of the surface G yet (the bulk G is covered by one).
+    /// @todo No patch test of the G matrices yet (surface and bulk).
 
     FloatMatrix d2Ndx2;
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-    // this uses FEInterpolation::nodes2coords - quite inefficient in this case (large num of dofmans)
     interp->evald2Ndx2( d2Ndx2, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
 
@@ -115,7 +113,7 @@ void Space2dStructuralSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp,
 
 double Space2dStructuralSurfaceElementEvaluator ::computeVolumeAround( GaussPoint *gp )
 {
-    double determinant, weight, thickness, volume;
+    double determinant, weight, volume;
     determinant = fabs( this->giveElement()->giveInterpolation()->giveTransformationJacobian( gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( this->giveElement(),
             gp->giveIntegrationRule()->giveKnotSpan() ) ) );
@@ -126,54 +124,14 @@ double Space2dStructuralSurfaceElementEvaluator ::computeVolumeAround( GaussPoin
 }
 
 
-int Space2dStructuralSurfaceElementEvaluator ::giveIntegrationElementLocalCodeNumbers( IntArray &answer, Element *elem,
-    IntegrationRule *ie )
-{
-    int nsd;
-    IntArray mask, nodeDofIDMask, nodalArray;
-    int dofmandof;
-
-    // get number of dofs in node
-    elem->giveDofManDofIDMask( 1, nodeDofIDMask );
-    dofmandof = nodeDofIDMask.giveSize();
-
-    nsd = elem->giveInterpolation()->giveNsd();
-
-    if ( nsd == 1 ) { // a curve in the plane: two dofs per control point (the general function uses nsd)
-        nsd = 2;
-    }
-
-    // first evaluate nonzero basis function mask
-    if ( elem->giveInterpolation()->hasSubPatchFormulation() ) {
-        IGAIntegrationElement *ee = static_cast<IGAIntegrationElement *>( ie );
-        elem->giveInterpolation()->giveKnotSpanBasisFuncMask( *ee->giveKnotSpan(), mask );
-        // loop over nonzero shape functions and assemble localization array
-        answer.clear();
-        for ( int i = 1; i <= mask.giveSize(); i++ ) {
-            nodalArray.resize( nodeDofIDMask.giveSize() );
-            for ( int j = 1; j <= nsd; j++ ) { 
-                nodalArray.at( j ) = dofmandof * ( mask.at( i ) - 1 ) + j;
-            }
-
-            answer.followedBy( nodalArray );
-        }
-
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-void Space2dStructuralSurfaceElementEvaluator::computeReferenceCurvature( FloatArray &RefCurvature, TimeStep *tStep, FloatArray &lcoords, int RuleIndex )
+void Space2dStructuralSurfaceElementEvaluator::computeCurvatureAt( FloatArray &answer, TimeStep *tStep, const FloatArray &lcoords, int RuleIndex )
 {
     double xiAns = lcoords.at( 1 );
     // linear interpolation of the values at the Gauss points
     FloatArray KvecR, KvecL;
     double xiR, xiL;
 
-    Element *elem                = this->giveElement();
-    int numberOfIntegrationRules = elem->giveNumberOfIntegrationRules();
-
+    Element *elem          = this->giveElement();
     IntegrationRule *iRule = elem->giveIntegrationRule( RuleIndex );
     int nIP                = iRule->giveNumberOfIntegrationPoints();
     for ( int i = 0; i < nIP ; i++){
@@ -183,7 +141,7 @@ void Space2dStructuralSurfaceElementEvaluator::computeReferenceCurvature( FloatA
 
         if ( nIP == 1 ) {
             StructuralSurfaceMaterialStatus *matStat = static_cast<StructuralSurfaceMaterialStatus *>( gp->giveMaterialStatus() );
-            RefCurvature                             = matStat->giveTempKVector();
+            answer                                   = matStat->giveTempKVector();
             break;
         }
 
@@ -207,10 +165,28 @@ void Space2dStructuralSurfaceElementEvaluator::computeReferenceCurvature( FloatA
                 KvecR = matStat2->giveTempKVector();
             }
 
-            RefCurvature = ( xiAns - xiL ) / ( xiR - xiL ) * ( KvecR - KvecL ) + KvecL;
+            answer = ( xiAns - xiL ) / ( xiR - xiL ) * ( KvecR - KvecL ) + KvecL;
             break;
         }
     } // end loop over the Gauss points
+}
+
+
+bool Space2dStructuralSurfaceElementEvaluator::giveCurvatureExportValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, int RuleIndex, TimeStep *tStep )
+{
+    if ( type != IST_CurvatureTensor ) {
+        return false;
+    }
+    // only the bending (second gradient) materials compute K; the status of a membrane keeps zeros there
+    if ( !this->hasSecondGradient ) {
+        OOFEM_ERROR( "element %d: the curvature is computed only by the bending surface materials (surfacetensionmat2)",
+            this->giveElement()->giveNumber() );
+    }
+    FloatArray K;
+    this->computeCurvatureAt( K, tStep, gp->giveNaturalCoordinates(), RuleIndex );
+    // K has the 9 component order 11, 22, 33, 23, 13, 12, 32, 31, 21; VTK tensors are written row by row
+    answer = { K.at( 1 ), K.at( 6 ), K.at( 5 ), K.at( 9 ), K.at( 2 ), K.at( 4 ), K.at( 8 ), K.at( 7 ), K.at( 3 ) };
+    return true;
 }
 
 
@@ -219,43 +195,13 @@ void Space2dStructuralSurfaceElementEvaluator::computeReferenceCurvature( FloatA
 
 void AxisymSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
 {
-    // Returns the [ 9 x (nno*2) ] displacement gradient matrix {BH} of the receiver,
-    // evaluated at gp (dNdx is already the surface gradient in x, y).
+    // [ 9 x (nno*2) ] displacement gradient matrix: the plane one with the hoop part, F_33 = 1 + u / r
+    Space2dStructuralSurfaceElementEvaluator::computeBHmatrixAt( gp, answer );
 
-    FloatMatrix dNdx;
-    FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-
-    // this uses FEInterpolation::nodes2coords - quite inefficient in this case (large num of dofmans)
-    interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-
-    int nRows = dNdx.giveNumberOfRows();
-    answer.resize( 9, nRows * 2 );
-    answer.zero();
-
-    for ( int i = 1; i <= nRows; i++ ) {
-        answer.at( 1, 2 * i - 1 ) = dNdx.at( i, 1 ); // du/dx -1
-        answer.at( 2, 2 * i - 0 ) = dNdx.at( i, 2 ); // dv/dy -2
-        answer.at( 6, 2 * i - 1 ) = dNdx.at( i, 2 ); // du/dy -6
-        answer.at( 9, 2 * i - 0 ) = dNdx.at( i, 1 ); // dv/dx -9
-    }
-
-
-    // hoop part, F_33 = 1 + u / r
     FloatArray n;
-    FloatMatrix nmat;
-    // return index where nonzero basis functions start, 1-based
-    int indexStart = interp->evalDerivatives( 0, nmat, gp->giveNaturalCoordinates(),
+    gp->giveElement()->giveInterpolation()->evalN( n, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-
-    FloatMatrix nmatT;
-    nmatT.beTranspositionOf( nmat );
-    n.beColumnOf( nmatT, 1 );
-
-    FloatArray gcoords;
-    interp->local2global( gcoords, gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-    double r = gcoords.at( 1 ); 
+    double r = this->computeRadiusAt( gp );
 
     for ( int i = 0; i < n.giveSize(); i++ ) {
         answer.at( 3, 2 * i + 1 ) = n.at( i + 1 ) / r; // u / r
@@ -265,19 +211,16 @@ void AxisymSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp, FloatMatr
 void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer )
 {
     FloatMatrix ders;
-    FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-    /// @todo No patch test of the surface G yet (the bulk G is covered by one).
+    auto interp = dynamic_cast< const BSpline2dLineInterpolation * >( gp->giveElement()->giveInterpolation() );
+    if ( !interp ) {
+        OOFEM_ERROR( "element %d: the second gradient needs a B-spline curve (BSpline2dLineInterpolation)", gp->giveElement()->giveGlobalNumber() );
+    }
+    /// @todo No patch test of the G matrices yet (surface and bulk).
 
-    // ders( d, k ) = d-th derivative of the k-th nonzero basis function with respect to xi;
-    // returns index where nonzero basis functions start (1-based)
-    auto knotSpan       = gp->giveIntegrationRule()->giveKnotSpan();
-    int indexStart = interp->evalDerivatives( 2, ders, gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-
-    // Get nodal coordinates
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-    FloatArray nodesCoords;
-    elem->giveNodalCoordinates( nodesCoords );
+    // ders( d, k ) = d-th derivative of the k-th nonzero basis function with respect to xi
+    auto knotSpan = gp->giveIntegrationRule()->giveKnotSpan();
+    FEIIGAElementGeometryWrapper cellgeo( gp->giveElement(), knotSpan );
+    interp->evalDerivatives( 2, ders, gp->giveNaturalCoordinates(), cellgeo );
 
     double Rxi = 0., Yxi = 0., Rxixi = 0., Yxixi = 0.;
     double R = 0.; // undeformed radius (X1)
@@ -285,10 +228,11 @@ void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatri
     IntArray mask;
     interp->giveKnotSpanBasisFuncMask( *knotSpan, mask );
 
+    // only the p+1 control points of the span (not the coordinates of the whole patch)
     for ( int k = 0; k < ders.giveNumberOfColumns(); k++ ) {
-        int indCords          = mask.at( k + 1 );
-        double vertexCoord_1 = nodesCoords.at( 2 * indCords - 1 );
-        double vertexCoord_2  = nodesCoords.at( 2 * indCords );
+        const auto &vertexCoords = cellgeo.giveVertexCoordinates( mask.at( k + 1 ) );
+        double vertexCoord_1     = vertexCoords[0];
+        double vertexCoord_2     = vertexCoords[1];
 
         Rxi += ders( 1, k ) * vertexCoord_1;
         Yxi += ders( 1, k ) * vertexCoord_2;
@@ -298,6 +242,7 @@ void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatri
 
         R += vertexCoord_1 * ders( 0, k ); // compute radial coordinate at the gauss point
     }
+    checkRadius( R, gp );
 
     // Inverse (contravariant) metric coefficient g^{11} = 1 / |X_,xi|^2
     double G_11 = 1. / ( Rxi * Rxi + Yxi * Yxi ); // Same as 1/J^2
@@ -354,30 +299,8 @@ void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatri
 
 double AxisymSurfaceElementEvaluator ::computeVolumeAround( GaussPoint *gp )
 {
-    double determinant, weight, thickness, volume;
-    determinant = fabs( this->giveElement()->giveInterpolation()->giveTransformationJacobian( gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( this->giveElement(),
-            gp->giveIntegrationRule()->giveKnotSpan() ) ) );
-    weight      = gp->giveWeight();
-    volume      = determinant * weight;
-
-    // Compute R
-    FloatMatrix ders;
-    FEInterpolation *interp = gp->giveElement()->giveInterpolation();
-    // returns index where nonzero basis functions start (1-based)
-    int indexStart = interp->evalDerivatives( 0, ders, gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-    // Get nodal coordinates
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-    FloatArray nodesCoords;
-    elem->giveNodalCoordinates( nodesCoords );
-
-    FloatArray gcoords;
-    interp->local2global( gcoords, gp->giveNaturalCoordinates(),
-        FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-    double R = gcoords.at( 1 ); 
-
-    return volume*R;
+    // area per radian: the length of the reference curve times the reference radius R
+    return Space2dStructuralSurfaceElementEvaluator::computeVolumeAround( gp ) * this->computeRadiusAt( gp );
 }
 
 

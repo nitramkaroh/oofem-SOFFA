@@ -76,7 +76,9 @@ void IGAClampBoundaryCondition ::initializeFrom( InputRecord &ir )
     this->BcKnotSpan.at( 1 ) = ks;
 
     IR_GIVE_OPTIONAL_FIELD( ir, this->penalty, _IFT_IGAClampBoundaryCondition_p );
-
+    if ( !( this->penalty > 0. ) || !std::isfinite( this->penalty ) ) {
+        throw ValueInputException( ir, _IFT_IGAClampBoundaryCondition_p, "must be positive and finite" );
+    }
 }
 
 
@@ -117,6 +119,70 @@ void IGAClampBoundaryCondition ::postInitialize()
 }
 
 
+void IGAClampBoundaryCondition ::computeClampVector( FloatArray &answer, Element *elem, const FloatArray &localPosition, const IntArray &knotSpan )
+{
+    auto interp = static_cast<const BSpline2dLineInterpolation *>( elem->giveInterpolation() ); // checked in checkClampLocation
+    FEIIGAElementGeometryWrapper gw( elem, &knotSpan );
+
+    // normal of the reference curve in the knot span; rows of ders: basis functions and their first
+    // derivatives w.r.t. xi (nonzero functions of the span)
+    FloatArray normal;
+    FloatMatrix ders;
+    interp->evalCurveNormal( normal, localPosition, gw );
+    interp->evalDerivatives( 1, ders, localPosition, gw );
+
+    // du/dxi = dNdxi_mat * u_span (2 x 2*nnz), c = dNdxi_mat^T n
+    FloatMatrix dNdxi_mat;
+    dNdxi_mat.resize( 2, 2 * ders.giveNumberOfColumns() );
+    for ( int i = 1; i <= ders.giveNumberOfColumns(); i++ ) {
+        dNdxi_mat.at( 1, 2 * i - 1 ) = ders.at( 2, i );
+        dNdxi_mat.at( 2, 2 * i )     = ders.at( 2, i );
+    }
+    answer.beTProductOf( dNdxi_mat, normal );
+}
+
+
+void IGAClampBoundaryCondition ::giveSpanCodeNumbers( IntArray &answer, Element *elem, const IntArray &knotSpan )
+{
+    // all nodes have the dofs of node 1, u and v first (the IGA surface elements have just these two)
+    IntArray mask, nodeDofIDMask;
+    elem->giveDofManDofIDMask( 1, nodeDofIDMask );
+    int dofmandof = nodeDofIDMask.giveSize();
+
+    elem->giveInterpolation()->giveKnotSpanBasisFuncMask( knotSpan, mask );
+    answer.resize( 2 * mask.giveSize() );
+    for ( int i = 1; i <= mask.giveSize(); i++ ) {
+        answer.at( 2 * i - 1 ) = dofmandof * ( mask.at( i ) - 1 ) + 1;
+        answer.at( 2 * i )     = dofmandof * ( mask.at( i ) - 1 ) + 2;
+    }
+}
+
+
+void IGAClampBoundaryCondition ::giveSpanLocationArray( IntArray &answer, Element *elem, const IntArray &knotSpan, const UnknownNumberingScheme &s )
+{
+    IntArray lc, elemLoc;
+    giveSpanCodeNumbers( lc, elem, knotSpan );
+    elem->giveLocationArray( elemLoc, s );
+    answer.resize( lc.giveSize() );
+    for ( int i = 1; i <= lc.giveSize(); i++ ) {
+        answer.at( i ) = elemLoc.at( lc.at( i ) );
+    }
+}
+
+
+void IGAClampBoundaryCondition ::giveSpanDisplacements( FloatArray &answer, Element *elem, const IntArray &knotSpan, TimeStep *tStep )
+{
+    IntArray lc;
+    FloatArray u;
+    giveSpanCodeNumbers( lc, elem, knotSpan );
+    elem->computeVectorOf( VM_Total, tStep, u );
+    answer.resize( lc.giveSize() );
+    for ( int i = 1; i <= lc.giveSize(); i++ ) {
+        answer.at( i ) = u.at( lc.at( i ) );
+    }
+}
+
+
 void IGAClampBoundaryCondition ::assemble( SparseMtrx &answer, TimeStep *tStep,
     CharType type, const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s,
     double scale,
@@ -127,64 +193,31 @@ void IGAClampBoundaryCondition ::assemble( SparseMtrx &answer, TimeStep *tStep,
         return;
     }
 
-    auto el                 = this->giveDomain()->giveElement( this->elementNumber );
-    FEInterpolation *interp = el->giveInterpolation();
-    // normal of the reference curve in the selected knot span
-    FloatArray normal;
-    auto gw = FEIIGAElementGeometryWrapper( el, &this->BcKnotSpan );
-    interp->boundaryEvalNormal( normal, 1, this->localPosition, gw );
-    normal.resize( 2 ); // drop the out-of-plane component
-
-    // rows: basis functions and their first derivatives w.r.t. xi (nonzero functions of the span)
-    FloatMatrix ders, dersT;
-    interp->evalDerivatives( 1, ders, this->localPosition, gw );
-
-    // du/dxi = dNdxi_mat * u_span (2 x 2*nnz)
-    FloatMatrix dNdxi_mat;
-    dNdxi_mat.resize( 2, 2 * ders.giveNumberOfColumns() );
-    for ( int i = 1; i <= ders.giveNumberOfColumns(); i++ ) {
-        dNdxi_mat.at( 1, 2 * i - 1 ) = ders.at( 2, i );
-        dNdxi_mat.at( 2, 2 * i )     = ders.at( 2, i );
-    }
-
-    // c = dNdxi_mat^T n, so that n . du/dxi = c . u_span
-    FloatArray dNdxi;
-    dNdxi.beTProductOf( dNdxi_mat, normal );
+    auto el = this->giveDomain()->giveElement( this->elementNumber );
+    FloatArray c;
+    IntArray loc_r, loc_c;
+    computeClampVector( c, el, this->localPosition, this->BcKnotSpan );
+    giveSpanLocationArray( loc_r, el, this->BcKnotSpan, r_s );
+    giveSpanLocationArray( loc_c, el, this->BcKnotSpan, c_s );
 
     // penalty matrix p c c^T
-    FloatMatrix dNdNt;
-    dNdNt.beDyadicProductOf( dNdxi, dNdxi );
-    dNdNt.times( this->penalty * scale );
+    FloatMatrix ccT;
+    ccT.beDyadicProductOf( c, c );
+    ccT.times( this->penalty * scale );
 
-
-    IGAElement *elem = static_cast<IGAElement *>( el );
-    // element-local code numbers of the dofs of the current knot span
-    IntArray lc;
-    this->giveLocalCodeNumbers( lc, elem, this->BcKnotSpan );
-
-
-    // global equation numbers of the dofs of the clamped knot span only
-    IntArray lcGlob_r, lcGlob_c, loc_r( lc.giveSize() ), loc_c( lc.giveSize() );
-    elem->giveLocationArray( lcGlob_r, r_s );
-    elem->giveLocationArray( lcGlob_c, c_s );
-    for ( int i = 1; i <= lc.giveSize(); i++ ) {
-        loc_r.at( i ) = lc.at( i ) ? lcGlob_r.at( lc.at( i ) ) : 0;
-        loc_c.at( i ) = lc.at( i ) ? lcGlob_c.at( lc.at( i ) ) : 0;
-    }
 #ifdef _OPENMP
     if ( lock ) {
         omp_set_lock( static_cast<omp_lock_t *>( lock ) );
     }
 #endif
-    answer.assemble( loc_r, loc_c, dNdNt );
+    answer.assemble( loc_r, loc_c, ccT );
 #ifdef _OPENMP
     if ( lock ) {
         omp_unset_lock( static_cast<omp_lock_t *>( lock ) );
     }
 #endif
-
-
 }
+
 
 void IGAClampBoundaryCondition ::assembleVector( FloatArray &answer, TimeStep *tStep,
     CharType type, ValueModeType mode,
@@ -192,113 +225,32 @@ void IGAClampBoundaryCondition ::assembleVector( FloatArray &answer, TimeStep *t
     FloatArray *eNorms,
     void *lock )
 {
+    if ( type != InternalForcesVector ) {
+        return;
+    }
 
-    if ( type == InternalForcesVector ) {
+    auto el = this->giveDomain()->giveElement( this->elementNumber );
+    FloatArray c, u;
+    IntArray loc;
+    computeClampVector( c, el, this->localPosition, this->BcKnotSpan );
+    giveSpanDisplacements( u, el, this->BcKnotSpan, tStep );
+    giveSpanLocationArray( loc, el, this->BcKnotSpan, s );
 
-        auto el                 = this->giveDomain()->giveElement( this->elementNumber );
-        FEInterpolation *interp = el->giveInterpolation();
-
-        // normal of the reference curve in the selected knot span
-        FloatArray normal;
-        auto gw = FEIIGAElementGeometryWrapper( el, &this->BcKnotSpan );
-        interp->boundaryEvalNormal( normal, 1, this->localPosition, gw );
-        normal.resize( 2 ); // drop the out-of-plane component
-
-        FloatMatrix ders, dersT;
-        // rows: basis functions and their first derivatives w.r.t. xi (nonzero functions of the span)
-        interp->evalDerivatives( 1, ders, this->localPosition, gw );
-
-        // du/dxi = dNdxi_mat * u_span (2 x 2*nnz)
-        FloatMatrix dNdxi_mat;
-        dNdxi_mat.resize( 2, 2 * ders.giveNumberOfColumns() );
-        for ( int i = 1; i <= ders.giveNumberOfColumns(); i++ ) {
-            dNdxi_mat.at( 1, 2 * i - 1 ) = ders.at( 2, i );
-            dNdxi_mat.at( 2, 2 * i )     = ders.at( 2, i );
-        }
-
-        // c = dNdxi_mat^T n, so that n . du/dxi = c . u_span
-        FloatArray dNdxi;
-        dNdxi.beTProductOf( dNdxi_mat, normal );
-
-        // total displacements of all control points of the patch
-        FloatArray u;
-        IGAElement *elem = static_cast<IGAElement *>( el );
-        elem->computeVectorOf( VM_Total, tStep, u );
-
-        // element-local code numbers of the dofs of the current knot span
-        IntArray lc,lcGlob;
-        FloatArray ur, xr;
-        this->giveLocalCodeNumbers( lc, elem, this->BcKnotSpan );
-
-        // displacements of the current knot span
-        ur.resize( dNdxi.giveSize() );
-        for ( int i = 1; i <= lc.giveSize(); i++ ) {
-            if ( lc.at( i ) ) {
-                ur.at( i ) = u.at( lc.at( i ) );
-            }
-        }
-
-        // internal forces p c (c . u_span)
-        FloatArray prod2 = dNdxi.dotProduct( ur ) * dNdxi;
-        prod2.times( this->penalty );
-
-        // global equation numbers of the dofs of the clamped knot span only
-        IntArray loc( lc.giveSize() );
-        elem->giveLocationArray( lcGlob, s );
-        for ( int i = 1; i <= lc.giveSize(); i++ ) {
-            loc.at( i ) = lc.at( i ) ? lcGlob.at( lc.at( i ) ) : 0;
-        }
+    // internal forces p c (c . u_span)
+    FloatArray f = c.dotProduct( u ) * c;
+    f.times( this->penalty );
 
 #ifdef _OPENMP
-        if ( lock ) {
-            omp_set_lock( static_cast<omp_lock_t *>( lock ) );
-        }
+    if ( lock ) {
+        omp_set_lock( static_cast<omp_lock_t *>( lock ) );
+    }
 #endif
-        answer.assemble( prod2, loc );
+    answer.assemble( f, loc );
 #ifdef _OPENMP
-        if ( lock ) {
-            omp_unset_lock( static_cast<omp_lock_t *>( lock ) );
-        }
+    if ( lock ) {
+        omp_unset_lock( static_cast<omp_lock_t *>( lock ) );
+    }
 #endif
-    }
-}
-
-int IGAClampBoundaryCondition ::giveLocalCodeNumbers( IntArray &answer, Element *elem, IntArray &span )
-{
-    int nsd;
-    IntArray mask, nodeDofIDMask, nodalArray;
-    int dofmandof;
-
-    // get number of dofs in node
-    elem->giveDofManDofIDMask( 1, nodeDofIDMask );
-    dofmandof = nodeDofIDMask.giveSize();
-
-    nsd = elem->giveInterpolation()->giveNsd();
-
-    // unlike StructuralElementEvaluator::giveIntegrationElementLocalCodeNumbers: the planar curve has
-    // one parametric dimension but two displacement dofs (u, v) per control point
-    if ( nsd == 1 ) {
-        nsd = 2;
-    }
-
-    // first evaluate nonzero basis function mask
-    if ( elem->giveInterpolation()->hasSubPatchFormulation() ) {
-        elem->giveInterpolation()->giveKnotSpanBasisFuncMask( span, mask );
-        // loop over nonzero shape functions and assemble localization array
-        answer.clear();
-        for ( int i = 1; i <= mask.giveSize(); i++ ) {
-            nodalArray.resize( nodeDofIDMask.giveSize() );
-            for ( int j = 1; j <= nsd; j++ ) {
-                nodalArray.at( j ) = dofmandof * ( mask.at( i ) - 1 ) + j;
-            }
-
-            answer.followedBy( nodalArray );
-        }
-
-        return 1;
-    } else {
-        return 0;
-    }
 }
 
 } // namespace oofem

@@ -110,9 +110,6 @@ protected:
     /// Second gradient matrix, 27 x (2 nno) (full 27 component grad F, see StructuralElementEvaluator).
     void computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
-    /// grad F = G x with the current positions x of the control points. @todo The same in all evaluators.
-    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
-
     /// dA/dF reduced to the plane strain components of F, 27 x 5
     void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
@@ -130,6 +127,9 @@ public:
     AxisymStructuralElementEvaluator() :
         StructuralElementEvaluator() {}
 
+    /// Reads nlgeo like StructuralElementEvaluator and rejects everything but 1 (small strains are not implemented).
+    void initializeFrom( InputRecord &ir ) override;
+
 protected:
     /**
      * Assemble interpolation matrix at given IP.
@@ -139,14 +139,14 @@ protected:
     /// Displacement gradient matrix, 9 x (2 nno), with the hoop row 3 (u / r).
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
     double computeVolumeAround( GaussPoint *gp ) override;
-    
+
     void giveDofManDofIDMask( int inode, IntArray &answer ) const
     {
         answer = { D_u, D_v };
     }
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
-    // small strains (nlgeo 0) are not implemented
+    // small strains (nlgeo 0) are not implemented; not reached, initializeFrom rejects nlgeo 0
     void computeBMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override
     {
         OOFEM_ERROR( "This element is only for large strains so far" );
@@ -166,9 +166,6 @@ protected:
 
     /// Second gradient matrix, 27 x (2 nno), including the hoop terms.
     void computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
-
-    /// grad F = G x with the current positions x of the control points. @todo The same in all evaluators.
-    void computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
 }; // end of AxisymStructuralElementEvaluator definition
 

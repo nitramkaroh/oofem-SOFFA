@@ -55,6 +55,15 @@ StructuralSurfaceElementEvaluator ::StructuralSurfaceElementEvaluator():
 {}
 
 
+void StructuralSurfaceElementEvaluator::initializeFrom( InputRecord &ir )
+{
+    StructuralElementEvaluator::initializeFrom( ir );
+    if ( this->nlGeometry != 1 ) {
+        throw ValueInputException( ir, _IFT_StructuralElementEvaluator_nlgeoflag, "only nlgeo 1 is implemented for surface elements" );
+    }
+}
+
+
 void StructuralSurfaceElementEvaluator::computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );
@@ -84,8 +93,7 @@ void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dPdF_At( Floa
     this->initializeReferenceGradients( gp, tStep );
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );
     SimpleSurfaceCrossSection *cs = static_cast<SimpleSurfaceCrossSection *>( elem->giveCrossSection() );
-    FloatArray normal = elem->giveNormal( gp );
-    answer = static_cast<SimpleSurfaceCrossSection *>( this->giveElement()->giveCrossSection() )->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );
+    answer = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, elem->giveNormal( gp ), gp, tStep );
 }
 
 void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dAddF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
@@ -93,8 +101,7 @@ void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dAddF_At( Flo
     this->initializeReferenceGradients( gp, tStep );
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );
     SimpleSurfaceCrossSection *cs = static_cast<SimpleSurfaceCrossSection *>( elem->giveCrossSection() );
-    FloatArray normal             = elem->giveNormal( gp );
-    answer                        = static_cast<SimpleSurfaceCrossSection *>( this->giveElement()->giveCrossSection() )->giveSurfaceStiffnessMatrix_dAddF_3d( rMode, normal, gp, tStep );
+    answer = cs->giveSurfaceStiffnessMatrix_dAddF_3d( rMode, elem->giveNormal( gp ), gp, tStep );
 }
 
 void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
@@ -102,8 +109,7 @@ void StructuralSurfaceElementEvaluator ::computeConstitutiveMatrix_dAdF_At( Floa
     this->initializeReferenceGradients( gp, tStep );
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );
     SimpleSurfaceCrossSection *cs = static_cast<SimpleSurfaceCrossSection *>( elem->giveCrossSection() );
-    FloatArray normal             = elem->giveNormal( gp );
-    answer                        = static_cast<SimpleSurfaceCrossSection *>( this->giveElement()->giveCrossSection() )->giveSurfaceStiffnessMatrix_dAdF_3d( rMode, normal, gp, tStep );
+    answer = cs->giveSurfaceStiffnessMatrix_dAdF_3d( rMode, elem->giveNormal( gp ), gp, tStep );
 }
 
 void StructuralSurfaceElementEvaluator::initializeReferenceGradients( GaussPoint *gp, TimeStep *tStep )
@@ -129,28 +135,15 @@ void StructuralSurfaceElementEvaluator::computeDeformationGradientVector( FloatA
     // the receiver at time step tStep.
     // Order of components: 11, 22, 33, 23, 13, 12, 32, 31, 21 in the 3D.
 
-    // Obtain the current displacement vector of the element
-    FloatArray u;
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-    elem->computeVectorOf( VM_Total, tStep, u );
-
-    // Displacement gradient H = du/dX
+    // Displacement gradient H = du/dX from the control points of the knot span
     FloatMatrix B;
+    FloatArray ur;
     this->computeBHmatrixAt( gp, B );
-
-    // get local code numbers corresponding to ir
-    IntArray lc;
-    FloatArray ur,xr;
-    this->giveIntegrationElementLocalCodeNumbers( lc, elem, gp->giveIntegrationRule() );
-    ur.resize( B.giveNumberOfColumns() );
-
-    for ( int i = 1; i <= lc.giveSize(); i++ ) {
-        ur.at( i ) = u.at( lc.at( i ) );
-    }
-
+    this->giveSpanDisplacements( ur, gp, tStep );
     answer.beProductOf( B, ur );
 
     // F = H + I_s with the reference surface identity I_s = I - N x N
+    IGAElement *elem  = static_cast<IGAElement *>( this->giveElement() );
     FloatArray normal = elem->giveNormal( gp );
     FloatArrayF<9> du( answer );
     Tensor2_3d du_tens( du ), Ftens;
@@ -167,66 +160,15 @@ void StructuralSurfaceElementEvaluator::computeDeformationGradientVector( FloatA
     answer = Ftens.to_voigt_form();
 }
 
-void StructuralSurfaceElementEvaluator::computeGradientOfDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
-{
-    // Computes grad F (27 components, see computeGMatrixAt) at the Gauss point gp of
-    // the receiver at time step tStep from the current positions of the control points.
-
-    // Obtain the current displacement vector of the element
-    FloatArray u;
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-    elem->computeVectorOf( VM_Total, tStep, u );
-
-    // Get nodal coordinates
-    FloatArray nodesCoords;
-    elem->giveNodalCoordinates( nodesCoords );
-
-    // deformed coordinates
-    FloatArray xDef = nodesCoords + u;
-
-    // second gradient matrix, grad F = G x
-    FloatMatrix G;
-    this->computeGMatrixAt( gp, G );
-
-    // get local code numbers corresponding to ir
-    IntArray lc;
-    FloatArray xr;
-    this->giveIntegrationElementLocalCodeNumbers( lc, elem, gp->giveIntegrationRule() );
-    xr.resize( G.giveNumberOfColumns() );
-    for ( int i = 1; i <= lc.giveSize(); i++ ) {
-        xr.at( i ) = xDef.at( lc.at( i ) );
-    }
-
-    answer.beProductOf( G, xr );
-}
-
-
-
 void StructuralSurfaceElementEvaluator::computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
-    // Computes grad I = G X (27 components) at the Gauss point gp, as grad F with the
-    // reference positions of the control points.
-    FloatArray u;
-    IGAElement *elem = static_cast<IGAElement *>( this->giveElement() );
-
-    // Get nodal coordinates
-    FloatArray nodesCoords;
-    elem->giveNodalCoordinates( nodesCoords );
-
-    // second gradient matrix
+    // grad I = G X (27 components) at the Gauss point gp, as grad F with the reference positions
+    // of the control points of the knot span
     FloatMatrix G;
+    FloatArray X;
     this->computeGMatrixAt( gp, G );
-
-    // get local code numbers corresponding to ir
-    IntArray lc;
-    FloatArray xr;
-    this->giveIntegrationElementLocalCodeNumbers( lc, elem, gp->giveIntegrationRule() );
-    xr.resize( G.giveNumberOfColumns() );
-    for ( int i = 1; i <= lc.giveSize(); i++ ) {
-        xr.at( i ) = nodesCoords.at( lc.at( i ) );
-    }
-
-    answer.beProductOf( G, xr );
+    this->giveSpanCoordinates( X, gp );
+    answer.beProductOf( G, X );
 }
 
 
