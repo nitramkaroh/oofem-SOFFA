@@ -379,8 +379,19 @@ public:
 #define _IFT_CylindricalALMStability_timeAsArcLength "timeasarclength"
 #define _IFT_CylindricalALMStability_pdConstrainedDofs "pdconstraineddofs"
 #define _IFT_CylindricalALMStability_reverseAfterTime "reverseaftertime"
+/// Obsolete: the predictor always uses the increment of R0 now. Still accepted on input.
 #define _IFT_CylindricalALMStability_r0Increment "r0increment"
 
+/**
+ * Cylindrical arc-length method for tracing equilibrium paths through critical points.
+ * In addition to CylindricalALM it
+ *  - checks the definiteness of the converged tangent stiffness when the linear solver can
+ *    (BifurcationInterface), optionally with some DOFs removed (pdconstraineddofs);
+ *  - can take the arc-length increment from the solution step (timeasarclength) and reverse
+ *    the traversal after a given arc length (reverseaftertime);
+ *  - loads the predictor by the increment of the non-reference load since the last converged
+ *    step, R0 - R0_old, instead of by the whole R0, see solve.
+ */
 class OOFEM_EXPORT CylindricalALMStability : public CylindricalALM
 {
 protected:
@@ -463,17 +474,7 @@ protected:
      */
     double pathDirection = 1.;
 
-    /**
-     * If set, the predictor is loaded by the increment of the non-reference load R0 since
-     * the last converged step instead of by R0 itself. At a converged state
-     * F = Lambda R + R0_old, so the linearised residual of the predictor holds only
-     * DeltaLambda R + (R0 - R0_old); adding the whole R0 applies the non-reference load
-     * once more on every step. The iterations remove that again, but near a critical point
-     * K^-1 R0 grows without bound and can decide which root the corrector selects.
-     * Default is false, which keeps the legacy predictor.
-     */
-    bool r0Increment = false;
-    /// R0 of the last converged step, used by r0Increment. Empty before the first step.
+    /// R0 of the last converged step; the predictor is loaded by R0 - R0_old. Empty before the first step.
     FloatArray R0_old;
 
 public:

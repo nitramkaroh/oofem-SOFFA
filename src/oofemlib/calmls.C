@@ -2898,9 +2898,10 @@ CylindricalALMStability::initializeFrom( InputRecord &ir )
             this->reverseAfterTime );
     }
 
-    this->r0Increment = ir.hasField( _IFT_CylindricalALMStability_r0Increment );
-    if ( this->r0Increment ) {
-        OOFEM_LOG_INFO( "CALMLS:       Predictor loaded by the increment of the non-reference load\n" );
+    // The predictor now always uses the increment of R0 (see solve), which this keyword used to
+    // switch on. It is still read, so that older input raises no unread-token warning.
+    if ( ir.hasField( _IFT_CylindricalALMStability_r0Increment ) ) {
+        OOFEM_LOG_INFO( "CALMLS:       'r0increment' is obsolete, the predictor always uses the increment of R0\n" );
     }
 }
 
@@ -2985,7 +2986,6 @@ CylindricalALMStability ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
 
     FloatArray rhs, deltaXt, deltaX_, dXm1, XInitial;
     FloatArray ddX; // total increment of displacements in iteration
-    // double Bergan_k0 = 1.0, bk;
     double XX, RR, RR0, XR, p                                   = 0.0;
     double deltaLambda, Lambda, eta, DeltaLambdam1, DeltaLambda = 0.0;
     double drProduct = 0.0;
@@ -2995,6 +2995,17 @@ CylindricalALMStability ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
     double _RR, _XX;
     ConvergedReason status = CR_UNKNOWN;
     bool converged, errorOutOfRangeFlag;
+
+    // A failed attempt returns to the starting state of the step, so that the engineering model
+    // can retry the step with a shorter increment, or continue from the last equilibrium.
+    auto restoreStartingState = [&]() {
+        X = XInitial;
+        dX.zero();
+        solved = 0;
+        engngModel->initStepIncrements();
+        tStep->incrementStateCounter();
+        engngModel->updateComponent( tStep, InternalRhs, domain );
+    };
 
     // The arc-length increment is the step time increment, so that the metastep
     // deltaT is the single lever controlling how far this step advances and
@@ -3111,7 +3122,8 @@ restart:
     // A.1. calculation of (0)VarRt
     //
     dX.zero();
-    // engngModel->updateComponent(tStep, InternalRhs, domain); // By not updating this, one obtains the old equilibrated tangent.
+    // The internal forces are not updated here, so that the tangent is still the equilibrated
+    // tangent of the last converged state.
     engngModel->updateComponent( tStep, NonLinearLhs, domain );
     linSolver->solve( k, R, deltaXt );
 
@@ -3175,13 +3187,19 @@ restart:
     //
     // A.3.
     //
-
+    // At the converged starting state F = ReachedLambda R + R0_old, so the linearised equilibrium
+    // of the predictor is K dX = DeltaLambda R + ( R0 - R0_old ). CylindricalALM loads the predictor
+    // by the whole R0 instead, which applies the already balanced R0_old once more; near a critical
+    // point K^-1 R0_old grows without bound and the extra displacement can decide which root the
+    // corrector selects. The residual left by the previous step is deliberately not added: it is
+    // only known up to the convergence tolerance, and K^-1 would amplify that noise in the same way.
+    // R0_old is empty in the first step of this solver, where the whole R0 is applied; this is exact
+    // when the analysis starts unloaded, but not after a change of the solver or a restart.
     rhs = R;
     rhs.times( DeltaLambda );
     if ( R0 ) {
         rhs.add( *R0 );
-        // Only the increment of R0 is unbalanced at the converged start state, see r0Increment.
-        if ( this->r0Increment && R0_old.giveSize() ) {
+        if ( R0_old.giveSize() ) {
             rhs.subtract( R0_old );
         }
     }
@@ -3238,12 +3256,18 @@ restart:
         // B.3.
         //
         if ( this->computeDeltaLambda( deltaLambda, dX, deltaXt, deltaX_, R, RR, eta, deltaL, DeltaLambda, neq ) ) {
+            // The linearised arc-length constraint has no solution.
+            if ( this->timeAsArcLength ) {
+                // As for exhausted iterations below: deltaL is owned by the TimeStepController,
+                // so do not shrink it here but let MetaStep::reduceTimeStep retry the step.
+                restoreStartingState();
+                throw ConvergenceException( "Arc-length constraint has no solution in arc-length step" );
+            }
+
             irest++;
             if ( irest <= maxRestarts ) {
                 // convergence problems
                 // there must be step restart followed by decrease of step length
-                // status |= NM_ForceRestart;
-                // reduce step length
                 deltaL = deltaL * CALM_RESET_STEP_REDUCE;
                 if ( deltaL < minStepLength ) {
                     deltaL = minStepLength;
@@ -3251,7 +3275,8 @@ restart:
 
                 // restore previous total displacement vector
                 X = XInitial;
-                // reset all changes fro previous equilibrium state
+                // reset all changes from previous equilibrium state
+                engngModel->initStepIncrements();
                 dX.zero();
                 // restore initial stiffness
                 engngModel->updateComponent( tStep, NonLinearLhs, domain );
@@ -3268,7 +3293,8 @@ restart:
                 goto restart;
             } else {
                 status = CR_DIVERGED_ITS;
-                OOFEM_ERROR( "can't continue further" );
+                OOFEM_WARNING( "arc-length constraint could not be satisfied after %d restarts", maxRestarts );
+                break;
             }
         }
 
@@ -3327,35 +3353,7 @@ restart:
         if ( converged && stabSolver && stabSolver->canComputeEigenVectors() ) {
             engngModel->updateComponent( tStep, NonLinearLhs, domain );
             bool isPD = stabSolver->checkPD( k );
-
-            ////////////////////////
-            //// Independently verify the negative result with the smallest
-            //// eigenpair computed by the stability solver.
-            //FloatArray eigenvalues;
-            //int nconv = stabSolver->computeEigenValues( k, eigenvalues );
-            //if ( nconv > 0 ) {
-            //    bool isPD_check = eigenvalues.at( 1 ) > 0.0;
-            //    if ( isPD_check != isPD ) {
-            //        OOFEM_WARNING( "Positive-definiteness checks disagree" );
-            //    }
-            //} else {
-            //    OOFEM_WARNING( "Could not compute eigenpairs for positive-definiteness check" );
-            //}
-            ////////////////////////
-
             if ( !isPD ) {
-                //// Independently verify the negative result with the smallest
-                //// eigenvalue computed by the stability solver.
-                //FloatArray eigenvalues;
-                //int nconv = stabSolver->computeEigenValues( k, eigenvalues );
-                //if ( nconv > 0 ) {
-                //    if ( eigenvalues.at( 1 ) > 0.0 ) {
-                //        OOFEM_WARNING( "Positive-definiteness checks disagree" );
-                //    }
-                //} else {
-                //    OOFEM_WARNING( "Could not compute eigenpairs for positive-definiteness check" );
-                //}
-
                 OOFEM_LOG_INFO( "Negative eigenvalue\n" );
             }
         }
@@ -3364,18 +3362,11 @@ restart:
             engngModel->updateComponent( tStep, NonLinearLhs, domain );
             // Make a copy of the stiffness matrix
             EigenMtrx Kcopy( *eigenK );
-            // Remove the prescribed DOFs corresponding to the HPC mask
-            // Constrain the check whenever a DOF set is available, see givePDConstrainedDofMask.
+            // Remove the DOFs held fixed by the stability check whenever such a set is
+            // available, see givePDConstrainedDofMask.
             const IntArray &pdMask = this->givePDConstrainedDofMask();
             if ( pdMask.giveSize() ) {
                 std::unique_ptr<EigenMtrx> Kdel = Kcopy.removeRowsAndColumns( pdMask );
-
-                ////////////////////
-                // std::string filename = "C:\\Users\\msmej\\OneDrive - �esk� vysok� u�en� technick� v Praze\\cvut\\Doktor�t\\ERC project\\OOFEM\\vypocty\\K.txt";
-                // std::string filenameDel = "C:\\Users\\msmej\\OneDrive - �esk� vysok� u�en� technick� v Praze\\cvut\\Doktor�t\\ERC project\\OOFEM\\vypocty\\Kdel.txt";
-                //eigenK->printToFile( filename );
-                //Kdel->printToFile( filenameDel );
-                ////////////////////
 
                 bool isPD2 = stabSolver->checkPD( *Kdel );
                 if ( !isPD2 ) {
@@ -3466,9 +3457,10 @@ restart:
                 // deltaL from tStep->giveTimeIncrement() and hence corrupt the
                 // cumulated arc length carried by targetTime. Hand control back
                 // instead: MetaStep::reduceTimeStep will shorten deltaT and
-                // EngngModel::solveYourself will re-run the step.
-                X = XInitial;
-                dX.zero();
+                // EngngModel::solveYourself will re-run the step. The state is restored
+                // also for the case that no reduction strategy is active and the
+                // engineering model continues from the last equilibrium.
+                restoreStartingState();
 
                 throw ConvergenceException( errorOutOfRangeFlag
                         ? "Error out of range in arc-length step"
@@ -3479,8 +3471,6 @@ restart:
             if ( irest <= maxRestarts ) {
                 // convergence problems
                 // there must be step restart followed by decrease of step length
-                // status |= NM_ForceRestart;
-                // reduce step length
                 deltaL = deltaL * CALM_RESET_STEP_REDUCE;
                 if ( deltaL < minStepLength ) {
                     deltaL = minStepLength;
@@ -3507,7 +3497,6 @@ restart:
             } else {
                 status = CR_DIVERGED_ITS;
                 OOFEM_WARNING( "Convergence not reached after %d iterations", nsmax );
-                // exit(1);
                 break;
             }
         }
@@ -3516,46 +3505,11 @@ restart:
         engngModel->giveExportModuleManager()->doOutput( tStep, true );
     } while ( !converged || ( nite < minIterations ) );
 
-    //
-    // update dofs,nodes,Elemms and print result
-    //
-#ifdef VERBOSE
-    // printf ("\nCALM - step iteration finished") ;
-#endif
-
     // A failed attempt must not advance the accepted load level or displacement history.
     if ( status == CR_DIVERGED_ITS ) {
-        X = XInitial;
-        dX.zero();
-        solved = 0;
-        engngModel->initStepIncrements();
-        tStep->incrementStateCounter();
-        engngModel->updateComponent( tStep, InternalRhs, domain );
+        restoreStartingState();
         return status;
     }
-
-    // Seems to be completely unused / Mikael
-#if 0
-    /* compute Bergan's parameter of current stiffness */
-    double RDR = parallel_context->localDotProduct(* R, * dX);
-    double DR = parallel_context->localNorm(* dX);
-    bk = DeltaLambda * RDR / ( DR * DR );
-
-    if ( tStep->giveNumber() == 1 ) {
-        // compute Bergan_k0
-        Bergan_k0 = bk;
-    } else {
-        bk = bk / Bergan_k0;
-        //if (fabs(bk) < CALM_TANGENT_STIFF_TRESHOLD) status |= NM_KeepTangent;
-    }
-#endif
-
-    /* we have computed Bergan's  parameter -> you can adjust deltaL according
-     * to this value */
-    //
-    // there has been restart already - set nite to maxiter
-    //
-    // if (irest > 0) nite = nsmax;
 
     // Post-convergence adaptation of the step length. When deltaL is the step time
     // increment this is MetaStep::adaptTimeStep's job (driven by minrequirediter /
@@ -3578,13 +3532,8 @@ restart:
         OOFEM_LOG_INFO( "CALMLS:       Adjusted step length: %-15e\n", deltaL );
     }
 
-    // Do not report a step that gave up as converged: the caller stores this in
-    // tStep->convergedReason and would otherwise accept a non-equilibrated state.
-    if ( status != CR_DIVERGED_ITS ) {
-        status = CR_CONVERGED;
-        solved = 1;
-    }
-
+    status        = CR_CONVERGED;
+    solved        = 1;
     ReachedLambda = Lambda;
     old_dX        = dX;
     if ( R0 ) {
