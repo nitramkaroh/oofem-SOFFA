@@ -1,0 +1,78 @@
+surface-tangent-check.out
+Analytical equilibria with finite-difference checks of membrane, fibre and bending material tangents
+StaticStructural nsteps 2 deltat 1.0 maxiter 30 manrmsteps 1 rtolv 1.e-11 rtolf 1.e-11 nmodules 1
+errorcheck
+domain 3d
+OutputManager tstep_all dofman_all element_all
+ndofman 13 nelem 4 ncrosssect 4 nmat 4 nbc 11 nic 0 nltf 2 nset 10
+# Each triangle has the target F = diag(1.1,1.2,0), with one free horizontal dof.
+# The nodal force is half of the analytical P11 at that F (reference area = 1/2).
+# For element 2, the axis through p_1/p_2 gives a=(-1,7,0)/sqrt(50) at its centroid.
+# Element 3 uses anisodir=(1,2,0), hence the current convention gives a=(-2,1,0),
+# intentionally not normalized. This tests both direction sources and their fibre tangents.
+node 1 coords 3 0.0 0.0 0.0
+node 2 coords 3 1.0 0.0 0.0
+node 3 coords 3 0.0 1.0 0.0
+node 4 coords 3 2.0 0.0 0.0
+node 5 coords 3 3.0 0.0 0.0
+node 6 coords 3 2.0 1.0 0.0
+node 7 coords 3 4.0 0.0 0.0
+node 8 coords 3 5.0 0.0 0.0
+node 9 coords 3 4.0 1.0 0.0
+# A curved quadratic C1 patch with two spans. Its target deformation stretches x by 1.1;
+# the last horizontal dof is free, and all other curve dofs prescribe that deformation.
+node 10 coords 3 0.0 2.0 0.0 dofidmask 2 1 2
+node 11 coords 3 0.25 2.2 0.0 dofidmask 2 1 2
+node 12 coords 3 0.75 2.2 0.0 dofidmask 2 1 2
+node 13 coords 3 1.0 2.0 0.0 dofidmask 2 1 2
+triangularsurface 1 nodes 3 1 2 3 crosssect 1 nlgeo 1
+triangularsurface 2 nodes 3 4 5 6 crosssect 2 nlgeo 1
+triangularsurface 3 nodes 3 7 8 9 crosssect 3 nlgeo 1 anisodir 3 1.0 2.0 0.0
+bsplineplanestrainsurfaceelement 4 nodes 4 10 11 12 13 crosssect 4 knotvectoru 3 0.0 0.5 1.0 degree 1 2 nip 3 nlgeo 1
+simplesurfacecs 1 material 1
+simplesurfacecs 2 material 2
+simplesurfacecs 3 material 3
+simplesurfacecs 4 material 4
+surfacetensionmat 1 gamma1 0.4 alpha1 0.15 alphas 0.2 mu 0.3 lambda 0.1 checktangent 1.e-5 d 1.0
+anisosurfacetensionmat 2 gamma1 0.4 alpha1 0.15 alphas 0.2 mu 0.3 lambda 0.1 eta 0.17 beta 0.13 p_1 3 0.0 0.0 -1.0 p_2 3 0.0 0.0 1.0 checktangent 1.e-5 d 1.0
+anisosurfacetensionmat 3 gamma1 0.4 alpha1 0.15 alphas 0.2 mu 0.3 lambda 0.1 eta 0.17 beta 0.13 p_1 3 0.0 0.0 -1.0 p_2 3 0.0 0.0 1.0 checktangent 1.e-5 d 1.0
+surfacetensionmat2 4 gamma1 0.4 alpha1 0.15 alphas 0.2 mu 0.3 lambda 0.1 omega1 0.4 omega_ltf 2 useh0 2 h0 0.2 checktangent 1.e-5 d 1.0
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 0.0 set 2
+BoundaryCondition 3 loadTimeFunction 1 dofs 1 2 values 1 0.2 set 3
+BoundaryCondition 4 loadTimeFunction 1 dofs 1 3 values 1 0.0 set 4
+BoundaryCondition 5 loadTimeFunction 1 dofs 1 1 values 1 0.025 set 5
+BoundaryCondition 6 loadTimeFunction 1 dofs 1 1 values 1 0.075 set 6
+NodalLoad 7 loadTimeFunction 1 dofs 1 1 components 1 0.3703353351659955 set 7
+NodalLoad 8 loadTimeFunction 1 dofs 1 1 components 1 0.37290193220132717 set 8
+NodalLoad 9 loadTimeFunction 1 dofs 1 1 components 1 0.5928088436383351 set 9
+# For the IGA dof, differentiate the discrete energy using the same three-point Gauss
+# rule in each span, independently of the material implementation:
+# E = integral J_ref [W_mem(j/J_ref) + omega/2 (j/J_ref) (H-h0)^2] dxi,
+# H = -cross(y_xi,y_xixi)/(2*j^3), j=|y_xi|.
+# At u13=.1: dE_mem/du13=.5171084335841627 and dE_bend/du13/omega=-.3497119324883055.
+# The two loads therefore preserve the same equilibrium while omega changes from .2 to .4.
+NodalLoad 10 loadTimeFunction 1 dofs 1 1 components 1 0.5171084335841627 set 10
+NodalLoad 11 loadTimeFunction 2 dofs 1 1 components 1 -0.1398847729953222 set 10
+ConstantFunction 1 f(t) 1.0
+PiecewiseLinFunction 2 npoints 2 t 2 0.0 2.0 f(t) 2 0.0 1.0
+Set 1 nodes 7 1 3 4 6 7 9 10
+Set 2 nodes 10 1 2 4 5 7 8 10 11 12 13
+Set 3 nodes 3 3 6 9
+Set 4 nodes 9 1 2 3 4 5 6 7 8 9
+Set 5 nodes 1 11
+Set 6 nodes 1 12
+Set 7 nodes 1 2
+Set 8 nodes 1 5
+Set 9 nodes 1 8
+Set 10 nodes 1 13
+#%BEGIN_CHECK% tolerance 1.e-8
+#NODE tStep 1 number 2 dof 1 unknown d value 0.1
+#NODE tStep 1 number 5 dof 1 unknown d value 0.1
+#NODE tStep 1 number 8 dof 1 unknown d value 0.1
+#NODE tStep 1 number 13 dof 1 unknown d value 0.1
+#NODE tStep 2 number 2 dof 1 unknown d value 0.1
+#NODE tStep 2 number 5 dof 1 unknown d value 0.1
+#NODE tStep 2 number 8 dof 1 unknown d value 0.1
+#NODE tStep 2 number 13 dof 1 unknown d value 0.1
+#%END_CHECK%

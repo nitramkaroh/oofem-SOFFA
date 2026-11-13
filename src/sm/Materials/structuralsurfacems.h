@@ -37,21 +37,17 @@
 
 #include "structuralms.h"
 #include "floatarray.h"
-#include "floatmatrix.h"
-#include "matstatmapperint.h"
 
 namespace oofem {
 class GaussPoint;
-class Dictionary;
-class Domain;
 
 /**
  * Status of the surface materials. Besides F, P and the Cauchy stress of StructuralMaterialStatus it holds, for the
  * second gradient, grad F and the gradient of the reference surface identity (27 components each, as left by the
  * last evaluation of the second order stress; the stress and the tangents of the bending material read them; empty
  * in a fresh status until the IGA surface evaluator sets both to the reference grad I before the first tangent), and
- * for postprocessing the curvature K = -n . grad F and the moment M = de/dK (9 components each, stored by the
- * bending material; the 2D surface evaluator interpolates K between Gauss points). The initial F is the
+ * for postprocessing the curvature K = -n . grad F (9 components, stored by the bending material;
+ * the 2D surface evaluator interpolates K between Gauss points). The initial F is the
  * surface identity of the element frame: diag(1, 1, 0) for the Lagrange elements, I - N x N for the IGA elements.
  */
 class OOFEM_EXPORT StructuralSurfaceMaterialStatus : public StructuralMaterialStatus
@@ -59,9 +55,6 @@ class OOFEM_EXPORT StructuralSurfaceMaterialStatus : public StructuralMaterialSt
 protected:
     FloatArray GVector; ///< grad F
     FloatArray tempGVector;
-
-    FloatArray MVector; ///< Second order stress M = de/dK conjugate to the curvature K
-    FloatArray tempMVector;
 
     FloatArray KVector; ///< Current curvature K = -n . grad F, in the reference frame
     FloatArray tempKVector;
@@ -75,9 +68,8 @@ public:
 
     void initTempStatus() override;
     void updateYourself( TimeStep *tStep ) override;
+    void printOutputAt( FILE *file, TimeStep *tStep ) const override;
 
-    const FloatArray &giveMVector() const { return MVector; }
-    const FloatArray &giveTempMVector() const { return tempMVector; }
     const FloatArray &giveKVector() const { return KVector; }
     const FloatArray &giveTempKVector() const { return tempKVector; }
     const FloatArray &giveGVector() const { return GVector; }
@@ -85,13 +77,8 @@ public:
     const FloatArray &givedIVector() const { return dIVector; }
     const FloatArray &giveTempdIVector() const { return tempdIVector; }
 
-    void letMVectorBe( const FloatArray &v ) { MVector = v; }
-    void letTempMVectorBe( const FloatArray &v ) { tempMVector = v; }
-    void letKVectorBe( const FloatArray &v ) { KVector = v; }
     void letTempKVectorBe( const FloatArray &v ) { tempKVector = v; }
-    void letGVectorBe( const FloatArray &v ) { GVector = v; }
     void letTempGVectorBe( const FloatArray &v ) { tempGVector = v; }
-    void letdIVectorBe( const FloatArray &v ) { dIVector = v; }
     void letTempdIVectorBe( const FloatArray &v ) { tempdIVector = v; }
 
     const char *giveClassName() const override { return "StructuralSurfaceMaterialStatus"; }

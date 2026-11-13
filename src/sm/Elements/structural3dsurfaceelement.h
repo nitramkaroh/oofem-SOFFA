@@ -39,7 +39,6 @@
 #include "feinterpol2d.h"
 
 
-#define _IFT_Structural3DSurfaceElement_materialCoordinateSystem "matcs" ///< [optional] Material directions from the element orientation (not implemented).
 
 namespace oofem {
 class GaussPoint;
@@ -59,8 +58,6 @@ class IntArray;
 class Structural3DSurfaceElement : public NLStructuralSurfaceElement
 {
 protected:
-    /// Set by matcs; material rotation is not implemented (see computeStressVector).
-    bool matRotation;
     /// Geometry of the element for the interpolation, created on demand (see giveCellGeometryWrapper).
     FEICellGeometry *cellGeometryWrapper;
 
@@ -74,13 +71,12 @@ public:
     /// Destructor.
     virtual ~Structural3DSurfaceElement();
 
-    void initializeFrom( InputRecord &ir ) override;
 
     MaterialMode giveMaterialMode() override;
     void giveDofManDofIDMask( int inode, IntArray &answer ) const override;
     double computeVolumeAround( GaussPoint *gp ) override;
 
-    /// In-plane material directions from elemLocalCS or the element geometry (meant for matcs, not used).
+    /// In-plane material directions from elemLocalCS or the element geometry (reserved for the small-strain path, currently unused).
     void giveMaterialOrientationAt( FloatArray &x, FloatArray &y, const FloatArray &lcoords );
     void computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep ) override;
     void computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;

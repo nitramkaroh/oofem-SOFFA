@@ -34,15 +34,14 @@
 
 #include "sm/Materials/structuralsurfacems.h"
 #include "sm/Materials/structuralmaterial.h"
-#include "contextioerr.h"
-#include "sm/Elements/nlstructuralelement.h"
-#include "sm/Elements/nlstructuralsurfaceelement.h"
 #include "gausspoint.h"
-#include "oofemlib/iga/iga.h"
+#include "iga/iga.h"
+#include "tensor/tensor1.h"
+#include "tensor/tensor2.h"
 
 namespace oofem {
 StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g ) :
-    StructuralMaterialStatus( g ), MVector(), tempMVector(), KVector(), tempKVector(), GVector(), tempGVector(), dIVector(), tempdIVector()
+    StructuralMaterialStatus( g )
 {
     // Surface identity in the frame with the normal as the third axis, which all Lagrange
     // surface elements (NLStructuralSurfaceElement, 2D and 3D) use for F
@@ -64,9 +63,6 @@ StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g
         FVector          = id2D.to_voigt_form();
     }
     tempFVector = FVector;
-    MVector.resize( 9 );
-    tempMVector = MVector;
-
     KVector.resize( 9 );
     tempKVector = KVector;
 
@@ -79,10 +75,10 @@ void StructuralSurfaceMaterialStatus ::updateYourself( TimeStep *tStep )
 // Performs end-of-step updates.
 {
     StructuralMaterialStatus ::updateYourself( tStep );
-    MVector      = tempMVector;
-    KVector       = tempKVector;
+    CVector = tempCVector;
+    KVector = tempKVector;
     GVector = tempGVector;
-    dIVector    = tempdIVector;
+    dIVector = tempdIVector;
 }
 
 
@@ -94,10 +90,27 @@ void StructuralSurfaceMaterialStatus ::initTempStatus()
     StructuralMaterialStatus ::initTempStatus();
 
     // reset temp vars.
-    tempMVector = MVector;
-    tempKVector       = KVector;
+    tempCVector = CVector;
+    tempKVector = KVector;
     tempGVector = GVector;
     tempdIVector = dIVector;
+}
+
+
+void StructuralSurfaceMaterialStatus::printOutputAt( FILE *file, TimeStep *tStep ) const
+{
+    // Surface elements store all nine components in their constitutive frame, including IGA
+    // elements, which do not derive from NLStructuralElement.
+    MaterialStatus::printOutputAt( file, tStep );
+    fprintf( file, "  F " );
+    for ( double value : FVector ) {
+        fprintf( file, " %+.4e", value );
+    }
+    fprintf( file, "\n  P" );
+    for ( double value : PVector ) {
+        fprintf( file, " %+.4e", value );
+    }
+    fprintf( file, "\n" );
 }
 
 
@@ -106,9 +119,6 @@ void StructuralSurfaceMaterialStatus ::copyStateVariables( const MaterialStatus 
     StructuralMaterialStatus ::copyStateVariables(iStatus );
 
     const StructuralSurfaceMaterialStatus &structStatus = static_cast<const StructuralSurfaceMaterialStatus &>( iStatus );
-
-    MVector     = structStatus.giveMVector();
-    tempMVector = structStatus.giveTempMVector();
 
     KVector     = structStatus.giveKVector();
     tempKVector = structStatus.giveTempKVector();

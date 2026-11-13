@@ -55,18 +55,16 @@ namespace oofem {
 class GaussPoint;
 
 /**
- * This class implements an isotropic linear elastic surface material in a finite element problem.
- * For large deformation analysis it becomes the St. Venant-Kirchoff hyperelasticity model.
- *
- * Tasks:
- * - Returning standard material stiffness matrix for 3d-case.
- *   according to current state determined by using data stored
- *   in Gausspoint.
- * - methods give2dPlaneStressMtrx, givePlaneStrainMtrx, give1dStressMtrx are
- *   introduced since form of this matrices is well known, and for
- *   faster response mainly in linear elastic problems.
- * - Returning a material property (method 'give'). Only for non-standard elements.
- * - Returning real stress state vector(tensor) at gauss point for 3d - case.
+ * Isotropic linear elastic surface material (isolesurf): NOT IMPLEMENTED, the input stops with an error.
+ * The code is kept for a future surface version; use surfacetensionmat with mu and lambda for an elastic
+ * membrane. What is missing:
+ * - large strains: the default path of HyperElasticSurfaceMaterial takes E = (F^T F - I)/2 with the 3D
+ *   identity, but a surface F has F N = 0, so E_NN = -1/2 in the reference state and the Poisson term
+ *   gives the in-plane stress -lambda/2 without any load (zero only for n = 0); a surface version needs
+ *   the surface identity I_s = I - N x N;
+ * - small strains: the full 3D Hooke matrix acts on the in-plane strains with E_33 = 0 (plane strain
+ *   constants) instead of the plane stress constants of a membrane;
+ * - the generic StructuralMaterialStatus instead of StructuralSurfaceMaterialStatus, tests and documentation.
  */
 class IsotropicLinearElasticSurfaceMaterial : public LinearElasticSurfaceMaterial
 {

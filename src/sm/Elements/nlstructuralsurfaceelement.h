@@ -37,11 +37,6 @@
 
 #include "sm/Elements/nlstructuralelement.h"
 
-///@name Input fields for NLStructuralSurfaceElement
-//@{
-#define _IFT_NLStructuralSurfaceElement_nlgeoflag "nlgeo"
-//@}
-
 namespace oofem {
 class TimeStep;
 class Node;
@@ -69,7 +64,8 @@ class IntArray;
 class NLStructuralSurfaceElement : public NLStructuralElement
 {
 protected:
-
+    /// Physical global-to-material frame (3 x 3), without nodal coordinate systems or master DOFs.
+    void computeMaterialFrame( FloatMatrix &answer );
 public:
 
     NLStructuralSurfaceElement( int n, Domain *d );
@@ -83,6 +79,14 @@ public:
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
     void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
+
+    /// Interpolate every translational DOF of a node, independently of the dimension of the parameter space.
+    void computeNmatrixAt( const FloatArray &lcoords, FloatMatrix &answer ) override;
+    int computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords ) override;
+    int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
+
+    /// Body forces use a rotation of their pointwise components. Spatial PointLoad localization is unsupported.
+    void computeLoadVector( FloatArray &answer, BodyLoad *load, CharType type, ValueModeType mode, TimeStep *tStep ) override;
 
     /**
      * Kinematics handed to the surface material, in the frame of the element.

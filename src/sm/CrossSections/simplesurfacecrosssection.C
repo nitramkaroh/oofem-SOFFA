@@ -46,9 +46,28 @@
 #include "contextioerr.h"
 #include "engngm.h"
 #include "sm/Elements/nlstructuralsurfaceelement.h"
+#include "domain.h"
 
 namespace oofem {
 REGISTER_CrossSection( SimpleSurfaceCrossSection );
+
+int SimpleSurfaceCrossSection::checkConsistency()
+{
+    // With material 0 the material is resolved through a real element integration point.
+    if ( this->materialNumber && !dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveDomain()->giveMaterial( this->materialNumber ) ) ) {
+        OOFEM_ERROR( "cross section %d: a HyperElasticSurfaceMaterial is required by simplesurfacecs", this->giveNumber() );
+    }
+    return 1;
+}
+
+HyperElasticSurfaceMaterial *SimpleSurfaceCrossSection::giveSurfaceMaterial( GaussPoint *gp ) const
+{
+    auto *mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    if ( !mat ) {
+        OOFEM_ERROR( "cross section %d: a HyperElasticSurfaceMaterial is required by simplesurfacecs", this->giveNumber() );
+    }
+    return mat;
+}
 
 FloatArray
 SimpleSurfaceCrossSection::giveRealSurfaceStresses( const FloatArray &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
@@ -65,7 +84,7 @@ SimpleSurfaceCrossSection::giveRealSurfaceStresses( const FloatArray &strain, co
 FloatArrayF<6>
 SimpleSurfaceCrossSection::giveRealSurfaceStress_3d( const FloatArrayF<6> &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
-    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    auto *mat = this->giveSurfaceMaterial( gp );
     return mat->giveRealSurfaceStressVector_3d( strain, normal, gp, tStep );
 }
 
@@ -95,42 +114,42 @@ SimpleSurfaceCrossSection::giveSecondOrderSurfaceStresses( const FloatArray &ful
 FloatArrayF<9>
 SimpleSurfaceCrossSection::giveFirstPKSurfaceStress_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
-    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    auto *mat = this->giveSurfaceMaterial( gp );
     return mat->giveFirstPKSurfaceStressVector_3d( vF, normal, gp, tStep );
 }
 
 FloatArrayF<27>
 SimpleSurfaceCrossSection::giveSecondOrderSurfaceStress_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
-    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    auto *mat = this->giveSurfaceMaterial( gp );
     return mat->giveSecondOrderSurfaceStressVector_3d( vF, vG, gradI, normal, gp, tStep );
 }
 
 FloatMatrixF<9, 9>
 SimpleSurfaceCrossSection::giveSurfaceStiffnessMatrix_dPdF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
-    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    auto *mat = this->giveSurfaceMaterial( gp );
     return mat->give3dSurfaceMaterialStiffnessMatrix_dPdF( rMode, normal, gp, tStep );
 }
 
 FloatMatrixF<27, 27>
 SimpleSurfaceCrossSection::giveSurfaceStiffnessMatrix_dAddF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
-    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    auto *mat = this->giveSurfaceMaterial( gp );
     return mat->give3dSurfaceMaterialStiffnessMatrix_dAddF( rMode, normal, gp, tStep );
 }
 
 FloatMatrixF<27, 9>
 SimpleSurfaceCrossSection::giveSurfaceStiffnessMatrix_dAdF_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
-    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    auto *mat = this->giveSurfaceMaterial( gp );
     return mat->give3dSurfaceMaterialStiffnessMatrix_dAdF( rMode, normal, gp, tStep );
 }
 
 FloatMatrixF<6, 6>
 SimpleSurfaceCrossSection::giveSurfaceStiffnessMatrix_3d( MatResponseMode rMode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
-    auto mat = dynamic_cast<HyperElasticSurfaceMaterial *>( this->giveMaterial( gp ) );
+    auto *mat = this->giveSurfaceMaterial( gp );
     return mat->give3dSurfaceMaterialStiffnessMatrix( rMode, normal, gp, tStep );
 }
 

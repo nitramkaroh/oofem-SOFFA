@@ -8,6 +8,10 @@ surface elements, see the Element Library Manual), which get them from the cross
 :param:`simplesurfacecs`. They are formulated for large deformations only, so the elements
 have to use :param:`nlgeo` 1.
 
+The registered name :param:`isolesurf` is a placeholder for an unfinished linear elastic
+surface material and is rejected on input. It does not provide a supported small-strain
+alternative to these materials.
+
 The element hands over the surface deformation gradient :math:`\mathbf{F}` (nine components
 in the order 11, 22, 33, 23, 13, 12, 32, 31, 21) and the unit normal :math:`\mathbf{N}` of
 the reference surface, both in the same orthonormal frame and with
@@ -53,7 +57,7 @@ outside that theory. This material has no bending stiffness and rejects a nonzer
    |                    | :optelemparam:`gamma1{rn}` :optelemparam:`gamma_ltf{in}`                                     |
    |                    | :optelemparam:`alpha1{rn}` :optelemparam:`alpha_ltf{in}` :optelemparam:`alphas{rn}`          |
    |                    | :optelemparam:`alphas_ltf{in}` :optelemparam:`mu{rn}` :optelemparam:`mu_ltf{in}`             |
-   |                    | :optelemparam:`lambda{rn}` :optelemparam:`lambda_ltf{in}` :optelemparam:`arclenghtpar{in}`   |
+   |                    | :optelemparam:`lambda{rn}` :optelemparam:`lambda_ltf{in}` :optelemparam:`arclengthpar{in}`   |
    |                    | :optelemparam:`checktangent{rn}`                                                             |
    +--------------------+----------------------------------------------------------------------------------------------+
    | Parameters         | - material number                                                                            |
@@ -65,7 +69,7 @@ outside that theory. This material has no bending stiffness and rejects a nonzer
    |                    | - :param:`mu`, :param:`lambda` the neo-Hookean coefficients :math:`\mu`, :math:`\lambda`     |
    |                    | - :param:`gamma_ltf`, :param:`alpha_ltf`, :param:`alphas_ltf`, :param:`mu_ltf`,              |
    |                    |   :param:`lambda_ltf` time functions of the parameters, see below                            |
-   |                    | - :param:`arclenghtpar` load parameter of the material arc-length method, see below          |
+   |                    | - :param:`arclengthpar` load parameter of the material arc-length method, see below          |
    |                    | - :param:`checktangent` tolerance of the check of the tangent stiffness, see below           |
    |                    |                                                                                              |
    |                    | All parameters except :param:`d` are optional and zero by default.                           |
@@ -74,10 +78,10 @@ outside that theory. This material has no bending stiffness and rejects a nonzer
    +--------------------+----------------------------------------------------------------------------------------------+
    | Elements           | All surface elements (Lagrange and IGA).                                                     |
    +--------------------+----------------------------------------------------------------------------------------------+
-   | Tests/Examples     | ``tests/regression/sm/surface-membrane-parameters.in``,                                      |
-   |                    | ``tests/regression/sm/surface-arclength-gamma.in``,                                          |
-   |                    | ``tests/regression/sm/surface-prestrain-normal.in``,                                         |
-   |                    | ``tests/regression/sm/iga-surface-reactions.in``                                             |
+   | Tests/Examples     | ``tests/sm/surface-membrane-parameters.in``,                                                 |
+   |                    | ``tests/sm/surface-arclength-gamma.in``,                                                     |
+   |                    | ``tests/sm/surface-prestrain-normal.in``,                                                    |
+   |                    | ``tests/sm/iga-surface-reactions.in``                                                        |
    +--------------------+----------------------------------------------------------------------------------------------+
 
 Membrane with bending stiffness
@@ -101,8 +105,12 @@ curvature given by :param:`useh0`: 0 (default) :math:`H_0 = 0`, 1 the mean curva
 reference surface (the reference shape is then free of bending stress), 2 the value
 :param:`h0`. The sign of the curvature, and so that of :param:`h0`, follows the orientation
 of the normal. The bending term needs the second gradient of the deformation, so only the
-IGA surface elements of degree at least 2 accept this material; all other surface elements
-reject it, even with :math:`\omega = 0`.
+IGA surface elements of degree at least 2 with at least :math:`C^1` continuity accept this
+material. Each interior knot must have multiplicity at most the degree minus one. All other
+surface elements reject it, even with :math:`\omega = 0`. The planar IGA curve uses the normal
+obtained by rotating its oriented tangent clockwise; the Lagrange planar line uses the
+opposite rotation. A change of orientation must also change the sign of a prescribed
+nonzero :param:`h0` to preserve the same preferred curvature.
 
 .. table:: Surface membrane with bending stiffness - summary.
    :name: SurfaceTensionMat2_table
@@ -117,13 +125,13 @@ reject it, even with :math:`\omega = 0`.
    |                    | :optelemparam:`alphas_ltf{in}` :optelemparam:`mu{rn}` :optelemparam:`mu_ltf{in}`             |
    |                    | :optelemparam:`lambda{rn}` :optelemparam:`lambda_ltf{in}` :optelemparam:`omega1{rn}`         |
    |                    | :optelemparam:`omega_ltf{in}` :optelemparam:`useh0{in}` :optelemparam:`h0{rn}`               |
-   |                    | :optelemparam:`arclenghtpar{in}` :optelemparam:`checktangent{rn}`                            |
+   |                    | :optelemparam:`arclengthpar{in}` :optelemparam:`checktangent{rn}`                            |
    +--------------------+----------------------------------------------------------------------------------------------+
    | Parameters         | - the parameters of :param:`surfacetensionmat`                                               |
    |                    | - :param:`omega1` bending modulus :math:`\omega`, :param:`omega_ltf` its time function       |
    |                    | - :param:`useh0` choice of the spontaneous curvature (0, 1 or 2, default 0)                  |
    |                    | - :param:`h0` spontaneous curvature :math:`H_0` for :param:`useh0` 2                         |
-   |                    | - :param:`arclenghtpar` load parameter of the material arc-length method, see below          |
+   |                    | - :param:`arclengthpar` load parameter of the material arc-length method, see below          |
    |                    | - :param:`checktangent` tolerance of the check of the tangent stiffness, see below           |
    |                    |                                                                                              |
    |                    | All parameters except :param:`d` are optional and zero by default.                           |
@@ -133,8 +141,8 @@ reject it, even with :math:`\omega = 0`.
    | Elements           | :param:`bsplineplanestrainsurfaceelement` and :param:`bsplineaxisymsurfaceelement` of degree |
    |                    | at least 2.                                                                                  |
    +--------------------+----------------------------------------------------------------------------------------------+
-   | Tests/Examples     | ``tests/regression/sm/surface-membrane-parameters.in``,                                      |
-   |                    | ``tests/regression/sm/surface-arclength-gamma.in``                                           |
+   | Tests/Examples     | ``tests/sm/surface-membrane-parameters.in``,                                                 |
+   |                    | ``tests/sm/surface-arclength-gamma.in``                                                      |
    +--------------------+----------------------------------------------------------------------------------------------+
 
 Anisotropic membrane
@@ -160,7 +168,13 @@ from the position :math:`\mathbf{X}` of the integration point, the points
 :math:`\mathbf{p}_1` (:param:`p_1`) and :math:`\mathbf{p}_2` (:param:`p_2`) and the normal
 :math:`\mathbf{n}_e` of the element, and uses
 :math:`\mathbf{a} = \mathbf{N} \times \mathbf{d} + (\mathbf{N} \cdot \mathbf{d}) \mathbf{N}`.
-Without prestrain, the constructed :math:`\mathbf{a}` is the unit tangential part of
+An explicit :param:`anisodir` is not normalized; its magnitude affects the fibre energy.
+The construction gives a unit tangential fibre direction when :math:`\mathbf{d}` is a
+unit vector perpendicular to :math:`\mathbf{N}` in the material frame. With prestrain,
+this condition refers to the normal of the original configuration supplied to the
+material, which can differ from the geometric normal. The formula does not automatically
+project or normalize an explicit direction.
+Without prestrain, the direction constructed from :param:`p_1` and :param:`p_2` gives the unit tangential part of
 :math:`(\mathbf{X} - \mathbf{p}_1) \times (\mathbf{X} - \mathbf{p}_2)`: for
 :math:`\mathbf{p}_1, \mathbf{p}_2` on an axis of revolution, the circumferential direction
 around this axis. The direction is built in 3D and rotated with the frame of the element,
@@ -180,15 +194,15 @@ error.
    |                    | :optelemparam:`alphas_ltf{in}` :optelemparam:`mu{rn}` :optelemparam:`mu_ltf{in}`             |
    |                    | :optelemparam:`lambda{rn}` :optelemparam:`lambda_ltf{in}` :elemparam:`p_1{ra}`               |
    |                    | :elemparam:`p_2{ra}` :optelemparam:`eta{rn}` :optelemparam:`eta_ltf{in}`                     |
-   |                    | :optelemparam:`beta{rn}` :optelemparam:`beta_ltf{in}` :optelemparam:`arclenghtpar{in}`       |
+   |                    | :optelemparam:`beta{rn}` :optelemparam:`beta_ltf{in}` :optelemparam:`arclengthpar{in}`       |
    |                    | :optelemparam:`checktangent{rn}`                                                             |
    +--------------------+----------------------------------------------------------------------------------------------+
-   | Parameters         | - the parameters of :param:`surfacetensionmat` (:param:`arclenghtpar` only 0 or 1)           |
+   | Parameters         | - the parameters of :param:`surfacetensionmat` (:param:`arclengthpar` only 0 or 1)           |
    |                    | - :param:`p_1`, :param:`p_2` two different points (three components each, required) which    |
    |                    |   define the fibre direction                                                                 |
    |                    | - :param:`eta`, :param:`beta` the fibre coefficients :math:`\eta`, :math:`\beta`,            |
    |                    |   :param:`eta_ltf`, :param:`beta_ltf` their time functions                                   |
-   |                    | - :param:`arclenghtpar` load parameter of the material arc-length method, see below          |
+   |                    | - :param:`arclengthpar` load parameter of the material arc-length method, see below          |
    |                    | - :param:`checktangent` tolerance of the check of the tangent stiffness, see below           |
    |                    |                                                                                              |
    |                    | All parameters except :param:`d`, :param:`p_1` and :param:`p_2` are optional and zero by     |
@@ -205,10 +219,11 @@ error.
 Time dependence of the parameters
 ---------------------------------
 
-Each of the parameters :param:`gamma1`, :param:`alpha1`, :param:`alphas`, :param:`mu`,
-:param:`lambda`, :param:`omega1`, :param:`eta` and :param:`beta` may have its own time
-function, given by the parameter of the same name with the suffix ``_ltf`` (e.g.
-:param:`mu_ltf` for :param:`mu`); the value :math:`p` of the parameter is then
+The time-function keywords are :param:`gamma_ltf` for :param:`gamma1`, :param:`alpha_ltf`
+for :param:`alpha1`, :param:`alphas_ltf` for :param:`alphas`, :param:`mu_ltf` for :param:`mu`,
+:param:`lambda_ltf` for :param:`lambda`, :param:`omega_ltf` for :param:`omega1`,
+:param:`eta_ltf` for :param:`eta` and :param:`beta_ltf` for :param:`beta`.
+The value :math:`p` of a parameter with a time function is then
 :math:`p\,f(t)` with the value :math:`f(t)` of the time function, otherwise it is constant.
 An initial value belongs to the time function: for example,
 :math:`\gamma(t) = \gamma_0 + \gamma_1 t` is :param:`gamma1` 1 with the time function
@@ -217,15 +232,17 @@ An initial value belongs to the time function: for example,
 Material arc-length method
 --------------------------
 
-With :param:`arclenghtpar` (spelled so in the input) 1 or 2, the material is driven by the
+The input keyword is :param:`arclengthpar`. The earlier misspelling ``arclenghtpar`` is
+rejected; older input files must replace it with ``arclengthpar``.
+With :param:`arclengthpar` 1 or 2, the material is driven by the
 material arc-length method (solver ``matcalm`` of the static structural analysis), whose load
 level :math:`\lambda` multiplies the surface tension, :math:`\gamma = \lambda \gamma_1`
-(:param:`arclenghtpar` 1), or the bending modulus, :math:`\omega = \lambda \omega_1`
-(:param:`arclenghtpar` 2, only :param:`surfacetensionmat2`). All other parameters keep their
-values; the time functions are not used then. :param:`arclenghtpar` 0
+(:param:`arclengthpar` 1), or the bending modulus, :math:`\omega = \lambda \omega_1`
+(:param:`arclengthpar` 2, only :param:`surfacetensionmat2`). All other parameters keep their
+values; the time functions are not used then. :param:`arclengthpar` 0
 (default) switches it off.
 
-All materials with a nonzero :param:`arclenghtpar` share the same global load level.
+All materials with a nonzero :param:`arclengthpar` share the same global load level.
 The time functions of materials without this setting are still evaluated normally.
 External loads, including loads marked ``reference``, remain fixed in ``matcalm``;
 the same convention is used for the equilibrium residual and the reported reactions.
@@ -256,4 +273,5 @@ derivative :math:`\partial\mathbf{P}/\partial\mathbf{F}` (for :param:`surfaceten
 also the derivatives of the second order stress) with central finite differences and stops
 with an error when the relative difference exceeds the given tolerance; a negative value
 only writes the differences to the log, 0 (default) switches the check off. It is meant for
-testing and makes the computation considerably slower.
+testing and makes the computation considerably slower. Non-finite compared values stop
+the check with an error, including when a negative tolerance requests logging only.

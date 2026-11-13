@@ -38,7 +38,6 @@
 #include "sm/Elements/nlstructuralsurfaceelement.h"
 #include "feinterpol2d.h"
 
-#define _IFT_Structural2DSurfaceElement_materialCoordinateSystem "matcs" ///< [optional] Material directions from the element orientation (not implemented, ignored).
 
 namespace oofem {
 /**
@@ -57,8 +56,6 @@ protected:
     /// Geometry of the element for the interpolation, created on demand (see giveCellGeometryWrapper).
     FEICellGeometry *cellGeometryWrapper;
 
-    /// Set by matcs; material rotation is not implemented for the surface elements.
-    bool matRotation;
 
 public:
     /**
@@ -80,7 +77,6 @@ public:
     void giveDofManDofIDMask(int inode, IntArray &answer) const override;
     double computeVolumeAround(GaussPoint *gp) override;
 
-    void initializeFrom(InputRecord &ir) override;
 
 protected:
     void computeBmatrixAt(GaussPoint *gp, FloatMatrix &answer, int lowerIndx = 1, int upperIndx = ALL_STRAINS) override = 0;

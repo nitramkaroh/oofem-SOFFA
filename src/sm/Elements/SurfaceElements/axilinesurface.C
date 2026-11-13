@@ -50,7 +50,7 @@
 namespace oofem {
 REGISTER_Element( AxiLineSurface );
 
-FEI1dLinAxi AxiLineSurface ::interpolation( 1 );
+FEI1dLin AxiLineSurface ::interpolation( 1 );
 
 AxiLineSurface ::AxiLineSurface( int n, Domain *aDomain ) :
     AxisymSurfaceElement( n, aDomain )
@@ -64,17 +64,14 @@ AxiLineSurface ::AxiLineSurface( int n, Domain *aDomain ) :
 FEInterpolation *AxiLineSurface ::giveInterpolation() const { return &interpolation; }
 
 
-void AxiLineSurface ::initializeFrom( InputRecord &ir )
-{
-    numberOfGaussPoints = 2;
-    AxisymSurfaceElement ::initializeFrom( ir );
-}
+
 
 
 FloatArray AxiLineSurface::giveNormal( GaussPoint *gp ) const
 {
     FloatArray e1, normal;
-    e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+    e1 = { this->giveNode( 2 )->giveCoordinate( 1 ) - this->giveNode( 1 )->giveCoordinate( 1 ),
+        this->giveNode( 2 )->giveCoordinate( 2 ) - this->giveNode( 1 )->giveCoordinate( 2 ) };
 
     // let us normalize e1'
     e1.normalize();
@@ -110,7 +107,8 @@ void AxiLineSurface ::computeLocalNodalCoordinates( std::vector<FloatArray> &lxy
     lxy.resize( 2 );
     for ( int i = 0; i < 2; i++ ) {
         const auto &nc = this->giveNode( i + 1 )->giveCoordinates();
-        lxy[i].beProductOf( *GtoLRotationMatrix, nc );
+        FloatArray xy = { nc.at( 1 ), nc.at( 2 ) }; // ignore an optional third coordinate for the planar line
+        lxy[i].beProductOf( *GtoLRotationMatrix, xy );
     }
 }
 
@@ -125,7 +123,8 @@ AxiLineSurface ::computeGtoLRotationMatrix()
         FloatArray e1, e2;
 
         // compute e1' = [N2-N1]
-        e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+        e1 = { this->giveNode( 2 )->giveCoordinate( 1 ) - this->giveNode( 1 )->giveCoordinate( 1 ),
+        this->giveNode( 2 )->giveCoordinate( 2 ) - this->giveNode( 1 )->giveCoordinate( 2 ) };
         // let us normalize e1'
         e1.normalize();
 
@@ -168,23 +167,10 @@ bool AxiLineSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
 
     return 1;
 }
-int AxiLineSurface ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [4,4]
-// f(local) = T * f(global)
+int AxiLineSurface::computeLoadGToLRotationMtrx( FloatMatrix &answer )
+// Rotate pointwise load components before multiplication by N^T, not a whole element vector.
 {
-    // test if previously computed
-    if ( GtoLRotationMatrix == NULL ) {
-        this->computeGtoLRotationMatrix();
-    }
-
-    answer.resize( 4, 4 );
-    answer.zero();
-
-    for ( int i = 1; i <= 2; i++ ) {
-        answer.at( 1, i ) = answer.at( 3, i + 2 ) = GtoLRotationMatrix->at( 1, i );
-        answer.at( 2, i ) = answer.at( 4, i + 2 ) = GtoLRotationMatrix->at( 2, i );
-    }
-
+    answer = *this->computeGtoLRotationMatrix();
     return 1;
 }
 

@@ -33,7 +33,6 @@
  */
 
 #include "sm/Elements/SurfaceElements/triangularsurface.h"
-#include "fei3dquadlin.h"
 #include "fei2dtrlin.h"
 #include "node.h"
 #include "gausspoint.h"
@@ -74,6 +73,9 @@ void TriangularSurface ::initializeFrom( InputRecord &ir )
     Structural3DSurfaceElement ::initializeFrom( ir );
 
     IR_GIVE_OPTIONAL_FIELD( ir, this->prestrain, _IFT_TriangularSurface_prestrain );
+    if ( !this->prestrain && ir.hasField( _IFT_TriangularSurface_f0 ) ) {
+        throw ValueInputException( ir, _IFT_TriangularSurface_f0, "requires prestrain 1" );
+    }
     if ( this->prestrain ) {
         FloatArray F0_temp;
         IR_GIVE_FIELD( ir, F0_temp, _IFT_TriangularSurface_f0 );
@@ -122,6 +124,16 @@ void TriangularSurface ::initializeFrom( InputRecord &ir )
         if ( adir.giveSize() != 3 ) {
             throw ValueInputException( ir, _IFT_TriangularSurface_anisodir, "must have 3 components" );
         }
+        double scale = 0.;
+        for ( double component : adir ) {
+            if ( !std::isfinite( component ) ) {
+                throw ValueInputException( ir, _IFT_TriangularSurface_anisodir, "must be a finite nonzero vector" );
+            }
+            scale = std::max( scale, std::fabs( component ) );
+        }
+        if ( scale == 0. ) {
+            throw ValueInputException( ir, _IFT_TriangularSurface_anisodir, "must be a finite nonzero vector" );
+        }
         this->anisoDir      = FloatArrayF<3>( adir );
         this->anisoDirGiven = 1;
     }
@@ -140,12 +152,8 @@ int TriangularSurface::checkConsistency()
         this->giveMaterialKinematics( vF, gp, nullptr, vFmat, N, F0s, J0 );
         FloatMatrix R;
         FloatArray given( this->referenceNormal );
-        if ( this->giveRotationMatrix( R ) ) {
-            IntArray pos( { 1, 2, 3 } );
-            FloatMatrix R3x3;
-            R3x3.beSubMatrixOf( R, pos, pos );
-            given.beProductOf( R3x3, FloatArray( this->referenceNormal ) );
-        }
+        this->computeMaterialFrame( R );
+        given.beProductOf( R, FloatArray( this->referenceNormal ) );
         if ( 1. - std::fabs( given.dotProduct( N ) ) > 1.e-8 ) {
             OOFEM_ERROR( "element %d: the given normal does not belong to the prestrain f0, which maps the normal (%g %g %g) of the element frame to zero",
                 this->giveNumber(), N.at( 1 ), N.at( 2 ), N.at( 3 ) );
@@ -265,48 +273,14 @@ bool TriangularSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
 
     return 1;
 }
-int TriangularSurface ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [6,6], two blocks R
-// f(local) = T * f(global); the anisotropic surface material rotates anisodir with its first block
+int TriangularSurface::computeLoadGToLRotationMtrx( FloatMatrix &answer )
+// Rotate pointwise load components before multiplication by N^T, not a whole element vector.
 {
-    // test if previously computed
-    if ( GtoLRotationMatrix == NULL ) {
-        this->computeGtoLRotationMatrix();
-    }
-
-    answer.resize( 6, 6 );
-    answer.zero();
-
-    for ( int i = 1; i <= 3; i++ ) {
-        answer.at( 1, i ) = answer.at( 4, i + 3 ) = GtoLRotationMatrix->at( 1, i );
-        answer.at( 2, i ) = answer.at( 5, i + 3 ) = GtoLRotationMatrix->at( 2, i );
-        answer.at( 3, i ) = answer.at( 6, i + 3 ) = GtoLRotationMatrix->at( 3, i );
-    }
-
+    answer = *this->computeGtoLRotationMatrix();
     return 1;
 }
 
-int TriangularSurface ::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
-{
-    // Linear interpolation of the global nodal coordinates (area coordinates l1, l2, l3 of FEI2dTrLin).
-    // Vertex coordinates
-    const auto &p1 = this->giveNode( 1 )->giveCoordinates();
-    const auto &p2 = this->giveNode( 2 )->giveCoordinates();
-    const auto &p3 = this->giveNode( 3 )->giveCoordinates();
 
-    // Local coordinates
-    double l1 = lcoords.at( 1 );
-    double l2 = lcoords.at( 2 );
-    double l3 = 1.0 - l1 - l2;
-
-    answer.resize( 3 );
-    answer.zero();
-    answer.at( 1 ) = l1 * p1.at( 1 ) + l2 * p2.at( 1 ) + l3 * p3.at( 1 );
-    answer.at( 2 ) = l1 * p1.at( 2 ) + l2 * p2.at( 2 ) + l3 * p3.at( 2 );
-    answer.at( 3 ) = l1 * p1.at( 3 ) + l2 * p2.at( 3 ) + l3 * p3.at( 3 );
-
-    return true;
-}
 
 int TriangularSurface::giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep )
 {
@@ -315,34 +289,17 @@ int TriangularSurface::giveIPValue( FloatArray &answer, GaussPoint *gp, Internal
         if ( this->prestrain ) {
             answer = FloatArray( this->F0 );
             FloatMatrix R;
-            if ( this->giveRotationMatrix( R ) ) {
-                IntArray pos( { 1, 2, 3 } );
-                FloatMatrix R3x3, Fmat, FRt, RFRt;
-                R3x3.beSubMatrixOf( R, pos, pos );
-
-                Fmat.beMatrixForm( answer );
-                FRt.beProductTOf( Fmat, R3x3 );
-                RFRt.beProductOf( R3x3, FRt );
-
-                answer.beVectorForm( RFRt );
-            }
+            this->computeMaterialFrame( R );
+            FloatMatrix Fmat, FRt, RFRt;
+            Fmat.beMatrixForm( answer );
+            FRt.beProductTOf( Fmat, R );
+            RFRt.beProductOf( R, FRt );
+            answer.beVectorForm( RFRt );
 
             return 1;
         } else {
             return 0;
         }  
-    } else if ( type == IST_DisplacementVector ) {
-        // the unknowns are in the element frame, the answer is the global displacement at gp
-        FloatArray u;
-        FloatMatrix N, G2L;
-        this->computeVectorOf( VM_Total, tStep, u );
-
-        if ( this->computeGtoLRotationMatrix( G2L ) ) {
-            u.rotatedWith( G2L, 't' );
-        }
-        this->computeNmatrixAt( gp->giveSubPatchCoordinates(), N );
-        answer.beProductOf( N, u );
-        return 1;
     } else if ( type == IST_AnisotropyDirection ){
         if ( this->anisoDirGiven ) {
             answer = FloatArray( this->anisoDir );

@@ -79,7 +79,6 @@ public:
     // definition & identification
     const char *giveInputRecordName() const override { return _IFT_LinePlaneStrainSurface_Name; }
     const char *giveClassName() const override { return "LinePlaneStrainSurface"; }
-    void initializeFrom( InputRecord &ir ) override;
 
     FloatArray giveNormal( GaussPoint *gp ) const override;
 

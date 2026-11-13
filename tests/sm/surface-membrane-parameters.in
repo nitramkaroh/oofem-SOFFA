@@ -58,4 +58,18 @@ Set 4 nodes 10 1 2 3 4 5 6 7 8 9 10
 #REACTION tStep 1 number 9 dof 1 value 0.0
 #REACTION tStep 1 number 10 dof 1 value 0.8808714767419791
 #REACTION tStep 1 number 10 dof 2 value 0.0
+## IST_CauchyStressTensor = 97: sigma = P F^T / J, J = 2.
+## The native element uses (tangent, out of plane, normal); IGA uses global (x,y,z).
+## sigma_tangent = P11 and sigma_out-of-plane = P22/2 = 0.5967073980919917.
+## These values must be committed from the temporary material status before output.
+#ELEMENT tStep 1 number 1 irule 0 gp 1 keyword 97 component 1 value 0.8808714767419791
+#ELEMENT tStep 1 number 1 irule 0 gp 1 keyword 97 component 2 value 0.5967073980919917
+#ELEMENT tStep 1 number 1 irule 0 gp 1 keyword 97 component 3 value 0.0
+#ELEMENT tStep 1 number 2 irule 0 gp 1 keyword 97 component 1 value 0.8808714767419791
+#ELEMENT tStep 1 number 2 irule 0 gp 1 keyword 97 component 2 value 0.0
+#ELEMENT tStep 1 number 2 irule 0 gp 1 keyword 97 component 3 value 0.5967073980919917
+#ELEMENT tStep 1 number 3 irule 0 gp 2 keyword 97 component 1 value 0.8808714767419791
+#ELEMENT tStep 1 number 3 irule 0 gp 2 keyword 97 component 3 value 0.5967073980919917
+#ELEMENT tStep 1 number 4 irule 0 gp 2 keyword 97 component 1 value 0.8808714767419791
+#ELEMENT tStep 1 number 4 irule 0 gp 2 keyword 97 component 3 value 0.5967073980919917
 #%END_CHECK%

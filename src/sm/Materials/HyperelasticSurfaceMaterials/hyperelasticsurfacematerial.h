@@ -51,7 +51,8 @@ namespace oofem {
  * the second order stress A conjugate to grad F (27) with dA/dgradF (27 x 27) and dA/dF (27 x 9); the element
  * uses dP/dgradF = (dA/dF)^T. The tangents are evaluated at the F (and grad F) stored in the temporary status by
  * the last stress evaluation. The surface Cauchy stress (output IST_CauchyStressTensor) is the one stored in the
- * status by the material. Small strains (6 components) are only declared; the current materials do not implement them.
+ * status by the material. The small-strain API (6 components) and its conversion to first PK stress are retained
+ * for the unfinished linear surface model; the currently supported surface materials implement large strains directly.
  */
 class OOFEM_EXPORT HyperElasticSurfaceMaterial : public BaseHyperElasticSurfaceMaterial, public StructuralMaterial
 {

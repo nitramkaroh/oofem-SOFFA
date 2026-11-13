@@ -72,6 +72,11 @@ void IsotropicLinearElasticSurfaceMaterial ::initializeFrom( InputRecord &ir )
     // compute  value of shear modulus
     G = E / ( 2.0 * ( 1. + nu ) );
     this->initTangents();
+
+    // see the class description for what is missing
+    throw ValueInputException( ir, _IFT_IsotropicLinearElasticSurfaceMaterial_Name,
+        "not implemented for surface elements yet (with large strains it gives stress without load for n != 0); "
+        "use surfacetensionmat with mu and lambda" );
 }
 
 

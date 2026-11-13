@@ -41,10 +41,10 @@
 #define _IFT_AxiLineSurface_Name "axilinesurface"
 
 namespace oofem {
-class FEI1dLinAxi;
+class FEI1dLin;
 
 /**
- * Two-node linear line element (FEI1dLinAxi) in the (r, z) plane, x = radius, y = axis, carrying a surface energy
+ * Two-node linear line element (FEI1dLin) in the (r, z) plane, x = radius, y = axis, carrying a surface energy
  * on the surface of revolution, given by a SimpleSurfaceCrossSection with a surface material; per radian.
  *
  * The frame is the tangent e1 = (N2 - N1) / |N2 - N1| and the in-plane normal e2 = (-e1_y, e1_x), to the left of
@@ -55,7 +55,7 @@ class FEI1dLinAxi;
 class AxiLineSurface : public AxisymSurfaceElement
 {
 protected:
-    static FEI1dLinAxi interpolation;
+    static FEI1dLin interpolation;
 
     /// Nodal coordinates in the element frame (for the geometry wrapper).
     std ::vector<FloatArray> lc;
@@ -75,7 +75,6 @@ public:
     // definition & identification
     const char *giveInputRecordName() const override { return _IFT_AxiLineSurface_Name; }
     const char *giveClassName() const override { return "AxiLineSurface"; }
-    void initializeFrom( InputRecord &ir ) override;
 
     FloatArray giveNormal( GaussPoint *gp ) const override;
 

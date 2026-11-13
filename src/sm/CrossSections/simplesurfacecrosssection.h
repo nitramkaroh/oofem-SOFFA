@@ -56,6 +56,10 @@ class OOFEM_EXPORT SimpleSurfaceCrossSection : public SimpleCrossSection
 public:
     SimpleSurfaceCrossSection( int n, Domain *d ) : SimpleCrossSection( n, d ){};
 
+    int checkConsistency() override;
+    /// Checked surface material access, also for cross sections which take the material from the element.
+    HyperElasticSurfaceMaterial *giveSurfaceMaterial( GaussPoint *gp ) const;
+
     /// Small strains: stress (6) for the strain (6).
     FloatArray giveRealSurfaceStresses( const FloatArray &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
     FloatArrayF<6> giveRealSurfaceStress_3d( const FloatArrayF<6> &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;

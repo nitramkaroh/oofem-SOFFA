@@ -53,16 +53,19 @@
 namespace oofem {
 /**
  * Anisotropic membrane: the energy of IsotropicPolyconvexHyperelasticSurfaceMaterial plus
- * eta |F a| + beta sqrt(|C a|) (Horak, Smejkal, Kruzik, JMPS 2025, eq. 97), with the unit fibre direction a
- * tangent to the reference surface. a is the tangential part of (X - p_1) x (X - p_2): for p_1 and p_2 on an axis
- * of revolution the circumferential direction around it.
- * Parameters: the membrane ones (no bending: omega1 and arclenghtpar 2 are rejected), p_1 and p_2 (required,
+ * eta |F a| + beta sqrt(|C a|) (Horak, Smejkal, Kruzik, JMPS 2025, eq. 97), with the reference fibre vector a.
+ * In the element frame a = N x d + (N . d) N, a rotation of d by 90 degrees about the material reference normal N.
+ * Without anisodir, d is the normalized vector ((X - p_1) x (X - p_2)) x n_e, rotated into the element frame.
+ * Without prestrain this gives a unit tangential fibre direction, circumferential for p_1 and p_2 on an axis
+ * of revolution. With prestrain, N belongs to the original configuration and this construction need not make
+ * a tangent to that configuration.
+ * Parameters: the membrane ones (no bending: omega1 and arclengthpar 2 are rejected), p_1 and p_2 (required,
  * 3 components each, different points), eta and beta (default 0) with their time functions eta_ltf and beta_ltf,
  * otherwise constant.
  * Only the 3D Lagrange surface elements are supported (the direction is rotated with their frame).
- * @note When the element gives a direction (anisodir of TriangularSurface), it replaces (X - p_1) x (X - p_2) x n
- * before the rotation by 90 degrees about the normal, so the fibres are perpendicular to anisodir (and anisodir is
- * not normalized); p_1 and p_2 are still required.
+ * @note anisodir of TriangularSurface supplies d in global coordinates before rotation into the element frame.
+ * Its magnitude is retained; it must have a finite nonzero tangential part. The vector a is unit and tangent
+ * only when d is unit and perpendicular to N; p_1 and p_2 are still required.
  */
 class AnisotropicPolyconvexHyperelasticSurfaceMaterial : public IsotropicPolyconvexHyperelasticSurfaceMaterial
 {

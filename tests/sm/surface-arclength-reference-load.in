@@ -31,7 +31,7 @@ lineplanestrainsurface 7 nodes 2 7 8 crosssect 1 nlgeo 1
 lineplanestrainsurface 8 nodes 2 7 8 crosssect 2 nlgeo 1
 simplesurfacecs 1 material 1
 simplesurfacecs 2 material 2
-surfacetensionmat 1 gamma1 0.5 d 1 arclenghtpar 1
+surfacetensionmat 1 gamma1 0.5 d 1 arclengthpar 1
 surfacetensionmat 2 gamma1 -0.5 mu 1 d 1
 BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0 set 1
 BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 0 set 2

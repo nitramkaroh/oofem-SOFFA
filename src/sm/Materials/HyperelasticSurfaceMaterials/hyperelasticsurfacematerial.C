@@ -59,6 +59,8 @@ HyperElasticSurfaceMaterial::giveFirstPKSurfaceStressVector_3d( const FloatArray
     // 1) Compute Green-Lagrange strain and call standard method for small strains.
     // 2) Treat stress as second Piola-Kirchhoff stress and convert to first Piola-Kirchhoff stress.
     // 3) Set state variables F, P
+    // Only isolesurf uses it, and isolesurf stops at input: the strain below takes the 3D identity, but a
+    // surface F has F N = 0, so E_NN = -1/2 without any deformation. A surface version needs I_s = I - N x N.
 
     auto F      = from_voigt_form( vF );
     auto E      = 0.5 * ( Tdot( F, F ) - eye<3>() );

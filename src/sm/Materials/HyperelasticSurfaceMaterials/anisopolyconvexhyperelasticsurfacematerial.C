@@ -43,6 +43,8 @@
 #include "structuralelement.h"
 #include "sm/Elements/SurfaceElements/triangularsurface.h"
 
+#include <cmath>
+
 
 namespace oofem {
 REGISTER_Material( AnisotropicPolyconvexHyperelasticSurfaceMaterial );
@@ -110,8 +112,20 @@ void AnisotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputReco
     if ( P1.giveSize() != 3 || P2.giveSize() != 3 ) {
         throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1, "p_1 and p_2 must have 3 components" );
     }
-    if ( ( P1 - P2 ).computeNorm() < 1e-6 ) {
-        OOFEM_ERROR( "The P1 and P2 points specifying surface anisotropy are the same" );
+    for ( double component : P1 ) {
+        if ( !std::isfinite( component ) ) {
+            throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1, "must have finite components" );
+        }
+    }
+    for ( double component : P2 ) {
+        if ( !std::isfinite( component ) ) {
+            throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2, "must have finite components" );
+        }
+    }
+    const double separation = ( P1 - P2 ).computeNorm();
+    if ( !std::isfinite( separation ) || separation < 1e-6 ) {
+        throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1,
+            "p_1 and p_2 must be different points with a finite separation" );
     }
     readParameter( ir, this->beta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_beta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_betaLTF );
     readParameter( ir, this->eta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_eta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_etaLTF );
@@ -136,14 +150,39 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
         FloatArray gpCor           = gp->giveGlobalCoordinates();
         Naniso.beVectorProductOf( gpCor - P1, gpCor - P2 );
         matdir.beVectorProductOf( Naniso, geometricNormal );
+        const double directionNorm = matdir.computeNorm();
+        if ( !std::isfinite( directionNorm ) || !( directionNorm > 0. ) ) {
+            OOFEM_ERROR( "element %d: the points p_1 and p_2 do not define a finite nonzero tangential anisotropic direction at this Gauss point",
+                el->giveNumber() );
+        }
         matdir.normalize();
+    }
+
+    if ( matdir.giveSize() != 3 ) {
+        OOFEM_ERROR( "element %d: the anisotropic material direction must have 3 components", el->giveNumber() );
+    }
+    for ( double component : matdir ) {
+        if ( !std::isfinite( component ) ) {
+            OOFEM_ERROR( "element %d: the anisotropic material direction must have finite components", el->giveNumber() );
+        }
     }
 
     // Global to the frame of the element (first 3 x 3 block of its load rotation matrix)
     FloatMatrix T; // transformation matrix
-    int val = el->computeLoadGToLRotationMtrx( T );
+    if ( !el->computeLoadGToLRotationMtrx( T ) || T.giveNumberOfRows() < 3 || T.giveNumberOfColumns() < 3 ) {
+        OOFEM_ERROR( "element %d: the anisotropic material needs a 3D element frame", el->giveNumber() );
+    }
     T.resizeWithData( 3, 3 );
     matdir.rotatedWith( T, 'n' );
+
+    // Preserve the existing direction and its magnitude, but reject a direction whose
+    // tangential part vanishes: F a would be zero and the fibre derivatives undefined.
+    FloatArray tangentialDirection;
+    tangentialDirection.beVectorProductOf( normal, matdir );
+    const double tangentialNorm = tangentialDirection.computeNorm();
+    if ( !std::isfinite( tangentialNorm ) || !( tangentialNorm > 0. ) ) {
+        OOFEM_ERROR( "element %d: the anisotropic material direction must have a finite nonzero tangential part", el->giveNumber() );
+    }
 
     // Rotate by 90 degrees around the reference normal in the frame of the element (e3, or the normal of the
     // original configuration with prestrain): a is then the tangential part of (X - p_1) x (X - p_2)
@@ -159,6 +198,11 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
     FloatArrayF<3> matdir3( matdir );
     Tensor1_3d matdirLocT, matdirT( matdir3 );
     matdirLocT( i_3 ) = Qt( i_3, j_3 ) * matdirT( j_3 );
+    for ( int component = 0; component < 3; ++component ) {
+        if ( !std::isfinite( matdirLocT( component ) ) ) {
+            OOFEM_ERROR( "element %d: the local anisotropic material direction must have finite components", el->giveNumber() );
+        }
+    }
 
     return matdirLocT;
 }

@@ -54,7 +54,7 @@ class FEI2dTrLin;
  *
  * The element is planar. Its frame is e1 = (N2 - N1) / |N2 - N1|, the normal e3 = e1 x (N3 - N1) normalized and
  * e2 = e3 x e1; the interpolation works with the nodal coordinates in this frame (the coordinate along e3 is
- * not used), and the unknowns D_u, D_v, D_w of each node are rotated to it.
+ * not used); all nodes must lie in this plane. The unknowns D_u, D_v, D_w of each node are rotated to it.
  * BH is 9 x 9 (see Structural3DSurfaceElement), 1 Gauss point by default (nip).
  *
  * Optional input:
@@ -110,9 +110,7 @@ public:
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override;
     int computeLoadGToLRotationMtrx( FloatMatrix &answer ) override;
 
-    int computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords ) override;
 
-    int giveSpatialDimension() override { return 3; };
 
     int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
 

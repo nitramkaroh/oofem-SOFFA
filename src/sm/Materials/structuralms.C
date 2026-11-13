@@ -83,8 +83,8 @@ void StructuralMaterialStatus :: printOutputAt(FILE *File, TimeStep *tStep) cons
     FloatArray helpVec;
 
     MaterialStatus :: printOutputAt(File, tStep);
-    NLStructuralElement * el = static_cast< NLStructuralElement * >( gp->giveElement());
-    if ( el->giveGeometryMode() == 1) {
+    auto el = dynamic_cast<NLStructuralElement *>( gp->giveElement() );
+    if ( el && el->giveGeometryMode() == 1 ) {
       fprintf(File, "  F ");
       StructuralMaterial :: giveFullVectorFormF( helpVec, FVector, gp->giveMaterialMode() );
       for ( auto &var : helpVec ) {

@@ -65,17 +65,14 @@ LinePlaneStrainSurface ::LinePlaneStrainSurface( int n, Domain *aDomain ) :
 FEInterpolation *LinePlaneStrainSurface ::giveInterpolation() const { return &interpolation; }
 
 
-void LinePlaneStrainSurface ::initializeFrom( InputRecord &ir )
-{
-    numberOfGaussPoints = 2;
-    Structural2DSurfaceElement ::initializeFrom( ir );
-}
+
 
 
 FloatArray LinePlaneStrainSurface::giveNormal( GaussPoint *gp ) const
 {
     FloatArray e1, normal;
-    e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+    e1 = { this->giveNode( 2 )->giveCoordinate( 1 ) - this->giveNode( 1 )->giveCoordinate( 1 ),
+        this->giveNode( 2 )->giveCoordinate( 2 ) - this->giveNode( 1 )->giveCoordinate( 2 ) };
 
     // let us normalize e1'
     e1.normalize();
@@ -111,7 +108,8 @@ void LinePlaneStrainSurface ::computeLocalNodalCoordinates( std::vector<FloatArr
     lxy.resize( 2 );
     for ( int i = 0; i < 2; i++ ) {
         const auto &nc = this->giveNode( i + 1 )->giveCoordinates();
-        lxy[i].beProductOf( *GtoLRotationMatrix, nc );
+        FloatArray xy = { nc.at( 1 ), nc.at( 2 ) }; // ignore an optional third coordinate for the planar line
+        lxy[i].beProductOf( *GtoLRotationMatrix, xy );
     }
 }
 
@@ -126,7 +124,8 @@ LinePlaneStrainSurface ::computeGtoLRotationMatrix()
         FloatArray e1, e2;
 
         // compute e1' = [N2-N1]
-        e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+        e1 = { this->giveNode( 2 )->giveCoordinate( 1 ) - this->giveNode( 1 )->giveCoordinate( 1 ),
+        this->giveNode( 2 )->giveCoordinate( 2 ) - this->giveNode( 1 )->giveCoordinate( 2 ) };
         // let us normalize e1'
         e1.normalize();
 
@@ -169,23 +168,10 @@ bool LinePlaneStrainSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
 
     return 1;
 }
-int LinePlaneStrainSurface ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [4,4]
-// f(local) = T * f(global)
+int LinePlaneStrainSurface::computeLoadGToLRotationMtrx( FloatMatrix &answer )
+// Rotate pointwise load components before multiplication by N^T, not a whole element vector.
 {
-    // test if previously computed
-    if ( GtoLRotationMatrix == NULL ) {
-        this->computeGtoLRotationMatrix();
-    }
-
-    answer.resize( 4, 4 );
-    answer.zero();
-
-    for ( int i = 1; i <= 2; i++ ) {
-        answer.at( 1, i ) = answer.at( 3, i + 2 ) = GtoLRotationMatrix->at( 1, i );
-        answer.at( 2, i ) = answer.at( 4, i + 2 ) = GtoLRotationMatrix->at( 2, i );
-    }
-
+    answer = *this->computeGtoLRotationMatrix();
     return 1;
 }
 

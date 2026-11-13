@@ -58,12 +58,19 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::readParameter( InputRecord 
 {
     IR_GIVE_OPTIONAL_FIELD( ir, p.value, name );
     IR_GIVE_OPTIONAL_FIELD( ir, p.ltf, ltfName );
+    if ( !std::isfinite( p.value ) ) {
+        throw ValueInputException( ir, name, "must be finite" );
+    }
 }
 
 
 void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord &ir )
 {
     HyperElasticSurfaceMaterial::initializeFrom( ir );
+
+    if ( ir.hasField( "arclenghtpar" ) ) {
+        throw ValueInputException( ir, "arclenghtpar", "removed; use arclengthpar" );
+    }
 
     // Keywords of the earlier versions whose meaning changed: stop instead of silently computing something else.
     // There, gamma_ltf scaled all parameters; now every parameter has its own time function.
@@ -91,6 +98,12 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord
     double alphaTemp = 0., gammaTemp = 0.;
     IR_GIVE_OPTIONAL_FIELD( ir, alphaTemp, "alpha" );
     IR_GIVE_OPTIONAL_FIELD( ir, gammaTemp, "gamma" );
+    if ( !std::isfinite( alphaTemp ) ) {
+        throw ValueInputException( ir, "alpha", "must be finite" );
+    }
+    if ( !std::isfinite( gammaTemp ) ) {
+        throw ValueInputException( ir, "gamma", "must be finite" );
+    }
     if ( alphaTemp != 0. && this->alpha.value == 0. ) {
         this->alpha.value = alphaTemp;
     }
@@ -116,6 +129,9 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord
     this->hasALP             = par != calm_par_no;
 
     IR_GIVE_OPTIONAL_FIELD( ir, this->checkTangentTolerance, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_checkTangent );
+    if ( !std::isfinite( this->checkTangentTolerance ) ) {
+        throw ValueInputException( ir, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_checkTangent, "must be finite" );
+    }
 }
 
 
@@ -257,7 +273,7 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::checkTangentsByFiniteDiffer
     auto status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
     // the perturbed evaluations overwrite the temporary status, which is restored at the end
     FloatArray sF = status->giveTempFVector(), sP = status->giveTempPVector(), sC = status->giveTempCVector();
-    FloatArray sG = status->giveTempGVector(), sdI = status->giveTempdIVector(), sM = status->giveTempMVector(), sK = status->giveTempKVector();
+    FloatArray sG = status->giveTempGVector(), sdI = status->giveTempdIVector(), sK = status->giveTempKVector();
 
     const bool bending = this->supportsSecondGradient();
     if ( bending && ( sG.giveSize() != 27 || sdI.giveSize() != 27 ) ) {
@@ -295,12 +311,20 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::checkTangentsByFiniteDiffer
     double diff[4] = { 0., 0., 0., 0. }, size[4] = { 0., 0., 0., 0. };
     auto compare = [&]( int block, const FloatArrayF<9> &fd, const FloatArrayF<9> &an ) {
         for ( int i = 0; i < 9; i++ ) {
+            if ( !std::isfinite( fd[i] ) || !std::isfinite( an[i] ) ) {
+                OOFEM_ERROR( "tangent check, element %d gp %d: non-finite value in block %d component %d",
+                    gp->giveElement()->giveNumber(), gp->giveNumber(), block, i + 1 );
+            }
             diff[block] = std::max( diff[block], std::fabs( fd[i] - an[i] ) );
             size[block] = std::max( { size[block], std::fabs( fd[i] ), std::fabs( an[i] ) } );
         }
     };
     auto compare27 = [&]( int block, const FloatArrayF<27> &fd, const FloatArrayF<27> &an ) {
         for ( int i = 0; i < 27; i++ ) {
+            if ( !std::isfinite( fd[i] ) || !std::isfinite( an[i] ) ) {
+                OOFEM_ERROR( "tangent check, element %d gp %d: non-finite value in block %d component %d",
+                    gp->giveElement()->giveNumber(), gp->giveNumber(), block, i + 1 );
+            }
             diff[block] = std::max( diff[block], std::fabs( fd[i] - an[i] ) );
             size[block] = std::max( { size[block], std::fabs( fd[i] ), std::fabs( an[i] ) } );
         }
@@ -350,7 +374,6 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::checkTangentsByFiniteDiffer
     status->letTempCVectorBe( sC );
     status->letTempGVectorBe( sG );
     status->letTempdIVectorBe( sdI );
-    status->letTempMVectorBe( sM );
     status->letTempKVectorBe( sK );
 
     double ref = std::max( { size[0], size[1], size[2], size[3], 1.e-300 } );
@@ -385,6 +408,9 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial2::initializeFrom( InputRecor
     readParameter( ir, this->omega, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_omega1, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_omegaLTF );
     IR_GIVE_OPTIONAL_FIELD( ir, this->use_H0, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_use_H0 );
     IR_GIVE_OPTIONAL_FIELD( ir, this->H0_val, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_H0 );
+    if ( !std::isfinite( this->H0_val ) ) {
+        throw ValueInputException( ir, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_H0, "must be finite" );
+    }
     if ( this->use_H0 < 0 || this->use_H0 > 2 ) {
         throw ValueInputException( ir, _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial2_use_H0, "must be 0 (H0 = 0), 1 (reference curvature) or 2 (value h0)" );
     }
@@ -465,6 +491,23 @@ FloatArrayF<9>
 IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
     auto status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
+    // A leaves the gradients associated with F in the temporary status. Do not combine
+    // those gradients with a different deformation gradient in the first-order stress.
+    const auto &storedF = status->giveTempFVector();
+    if ( storedF.giveSize() != 9 ) {
+        OOFEM_ERROR( "the second order stress has to be evaluated first at the same F" );
+    }
+    double scale = 1., difference = 0.;
+    for ( int i = 0; i < 9; ++i ) {
+        if ( !std::isfinite( vF[i] ) || !std::isfinite( storedF[i] ) ) {
+            OOFEM_ERROR( "non-finite F in the first-order bending stress" );
+        }
+        scale = std::max( { scale, std::fabs( vF[i] ), std::fabs( storedF[i] ) } );
+        difference = std::max( difference, std::fabs( vF[i] - storedF[i] ) );
+    }
+    if ( difference > 1.e-12 * scale ) {
+        OOFEM_ERROR( "the second order stress has to be evaluated first at the same F" );
+    }
     Tensor2_3d F( vF ), Is = giveSurfaceIdentity( normal );
     FloatArrayF<3> vN( normal );
     Tensor1_3d N( vN );
@@ -493,12 +536,11 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveSecondOrderSurfaceStressVec
     A( i_3, j_3, k_3 ) = -s.n( i_3 ) * s.M( j_3, k_3 );
     auto vA            = A.to_voigt_form_27();
 
-    // P and the tangents take F, grad F and grad I from the temporary status; M and K are kept for output
+    // P and the tangents take F, grad F and grad I from the temporary status; K is kept for output.
     auto status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
     status->letTempFVectorBe( vF );
     status->letTempGVectorBe( vG );
     status->letTempdIVectorBe( gradI );
-    status->letTempMVectorBe( s.M.to_voigt_form() );
     status->letTempKVectorBe( s.K.to_voigt_form() );
 
     return vA;

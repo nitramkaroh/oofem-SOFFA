@@ -38,11 +38,11 @@
 #include "sm/CrossSections/simplesurfacecrosssection.h"
 #include "gaussintegrationrule.h"
 #include "mathfem.h"
+#include <cmath>
 
 namespace oofem {
 Structural2DSurfaceElement::Structural2DSurfaceElement(int n, Domain *aDomain) :
-    NLStructuralSurfaceElement(n, aDomain),
-    matRotation(false)
+    NLStructuralSurfaceElement(n, aDomain)
 {
     cellGeometryWrapper = NULL;
 }
@@ -55,12 +55,7 @@ Structural2DSurfaceElement::~Structural2DSurfaceElement()
 }
 
 
-void
-Structural2DSurfaceElement::initializeFrom(InputRecord &ir)
-{
-    NLStructuralSurfaceElement::initializeFrom(ir);
-    matRotation = ir.hasField(_IFT_Structural2DSurfaceElement_materialCoordinateSystem);
-}
+
 
 
 void
@@ -164,6 +159,10 @@ AxisymSurfaceElement::computeVolumeAround(GaussPoint *gp)
         r += x * N.at( i );
     }
 
+    if ( !std::isfinite( r ) || !( r > 0. ) ) {
+        OOFEM_ERROR( "element %d: the axisymmetric reference radius must be finite and positive at integration points", this->giveNumber() );
+    }
+
     double determinant = fabs( r * interpolation->giveTransformationJacobian( lcoords, *this->giveCellGeometryWrapper() ) );
 
 
@@ -203,6 +202,10 @@ AxisymSurfaceElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
     double r = 0.;
     for ( int i = 1; i <= this->giveNumberOfDofManagers(); i++ ) {
         r += this->giveNode(i)->giveCoordinate(1) * n.at(i);
+    }
+
+    if ( !std::isfinite( r ) || !( r > 0. ) ) {
+        OOFEM_ERROR( "element %d: the axisymmetric reference radius must be finite and positive at integration points", this->giveNumber() );
     }
 
     int nRows = dnx.giveNumberOfRows();

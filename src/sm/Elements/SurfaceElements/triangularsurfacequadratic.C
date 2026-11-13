@@ -33,7 +33,6 @@
  */
 
 #include "sm/Elements/SurfaceElements/triangularsurfacequadratic.h"
-#include "fei3dquadlin.h"
 #include "fei2dtrquad.h"
 #include "node.h"
 #include "gausspoint.h"
@@ -65,11 +64,7 @@ TriangularSurfaceQuadratic ::TriangularSurfaceQuadratic( int n, Domain *aDomain 
 FEInterpolation *TriangularSurfaceQuadratic ::giveInterpolation() const { return &interpolation; }
 
 
-void TriangularSurfaceQuadratic ::initializeFrom( InputRecord &ir )
-{
-    numberOfGaussPoints = 4;
-    Structural3DSurfaceElement ::initializeFrom( ir );
-}
+
 
 
 FloatArray TriangularSurfaceQuadratic::giveNormal( GaussPoint *gp ) const
@@ -187,45 +182,14 @@ bool TriangularSurfaceQuadratic ::computeGtoLRotationMatrix( FloatMatrix &answer
 
     return 1;
 }
-int TriangularSurfaceQuadratic ::computeLoadGToLRotationMtrx( FloatMatrix &answer )
-// Returns the rotation matrix of the receiver of the size [6,6], two blocks R
-// f(local) = T * f(global); the anisotropic surface material rotates anisodir with its first block
+int TriangularSurfaceQuadratic::computeLoadGToLRotationMtrx( FloatMatrix &answer )
+// Rotate pointwise load components before multiplication by N^T, not a whole element vector.
 {
-    // test if previously computed
-    if ( GtoLRotationMatrix == NULL ) {
-        this->computeGtoLRotationMatrix();
-    }
-
-    answer.resize( 6, 6 );
-    answer.zero();
-
-    for ( int i = 1; i <= 3; i++ ) {
-        answer.at( 1, i ) = answer.at( 4, i + 3 ) = GtoLRotationMatrix->at( 1, i );
-        answer.at( 2, i ) = answer.at( 5, i + 3 ) = GtoLRotationMatrix->at( 2, i );
-        answer.at( 3, i ) = answer.at( 6, i + 3 ) = GtoLRotationMatrix->at( 3, i );
-    }
-
+    answer = *this->computeGtoLRotationMatrix();
     return 1;
 }
 
-int TriangularSurfaceQuadratic ::computeGlobalCoordinates( FloatArray &answer, const FloatArray &lcoords )
-{
-    // Quadratic interpolation of the global nodal coordinates.
-    auto cellgeo = FEIElementGeometryWrapper( this );
-    FloatArray n;
 
-    this->giveInterpolation()->evalN( n, lcoords, cellgeo );
-
-    answer.resize( 3 );
-    answer.zero();
-    for ( int i = 1; i <= n.giveSize(); i++ ) {
-        answer.at( 1 ) += n.at( i ) * cellgeo.giveVertexCoordinates( i ).at( 1 );
-        answer.at( 2 ) += n.at( i ) * cellgeo.giveVertexCoordinates( i ).at( 2 );
-        answer.at( 3 ) += n.at( i ) * cellgeo.giveVertexCoordinates( i ).at( 3 );
-    }
-
-    return true;
-}
 
 
 } // end namespace oofem

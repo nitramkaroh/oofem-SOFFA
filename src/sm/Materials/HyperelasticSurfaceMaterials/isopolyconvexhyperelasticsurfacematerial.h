@@ -53,7 +53,7 @@
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_alpha_sLTF "alphas_ltf"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_lambdaLTF "lambda_ltf"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_muLTF "mu_ltf"
-#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_ArcLengthParameter "arclenghtpar"
+#define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_ArcLengthParameter "arclengthpar"
 #define _IFT_IsotropicPolyconvexHyperelasticSurfaceMaterial_checkTangent "checktangent"
 //@}
 
@@ -91,7 +91,7 @@ struct SurfaceMaterialParameter {
  * Parameters (keyword, time function), all optional with the default 0: gamma1 (or gamma) with gamma_ltf, alpha1
  * (or alpha) with alpha_ltf, alphas with alphas_ltf, lambda with lambda_ltf, mu with mu_ltf. A parameter without its
  * time function is constant, with it the value times the function, e.g. gamma(t) = gamma1 f(t); an initial value
- * belongs to the time function. With arclenghtpar 1, gamma is the load parameter of the material arc-length method
+ * belongs to the time function. With arclengthpar 1, gamma is the load parameter of the material arc-length method
  * (matcalm); the time functions are not used then.
  * checktangent tol > 0 compares the tangents with central finite differences at every evaluation of dP/dF and stops
  * when the relative difference exceeds tol; tol < 0 only prints the differences.
@@ -156,13 +156,14 @@ protected:
  * W(F, \nabla F) = W_{membrane}(F) + \frac{1}{2} \omega J (H - H_0)^2,
  * @f]
  * where H = tr b / 2 is the current mean curvature, b = -F^{+T} K F^{+}, K = -n . grad F, n the current normal.
- * The bending term needs the second gradient, so only IGA surface elements of degree >= 2 accept this material.
+ * The bending term needs the second gradient, so only IGA surface elements of degree >= 2 with C1 continuity
+ * inside the patch accept this material.
  *
  * Parameters as the membrane, plus omega1 with omega_ltf (default 0) and useh0 (0, default: H0 = 0, 1: the mean
- * curvature of the reference geometry, 2: the value h0, default 0). With arclenghtpar 2, omega is the load
+ * curvature of the reference geometry, 2: the value h0, default 0). With arclengthpar 2, omega is the load
  * parameter of the material arc-length method.
  * P and the tangents take grad F and the gradient of the reference surface identity from the temporary status,
- * where the second order stress A leaves them, so A has to be evaluated first. Everything else (the moment M,
+ * where the second order stress A leaves them, so A has to be evaluated first at the same F. Everything else (the moment M,
  * d2e/dK2) is computed again from these and the current omega, so it never comes from an older evaluation.
  */
 class IsotropicPolyconvexHyperelasticSurfaceMaterial2 : public IsotropicPolyconvexHyperelasticSurfaceMaterial

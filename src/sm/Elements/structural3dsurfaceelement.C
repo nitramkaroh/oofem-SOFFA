@@ -41,8 +41,7 @@
 
 namespace oofem {
 Structural3DSurfaceElement::Structural3DSurfaceElement( int n, Domain *aDomain ) :
-    NLStructuralSurfaceElement( n, aDomain ),
-    matRotation( false )
+    NLStructuralSurfaceElement( n, aDomain )
 {
     cellGeometryWrapper = NULL;
 }
@@ -55,11 +54,7 @@ Structural3DSurfaceElement::~Structural3DSurfaceElement()
     }
 }
 
-void Structural3DSurfaceElement::initializeFrom( InputRecord &ir )
-{
-    NLStructuralSurfaceElement::initializeFrom( ir );
-    this->matRotation = ir.hasField( _IFT_Structural3DSurfaceElement_materialCoordinateSystem );
-}
+
 
 
 void Structural3DSurfaceElement ::computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int li, int ui )
@@ -138,15 +133,10 @@ void Structural3DSurfaceElement::giveMaterialOrientationAt( FloatArray &x, Float
 
 void Structural3DSurfaceElement::computeStressVector( FloatArray &answer, const FloatArray &e, GaussPoint *gp, TimeStep *tStep )
 {
+    // Reserved small-strain path; current surface elements require nlgeo 1.
     auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    FloatArray normal = { 0., 0., 1. }; // the reference normal in the frame of the element
-
-    if ( this->matRotation ) {
-        ///@todo Material rotation (matcs) is not implemented; the stress is not computed then.
-    } else {
-        answer = cs->giveRealSurfaceStress_3d( e, normal, gp, tStep );
-    }
-
+    FloatArray normal = { 0., 0., 1. };
+    answer = cs->giveRealSurfaceStress_3d( e, normal, gp, tStep );
 }
 
 void Structural3DSurfaceElement::computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep )
@@ -154,7 +144,6 @@ void Structural3DSurfaceElement::computeConstitutiveMatrixAt( FloatMatrix &answe
     auto cs  = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
     FloatArray normal = { 0., 0., 1. }; // the reference normal in the frame of the element
     answer  = cs->giveSurfaceStiffnessMatrix_3d( rMode, normal, gp, tStep );
-    ///@todo Material rotation (matcs) is not implemented and ignored here.
 }
 
 
