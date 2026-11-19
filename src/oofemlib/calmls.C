@@ -327,10 +327,8 @@ restart:
         if ( this->computeDeltaLambda(deltaLambda, dX, deltaXt, deltaX_, R, RR, eta, deltaL, DeltaLambda, neq) ) {
             irest++;
             if ( irest <= maxRestarts ) {
-                // convergence problems
-                // there must be step restart followed by decrease of step length
-                // status |= NM_ForceRestart;
-                // reduce step length
+                // the linearised arc-length constraint has no solution:
+                // restart the step with a shorter arc length
                 deltaL =  deltaL * CALM_RESET_STEP_REDUCE;
                 if ( deltaL < minStepLength ) {
                     deltaL = minStepLength;
@@ -338,7 +336,8 @@ restart:
 
                 // restore previous total displacement vector
                 X = XInitial;
-                // reset all changes fro previous equilibrium state
+                // reset all changes from previous equilibrium state
+                engngModel->initStepIncrements();
                 dX.zero();
                 // restore initial stiffness
                 engngModel->updateComponent(tStep, NonLinearLhs, domain);
@@ -351,7 +350,8 @@ restart:
                 goto restart;
             } else {
                 status = CR_DIVERGED_ITS;
-                OOFEM_ERROR("can't continue further");
+                OOFEM_WARNING("arc-length constraint could not be satisfied after %d restarts", maxRestarts);
+                break;
             }
         }
 

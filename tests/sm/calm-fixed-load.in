@@ -1,0 +1,34 @@
+calm-fixed-load.out
+CALM with a fixed load: the arc length also measures the displacement caused by the fixed load
+StaticStructural solverType "calm" nsteps 1 deltat 1.0 stepLength 1.5 Psi 0. MaxIter 30 maxrestarts 2 rtolv 1.e-10 manrmsteps 1 nmodules 1
+errorcheck
+domain 1dtruss
+OutputManager tstep_all dofman_all
+ndofman 4 nelem 2 ncrosssect 1 nmat 1 nbc 3 nic 0 nltf 1 nset 4
+# Two independent linear bars with unit stiffness. The reference force on node 2 is scaled by Lambda,
+# the fixed force on node 4 (not scaled) moves node 4 by 1. With Psi = 0 the arc length is the norm of
+# the displacement increment, so Lambda^2 + 1 = 1.5^2 and Lambda = sqrt(1.25).
+# calm-fixed-load-checks.sh shortens the arc length below 1, where the constraint has no solution.
+node 1 coords 3 0.0 0.0 0.0
+node 2 coords 3 1.0 0.0 0.0
+node 3 coords 3 2.0 0.0 0.0
+node 4 coords 3 3.0 0.0 0.0
+truss1d 1 nodes 2 1 2
+truss1d 2 nodes 2 3 4
+SimpleCS 1 thick 1.0 width 1.0 material 1 set 1
+IsoLE 1 d 1.0 E 1.0 n 0.2 tAlpha 0.0
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 2
+NodalLoad 2 loadTimeFunction 1 dofs 1 1 components 1 1.0 set 3 reference
+NodalLoad 3 loadTimeFunction 1 dofs 1 1 components 1 1.0 set 4
+ConstantFunction 1 f(t) 1.0
+Set 1 elementranges {(1 2)}
+Set 2 nodes 2 1 3
+Set 3 nodes 1 2
+Set 4 nodes 1 4
+#%BEGIN_CHECK% tolerance 1.e-9
+#LOADLEVEL tStep 1 value 1.118033988749895
+#NODE tStep 1 number 2 dof 1 unknown d value 1.118033988749895
+#NODE tStep 1 number 4 dof 1 unknown d value 1.0
+#REACTION tStep 1 number 1 dof 1 value -1.118033988749895
+#REACTION tStep 1 number 3 dof 1 value -1.0
+#%END_CHECK%
