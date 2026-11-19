@@ -247,7 +247,15 @@ public:
         return;
     }
 
-    void PrestrainDeformationGradient( const FloatArray &vF, FloatArray &vFmod, Tensor2_3d &F0, GaussPoint *gp, TimeStep *tStep );
+    /**
+     * Prestrain deformation gradient F0 at gp, from the original, stress-free configuration to the mesh,
+     * in the frame in which the element evaluates F. Only elements with a prestrain override this (opt-in):
+     * the material then gets F * F0 and the stress and the tangent are pulled back to F. When it returns
+     * false, F0 is not set and the material gets F itself.
+     */
+    virtual bool givePrestrainDeformationGradient( Tensor2_3d &F0, GaussPoint *gp ) { return false; }
+    /// F * F0 in the 9-component Voigt order (11, 22, 33, 23, 13, 12, 32, 31, 21).
+    static FloatArray applyPrestrain( const FloatArray &vF, const Tensor2_3d &F0 );
     double giveElementMaximumLineSearchStep( FloatArray &element_ddX, TimeStep *tStep );
 
 protected:

@@ -64,8 +64,9 @@ class FEI2dTrLin;
  * - normal 3 ...: that normal (global coordinates), only checked against the one computed from F0.
  * - anisodir 3 ...: fibre direction for the anisotropic material (global coordinates).
  *
- * giveIPValue reports IST_PrestrainDeformationGradient (F0 in the element frame, R F0 R^T),
- * IST_AnisotropyDirection (anisodir as given) and IST_DisplacementVector (global, at the Gauss point).
+ * The prestrain is rotated to the element frame once, R F0 R^T in postInitialize; givePrestrainDeformationGradient
+ * and giveIPValue( IST_PrestrainDeformationGradient ) report it. giveIPValue also reports IST_AnisotropyDirection
+ * (anisodir as given) and IST_DisplacementVector (global, at the Gauss point).
  */
 class TriangularSurface : public Structural3DSurfaceElement
 {
@@ -77,6 +78,7 @@ protected:
     /// Cached 3x3 rotation from the global to the element frame, rows e1, e2, e3.
     FloatMatrix *GtoLRotationMatrix;
     FloatArrayF<9> F0; // prestrain deformation gradient f0 (global coordinates, one for the element)
+    FloatArrayF<9> F0frame; // R F0 R^T, the prestrain in the element frame (set in postInitialize)
     int prestrain = 0;
     int isReferenceNormalGiven = 0;
     FloatArrayF<3> referenceNormal; // normal of the original configuration, checked against F0
@@ -97,6 +99,9 @@ public:
     const char *giveInputRecordName() const override { return _IFT_TriangularSurface_Name; }
     const char *giveClassName() const override { return "TriangularSurface"; }
     void initializeFrom( InputRecord &ir ) override;
+    void postInitialize() override;
+
+    bool givePrestrainDeformationGradient( Tensor2_3d &answer, GaussPoint *gp ) override;
 
     FloatArray giveNormal( GaussPoint *gp ) const override;
 

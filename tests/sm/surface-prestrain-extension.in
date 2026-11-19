@@ -1,0 +1,126 @@
+surface-prestrain-extension.out
+Prestrained triangle: the row of f0 along the element normal does not change the results
+StaticStructural nsteps 2 deltat 1.0 rtolv 1.e-11 maxiter 20 manrmsteps 1 nmodules 1
+errorcheck
+domain 3d
+OutputManager tstep_all dofman_all element_all
+ndofman 9 nelem 3 ncrosssect 1 nmat 1 nbc 9 nic 0 nltf 2 nset 3
+# Three identical triangles (nodes 1-3, 4-6, 7-9) of surface-prestrain-normal.in. Triangle 1 has its surface
+# prestrain f0, which maps the original configuration onto the element plane (no row along the element normal
+# n). Triangles 2 and 3 have f0 + c n (x) N with c = 1.3 and -0.8, N the normal of the original configuration
+# that the element computes from f0, i.e. a full 3D prestrain that also stretches the normal. In the element
+# frame this fills only the third row with c N, which F e3 = 0 removes from F f0, so all three triangles have the
+# reactions of surface-prestrain-normal.in and the same global F (IST 156).
+node 1 coords 3 -0.326099033699941 0.1130495168499705 0.5
+node 2 coords 3 0.04900199203977734 -0.7019960159204452 0.9183300132670378
+node 3 coords 3 0.3 -0.2 0.5
+node 4 coords 3 -0.326099033699941 0.1130495168499705 0.5
+node 5 coords 3 0.04900199203977734 -0.7019960159204452 0.9183300132670378
+node 6 coords 3 0.3 -0.2 0.5
+node 7 coords 3 -0.326099033699941 0.1130495168499705 0.5
+node 8 coords 3 0.04900199203977734 -0.7019960159204452 0.9183300132670378
+node 9 coords 3 0.3 -0.2 0.5
+triangularsurface 1 nodes 3 1 2 3 crossSect 1 nlgeo 1 prestrain 1 f0 9 0.9504662041515332 0.9157697902919751 0.1737048661086384 -0.1896109129692933 -0.1418927723873284 -0.2000947795358195 -0.5438149336827104 -0.1981678804004849 -0.1779812814750393
+triangularsurface 2 nodes 3 4 5 6 crossSect 1 nlgeo 1 prestrain 1 f0 9 1.01705526554395 1.078768984086224 1.167053739820649 0.4726216695053803 0.1892235188500084 -0.1185951826386949 -0.2993161429913366 0.001599303776766342 -0.04480315869020512
+triangularsurface 3 nodes 3 7 8 9 crossSect 1 nlgeo 1 prestrain 1 f0 9 0.9094883202177381 0.8154625941108987 -0.4375867484833679 -0.5971386560306309 -0.3456566439179972 -0.2502483776263577 -0.694275727954325 -0.3211015322018703 -0.2599370493426296
+simplesurfacecs 1 material 1
+surfacetensionmat 1 gamma1 0.5 alpha1 0.3 alphas 0.4 lambda 0.2 mu 0.3 d 1. gamma_ltf 2 alpha_ltf 2 alphas_ltf 2 lambda_ltf 2 mu_ltf 2
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.01999999999999989 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 1 2 values 1 0.0169574275274956 set 1
+BoundaryCondition 3 loadTimeFunction 1 dofs 1 3 values 1 -0.03826237921249263 set 1
+BoundaryCondition 4 loadTimeFunction 1 dofs 1 1 values 1 -0.0845825033167595 set 2
+BoundaryCondition 5 loadTimeFunction 1 dofs 1 2 values 1 0.06203260291874838 set 2
+BoundaryCondition 6 loadTimeFunction 1 dofs 1 3 values 1 -0.001833001326703755 set 2
+BoundaryCondition 7 loadTimeFunction 1 dofs 1 1 values 1 0.02 set 3
+BoundaryCondition 8 loadTimeFunction 1 dofs 1 2 values 1 -0.03 set 3
+BoundaryCondition 9 loadTimeFunction 1 dofs 1 3 values 1 0.04 set 3
+PiecewiseLinFunction 1 npoints 2 t 2 0 2 f(t) 2 0 1
+PiecewiseLinFunction 2 npoints 2 t 2 0 2 f(t) 2 0.5 1
+Set 1 nodes 3 1 4 7
+Set 2 nodes 3 2 5 8
+Set 3 nodes 3 3 6 9
+#%BEGIN_CHECK% tolerance 1.e-9
+## the reactions of surface-prestrain-normal.in for all three triangles
+#REACTION tStep 1 number 1 dof 1 value -1.7711852973e-01
+#REACTION tStep 1 number 1 dof 2 value 1.2081068182e-01
+#REACTION tStep 1 number 1 dof 3 value -2.8296131675e-02
+#REACTION tStep 1 number 2 dof 1 value -5.9069286340e-02
+#REACTION tStep 1 number 2 dof 2 value -1.4167485554e-01
+#REACTION tStep 1 number 2 dof 3 value 1.1296230715e-01
+#REACTION tStep 1 number 3 dof 1 value 2.3618781607e-01
+#REACTION tStep 1 number 3 dof 2 value 2.0864173727e-02
+#REACTION tStep 1 number 3 dof 3 value -8.4666175476e-02
+#REACTION tStep 1 number 4 dof 1 value -1.7711852973e-01
+#REACTION tStep 1 number 4 dof 2 value 1.2081068182e-01
+#REACTION tStep 1 number 4 dof 3 value -2.8296131675e-02
+#REACTION tStep 1 number 5 dof 1 value -5.9069286340e-02
+#REACTION tStep 1 number 5 dof 2 value -1.4167485554e-01
+#REACTION tStep 1 number 5 dof 3 value 1.1296230715e-01
+#REACTION tStep 1 number 6 dof 1 value 2.3618781607e-01
+#REACTION tStep 1 number 6 dof 2 value 2.0864173727e-02
+#REACTION tStep 1 number 6 dof 3 value -8.4666175476e-02
+#REACTION tStep 1 number 7 dof 1 value -1.7711852973e-01
+#REACTION tStep 1 number 7 dof 2 value 1.2081068182e-01
+#REACTION tStep 1 number 7 dof 3 value -2.8296131675e-02
+#REACTION tStep 1 number 8 dof 1 value -5.9069286340e-02
+#REACTION tStep 1 number 8 dof 2 value -1.4167485554e-01
+#REACTION tStep 1 number 8 dof 3 value 1.1296230715e-01
+#REACTION tStep 1 number 9 dof 1 value 2.3618781607e-01
+#REACTION tStep 1 number 9 dof 2 value 2.0864173727e-02
+#REACTION tStep 1 number 9 dof 3 value -8.4666175476e-02
+#REACTION tStep 2 number 1 dof 1 value -2.2615536683e-01
+#REACTION tStep 2 number 1 dof 2 value 1.6797846489e-01
+#REACTION tStep 2 number 1 dof 3 value -5.4261760273e-02
+#REACTION tStep 2 number 2 dof 1 value -9.5405803917e-02
+#REACTION tStep 2 number 2 dof 2 value -1.7679973729e-01
+#REACTION tStep 2 number 2 dof 3 value 1.4678470005e-01
+#REACTION tStep 2 number 3 dof 1 value 3.2156117074e-01
+#REACTION tStep 2 number 3 dof 2 value 8.8212723984e-03
+#REACTION tStep 2 number 3 dof 3 value -9.2522939775e-02
+#REACTION tStep 2 number 4 dof 1 value -2.2615536683e-01
+#REACTION tStep 2 number 4 dof 2 value 1.6797846489e-01
+#REACTION tStep 2 number 4 dof 3 value -5.4261760273e-02
+#REACTION tStep 2 number 5 dof 1 value -9.5405803917e-02
+#REACTION tStep 2 number 5 dof 2 value -1.7679973729e-01
+#REACTION tStep 2 number 5 dof 3 value 1.4678470005e-01
+#REACTION tStep 2 number 6 dof 1 value 3.2156117074e-01
+#REACTION tStep 2 number 6 dof 2 value 8.8212723984e-03
+#REACTION tStep 2 number 6 dof 3 value -9.2522939775e-02
+#REACTION tStep 2 number 7 dof 1 value -2.2615536683e-01
+#REACTION tStep 2 number 7 dof 2 value 1.6797846489e-01
+#REACTION tStep 2 number 7 dof 3 value -5.4261760273e-02
+#REACTION tStep 2 number 8 dof 1 value -9.5405803917e-02
+#REACTION tStep 2 number 8 dof 2 value -1.7679973729e-01
+#REACTION tStep 2 number 8 dof 3 value 1.4678470005e-01
+#REACTION tStep 2 number 9 dof 1 value 3.2156117074e-01
+#REACTION tStep 2 number 9 dof 2 value 8.8212723984e-03
+#REACTION tStep 2 number 9 dof 3 value -9.2522939775e-02
+## global F (IST 156) = F f0 for all three triangles: F n = 0 removes c n (x) N
+#ELEMENT tStep 2 number 1 irule 0 gp 1 keyword 156 component 1 value 1.000008174252e+00
+#ELEMENT tStep 2 number 1 irule 0 gp 1 keyword 156 component 2 value 8.356092853627e-01
+#ELEMENT tStep 2 number 1 irule 0 gp 1 keyword 156 component 3 value 1.516256479075e-01
+#ELEMENT tStep 2 number 1 irule 0 gp 1 keyword 156 component 4 value -1.485706034712e-01
+#ELEMENT tStep 2 number 1 irule 0 gp 1 keyword 156 component 5 value -1.853189889145e-01
+#ELEMENT tStep 2 number 1 irule 0 gp 1 keyword 156 component 6 value -6.414104611514e-02
+#ELEMENT tStep 2 number 1 irule 0 gp 1 keyword 156 component 7 value -5.552314077826e-01
+#ELEMENT tStep 2 number 1 irule 0 gp 1 keyword 156 component 8 value -7.440540787153e-02
+#ELEMENT tStep 2 number 1 irule 0 gp 1 keyword 156 component 9 value -2.839456258565e-01
+#ELEMENT tStep 2 number 2 irule 0 gp 1 keyword 156 component 1 value 1.000008174252e+00
+#ELEMENT tStep 2 number 2 irule 0 gp 1 keyword 156 component 2 value 8.356092853627e-01
+#ELEMENT tStep 2 number 2 irule 0 gp 1 keyword 156 component 3 value 1.516256479075e-01
+#ELEMENT tStep 2 number 2 irule 0 gp 1 keyword 156 component 4 value -1.485706034712e-01
+#ELEMENT tStep 2 number 2 irule 0 gp 1 keyword 156 component 5 value -1.853189889145e-01
+#ELEMENT tStep 2 number 2 irule 0 gp 1 keyword 156 component 6 value -6.414104611514e-02
+#ELEMENT tStep 2 number 2 irule 0 gp 1 keyword 156 component 7 value -5.552314077826e-01
+#ELEMENT tStep 2 number 2 irule 0 gp 1 keyword 156 component 8 value -7.440540787153e-02
+#ELEMENT tStep 2 number 2 irule 0 gp 1 keyword 156 component 9 value -2.839456258565e-01
+#ELEMENT tStep 2 number 3 irule 0 gp 1 keyword 156 component 1 value 1.000008174252e+00
+#ELEMENT tStep 2 number 3 irule 0 gp 1 keyword 156 component 2 value 8.356092853627e-01
+#ELEMENT tStep 2 number 3 irule 0 gp 1 keyword 156 component 3 value 1.516256479075e-01
+#ELEMENT tStep 2 number 3 irule 0 gp 1 keyword 156 component 4 value -1.485706034712e-01
+#ELEMENT tStep 2 number 3 irule 0 gp 1 keyword 156 component 5 value -1.853189889145e-01
+#ELEMENT tStep 2 number 3 irule 0 gp 1 keyword 156 component 6 value -6.414104611514e-02
+#ELEMENT tStep 2 number 3 irule 0 gp 1 keyword 156 component 7 value -5.552314077826e-01
+#ELEMENT tStep 2 number 3 irule 0 gp 1 keyword 156 component 8 value -7.440540787153e-02
+#ELEMENT tStep 2 number 3 irule 0 gp 1 keyword 156 component 9 value -2.839456258565e-01
+#%END_CHECK%

@@ -140,6 +140,34 @@ void TriangularSurface ::initializeFrom( InputRecord &ir )
 }
 
 
+void TriangularSurface::postInitialize()
+{
+    Structural3DSurfaceElement::postInitialize();
+    if ( this->prestrain ) {
+        // f0 is given in global coordinates; the element works in its frame, fixed by the reference geometry:
+        // R F0 R^T, computed once.
+        FloatArray v( this->F0 );
+        FloatMatrix R, Fmat, FRt, RFRt;
+        this->computeMaterialFrame( R );
+        Fmat.beMatrixForm( v );
+        FRt.beProductTOf( Fmat, R );
+        RFRt.beProductOf( R, FRt );
+        v.beVectorForm( RFRt );
+        this->F0frame = FloatArrayF<9>( v );
+    }
+}
+
+
+bool TriangularSurface::givePrestrainDeformationGradient( Tensor2_3d &answer, GaussPoint *gp )
+{
+    if ( !this->prestrain ) {
+        return false;
+    }
+    answer = Tensor2_3d( this->F0frame );
+    return true;
+}
+
+
 int TriangularSurface::checkConsistency()
 {
     int result = Structural3DSurfaceElement::checkConsistency();
@@ -149,7 +177,7 @@ int TriangularSurface::checkConsistency()
         FloatArray vF = { 1., 1., 0., 0., 0., 0., 0., 0., 0. }, vFmat, N;
         Tensor2_3d F0s;
         double J0;
-        this->giveMaterialKinematics( vF, gp, nullptr, vFmat, N, F0s, J0 );
+        this->giveMaterialKinematics( vF, gp, vFmat, N, F0s, J0 );
         FloatMatrix R;
         FloatArray given( this->referenceNormal );
         this->computeMaterialFrame( R );
@@ -285,21 +313,13 @@ int TriangularSurface::computeLoadGToLRotationMtrx( FloatMatrix &answer )
 int TriangularSurface::giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep )
 {
     if ( type == IST_PrestrainDeformationGradient ) {
-        // f0 is given in global coordinates; the element works in its frame: R F0 R^T
-        if ( this->prestrain ) {
-            answer = FloatArray( this->F0 );
-            FloatMatrix R;
-            this->computeMaterialFrame( R );
-            FloatMatrix Fmat, FRt, RFRt;
-            Fmat.beMatrixForm( answer );
-            FRt.beProductTOf( Fmat, R );
-            RFRt.beProductOf( R, FRt );
-            answer.beVectorForm( RFRt );
-
+        // the prestrain in the element frame, R F0 R^T (the same as the material gets)
+        Tensor2_3d F0e;
+        if ( this->givePrestrainDeformationGradient( F0e, gp ) ) {
+            answer = F0e.to_voigt_form();
             return 1;
-        } else {
-            return 0;
-        }  
+        }
+        return 0;
     } else if ( type == IST_AnisotropyDirection ){
         if ( this->anisoDirGiven ) {
             answer = FloatArray( this->anisoDir );

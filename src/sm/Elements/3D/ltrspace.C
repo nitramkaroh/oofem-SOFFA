@@ -269,16 +269,24 @@ void LTRSpace :: HuertaErrorEstimatorI_computeNmatrixAt(GaussPoint *gp, FloatMat
     computeNmatrixAt(gp->giveSubPatchCoordinates(), answer);
 }
 
+bool LTRSpace::givePrestrainDeformationGradient( Tensor2_3d &answer, GaussPoint *gp )
+{
+    if ( !this->prestrain ) {
+        return false;
+    }
+    answer = Tensor2_3d( this->F0 );
+    return true;
+}
+
 int LTRSpace::giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep )
 {
     if ( type == IST_PrestrainDeformationGradient ) {
-        if ( this->prestrain ) {
-            answer = FloatArray( this->F0 );
+        Tensor2_3d F0e;
+        if ( this->givePrestrainDeformationGradient( F0e, gp ) ) {
+            answer = F0e.to_voigt_form();
             return 1;
-        } else {
-            return 0;
         }
-       
+        return 0;
     } else {
         return Structural3DElement::giveIPValue( answer, gp, type, tStep );
     }

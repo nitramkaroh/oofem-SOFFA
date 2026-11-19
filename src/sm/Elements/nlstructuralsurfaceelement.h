@@ -91,13 +91,16 @@ public:
     /**
      * Kinematics handed to the surface material, in the frame of the element.
      * @param vF Kinematic deformation gradient F = BH u + I_s, F e3 = 0.
-     * @param vFmat F * F0 with the prestrain F0 of the element (none: F0 = diag(1, 1, 0) and vFmat = F).
+     * @param vFmat F * F0 with the prestrain F0 of the element (none: vFmat = F).
      * @param normal Unit normal N of the configuration F * F0 starts from, (F * F0) N = 0: the normal of
      * F0s = I_s F0, the part of F0 in the element plane, N = cof(F0s)^T e3 / J0 (e3 without prestrain).
-     * @param F0s The part of F0 in the element plane, used to pull the stress and the tangent back to F.
+     * @param F0s The part of F0 in the element plane, used to pull the stress and the tangent back to F
+     * (I_s without prestrain).
      * @param J0 Area ratio of F0s, J0 = |cof(F0s)^T e3| (1 without prestrain).
+     * @return Whether the element has a prestrain. Without it, F0s = I_s only drops the stress and tangent
+     * components with the reference index 3 (Voigt 33, 23, 13), which BH does not use.
      */
-    void giveMaterialKinematics( const FloatArray &vF, GaussPoint *gp, TimeStep *tStep, FloatArray &vFmat, FloatArray &normal, Tensor2_3d &F0s, double &J0 );
+    bool giveMaterialKinematics( const FloatArray &vF, GaussPoint *gp, FloatArray &vFmat, FloatArray &normal, Tensor2_3d &F0s, double &J0 );
 
     int checkConsistency() override;
 

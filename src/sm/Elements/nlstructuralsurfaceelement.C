@@ -134,7 +134,7 @@ int NLStructuralSurfaceElement::giveIPValue( FloatArray &answer, GaussPoint *gp,
         Tensor2_3d F0s;
         double J0;
         // The element restores the kinematic F in the status after a constitutive call. Apply prestrain once.
-        this->giveMaterialKinematics( status->giveFVector(), gp, tStep, vFmat, normal, F0s, J0 );
+        this->giveMaterialKinematics( status->giveFVector(), gp, vFmat, normal, F0s, J0 );
         FloatMatrix R, F, FR, globalF;
         this->computeMaterialFrame( R );
         F.beMatrixForm( vFmat );
@@ -146,10 +146,18 @@ int NLStructuralSurfaceElement::giveIPValue( FloatArray &answer, GaussPoint *gp,
     return NLStructuralElement::giveIPValue( answer, gp, type, tStep );
 }
 
-void NLStructuralSurfaceElement::giveMaterialKinematics( const FloatArray &vF, GaussPoint *gp, TimeStep *tStep, FloatArray &vFmat, FloatArray &normal, Tensor2_3d &F0s, double &J0 )
+bool NLStructuralSurfaceElement::giveMaterialKinematics( const FloatArray &vF, GaussPoint *gp, FloatArray &vFmat, FloatArray &normal, Tensor2_3d &F0s, double &J0 )
 {
-    Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 0. ); // no prestrain
-    this->PrestrainDeformationGradient( vF, vFmat, F0, gp, tStep ); // vFmat = F * F0
+    Tensor2_3d F0;
+    if ( !this->givePrestrainDeformationGradient( F0, gp ) ) {
+        // No prestrain, F0 = I_s: F * F0 = F (F e3 = 0), the normal is e3 and the area ratio 1.
+        vFmat  = vF;
+        normal = { 0., 0., 1. };
+        F0s    = Tensor2_3d( 1., 0., 0., 0., 1., 0., 0., 0., 0. );
+        J0     = 1.;
+        return false;
+    }
+    vFmat = applyPrestrain( vF, F0 );
 
     // F maps e3 to zero, so only the part of F0 in the element plane counts; this part maps the plane
     // of the original configuration onto the element plane and its normal N to zero: cof(F0s) = J0 e3 x N.
@@ -161,6 +169,7 @@ void NLStructuralSurfaceElement::giveMaterialKinematics( const FloatArray &vF, G
         OOFEM_ERROR( "element %d: the prestrain deformation gradient is singular in the element plane or has a non-finite area ratio", this->giveNumber() );
     }
     normal.times( 1. / J0 );
+    return true;
 }
 
 
@@ -174,14 +183,22 @@ void NLStructuralSurfaceElement::computeFirstPKStressVector( FloatArray &answer,
     // stress is pulled back to the kinematic F.
     Tensor2_3d F0;
     double J0;
-    this->giveMaterialKinematics( vF, gp, tStep, vFmod, normal, F0, J0 );
+    bool prestrained = this->giveMaterialKinematics( vF, gp, vFmod, normal, F0, J0 );
 
     FloatArray answerTmp = cs->giveFirstPKSurfaceStresses( vFmod, normal, gp, tStep );
 
-    FloatArrayF<9> vP( answerTmp );
-    Tensor2_3d P( vP ), Pmod;
-    Pmod( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0( j_3, k_3 ); // P_element = P_material * F0^T / J0.
-    answer = Pmod.to_voigt_form();
+    if ( prestrained ) {
+        FloatArrayF<9> vP( answerTmp );
+        Tensor2_3d P( vP ), Pmod;
+        Pmod( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0( j_3, k_3 ); // P_element = P_material * F0^T / J0.
+        answer = Pmod.to_voigt_form();
+    } else {
+        // P I_s: drop the components with the reference index 3 (Voigt 33, 23, 13).
+        answer = answerTmp;
+        answer.at( 3 ) = 0.;
+        answer.at( 4 ) = 0.;
+        answer.at( 5 ) = 0.;
+    }
 
     // Store work-conjugate F and P in the same frame as BH, including for cached reactions.
     auto mat = cs->giveMaterial( gp );
@@ -200,7 +217,18 @@ void NLStructuralSurfaceElement::computeConstitutiveMatrix_dPdF_At( FloatMatrix 
 
     Tensor2_3d F0;
     double J0;
-    this->giveMaterialKinematics( vF, gp, tStep, vFmod, normal, F0, J0 );
+    if ( !this->giveMaterialKinematics( vF, gp, vFmod, normal, F0, J0 ) ) {
+        // No prestrain: the status already holds F; F0 = I_s on both reference indices only drops the rows
+        // and columns with the reference index 3 (Voigt 33, 23, 13).
+        answer = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );
+        for ( int i = 1; i <= 9; ++i ) {
+            for ( int k = 3; k <= 5; ++k ) {
+                answer.at( k, i ) = 0.;
+                answer.at( i, k ) = 0.;
+            }
+        }
+        return;
+    }
 
     status->letTempFVectorBe( vFmod ); // the material takes F from the status
     FloatMatrix answerTmp = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );

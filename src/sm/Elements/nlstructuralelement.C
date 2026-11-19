@@ -128,31 +128,21 @@ NLStructuralElement::computeFirstPKStressVector(FloatArray &answer, GaussPoint *
     FloatArray vF;
     this->computeDeformationGradientVector(vF, gp, tStep);
 
-    // Prestrain (3d only): the material gets F F0 and P is mapped back, P F0^T / det F0
-    FloatArray vFmod;
-    Tensor2_3d F0( 1., 0., 0., 0., 1., 0., 0., 0., 1. );
-    if ( this->giveMaterialMode()==_3dMat ) { // This should be changed
-        this->PrestrainDeformationGradient( vF, vFmod, F0, gp, tStep );
-    } else {
-        vFmod = vF;
-    }
-
-
-    FloatArray answerTmp = cs->giveFirstPKStresses( vFmod, gp, tStep ); // Compute stress with modified F
-
-    if ( this->giveMaterialMode() == _3dMat ) { // This should be changed
+    // Prestrain (3d only, elements that have one): the material gets F F0 and P is mapped back,
+    // P F0^T / det F0. Without prestrain the material gets F and its P is used as it is.
+    Tensor2_3d F0;
+    if ( this->giveMaterialMode() == _3dMat && this->givePrestrainDeformationGradient( F0, gp ) ) {
+        FloatArray answerTmp = cs->giveFirstPKStresses( applyPrestrain( vF, F0 ), gp, tStep );
         FloatArrayF<9> vPtmp( answerTmp );
         Tensor2_3d P( vPtmp ), Pmod;
-        Pmod( i_3, j_3 ) = 1. / F0.compute_determinant() * P( i_3, k_3 ) * F0( j_3, k_3 ); // Modify the answer
+        Pmod( i_3, j_3 ) = 1. / F0.compute_determinant() * P( i_3, k_3 ) * F0( j_3, k_3 );
         answer           = Pmod.to_voigt_form();
-    }
-    else {
-        answer = answerTmp;
+    } else {
+        answer = cs->giveFirstPKStresses( vF, gp, tStep );
     }
 
-    
-
-    // update status
+    // update status, also without prestrain: some materials (e.g. LargeStrainMasterMaterial) do not store
+    // F and P themselves, but read the temporary F in their tangent
     if ( this->giveMaterialMode() == _3dMat ) { // This should be changed
         auto mat                         = dynamic_cast<StructuralMaterial *>( cs->giveMaterial( gp ) );
         StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
@@ -566,17 +556,12 @@ NLStructuralElement::checkConsistency()
     }
 }
 
-void NLStructuralElement::PrestrainDeformationGradient( const FloatArray &vF, FloatArray &vFmod, Tensor2_3d &F0, GaussPoint *gp, TimeStep *tStep )
+FloatArray NLStructuralElement::applyPrestrain( const FloatArray &vF, const Tensor2_3d &F0 )
 {
-    FloatArray vF0_temp;
-    if ( this->giveIPValue( vF0_temp, gp, IST_PrestrainDeformationGradient, tStep ) ) {
-        FloatArrayF<9> vF0( vF0_temp );
-        F0 = Tensor2_3d( vF0 );
-    }
     FloatArrayF<9> vF2( vF );
     Tensor2_3d Fmod, Fcurrent( vF2 );
     Fmod( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
-    vFmod = Fmod.to_voigt_form();
+    return Fmod.to_voigt_form();
 }
 
 double NLStructuralElement::giveElementMaximumLineSearchStep( FloatArray &element_ddX, TimeStep *tStep )

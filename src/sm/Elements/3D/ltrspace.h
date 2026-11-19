@@ -112,6 +112,9 @@ public:
 
     int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
 
+    /// The prestrain f0 of the element (prestrain 1), in global coordinates.
+    bool givePrestrainDeformationGradient( Tensor2_3d &answer, GaussPoint *gp ) override;
+
 };
 } // end namespace oofem
 #endif // ltrspace_h
