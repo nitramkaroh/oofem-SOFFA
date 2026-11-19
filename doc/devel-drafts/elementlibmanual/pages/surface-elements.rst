@@ -197,8 +197,9 @@ with the same interpolation (see :ref:`Planestress2dfig`, :ref:`qplanstrssfig`,
    |                          | coordinates, only with the prestrain) the normal of the original configuration, which is     |
    |                          | only checked; see below.                                                                     |
    |                          |                                                                                              |
-   |                          | :param:`anisodir`: direction for the anisotropic surface material (three components, global  |
-   |                          | coordinates), used instead of the one the material constructs; see the material.             |
+   |                          | :param:`anisodir`: fibre direction for the anisotropic surface material (three components,   |
+   |                          | global coordinates); its part in the element plane, normalized, replaces the direction from  |
+   |                          | :param:`p_1` and :param:`p_2` of the material. That material does not allow the prestrain.   |
    +--------------------------+----------------------------------------------------------------------------------------------+
    | Unknowns                 | Three dofs (u-displacement, v-displacement, w-displacement) are required in each node.       |
    +--------------------------+----------------------------------------------------------------------------------------------+

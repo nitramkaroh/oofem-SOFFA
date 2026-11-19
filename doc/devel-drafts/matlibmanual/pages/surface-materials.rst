@@ -156,30 +156,38 @@ The material :param:`anisosurfacetensionmat` adds two fibre terms to the membran
    W(\mathbf{F}) = W_{membrane}(\mathbf{F}) + \eta |\mathbf{F}\mathbf{a}|
    + \beta \sqrt{|\mathbf{C}\mathbf{a}|}, \qquad \mathbf{C} = \mathbf{F}^T \mathbf{F},
 
-with the fibre direction :math:`\mathbf{a}` in the reference configuration. The material
-takes a vector :math:`\mathbf{d}`, either the :param:`anisodir` of the element or
+with the unit fibre direction :math:`\mathbf{a}` in the plane of the element (the energy is even
+in :math:`\mathbf{a}`, so its sign does not matter). The direction is given in global coordinates
+in one of two ways. The material rotates it into the frame of the element, keeps its part in the
+element plane (the surface identity) and normalizes it:
 
-.. math::
+- :param:`anisodir` of the element (only :param:`triangularsurface`) is a general direction for
+  any fibre layout, e.g. computed for each element by a script.
+- Otherwise :param:`p_1` and :param:`p_2` define an axis, a construction made for fibres wound
+  around it. The vector
 
-   \mathbf{d} = \frac{((\mathbf{X} - \mathbf{p}_1) \times (\mathbf{X} - \mathbf{p}_2)) \times \mathbf{n}_e}
-   {|((\mathbf{X} - \mathbf{p}_1) \times (\mathbf{X} - \mathbf{p}_2)) \times \mathbf{n}_e|}
+  .. math::
 
-from the position :math:`\mathbf{X}` of the integration point, the points
-:math:`\mathbf{p}_1` (:param:`p_1`) and :math:`\mathbf{p}_2` (:param:`p_2`) and the normal
-:math:`\mathbf{n}_e` of the element, and uses
-:math:`\mathbf{a} = \mathbf{N} \times \mathbf{d} + (\mathbf{N} \cdot \mathbf{d}) \mathbf{N}`.
-An explicit :param:`anisodir` is not normalized; its magnitude affects the fibre energy.
-The construction gives a unit tangential fibre direction when :math:`\mathbf{d}` is a
-unit vector perpendicular to :math:`\mathbf{N}` in the material frame. With prestrain,
-this condition refers to the normal of the original configuration supplied to the
-material, which can differ from the geometric normal. The formula does not automatically
-project or normalize an explicit direction.
-Without prestrain, the direction constructed from :param:`p_1` and :param:`p_2` gives the unit tangential part of
-:math:`(\mathbf{X} - \mathbf{p}_1) \times (\mathbf{X} - \mathbf{p}_2)`: for
-:math:`\mathbf{p}_1, \mathbf{p}_2` on an axis of revolution, the circumferential direction
-around this axis. The direction is built in 3D and rotated with the frame of the element,
-so only the spatial Lagrange surface elements are supported; other elements stop with an
-error.
+     \mathbf{m} = (\mathbf{X} - \mathbf{p}_1) \times (\mathbf{X} - \mathbf{p}_2)
+
+  is normal to the plane through the integration point :math:`\mathbf{X}` and the axis, so it
+  points along the circle through :math:`\mathbf{X}` around the axis. By default
+  :math:`\mathbf{a}` is the normalized part of :math:`\mathbf{m}` in the element plane, fibres
+  along the parallels; :param:`meridional` 1 rotates it by 90 degrees in that plane, fibres
+  along the meridians.
+
+On a surface of revolution about the axis (a sphere with its centre on the axis, a cylinder,
+a cone) :math:`\mathbf{m}` is tangent, so the two options are exactly the parallels and the
+meridians. On a mesh of flat elements this holds only approximately, and on other surfaces
+:math:`\mathbf{m}` has a normal part: the meridional fibres then lie in the plane through the
+axis and :math:`\mathbf{X}`, the default ones are perpendicular to them in the surface. On the
+axis, or where the circle is normal to the element, there is no direction and the analysis stops
+with an error; so does an :param:`anisodir` normal to the element.
+
+The material is made for elements without prestrain: the direction is taken on the mesh, which is
+the reference configuration only without prestrain, so a prestrained element stops with an error.
+The direction is built in 3D and rotated with the frame of the element, so only the spatial
+Lagrange surface elements are supported; other elements stop with an error.
 
 .. table:: Anisotropic surface membrane - summary.
    :name: AnisoSurfaceTensionMat_table
@@ -192,28 +200,30 @@ error.
    |                    | :optelemparam:`gamma1{rn}` :optelemparam:`gamma_ltf{in}`                                     |
    |                    | :optelemparam:`alpha1{rn}` :optelemparam:`alpha_ltf{in}` :optelemparam:`alphas{rn}`          |
    |                    | :optelemparam:`alphas_ltf{in}` :optelemparam:`mu{rn}` :optelemparam:`mu_ltf{in}`             |
-   |                    | :optelemparam:`lambda{rn}` :optelemparam:`lambda_ltf{in}` :elemparam:`p_1{ra}`               |
-   |                    | :elemparam:`p_2{ra}` :optelemparam:`eta{rn}` :optelemparam:`eta_ltf{in}`                     |
-   |                    | :optelemparam:`beta{rn}` :optelemparam:`beta_ltf{in}` :optelemparam:`arclengthpar{in}`       |
-   |                    | :optelemparam:`checktangent{rn}`                                                             |
+   |                    | :optelemparam:`lambda{rn}` :optelemparam:`lambda_ltf{in}` :optelemparam:`p_1{ra}`            |
+   |                    | :optelemparam:`p_2{ra}` :optelemparam:`meridional{in}` :optelemparam:`eta{rn}`               |
+   |                    | :optelemparam:`eta_ltf{in}` :optelemparam:`beta{rn}` :optelemparam:`beta_ltf{in}`            |
+   |                    | :optelemparam:`arclengthpar{in}` :optelemparam:`checktangent{rn}`                            |
    +--------------------+----------------------------------------------------------------------------------------------+
    | Parameters         | - the parameters of :param:`surfacetensionmat` (:param:`arclengthpar` only 0 or 1)           |
-   |                    | - :param:`p_1`, :param:`p_2` two different points (three components each, required) which    |
-   |                    |   define the fibre direction                                                                 |
+   |                    | - :param:`p_1`, :param:`p_2` two different points on the axis of the fibres (three           |
+   |                    |   components each, given together); required unless every element gives :param:`anisodir`    |
+   |                    | - :param:`meridional` 1 puts the fibres along the meridians of the axis instead of the       |
+   |                    |   parallels (default 0; needs :param:`p_1` and :param:`p_2`)                                 |
    |                    | - :param:`eta`, :param:`beta` the fibre coefficients :math:`\eta`, :math:`\beta`,            |
    |                    |   :param:`eta_ltf`, :param:`beta_ltf` their time functions                                   |
    |                    | - :param:`arclengthpar` load parameter of the material arc-length method, see below          |
    |                    | - :param:`checktangent` tolerance of the check of the tangent stiffness, see below           |
    |                    |                                                                                              |
-   |                    | All parameters except :param:`d`, :param:`p_1` and :param:`p_2` are optional and zero by     |
-   |                    | default.                                                                                     |
+   |                    | All parameters except :param:`d` are optional; :param:`p_1` and :param:`p_2` have no         |
+   |                    | default, the others are zero by default.                                                     |
    +--------------------+----------------------------------------------------------------------------------------------+
    | Supported modes    | 3dMat, through the surface elements and :param:`simplesurfacecs`                             |
    +--------------------+----------------------------------------------------------------------------------------------+
    | Elements           | :param:`quadsurface`, :param:`quadsurfacequadratic`, :param:`triangularsurface`,             |
    |                    | :param:`triangularsurfacequadratic`.                                                         |
    +--------------------+----------------------------------------------------------------------------------------------+
-   | Tests/Examples     | \-                                                                                           |
+   | Tests/Examples     | ``tests/sm/surface-tangent-check.in``, ``tests/sm/surface-input-checks.sh``                  |
    +--------------------+----------------------------------------------------------------------------------------------+
 
 Time dependence of the parameters

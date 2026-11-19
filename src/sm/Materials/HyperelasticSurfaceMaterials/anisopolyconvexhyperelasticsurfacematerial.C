@@ -63,7 +63,7 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector
     Tensor2_3d F( vF );
     Tensor2_3d Piso = this->computeMembraneStress( F, giveSurfaceIdentity( normal ), tStep );
 
-    Tensor1_3d a = this->computeLocalMaterialDirection( gp, tStep, normal );
+    Tensor1_3d a = this->computeLocalMaterialDirection( gp, tStep );
     Tensor2_3d Paniso1, Paniso2, P, Pfull;
     Paniso1( i_3, j_3 ) = this->compute_surface_d_normFa_dF( F, a )( i_3, j_3 );
     Paniso2( i_3, j_3 ) = this->compute_surface_d_SqrtNormCa_dF( F, a )( i_3, j_3 );
@@ -86,7 +86,7 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffness
     Tensor2_3d F( vF );
     Tensor4_3d Aiso = this->computeMembraneTangent( F, giveSurfaceIdentity( normal ), tStep );
 
-    Tensor1_3d a = this->computeLocalMaterialDirection( gp, tStep, normal );
+    Tensor1_3d a = this->computeLocalMaterialDirection( gp, tStep );
     Tensor4_3d Aaniso1, Aaniso2, A, Afull;
     Aaniso1( i_3, j_3, k_3, l_3 ) = this->compute_surface_d2_normFa_dF2( F, a )( i_3, j_3, k_3, l_3 );
     Aaniso2( i_3, j_3, k_3, l_3 ) = this->compute_surface_d2_SqrtNormCa_dF2( F, a )( i_3, j_3, k_3, l_3 );
@@ -107,33 +107,51 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffness
 void AnisotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( InputRecord &ir )
 {
     IsotropicPolyconvexHyperelasticSurfaceMaterial::initializeFrom( ir );
-    IR_GIVE_FIELD( ir, P1, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1 );
-    IR_GIVE_FIELD( ir, P2, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2 );
-    if ( P1.giveSize() != 3 || P2.giveSize() != 3 ) {
-        throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1, "p_1 and p_2 must have 3 components" );
+    // The axis p_1 p_2 is needed only by elements without anisodir; this is checked when the direction is computed.
+    const bool hasP1 = ir.hasField( _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1 );
+    const bool hasP2 = ir.hasField( _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2 );
+    if ( hasP1 != hasP2 ) {
+        throw ValueInputException( ir, hasP1 ? _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2 : _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1,
+            "p_1 and p_2 must be given together" );
     }
-    for ( double component : P1 ) {
-        if ( !std::isfinite( component ) ) {
-            throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1, "must have finite components" );
+    this->axisGiven = hasP1;
+    if ( this->axisGiven ) {
+        IR_GIVE_FIELD( ir, P1, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1 );
+        IR_GIVE_FIELD( ir, P2, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2 );
+        if ( P1.giveSize() != 3 || P2.giveSize() != 3 ) {
+            throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1, "p_1 and p_2 must have 3 components" );
+        }
+        for ( double component : P1 ) {
+            if ( !std::isfinite( component ) ) {
+                throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1, "must have finite components" );
+            }
+        }
+        for ( double component : P2 ) {
+            if ( !std::isfinite( component ) ) {
+                throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2, "must have finite components" );
+            }
+        }
+        const double separation = ( P1 - P2 ).computeNorm();
+        if ( !std::isfinite( separation ) || separation < 1e-6 ) {
+            throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1,
+                "p_1 and p_2 must be different points with a finite separation" );
         }
     }
-    for ( double component : P2 ) {
-        if ( !std::isfinite( component ) ) {
-            throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P2, "must have finite components" );
-        }
+    int meridionalFlag = 0;
+    IR_GIVE_OPTIONAL_FIELD( ir, meridionalFlag, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_meridional );
+    if ( meridionalFlag != 0 && meridionalFlag != 1 ) {
+        throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_meridional, "must be 0 or 1" );
     }
-    const double separation = ( P1 - P2 ).computeNorm();
-    if ( !std::isfinite( separation ) || separation < 1e-6 ) {
-        throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_P1,
-            "p_1 and p_2 must be different points with a finite separation" );
+    if ( meridionalFlag == 1 && !this->axisGiven ) {
+        throw ValueInputException( ir, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_meridional, "needs p_1 and p_2" );
     }
+    this->meridional = meridionalFlag == 1;
     readParameter( ir, this->beta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_beta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_betaLTF );
     readParameter( ir, this->eta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_eta, _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_etaLTF );
 }
 
-Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMaterialDirection( GaussPoint *gp, TimeStep *tStep, const FloatArray &normal ) const
+Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMaterialDirection( GaussPoint *gp, TimeStep *tStep ) const
 {
-    FloatArray matdir( 3 ), Naniso( 3 );
     // Only the 3D Lagrange surface elements are supported: the direction is built from the 3D position of the Gauss
     // point and rotated with the element's local frame. The IGA surfaces have no such frame and the 2D surfaces give
     // a one-component position and a nodal rotation, which would make the direction wrong (it ends up zero).
@@ -143,68 +161,59 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
             gp->giveElement()->giveNumber(), gp->giveElement()->giveClassName() );
     }
 
-    // Unless the element gives the direction (anisodir), (X - p_1) x (X - p_2) x n in global coordinates
-    if ( !el->giveIPValue( matdir, gp, IST_AnisotropyDirection, tStep ) ) {
-        // global geometry: normal of the element, Gauss point and p_1, p_2
-        FloatArray geometricNormal = el->giveNormal( gp );
-        FloatArray gpCor           = gp->giveGlobalCoordinates();
-        Naniso.beVectorProductOf( gpCor - P1, gpCor - P2 );
-        matdir.beVectorProductOf( Naniso, geometricNormal );
-        const double directionNorm = matdir.computeNorm();
-        if ( !std::isfinite( directionNorm ) || !( directionNorm > 0. ) ) {
-            OOFEM_ERROR( "element %d: the points p_1 and p_2 do not define a finite nonzero tangential anisotropic direction at this Gauss point",
-                el->giveNumber() );
-        }
-        matdir.normalize();
+    // The direction is taken on the mesh, which is the reference configuration of the material only without prestrain.
+    FloatArray direction;
+    if ( el->giveIPValue( direction, gp, IST_PrestrainDeformationGradient, tStep ) ) {
+        OOFEM_ERROR( "element %d: the anisotropic surface material does not support prestrain (the fibre direction is defined on the mesh)",
+            el->giveNumber() );
     }
 
-    if ( matdir.giveSize() != 3 ) {
+    // Global direction: anisodir of the element, or m = (X - p_1) x (X - p_2), normal to the plane through the
+    // Gauss point X and the axis p_1 p_2, i.e. along the circle through X around the axis
+    const bool anisodirGiven = el->giveIPValue( direction, gp, IST_AnisotropyDirection, tStep );
+    if ( !anisodirGiven ) {
+        if ( !this->axisGiven ) {
+            OOFEM_ERROR( "element %d: no fibre direction, give anisodir on the element or p_1 and p_2 in material %d",
+                el->giveNumber(), this->giveNumber() );
+        }
+        FloatArray gpCor = gp->giveGlobalCoordinates();
+        direction.beVectorProductOf( gpCor - P1, gpCor - P2 );
+    }
+    if ( direction.giveSize() != 3 ) {
         OOFEM_ERROR( "element %d: the anisotropic material direction must have 3 components", el->giveNumber() );
     }
-    for ( double component : matdir ) {
+    for ( double component : direction ) {
         if ( !std::isfinite( component ) ) {
             OOFEM_ERROR( "element %d: the anisotropic material direction must have finite components", el->giveNumber() );
         }
     }
 
-    // Global to the frame of the element (first 3 x 3 block of its load rotation matrix)
-    FloatMatrix T; // transformation matrix
+    // Global to the frame of the element (first 3 x 3 block of its load rotation matrix); its third axis is the normal
+    FloatMatrix T;
     if ( !el->computeLoadGToLRotationMtrx( T ) || T.giveNumberOfRows() < 3 || T.giveNumberOfColumns() < 3 ) {
         OOFEM_ERROR( "element %d: the anisotropic material needs a 3D element frame", el->giveNumber() );
     }
     T.resizeWithData( 3, 3 );
-    matdir.rotatedWith( T, 'n' );
+    FloatArray local;
+    local.beProductOf( T, direction );
 
-    // Preserve the existing direction and its magnitude, but reject a direction whose
-    // tangential part vanishes: F a would be zero and the fibre derivatives undefined.
-    FloatArray tangentialDirection;
-    tangentialDirection.beVectorProductOf( normal, matdir );
-    const double tangentialNorm = tangentialDirection.computeNorm();
-    if ( !std::isfinite( tangentialNorm ) || !( tangentialNorm > 0. ) ) {
-        OOFEM_ERROR( "element %d: the anisotropic material direction must have a finite nonzero tangential part", el->giveNumber() );
-    }
-
-    // Rotate by 90 degrees around the reference normal in the frame of the element (e3, or the normal of the
-    // original configuration with prestrain): a is then the tangential part of (X - p_1) x (X - p_2)
-    const FloatArray &l = normal;
-    FloatArrayF<3> l3( l );
-    Tensor1_3d lt( l3 ); // Create tensor from it
-
-    // Rotation matrix l x l + [l]_x, built with the Levi-Civita tensor
-    Tensor2_3d eps1( 0., 0., 0., 0., 0., 1., 0., -1., 0. ), eps2( 0., 0., -1., 0., 0., 0., 1., 0., 0. ), eps3( 0., 1., 0., -1., 0., 0., 0., 0., 0. );
-    Tensor2_3d Qt; 
-    Qt( i_3, j_3 ) = l.at( 1 ) * eps1( j_3, i_3 ) + l.at( 2 ) * eps2( j_3, i_3 ) + l.at( 3 ) * eps3( j_3, i_3 ) + lt( i_3 ) * lt( j_3 );
-        
-    FloatArrayF<3> matdir3( matdir );
-    Tensor1_3d matdirLocT, matdirT( matdir3 );
-    matdirLocT( i_3 ) = Qt( i_3, j_3 ) * matdirT( j_3 );
-    for ( int component = 0; component < 3; ++component ) {
-        if ( !std::isfinite( matdirLocT( component ) ) ) {
-            OOFEM_ERROR( "element %d: the local anisotropic material direction must have finite components", el->giveNumber() );
+    // The surface identity diag(1, 1, 0) keeps the part in the element plane, which is normalized. Without it,
+    // F (with F e3 = 0) would ignore the normal part and silently shorten a, i.e. weaken eta and beta.
+    const double length = std::hypot( local.at( 1 ), local.at( 2 ) );
+    if ( !std::isfinite( length ) || !( length > 0. ) ) {
+        if ( anisodirGiven ) {
+            OOFEM_ERROR( "element %d: anisodir has no finite nonzero part in the element plane", el->giveNumber() );
+        } else {
+            OOFEM_ERROR( "element %d: no fibre direction at a Gauss point on the axis p_1 p_2 or where the circle around the axis is normal to the element",
+                el->giveNumber() );
         }
     }
-
-    return matdirLocT;
+    const double a1 = local.at( 1 ) / length, a2 = local.at( 2 ) / length;
+    if ( !anisodirGiven && this->meridional ) {
+        // rotated by 90 degrees in the element plane: from the parallel to the meridian
+        return Tensor1_3d( FloatArrayF<3> { -a2, a1, 0. } );
+    }
+    return Tensor1_3d( FloatArrayF<3> { a1, a2, 0. } );
 }
 
 } // end namespace oofem

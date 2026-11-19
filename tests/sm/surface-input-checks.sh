@@ -8,7 +8,9 @@
 #   no longer scales all parameters (every parameter has its own <name>_ltf);
 # - gaminit of earlier versions is accepted only as 0: an initial value of gamma belongs to its time function;
 # - arclengthpar 2 (omega as the load parameter) needs the bending material surfacetensionmat2;
-# - isolesurf is not implemented (it stops at input) and surface elements need nlgeo 1.
+# - isolesurf is not implemented (it stops at input) and surface elements need nlgeo 1;
+# - the anisotropic material takes the fibre direction from anisodir or from p_1 and p_2 (given together, meridional
+#   needs them), the direction needs a part in the element plane, and prestrain stops the analysis.
 # The inputs are generated into a temporary directory, so nothing is written to tests/sm.
 # All displacements are prescribed; the material is evaluated for the reactions.
 # Run by ctest as: bash surface-input-checks.sh <oofem executable>
@@ -112,6 +114,18 @@ expect_error f0-without-prestrain      "$TRIANGLE f0 9 1 1 0 0 0 0 0 0 0" "$MEMB
 expect_error anisodir-zero             "$TRIANGLE anisodir 3 0 0 0"       "$MEMBRANE" 'finite nonzero vector'
 expect_error anisodir-nan              "$TRIANGLE anisodir 3 nan 0 0"     "$MEMBRANE" 'finite nonzero vector'
 expect_error anisodir-inf              "$TRIANGLE anisodir 3 inf 0 0"     "$MEMBRANE" 'finite nonzero vector'
+ANISO='anisosurfacetensionmat 1 gamma1 0.5 mu 0.2 eta 0.3 beta 0.2 d 1.0'
+AXIS='p_1 3 0 0 0 p_2 3 0 0 1'
+expect_run   aniso-axis                "$TRIANGLE"                        "$ANISO $AXIS"
+expect_run   aniso-axis-meridional     "$TRIANGLE"                        "$ANISO $AXIS meridional 1"
+expect_run   aniso-anisodir-only       "$TRIANGLE anisodir 3 1 2 0.5"     "$ANISO"
+expect_error aniso-no-direction        "$TRIANGLE"                        "$ANISO" 'give anisodir on the element'
+expect_error aniso-p1-only             "$TRIANGLE"                        "$ANISO p_1 3 0 0 0" 'given together'
+expect_error aniso-meridional-no-axis  "$TRIANGLE anisodir 3 1 2 0"       "$ANISO meridional 1" 'needs p_1 and p_2'
+expect_error aniso-meridional-value    "$TRIANGLE"                        "$ANISO $AXIS meridional 2" 'must be 0 or 1'
+expect_error aniso-anisodir-normal     "$TRIANGLE anisodir 3 0 0 1"       "$ANISO" 'no finite nonzero part in the element plane'
+expect_error aniso-axis-in-plane       "$TRIANGLE"                        "$ANISO p_1 3 0 0 0 p_2 3 1 0 0" 'no fibre direction at a Gauss point'
+expect_error aniso-prestrain           "$TRIANGLE $F0"                    "$ANISO $AXIS" 'does not support prestrain'
 SURFACE_CS='simplecs 1 material 1' expect_error cross-section-type "$TRIANGLE" "$MEMBRANE" 'simplesurfacecs.*required'
 expect_error material-type "$TRIANGLE" 'isole 1 d 1 e 1 n .2 talpha 0' 'HyperElasticSurfaceMaterial.*required'
 NBC=4 EXTRA_BC='PointLoad 4 loadTimeFunction 1 ndofs 3 coords 3 .2 .2 0 Components 3 1 0 0' \
