@@ -9,8 +9,9 @@ defined on the nodes of the bulk elements on the boundary, so that the surface d
 together with the bulk, and it takes a surface material (see the surface materials in the
 Material Library Manual) from a :param:`simplesurfacecs` cross section. The elements on
 this page interpolate the displacements by Lagrange polynomials; the IGA surface elements
-:param:`bsplineplanestrainsurfaceelement` and :param:`bsplineaxisymsurfaceelement` are
-described with the IGA elements (:doc:`iso-geometric-analysis-based-iga-elements`).
+:param:`bsplineplanestrainsurfaceelement`, :param:`bsplineaxisymsurfaceelement` and
+:param:`bspline3dsurfaceelement` (a B-spline surface in space) are described with the IGA
+elements (:doc:`iso-geometric-analysis-based-iga-elements`).
 
 Kinematics
 ----------
@@ -58,8 +59,8 @@ orientation of the normal.
 
 These elements are only :math:`C^0` continuous and provide no second gradient of the
 deformation, so they reject a material with bending stiffness (:param:`surfacetensionmat2`,
-even with a zero bending modulus); bending is available on the IGA surface elements of
-degree at least 2.
+even with a zero bending modulus); bending is available on the planar and axisymmetric
+IGA surface elements (curves) of degree at least 2.
 
 Planar surface elements
 -----------------------

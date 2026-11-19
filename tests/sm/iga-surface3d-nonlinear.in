@@ -1,0 +1,147 @@
+iga-surface3d-nonlinear.out
+Independent metric-energy and force audit: 2 x 3 degrees, 2 x 2 knot spans, nonrigid curved surface
+StaticStructural nsteps 1 deltat 1.0 rtolv 1.e-11 maxiter 25 manrmsteps 1 nmodules 1
+errorcheck
+domain 3d
+OutputManager tstep_all dofman_all element_all
+ndofman 20 nelem 1 ncrosssect 1 nmat 1 nbc 21 nic 0 nltf 1 nset 20
+# A doubly curved surface in a general global orientation, with degrees (p,q)=(2,3), four nonuniform
+# knot spans, and a nonrigid displacement in all three directions. Every displacement is prescribed
+# except w of control point 11; its applied force gives the known target w=0.032399981732271294.
+# This exercises the assembled nonlinear tangent on a curved surface, rather than only rigid motion.
+#
+# Independent references: Cox-de Boor basis derivatives, 4 x 4 Gauss quadrature on each span, and
+# five-point differences of the total membrane energy with h=1e-4 in each control-point displacement.
+# The energy is integrated from the reference/current metrics A_ab and a_ab, independently of BH:
+# J=sqrt(det(a)/det(A)), |F|^2=A^ab a_ab, and
+# W=.4 J+.2 |F|+.5 (|F|^2/2-1-ln J)+.6 (ln J)^2/2+.3 (J-1)^2/2.
+# Reactions and the applied force below are these energy derivatives, not fitted solver outputs;
+# the original independent OOFEM comparison differed by at most 6e-12. The check tolerance is absolute.
+# checktangent also compares the material tangent to admissible surface finite differences.
+node 1 coords 3 -0.10000000000000001 0 0.10000000000000001
+node 2 coords 3 0.11932417466429929 0.12232522203243981 0.32101363466865973
+node 3 coords 3 0.30662691421707156 0.23327640949060219 0.5873608724823518
+node 4 coords 3 0.46190821865831677 0.33285356237448682 0.89904171344107608
+node 5 coords 3 -0.20585270417312637 0.22681299749227637 0.12962484916088562
+node 6 coords 3 0.0097639996197659701 0.34200302866951338 0.36944560771195656
+node 7 coords 3 0.19231365756128085 0.44498879481525483 0.65637639480011989
+node 8 coords 3 0.34179626965141807 0.53577029592950076 0.99041721042537512
+node 9 coords 3 -0.30111859960526594 0.46203207836388449 0.1412633912271648
+node 10 coords 3 -0.08920936668378053 0.57008691868591854 0.39989127366064703
+node 11 coords 3 0.088587209646476733 0.6651072635192391 0.70740561002328117 load 1 21
+node 12 coords 3 0.2322711293855059 0.74709311286384639 1.0638064003150676
+node 13 coords 3 -0.38579768629641875 0.70565724261482421 0.13491562619883757
+node 14 coords 3 -0.17759592424634019 0.80657689208165551 0.41235063251473114
+node 15 coords 3 -0.0045524295273404042 0.89363181560255522 0.74044851815183643
+node 16 coords 3 0.13333279786058072 0.9668220131775237 1.1192092831101539
+node 17 coords 3 -0.45988996424658468 0.95768849024509561 0.11058155407590395
+node 18 coords 3 -0.25539567306791322 1.0514729488567238 0.40682368427420856
+node 19 coords 3 -0.087105259960170836 1.1305624510652028 0.755505119185785
+node 20 coords 3 0.04498127507664243 1.1949569968705327 1.1566258588106335
+bspline3dsurfaceelement 1 nodes 20 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 crosssect 1 knotvectoru 3 0 0.42 1 knotvectorv 3 0 0.37 1 degree 2 2 3 nip 16 nlgeo 1
+simplesurfacecs 1 material 1
+surfacetensionmat 1 gamma1 .4 d 1.0 alpha1 .2 mu .5 lambda .6 alphas .3 checktangent 1e-5
+BoundaryCondition 1 loadTimeFunction 1 dofs 3 1 2 3 values 3 0 0 0.035000000000000003 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.029999999999999999 0.0033333333333333327 0.029529327383628783 set 2
+BoundaryCondition 3 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.059999999999999998 0.013333333333333331 0.014827495755973061 set 3
+BoundaryCondition 4 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.089999999999999997 0.029999999999999999 -0.004509557300343363 set 4
+BoundaryCondition 5 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.012530325116844949 -0.01375 0.034200145784730906 set 5
+BoundaryCondition 6 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.045863658450178278 -0.012083333333333335 0.033547720793859849 set 6
+BoundaryCondition 7 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.079196991783511611 -0.0037500000000000025 0.024296631968813917 set 7
+BoundaryCondition 8 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.11253032511684494 0.01125 0.011422926685741951 set 8
+BoundaryCondition 9 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.021685580639850426 -0.0275 0.031802330224443461 set 9
+BoundaryCondition 10 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.058352247306517092 -0.0275 0.036041282803544648 set 10
+BoundaryCondition 11 loadTimeFunction 1 dofs 2 1 2 values 2 0.095018913973183766 -0.020833333333333336 set 11
+BoundaryCondition 12 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.13168558063985042 -0.0075000000000000015 0.026184865159777384 set 12
+BoundaryCondition 13 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.024999779114470079 -0.041250000000000002 0.027811777119396211 set 13
+BoundaryCondition 14 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.06499977911447008 -0.042916666666666665 0.037032975314763336 set 14
+BoundaryCondition 15 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.10499977911447006 -0.037916666666666668 0.039171066933165265 set 15
+BoundaryCondition 16 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.14499977911447007 -0.026250000000000002 0.039809860720850014 set 16
+BoundaryCondition 17 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.021580234166221846 -0.055 0.022237134790100976 set 17
+BoundaryCondition 18 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.06491356749955518 -0.058333333333333334 0.036548276826367763 set 18
+BoundaryCondition 19 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.10824690083288852 -0.055000000000000007 0.044644231418632004 set 19
+BoundaryCondition 20 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.15158023416622185 -0.044999999999999998 0.052330386339004983 set 20
+NodalLoad 21 loadTimeFunction 1 components 3 0 0 0.0081588870690096904
+ConstantFunction 1 f(t) 1.0
+Set 1 nodes 1 1
+Set 2 nodes 1 2
+Set 3 nodes 1 3
+Set 4 nodes 1 4
+Set 5 nodes 1 5
+Set 6 nodes 1 6
+Set 7 nodes 1 7
+Set 8 nodes 1 8
+Set 9 nodes 1 9
+Set 10 nodes 1 10
+Set 11 nodes 1 11
+Set 12 nodes 1 12
+Set 13 nodes 1 13
+Set 14 nodes 1 14
+Set 15 nodes 1 15
+Set 16 nodes 1 16
+Set 17 nodes 1 17
+Set 18 nodes 1 18
+Set 19 nodes 1 19
+Set 20 nodes 1 20
+#%BEGIN_CHECK% tolerance 1.e-9
+#NODE tStep 1 number 11 dof 3 unknown d value 0.032399981732271294
+#REACTION tStep 1 number 1 dof 1 value -0.014783759551736015
+#REACTION tStep 1 number 1 dof 2 value -0.096002668235062302
+#REACTION tStep 1 number 1 dof 3 value -0.055382812416867225
+#REACTION tStep 1 number 2 dof 1 value 0.086753559834784597
+#REACTION tStep 1 number 2 dof 2 value -0.11385448534110645
+#REACTION tStep 1 number 2 dof 3 value -0.0096307521650166681
+#REACTION tStep 1 number 3 dof 1 value 0.076769983955264159
+#REACTION tStep 1 number 3 dof 2 value -0.094334923225007167
+#REACTION tStep 1 number 3 dof 3 value -0.01199792680336061
+#REACTION tStep 1 number 4 dof 1 value 0.08869237237492851
+#REACTION tStep 1 number 4 dof 2 value -0.052416013121744001
+#REACTION tStep 1 number 4 dof 3 value 0.037276738416395595
+#REACTION tStep 1 number 5 dof 1 value -0.10541556709468361
+#REACTION tStep 1 number 5 dof 2 value -0.040592415151974308
+#REACTION tStep 1 number 5 dof 3 value -0.093817224004477659
+#REACTION tStep 1 number 6 dof 1 value 0.017175374773248375
+#REACTION tStep 1 number 6 dof 2 value -0.0081497229161472014
+#REACTION tStep 1 number 6 dof 3 value 0.010690858116927751
+#REACTION tStep 1 number 7 dof 1 value 0.014073212881715589
+#REACTION tStep 1 number 7 dof 2 value -0.0098715623426485575
+#REACTION tStep 1 number 7 dof 3 value 0.0098251877082381842
+#REACTION tStep 1 number 8 dof 1 value 0.071943625645961198
+#REACTION tStep 1 number 8 dof 2 value 0.001004832828703043
+#REACTION tStep 1 number 8 dof 3 value 0.098094715354953468
+#REACTION tStep 1 number 9 dof 1 value -0.087588019824040103
+#REACTION tStep 1 number 9 dof 2 value -0.033860941855053575
+#REACTION tStep 1 number 9 dof 3 value -0.086505399198855124
+#REACTION tStep 1 number 10 dof 1 value 0.014452185739070403
+#REACTION tStep 1 number 10 dof 2 value -0.0076419632632126104
+#REACTION tStep 1 number 10 dof 3 value 0.0090038003820273414
+#REACTION tStep 1 number 11 dof 1 value 0.011711842994218308
+#REACTION tStep 1 number 11 dof 2 value -0.0093267333046524268
+#REACTION tStep 1 number 12 dof 1 value 0.058238860084306822
+#REACTION tStep 1 number 12 dof 2 value -0.001685977692918635
+#REACTION tStep 1 number 12 dof 3 value 0.089417087883458798
+#REACTION tStep 1 number 13 dof 1 value -0.092128123006703547
+#REACTION tStep 1 number 13 dof 2 value -0.035393423333807128
+#REACTION tStep 1 number 13 dof 3 value -0.10065457094550941
+#REACTION tStep 1 number 14 dof 1 value 0.015788978368624917
+#REACTION tStep 1 number 14 dof 2 value -0.0069571444130667173
+#REACTION tStep 1 number 14 dof 3 value 0.0078776395996219915
+#REACTION tStep 1 number 15 dof 1 value 0.01260949285023886
+#REACTION tStep 1 number 15 dof 2 value -0.0089225727468537439
+#REACTION tStep 1 number 15 dof 3 value 0.0072541323096568053
+#REACTION tStep 1 number 16 dof 1 value 0.060183953468998887
+#REACTION tStep 1 number 16 dof 2 value -0.0022426745302506212
+#REACTION tStep 1 number 16 dof 3 value 0.10147119108340948
+#REACTION tStep 1 number 17 dof 1 value -0.10748508970259694
+#REACTION tStep 1 number 17 dof 2 value 0.08493714766596068
+#REACTION tStep 1 number 17 dof 3 value -0.094379147719814135
+#REACTION tStep 1 number 18 dof 1 value -0.057926926175326056
+#REACTION tStep 1 number 18 dof 2 value 0.17616299164043464
+#REACTION tStep 1 number 18 dof 3 value -0.0090959431848595482
+#REACTION tStep 1 number 19 dof 1 value -0.058107890390050411
+#REACTION tStep 1 number 19 dof 2 value 0.15469832443928039
+#REACTION tStep 1 number 19 dof 3 value 0.00032380610813046806
+#REACTION tStep 1 number 20 dof 1 value -0.0049580672192850441
+#REACTION tStep 1 number 20 dof 2 value 0.10444992489505588
+#REACTION tStep 1 number 20 dof 3 value 0.082069732409891419
+#%END_CHECK%

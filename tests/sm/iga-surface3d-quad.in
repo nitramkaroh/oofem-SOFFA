@@ -1,0 +1,109 @@
+iga-surface3d-quad.out
+3D IGA surface (bspline3dsurfaceelement): bilinear patch in a tilted plane against QuadSurface
+StaticStructural nsteps 2 deltat 1.0 rtolv 1.e-12 maxiter 20 manrmsteps 1 nmodules 1
+errorcheck
+domain 3d
+OutputManager tstep_all dofman_all element_all
+ndofman 12 nelem 3 ncrosssect 1 nmat 1 nbc 2 nic 0 nltf 1 nset 2
+# Nodes 1-6: control points of a bilinear B-spline patch with two knot spans in u (u index fastest);
+# nodes 7-12: the same points for two QuadSurface elements. The plane is rotated by 0.9 rad about
+# (2, -1, 1.5). Degree 1 B-splines are the bilinear Lagrange functions of each knot span and the 2 x 2
+# Gauss points coincide, so both models must give the same solution.
+node 1 coords 3 0.1 0.2 -0.3
+node 2 coords 3 0.9593381782422356 0.6325768797221647 0.24260034882512932
+node 3 coords 3 1.760753764656458 0.8639940182611983 0.5949909926321886
+node 4 coords 3 -0.4407639231881637 0.8738016967850555 0.20355302877425524
+node 5 coords 3 0.1984224862696097 1.3073593443596057 0.707009581213591
+node 6 coords 3 1.3030275297011171 1.5709954159593138 1.1432935710380532
+node 7 coords 3 0.1 0.2 -0.3
+node 8 coords 3 0.9593381782422356 0.6325768797221647 0.24260034882512932
+node 9 coords 3 1.760753764656458 0.8639940182611983 0.5949909926321886
+node 10 coords 3 -0.4407639231881637 0.8738016967850555 0.20355302877425524
+node 11 coords 3 0.1984224862696097 1.3073593443596057 0.707009581213591
+node 12 coords 3 1.3030275297011171 1.5709954159593138 1.1432935710380532
+bspline3dsurfaceelement 1 nodes 6 1 2 3 4 5 6 crosssect 1 knotvectoru 3 0 0.5 1 knotvectorv 2 0 1 degree 2 1 1 nip 4 nlgeo 1
+quadsurface 2 nodes 4 7 8 11 10 crosssect 1 nlgeo 1
+quadsurface 3 nodes 4 8 9 12 11 crosssect 1 nlgeo 1
+simplesurfacecs 1 material 1
+surfacetensionmat 1 gamma1 0.3 alpha1 0.2 mu 1.0 lambda 0.5 d 1.0
+BoundaryCondition 1 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.0 0.0 0.0 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.1950366723796523 0.16697927241768531 0.1846039517722538 set 2
+PiecewiseLinFunction 1 t 3 0.0 1.0 2.0 f(t) 3 0.0 0.5 1.0
+Set 1 nodes 4 1 4 7 10
+Set 2 nodes 4 3 6 9 12
+#
+# Recorded QuadSurface solution; the IGA nodes are checked against the same values.
+#%BEGIN_CHECK% tolerance 1.e-9
+#NODE tStep 1 number 2 dof 1 unknown d value 0.003716102038
+#NODE tStep 1 number 8 dof 1 unknown d value 0.003716102038
+#NODE tStep 1 number 2 dof 2 unknown d value 0.11279096451
+#NODE tStep 1 number 8 dof 2 unknown d value 0.11279096451
+#NODE tStep 1 number 2 dof 3 unknown d value 0.10142292774
+#NODE tStep 1 number 8 dof 3 unknown d value 0.10142292774
+#NODE tStep 1 number 5 dof 1 unknown d value 0.11672166832
+#NODE tStep 1 number 11 dof 1 unknown d value 0.11672166832
+#NODE tStep 1 number 5 dof 2 unknown d value -0.066936565913
+#NODE tStep 1 number 11 dof 2 unknown d value -0.066936565913
+#NODE tStep 1 number 5 dof 3 unknown d value -0.038571222429
+#NODE tStep 1 number 11 dof 3 unknown d value -0.038571222429
+#REACTION tStep 1 number 1 dof 1 value -0.11210228281
+#REACTION tStep 1 number 7 dof 1 value -0.11210228281
+#REACTION tStep 1 number 1 dof 2 value -0.19483014934
+#REACTION tStep 1 number 7 dof 2 value -0.19483014934
+#REACTION tStep 1 number 1 dof 3 value -0.19440491707
+#REACTION tStep 1 number 7 dof 3 value -0.19440491707
+#REACTION tStep 1 number 4 dof 1 value -0.3442507141
+#REACTION tStep 1 number 10 dof 1 value -0.3442507141
+#REACTION tStep 1 number 4 dof 2 value 0.00017047404072
+#REACTION tStep 1 number 10 dof 2 value 0.00017047404072
+#REACTION tStep 1 number 4 dof 3 value -0.062426642444
+#REACTION tStep 1 number 10 dof 3 value -0.062426642444
+#REACTION tStep 1 number 3 dof 1 value 0.27443223513
+#REACTION tStep 1 number 9 dof 1 value 0.27443223513
+#REACTION tStep 1 number 3 dof 2 value -0.033412387498
+#REACTION tStep 1 number 9 dof 2 value -0.033412387498
+#REACTION tStep 1 number 3 dof 3 value 0.020042414612
+#REACTION tStep 1 number 9 dof 3 value 0.020042414612
+#REACTION tStep 1 number 6 dof 1 value 0.18192076177
+#REACTION tStep 1 number 12 dof 1 value 0.18192076177
+#REACTION tStep 1 number 6 dof 2 value 0.22807206279
+#REACTION tStep 1 number 12 dof 2 value 0.22807206279
+#REACTION tStep 1 number 6 dof 3 value 0.2367891449
+#REACTION tStep 1 number 12 dof 3 value 0.2367891449
+#NODE tStep 2 number 2 dof 1 unknown d value 0.056549696888
+#NODE tStep 2 number 8 dof 1 unknown d value 0.056549696888
+#NODE tStep 2 number 2 dof 2 unknown d value 0.16565439403
+#NODE tStep 2 number 8 dof 2 unknown d value 0.16565439403
+#NODE tStep 2 number 2 dof 3 unknown d value 0.15824596859
+#NODE tStep 2 number 8 dof 3 unknown d value 0.15824596859
+#NODE tStep 2 number 5 dof 1 unknown d value 0.16027269173
+#NODE tStep 2 number 11 dof 1 unknown d value 0.16027269173
+#NODE tStep 2 number 5 dof 2 unknown d value -0.043970488215
+#NODE tStep 2 number 11 dof 2 unknown d value -0.043970488215
+#NODE tStep 2 number 5 dof 3 unknown d value -0.010140575965
+#NODE tStep 2 number 11 dof 3 unknown d value -0.010140575965
+#REACTION tStep 2 number 1 dof 1 value -0.16246355266
+#REACTION tStep 2 number 7 dof 1 value -0.16246355266
+#REACTION tStep 2 number 1 dof 2 value -0.2382451767
+#REACTION tStep 2 number 7 dof 2 value -0.2382451767
+#REACTION tStep 2 number 1 dof 3 value -0.24233900795
+#REACTION tStep 2 number 7 dof 3 value -0.24233900795
+#REACTION tStep 2 number 4 dof 1 value -0.41996115946
+#REACTION tStep 2 number 10 dof 1 value -0.41996115946
+#REACTION tStep 2 number 4 dof 2 value -0.025913938075
+#REACTION tStep 2 number 10 dof 2 value -0.025913938075
+#REACTION tStep 2 number 4 dof 3 value -0.099488689622
+#REACTION tStep 2 number 10 dof 3 value -0.099488689622
+#REACTION tStep 2 number 3 dof 1 value 0.33449133871
+#REACTION tStep 2 number 9 dof 1 value 0.33449133871
+#REACTION tStep 2 number 3 dof 2 value -0.015351196833
+#REACTION tStep 2 number 9 dof 2 value -0.015351196833
+#REACTION tStep 2 number 3 dof 3 value 0.047092794313
+#REACTION tStep 2 number 9 dof 3 value 0.047092794313
+#REACTION tStep 2 number 6 dof 1 value 0.24793337341
+#REACTION tStep 2 number 12 dof 1 value 0.24793337341
+#REACTION tStep 2 number 6 dof 2 value 0.27951031161
+#REACTION tStep 2 number 12 dof 2 value 0.27951031161
+#REACTION tStep 2 number 6 dof 3 value 0.29473490326
+#REACTION tStep 2 number 12 dof 3 value 0.29473490326
+#%END_CHECK%

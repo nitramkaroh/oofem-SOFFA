@@ -61,7 +61,7 @@ void Space3dStructuralSurfaceElementEvaluator::computeNMatrixAt( FloatMatrix &an
 
 void Space3dStructuralSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
 // Returns the [ 9 x (nno * 3) ] displacement gradient matrix {BH} of the receiver,
-// evaluated at gp.
+// evaluated at gp (dNdx is the surface gradient in x, y, z).
 // BH matrix  -  9 rows : du/dx, dv/dy, dw/dz, dv/dz, du/dz, du/dy, dw/dy, dw/dx, dv/dx
 {
     Element *element        = this->giveElement();
@@ -75,7 +75,9 @@ void Space3dStructuralSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp
     for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
         answer.at( 1, 3 * i - 2 ) = dNdx.at( i, 1 ); // du/dx - 1
         answer.at( 2, 3 * i - 1 ) = dNdx.at( i, 2 ); // dv/dy - 2
-
+        answer.at( 3, 3 * i - 0 ) = dNdx.at( i, 3 ); // dw/dz - 3
+        answer.at( 4, 3 * i - 1 ) = dNdx.at( i, 3 ); // dv/dz - 4
+        answer.at( 5, 3 * i - 2 ) = dNdx.at( i, 3 ); // du/dz - 5
         answer.at( 6, 3 * i - 2 ) = dNdx.at( i, 2 ); // du/dy - 6
         answer.at( 7, 3 * i - 0 ) = dNdx.at( i, 2 ); // dw/dy - 7
         answer.at( 8, 3 * i - 0 ) = dNdx.at( i, 1 ); // dw/dx - 8

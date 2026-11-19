@@ -79,12 +79,13 @@ IGA surface elements
 --------------------
 
 The surface elements carry a surface energy (surface tension, a surface membrane, and
-for second gradient materials also bending) on the boundary of a two-dimensional
-B-spline patch. Each of them is a planar B-spline curve: :param:`degree` has a single
+for second gradient materials also bending). The first two are planar B-spline curves
+on the boundary of a two-dimensional B-spline patch: :param:`degree` has a single
 entry, :param:`knotvectoru` and :param:`nodes` describe the curve, and to couple it with
 the bulk it has to use the control points (nodes) of the patch boundary with the same
-degree and knots. The cross section is a :param:`simplesurfacecs` with a surface
-material. Only the large strain formulation is available, so :param:`nlgeo` has to be 1.
+degree and knots. The third one is a B-spline surface in space. The cross section is a
+:param:`simplesurfacecs` with a surface material. Only the large strain formulation is
+available, so :param:`nlgeo` has to be 1.
 
 **Keyword**: :param:`bsplineplanestrainsurfaceelement`  **Parameters**: None.
 Surface of a plane strain body; the surface energy is per unit length of the curve (and
@@ -95,7 +96,25 @@ bulk).
 Surface of revolution of the curve (:math:`x` radius, :math:`y` axis); measured per
 radian, with the hoop stretch :math:`1 + u/r`.
 
-The normal of the curve is :math:`\mathbf{n} = (t_y, -t_x)/|\mathbf{t}|` with the
+**Keyword**: :param:`bspline3dsurfaceelement`  **Parameters**: None.
+B-spline surface in space: two parametric directions (:param:`degree` with two entries,
+each at least 1, :param:`knotvectoru` and :param:`knotvectorv`), control points with
+three coordinates and the degrees of freedom :math:`u, v, w`; the surface energy is per
+unit area of the reference surface. Its normal is
+:math:`\mathbf{N} = \mathbf{A}_1 \times \mathbf{A}_2 / |\mathbf{A}_1 \times \mathbf{A}_2|`
+with the tangents :math:`\mathbf{A}_1 = \partial \mathbf{X}/\partial \xi` and
+:math:`\mathbf{A}_2 = \partial \mathbf{X}/\partial \eta`. Only membranes are implemented
+so far: a bending material (second gradient), the anisotropic surface material and the
+clamp are rejected. As with the other IGA elements, the loads are applied as nodal loads
+in the control points.
+
+The surface gradient uses the reciprocal tangents
+:math:`\mathbf{A}^1 = (\mathbf{A}_2 \times \mathbf{N})/J` and
+:math:`\mathbf{A}^2 = (\mathbf{N} \times \mathbf{A}_1)/J`, where
+:math:`J = |\mathbf{A}_1 \times \mathbf{A}_2|`. This avoids cancellation in the
+inverse metric on strongly skew patches. A zero or non-finite reference area is rejected.
+
+The normal of the curves is :math:`\mathbf{n} = (t_y, -t_x)/|\mathbf{t}|` with the
 tangent :math:`\mathbf{t} = \partial \mathbf{X}/\partial \xi`, so it points to the
 right of the direction given by the order of the nodes (outwards for a boundary
 traversed counterclockwise). Isotropic surface energies do not depend on this
@@ -127,7 +146,8 @@ The composite VTK export (:param:`vtkxml`) is implemented for the B-spline and N
 elements with one or two parametric dimensions (not for :param:`nurbs3delement` and
 :param:`tsplineplanestresselement`): every knot span is sampled in :param:`numexp`
 points per parametric direction, connected by lines on the curves and by quadrilaterals
-on the patches. Exported are the positions, the primary variable DisplacementVector and,
+on the patches (planar or in space). Exported are the positions, the primary variable
+DisplacementVector and,
 for the surface elements with a bending material, the internal variable
 IST_CurvatureTensor (the current curvature, interpolated linearly between the Gauss
 points of the knot span). Other primary and internal variables and cell variables stop
@@ -143,5 +163,10 @@ Tests/Examples: `tests/regression/sm/ex-bspline-01.in
 `tests/regression/sm/ex3d-nurbs-02.in
 <https://github.com/oofem/oofem/blob/devel/tests/regression/sm/ex3d-nurbs-02.in>`_,
 `tests/regression/sm/iga-surface-reactions.in`,
+`tests/regression/sm/iga-surface3d-curved.in`,
+`tests/regression/sm/iga-surface3d-quad.in`,
+`tests/regression/sm/iga-surface3d-extruded.in`,
+`tests/regression/sm/iga-surface3d-skew.in`,
+`tests/regression/sm/iga-surface3d-nonlinear.in`,
 `tests/regression/sm/iga-element-material.in`,
 `tests/regression/sm/iga-tspline-nip.in`.

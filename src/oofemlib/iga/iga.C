@@ -367,7 +367,7 @@ void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, Int
 {
     const int nsd = this->giveNsd();
     if ( this->ExportIntegrationRulesArray.empty() || ( nsd != 1 && nsd != 2 ) ) {
-        OOFEM_ERROR( "element %d (%s) has no VTK export points (only B-spline and NURBS curves and 2D patches have them)",
+        OOFEM_ERROR( "element %d (%s) has no VTK export points (only B-spline and NURBS curves and patches with two parametric directions have them)",
             this->giveNumber(), this->giveClassName() );
     }
     for ( int type : primaryVarsToExport ) {
@@ -421,8 +421,11 @@ void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, Int
         }
     }
 
-    // points: position and displacements interpolated from the control points of the knot span
-    const IntArray uvMask        = { D_u, D_v };
+    // points: position and displacements interpolated from the control points of the knot span, in the
+    // directions of the dofs of the element (u, v in the xy plane; u, v, w for a surface in space)
+    IntArray dofMask;
+    this->giveDofManDofIDMask( 1, dofMask );
+    const int ncomp               = dofMask.giveSize(); // D_u, D_v, D_w are 1, 2, 3
     const bool exportDisplacement = primaryVarsToExport.giveSize() > 0;
     FEInterpolation *interp       = this->giveInterpolation();
     int point = 1;
@@ -431,16 +434,18 @@ void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, Int
         IntArray mask;
         interp->giveKnotSpanBasisFuncMask( *rule->giveKnotSpan(), mask );
         for ( GaussPoint *gp : *rule ) {
-            FloatArray N, X( 2 ), u( 3 ), nodeU;
+            FloatArray N, X( ncomp ), u( 3 ), nodeU;
             interp->evalN( N, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( this, rule->giveKnotSpan() ) );
             for ( int k = 1; k <= mask.giveSize(); k++ ) {
                 const auto &coords = this->giveNode( mask.at( k ) )->giveCoordinates();
-                X.at( 1 ) += N.at( k ) * coords.at( 1 );
-                X.at( 2 ) += N.at( k ) * coords.at( 2 );
+                for ( int i = 1; i <= ncomp; i++ ) {
+                    X.at( i ) += N.at( k ) * coords.at( i );
+                }
                 if ( exportDisplacement ) {
-                    this->giveDofManager( mask.at( k ) )->giveUnknownVector( nodeU, uvMask, VM_Total, tStep );
-                    u.at( 1 ) += N.at( k ) * nodeU.at( 1 );
-                    u.at( 2 ) += N.at( k ) * nodeU.at( 2 );
+                    this->giveDofManager( mask.at( k ) )->giveUnknownVector( nodeU, dofMask, VM_Total, tStep );
+                    for ( int i = 1; i <= ncomp; i++ ) {
+                        u.at( i ) += N.at( k ) * nodeU.at( i );
+                    }
                 }
             }
             piece.setNodeCoords( point, X );

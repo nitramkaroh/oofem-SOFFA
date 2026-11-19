@@ -39,6 +39,7 @@
 #include "iga/feibspline.h"
 
 #include "sm/Elements/SurfaceElements/space2dsurfaceelementevaluator.h"
+#include "sm/Elements/SurfaceElements/space3dsurfaceelementevaluator.h"
 
 #include "floatarray.h"
 #include "floatmatrix.h"
@@ -47,6 +48,7 @@
 
 #define _IFT_BsplinePlaneStrainSurfaceElement_Name "bsplineplanestrainsurfaceelement"
 #define _IFT_BsplineAxisymSurfaceElement_Name "bsplineaxisymsurfaceelement"
+#define _IFT_Bspline3dSurfaceElement_Name "bspline3dsurfaceelement"
 namespace oofem {
 
 /**
@@ -167,6 +169,56 @@ public:
 
 protected:
     int giveNsd() override { return 1; }
+};
+
+
+/**
+ * Surface energy on a B-spline surface in space (two parametric directions, control points with three
+ * coordinates and the dofs u, v, w), per unit area of the reference surface. Membranes only: the second
+ * gradient (bending) is not implemented, so the bending materials are rejected. Large strains only
+ * (nlgeo 1); the cross section is a SimpleSurfaceCrossSection with a surface material.
+ */
+class Bspline3dSurfaceElement : public IGAElement, public Space3dStructuralSurfaceElementEvaluator
+{
+protected:
+    BSpline3dSurfaceInterpolation interpolation;
+
+public:
+    Bspline3dSurfaceElement( int n, Domain *aDomain );
+
+    void initializeFrom( InputRecord &ir ) override;
+    void postInitialize() override { IGAElement :: postInitialize(); this->setupEvaluator(); }
+    /// The number of nodes and their coordinates (three each) and the cross section (SimpleSurfaceCrossSection).
+    int checkConsistency() override;
+
+    void giveCharacteristicMatrix( FloatMatrix &answer, CharType mtrx, TimeStep *tStep ) override
+    {
+        Space3dStructuralSurfaceElementEvaluator ::giveCharacteristicMatrix( answer, mtrx, tStep );
+    }
+    void giveCharacteristicVector( FloatArray &answer, CharType type, ValueModeType mode, TimeStep *t ) override
+    {
+        Space3dStructuralSurfaceElementEvaluator ::giveCharacteristicVector( answer, type, mode, t );
+    }
+
+    FEInterpolation *giveInterpolation() const override { return const_cast<BSpline3dSurfaceInterpolation *>( &this->interpolation ); }
+    Element *giveElement() override { return this; }
+    void giveDofManDofIDMask( int inode, IntArray &answer ) const override
+    {
+        Space3dStructuralSurfaceElementEvaluator ::giveDofManDofIDMask( inode, answer );
+    }
+    int computeNumberOfDofs() override { return numberOfDofMans * 3; }
+    void updateInternalState( TimeStep *tStep ) override { Space3dStructuralSurfaceElementEvaluator ::updateInternalState( tStep ); }
+    // definition & identification
+    const char *giveInputRecordName() const override { return _IFT_Bspline3dSurfaceElement_Name; }
+    const char *giveClassName() const override { return "Bspline3dSurfaceElement"; }
+
+    MaterialMode giveMaterialMode() override { return _3dMat; }
+
+    /// Unit normal of the reference surface, X_,xi x X_,eta / |X_,xi x X_,eta|.
+    FloatArray giveNormal( GaussPoint *gp ) const override;
+
+protected:
+    int giveNsd() override { return 2; }
 };
 
 } // end namespace oofem

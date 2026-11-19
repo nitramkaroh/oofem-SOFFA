@@ -125,4 +125,55 @@ FloatArray BsplineAxisymSurfaceElement::giveNormal( GaussPoint *gp ) const
 };
 
 
+//////////////////
+// surface in space
+
+REGISTER_Element( Bspline3dSurfaceElement );
+
+
+Bspline3dSurfaceElement ::Bspline3dSurfaceElement( int n, Domain *aDomain ) :
+    IGAElement( n, aDomain ), Space3dStructuralSurfaceElementEvaluator() {}
+
+
+void Bspline3dSurfaceElement ::initializeFrom( InputRecord &ir )
+{
+    Space3dStructuralSurfaceElementEvaluator::initializeFrom( ir );
+    IGAElement ::initializeFrom( ir );
+}
+
+
+int Bspline3dSurfaceElement ::checkConsistency()
+{
+    int nu = this->interpolation.giveNumberOfControlPoints( 1 );
+    int nv = this->interpolation.giveNumberOfControlPoints( 2 );
+    if ( giveNumberOfDofManagers() != nu * nv ) {
+        OOFEM_WARNING( "element %d (%s): %d nodes given, the knot vectors and degrees need %d x %d control points",
+            this->giveNumber(), this->giveClassName(), giveNumberOfDofManagers(), nu, nv );
+        return 0;
+    }
+    // the interpolation reads all three coordinates of the control points
+    for ( int i = 1; i <= giveNumberOfDofManagers(); i++ ) {
+        if ( this->giveNode( i )->giveCoordinates().giveSize() != 3 ) {
+            OOFEM_WARNING( "element %d (%s): node %d needs three coordinates (coords 3 x y z)",
+                this->giveNumber(), this->giveClassName(), this->giveNode( i )->giveNumber() );
+            return 0;
+        }
+    }
+    // the surface evaluator passes the normal to the surface material through it
+    if ( !dynamic_cast<SimpleSurfaceCrossSection *>( this->giveCrossSection() ) ) {
+        OOFEM_WARNING( "element %d (%s): a SimpleSurfaceCrossSection (simplesurfacecs) is required", this->giveNumber(), this->giveClassName() );
+        return 0;
+    }
+    return 1;
+}
+
+
+FloatArray Bspline3dSurfaceElement::giveNormal( GaussPoint *gp ) const
+{
+    FloatArray normal;
+    this->interpolation.evalSurfaceNormal( normal, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
+    return normal;
+}
+
+
 } // end namespace oofem

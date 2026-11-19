@@ -39,10 +39,11 @@
 
 namespace oofem {
 /**
- * General purpose 3d structural element evaluator.
- * @note Unfinished: no element uses it yet, and computeBHmatrixAt fills only the derivatives with respect
- * to x and y, so it would be valid only for a flat surface in the xy plane (a general surface needs the
- * tangential gradient of the whole 3D position). Not meant for the upstream port in this state.
+ * Evaluator of a surface energy on a surface in space (interpolation with two parametric directions and
+ * control points with three coordinates, BSpline3dSurfaceInterpolation; dofs u, v, w), per unit area of the
+ * reference surface. F and P are in the global basis with 9 components (11, 22, 33, 23, 13, 12, 32, 31, 21).
+ * The derivatives dN/dx of the interpolation are surface gradients, so H = BH u is tangential in its second
+ * index and F = I_s + H satisfies F N = 0. Membranes only: the second gradient (bending) is not implemented.
  */
 class Space3dStructuralSurfaceElementEvaluator : public StructuralSurfaceElementEvaluator
 {
@@ -58,11 +59,12 @@ protected:
      */
     void computeNMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
     /**
-     * Displacement gradient matrix, 9 x (3 nno) for the nno nonzero basis functions; only the derivatives
-     * with respect to x and y are filled (see the class note).
+     * Displacement gradient matrix, 9 x (3 nno) for the nno nonzero basis functions of the knot span,
+     * the rows of the 9 component order filled with the surface gradient as in the 3D bulk evaluator.
      */
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
+    /// Area of the reference surface around gp (|X_,xi x X_,eta| times the weight).
     double computeVolumeAround( GaussPoint *gp ) override;
 
     void giveDofManDofIDMask( int inode, IntArray &answer ) const

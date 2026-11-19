@@ -334,5 +334,62 @@ private:
         std::array<double, 2> &a, std::array<double, 2> &b ) const;
 };
 
+
+/**
+ * B-spline surface in space: two parametric directions xi, eta (nsd = 2) of degrees p, q >= 1 with the control
+ * points (element nodes, u index fastest) given by three coordinates. Used by the IGA surface element in 3D.
+ * With the tangents A_1 = X_,xi and A_2 = X_,eta, the metric A_ab = A_a . A_b, its inverse A^ab and the dual
+ * basis A^a = A^ab A_b, the derivatives with respect to x, y, z are the surface (tangential) gradients
+ * N_,a A^a, the unit normal is A_1 x A_2 / |A_1 x A_2| and the area element is |A_1 x A_2|.
+ * BSplineInterpolation with nsd = 2 is the planar patch: it uses only x and y of the control points.
+ * The cell geometry must be an FEIIGAElementGeometryWrapper. Its knot span is used when given (at an interior
+ * knot it selects the one sided derivatives), otherwise the span is found from lcoords. The rows of the answers
+ * are the (p+1)(q+1) nonzero basis functions of the span, u index fastest (giveKnotSpanBasisFuncMask).
+ * The methods that need the tangents stop with an error when the area |A_1 x A_2| is zero or not finite
+ * (e.g. coinciding control points). The surface gradient uses reciprocal cross products rather than
+ * inverse metric combinations to avoid cancellation on skew patches and unnecessary squared norms.
+ */
+class OOFEM_EXPORT BSpline3dSurfaceInterpolation : public BSplineInterpolation
+{
+public:
+    BSpline3dSurfaceInterpolation() : BSplineInterpolation( 2 ) {}
+
+    /// Reads the B-spline data and requires degree >= 1 in both directions (a surface with two tangents).
+    void initializeFrom( InputRecord &ir ) override;
+
+    /**
+     * Surface gradient of the basis functions, N_,xi A^1 + N_,eta A^2: answer is (p+1)(q+1) x 3 (x, y, z).
+     * @return |A_1 x A_2|.
+     */
+    double evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+    /**
+     * Unit normal of the reference surface, A_1 x A_2 / |A_1 x A_2| (oriented by xi, eta with the right hand rule).
+     * @return |A_1 x A_2|.
+     */
+    double evalSurfaceNormal( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+
+    /// Position on the surface (three coordinates; BSplineInterpolation gives one per parametric dimension).
+    void local2global( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+    /// Area element |A_1 x A_2|.
+    double giveTransformationJacobian( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+    /// Stops with an error: the tangents of a surface in space form no square matrix (see giveTransformationJacobian).
+    void giveJacobianMatrixAt( FloatMatrix &jacobianMatrix, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+private:
+    /// Knot spans of lcoords: those of the geometry wrapper when given, otherwise found from lcoords.
+    std::array<int, 2> giveSpans( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
+    /**
+     * First derivatives of the nonzero basis functions in both directions (dersU is 2 x (p+1), dersV 2 x (q+1))
+     * and the tangents a1 = X_,xi, a2 = X_,eta of the reference surface. Stops for a degenerate surface (see
+     * the class description).
+     * @return |a1 x a2|.
+     */
+    double evalTangents( const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &dersU, FloatMatrix &dersV,
+        std::array<double, 3> &a1, std::array<double, 3> &a2 ) const;
+};
+
 } // end namespace oofem
 #endif // feibspline_h

@@ -105,7 +105,7 @@ public:
 class OOFEM_EXPORT IGAElement : public Element, public VTKXMLExportModuleElementInterface
 {
 protected:
-    /// VTK export points, one rule per nonzero knot span (curves and 2D patches only).
+    /// VTK export points, one rule per nonzero knot span (one or two parametric directions only).
     std::vector<std ::unique_ptr<IGAIntegrationElement> > ExportIntegrationRulesArray;
     /// Number of export points per knot span and parametric direction (numexp).
     int numExportPoints = 2;
@@ -140,11 +140,13 @@ public:
     /// Composite geometry, exported by giveCompositeExportData.
     Element_Geometry_Type giveGeometryType() const override { return EGT_Composite; }
     /**
-     * VTK export of a curve (nsd 1) or a 2D patch (nsd 2) sampled at the export points: numexp points per
-     * knot span and parametric direction, u index fastest, giving numexp - 1 lines or (numexp - 1)^2 quads per
-     * knot span. The positions and DisplacementVector (padded to 3 components) are interpolated from the
-     * control points of the span, the internal variables come from giveExportPointValue. Other primary
-     * variables, unsupported internal variables and cell variables stop with an error.
+     * VTK export of a curve (nsd 1) or a patch with two parametric directions (nsd 2, planar or a surface in
+     * space) sampled at the export points: numexp points per knot span and parametric direction, u index
+     * fastest, giving numexp - 1 lines or (numexp - 1)^2 quads per knot span. The positions and
+     * DisplacementVector (padded to 3 components) are interpolated from the control points of the span in the
+     * directions of the dofs of the element (u, v or u, v, w), the internal variables come from
+     * giveExportPointValue. Other primary variables, unsupported internal variables and cell variables stop
+     * with an error.
      */
     void giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep ) override;
     /**

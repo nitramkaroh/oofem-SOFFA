@@ -997,4 +997,163 @@ void BSpline2dLineInterpolation::local2global( FloatArray &answer, const FloatAr
     }
 }
 
+///////////////////////
+// BSpline3dSurfaceInterpolation
+
+namespace {
+/// Coordinates of control point i of the cell; a surface in space needs all three.
+const FloatArray &giveSpaceVertexCoordinates( const FEICellGeometry &cellgeo, int i )
+{
+    const auto &coords = cellgeo.giveVertexCoordinates( i );
+    if ( coords.giveSize() < 3 ) {
+        OOFEM_ERROR( "control point %d has %d coordinates, a B-spline surface in space needs three", i, coords.giveSize() );
+    }
+    return coords;
+}
+} // end anonymous namespace
+
+
+void BSpline3dSurfaceInterpolation::initializeFrom( InputRecord &ir )
+{
+    BSplineInterpolation::initializeFrom( ir );
+    if ( this->degree[0] < 1 || this->degree[1] < 1 ) {
+        throw ValueInputException( ir, _IFT_BSplineInterpolation_degree, "a surface needs degree >= 1 in both directions" );
+    }
+}
+
+
+std::array<int, 2> BSpline3dSurfaceInterpolation::giveSpans( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    const FEIIGAElementGeometryWrapper &gw = static_cast<const FEIIGAElementGeometryWrapper &>( cellgeo );
+    if ( gw.knotSpan ) {
+        return { gw.knotSpan->at( 1 ), gw.knotSpan->at( 2 ) };
+    }
+    return { this->findSpan( numberOfControlPoints[0] - 1, degree[0], lcoords[0], knotVector[0] ),
+        this->findSpan( numberOfControlPoints[1] - 1, degree[1], lcoords[1], knotVector[1] ) };
+}
+
+
+double BSpline3dSurfaceInterpolation::evalTangents( const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &dersU,
+    FloatMatrix &dersV, std::array<double, 3> &a1, std::array<double, 3> &a2 ) const
+{
+    auto span = this->giveSpans( lcoords, cellgeo );
+    this->dersBasisFuns( 1, lcoords[0], span[0], degree[0], knotVector[0], dersU );
+    this->dersBasisFuns( 1, lcoords[1], span[1], degree[1], knotVector[1], dersV );
+
+    // X_,xi and X_,eta summed over the control points of the span, u index fastest
+    a1 = { 0., 0., 0. };
+    a2 = { 0., 0., 0. };
+    int ind = ( span[1] - degree[1] ) * numberOfControlPoints[0] + span[0] - degree[0] + 1;
+    for ( int l = 0; l <= degree[1]; l++ ) {
+        for ( int k = 0; k <= degree[0]; k++ ) {
+            const auto &X = giveSpaceVertexCoordinates( cellgeo, ind + k );
+            double dNdxi  = dersU( 1, k ) * dersV( 0, l );
+            double dNdeta = dersU( 0, k ) * dersV( 1, l );
+            for ( int i = 0; i < 3; i++ ) {
+                a1[i] += dNdxi * X[i];
+                a2[i] += dNdeta * X[i];
+            }
+        }
+        ind += numberOfControlPoints[0];
+    }
+
+    // Compute the area directly: squaring the cross product would reject representable areas
+    // through overflow or underflow, depending on the units of the control point coordinates.
+    double n0 = a1[1] * a2[2] - a1[2] * a2[1];
+    double n1 = a1[2] * a2[0] - a1[0] * a2[2];
+    double n2 = a1[0] * a2[1] - a1[1] * a2[0];
+    double J = std::hypot( n0, n1, n2 );
+    if ( !std::isfinite( J ) || !( J > 0. ) ) {
+        OOFEM_ERROR( "degenerate surface at (xi, eta) = (%g, %g) (knot spans %d, %d): |X,xi x X,eta| = %g (coinciding control points?)",
+            lcoords[0], lcoords[1], span[0], span[1], J );
+    }
+    return J;
+}
+
+
+double BSpline3dSurfaceInterpolation::evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    FloatMatrix dersU, dersV;
+    std::array<double, 3> a1, a2;
+    double J = this->evalTangents( lcoords, cellgeo, dersU, dersV, a1, a2 );
+
+    // Reciprocal tangents A^1 = (A_2 x N) / J, A^2 = (N x A_1) / J, N = (A_1 x A_2) / J.
+    // These are the same dual basis as the inverse metric gives, without subtracting nearly equal
+    // metric terms on skew patches or squaring the tangent lengths and area.
+    std::array<double, 3> normal = { ( a1[1] * a2[2] - a1[2] * a2[1] ) / J,
+        ( a1[2] * a2[0] - a1[0] * a2[2] ) / J, ( a1[0] * a2[1] - a1[1] * a2[0] ) / J };
+    std::array<double, 3> d1, d2;
+    for ( int i = 0; i < 3; i++ ) {
+        int j = ( i + 1 ) % 3, k = ( i + 2 ) % 3;
+        d1[i] = ( a2[j] * normal[k] - a2[k] * normal[j] ) / J;
+        d2[i] = ( normal[j] * a1[k] - normal[k] * a1[j] ) / J;
+        if ( !std::isfinite( d1[i] ) || !std::isfinite( d2[i] ) ) {
+            OOFEM_ERROR( "non-finite reciprocal tangents of a B-spline surface at (xi, eta) = (%g, %g)", lcoords[0], lcoords[1] );
+        }
+    }
+
+    // surface gradient N_,xi A^1 + N_,eta A^2 of the nonzero basis functions, u index fastest
+    answer.resize( ( degree[0] + 1 ) * ( degree[1] + 1 ), 3 );
+    int cnt = 0;
+    for ( int l = 0; l <= degree[1]; l++ ) {
+        for ( int k = 0; k <= degree[0]; k++ ) {
+            double dNdxi  = dersU( 1, k ) * dersV( 0, l );
+            double dNdeta = dersU( 0, k ) * dersV( 1, l );
+            for ( int i = 0; i < 3; i++ ) {
+                answer( cnt, i ) = dNdxi * d1[i] + dNdeta * d2[i];
+            }
+            cnt++;
+        }
+    }
+
+    return J;
+}
+
+
+double BSpline3dSurfaceInterpolation::evalSurfaceNormal( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    FloatMatrix dersU, dersV;
+    std::array<double, 3> a1, a2;
+    double J = this->evalTangents( lcoords, cellgeo, dersU, dersV, a1, a2 );
+
+    answer = FloatArray{ ( a1[1] * a2[2] - a1[2] * a2[1] ) / J, ( a1[2] * a2[0] - a1[0] * a2[2] ) / J, ( a1[0] * a2[1] - a1[1] * a2[0] ) / J };
+    return J;
+}
+
+
+void BSpline3dSurfaceInterpolation::local2global( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    auto span = this->giveSpans( lcoords, cellgeo );
+    FloatArray Nu, Nv;
+    this->basisFuns( Nu, span[0], lcoords[0], degree[0], knotVector[0] );
+    this->basisFuns( Nv, span[1], lcoords[1], degree[1], knotVector[1] );
+
+    answer.resize( 3 );
+    answer.zero();
+    int ind = ( span[1] - degree[1] ) * numberOfControlPoints[0] + span[0] - degree[0] + 1;
+    for ( int l = 0; l <= degree[1]; l++ ) {
+        for ( int k = 0; k <= degree[0]; k++ ) {
+            const auto &X = giveSpaceVertexCoordinates( cellgeo, ind + k );
+            for ( int i = 0; i < 3; i++ ) {
+                answer[i] += Nu[k] * Nv[l] * X[i];
+            }
+        }
+        ind += numberOfControlPoints[0];
+    }
+}
+
+
+double BSpline3dSurfaceInterpolation::giveTransformationJacobian( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    FloatMatrix dersU, dersV;
+    std::array<double, 3> a1, a2;
+    return this->evalTangents( lcoords, cellgeo, dersU, dersV, a1, a2 );
+}
+
+
+void BSpline3dSurfaceInterpolation::giveJacobianMatrixAt( FloatMatrix &jacobianMatrix, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    OOFEM_ERROR( "not defined for a surface in space (its tangents form a 3 x 2 matrix), use giveTransformationJacobian or evaldNdx" );
+}
+
 } // end namespace oofem

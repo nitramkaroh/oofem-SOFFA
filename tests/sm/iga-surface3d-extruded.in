@@ -1,0 +1,103 @@
+iga-surface3d-extruded.out
+3D IGA surface (bspline3dsurfaceelement): extruded curve against bsplineplanestrainsurfaceelement
+StaticStructural nsteps 2 deltat 1.0 rtolv 1.e-12 maxiter 20 manrmsteps 1 nmodules 1
+errorcheck
+domain 3d
+OutputManager tstep_all dofman_all element_all
+ndofman 12 nelem 2 ncrosssect 1 nmat 1 nbc 3 nic 0 nltf 1 nset 3
+# Nodes 1-4: control points of a plane strain B-spline curve (degree 2, two knot spans), dofs u, v.
+# Nodes 5-12: the curve extruded to z = 0.8 as a B-spline surface of degrees 2 x 1 (rows z = 0 and z = 0.8,
+# u index fastest). The first control points are fixed, the last ones moved by (0.25, 0.1) and the middle ones
+# are free in x, y; w = 0 everywhere. The surface is then in plane strain: its free control points move as
+# those of the curve, and the in-plane reactions of each row are L/2 = 0.4 times those of the curve.
+node 1 coords 3 0.0 0.0 0.0 dofidmask 2 1 2
+node 2 coords 3 0.3 0.5 0.0 dofidmask 2 1 2
+node 3 coords 3 0.7 0.6 0.0 dofidmask 2 1 2
+node 4 coords 3 1.0 0.0 0.0 dofidmask 2 1 2
+node 5 coords 3 0.0 0.0 0.0
+node 6 coords 3 0.3 0.5 0.0
+node 7 coords 3 0.7 0.6 0.0
+node 8 coords 3 1.0 0.0 0.0
+node 9 coords 3 0.0 0.0 0.8
+node 10 coords 3 0.3 0.5 0.8
+node 11 coords 3 0.7 0.6 0.8
+node 12 coords 3 1.0 0.0 0.8
+bsplineplanestrainsurfaceelement 1 nodes 4 1 2 3 4 crosssect 1 knotvectoru 3 0 0.5 1 degree 1 2 nip 3 nlgeo 1
+bspline3dsurfaceelement 2 nodes 8 5 6 7 8 9 10 11 12 crosssect 1 knotvectoru 3 0 0.5 1 knotvectorv 2 0 1 degree 2 2 1 nip 9 nlgeo 1
+simplesurfacecs 1 material 1
+surfacetensionmat 1 gamma1 0.3 alpha1 0.2 mu 1.0 lambda 0.5 d 1.0
+BoundaryCondition 1 loadTimeFunction 1 dofs 2 1 2 values 2 0.0 0.0 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 2 1 2 values 2 0.25 0.1 set 2
+BoundaryCondition 3 loadTimeFunction 1 dofs 1 3 values 1 0.0 set 3
+PiecewiseLinFunction 1 t 3 0.0 1.0 2.0 f(t) 3 0.0 0.5 1.0
+Set 1 nodes 3 1 5 9
+Set 2 nodes 3 4 8 12
+Set 3 nodes 8 5 6 7 8 9 10 11 12
+#
+# Recorded solution of the curve; the surface is checked against it (reactions times L/2).
+#%BEGIN_CHECK% tolerance 1.e-9
+#NODE tStep 1 number 2 dof 1 unknown d value 0.1110914429
+#NODE tStep 1 number 6 dof 1 unknown d value 0.1110914429
+#NODE tStep 1 number 10 dof 1 unknown d value 0.1110914429
+#NODE tStep 1 number 2 dof 2 unknown d value -0.25078308397
+#NODE tStep 1 number 6 dof 2 unknown d value -0.25078308397
+#NODE tStep 1 number 10 dof 2 unknown d value -0.25078308397
+#NODE tStep 1 number 3 dof 1 unknown d value -0.0066876056321
+#NODE tStep 1 number 7 dof 1 unknown d value -0.0066876056321
+#NODE tStep 1 number 11 dof 1 unknown d value -0.0066876056321
+#NODE tStep 1 number 3 dof 2 unknown d value -0.19055656326
+#NODE tStep 1 number 7 dof 2 unknown d value -0.19055656326
+#NODE tStep 1 number 11 dof 2 unknown d value -0.19055656326
+#REACTION tStep 1 number 1 dof 1 value -0.00030387775433
+#REACTION tStep 1 number 5 dof 1 value -0.00012155110173200001
+#REACTION tStep 1 number 9 dof 1 value -0.00012155110173200001
+#REACTION tStep 1 number 1 dof 2 value -1.350567797e-05
+#REACTION tStep 1 number 5 dof 2 value -5.402271188000001e-06
+#REACTION tStep 1 number 9 dof 2 value -5.402271188000001e-06
+#REACTION tStep 1 number 4 dof 1 value 0.00030387775433
+#REACTION tStep 1 number 8 dof 1 value 0.00012155110173200001
+#REACTION tStep 1 number 12 dof 1 value 0.00012155110173200001
+#REACTION tStep 1 number 4 dof 2 value 1.350567797e-05
+#REACTION tStep 1 number 8 dof 2 value 5.402271188000001e-06
+#REACTION tStep 1 number 12 dof 2 value 5.402271188000001e-06
+#REACTION tStep 1 number 5 dof 3 value -0.10138493631
+#REACTION tStep 1 number 9 dof 3 value 0.10138493631
+#REACTION tStep 1 number 6 dof 3 value -0.14271535285
+#REACTION tStep 1 number 10 dof 3 value 0.14271535285
+#REACTION tStep 1 number 7 dof 3 value -0.1433686365
+#REACTION tStep 1 number 11 dof 3 value 0.1433686365
+#REACTION tStep 1 number 8 dof 3 value -0.1116437617
+#REACTION tStep 1 number 12 dof 3 value 0.1116437617
+#NODE tStep 2 number 2 dof 1 unknown d value 0.20011150745
+#NODE tStep 2 number 6 dof 1 unknown d value 0.20011150745
+#NODE tStep 2 number 10 dof 1 unknown d value 0.20011150745
+#NODE tStep 2 number 2 dof 2 unknown d value -0.46673076803
+#NODE tStep 2 number 6 dof 2 unknown d value -0.46673076803
+#NODE tStep 2 number 10 dof 2 unknown d value -0.46673076803
+#NODE tStep 2 number 3 dof 1 unknown d value 0.021807948097
+#NODE tStep 2 number 7 dof 1 unknown d value 0.021807948097
+#NODE tStep 2 number 11 dof 1 unknown d value 0.021807948097
+#NODE tStep 2 number 3 dof 2 unknown d value -0.30427613054
+#NODE tStep 2 number 7 dof 2 unknown d value -0.30427613054
+#NODE tStep 2 number 11 dof 2 unknown d value -0.30427613054
+#REACTION tStep 2 number 1 dof 1 value -0.020079623171
+#REACTION tStep 2 number 5 dof 1 value -0.0080318492684
+#REACTION tStep 2 number 9 dof 1 value -0.0080318492684
+#REACTION tStep 2 number 1 dof 2 value -0.0016063698537
+#REACTION tStep 2 number 5 dof 2 value -0.0006425479414800001
+#REACTION tStep 2 number 9 dof 2 value -0.0006425479414800001
+#REACTION tStep 2 number 4 dof 1 value 0.020079623171
+#REACTION tStep 2 number 8 dof 1 value 0.0080318492684
+#REACTION tStep 2 number 12 dof 1 value 0.0080318492684
+#REACTION tStep 2 number 4 dof 2 value 0.0016063698537
+#REACTION tStep 2 number 8 dof 2 value 0.0006425479414800001
+#REACTION tStep 2 number 12 dof 2 value 0.0006425479414800001
+#REACTION tStep 2 number 5 dof 3 value -0.1052908894
+#REACTION tStep 2 number 9 dof 3 value 0.1052908894
+#REACTION tStep 2 number 6 dof 3 value -0.14263575057
+#REACTION tStep 2 number 10 dof 3 value 0.14263575057
+#REACTION tStep 2 number 7 dof 3 value -0.14580780412
+#REACTION tStep 2 number 11 dof 3 value 0.14580780412
+#REACTION tStep 2 number 8 dof 3 value -0.11268672453
+#REACTION tStep 2 number 12 dof 3 value 0.11268672453
+#%END_CHECK%
