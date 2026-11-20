@@ -109,7 +109,10 @@ IGA surface elements of degree at least 2 with at least :math:`C^1` continuity a
 material. Each interior knot must have multiplicity at most the degree minus one. All other
 surface elements reject it, even with :math:`\omega = 0`. The planar IGA curve uses the normal
 obtained by rotating its oriented tangent clockwise; the Lagrange planar line uses the
-opposite rotation. A change of orientation must also change the sign of a prescribed
+opposite rotation; the IGA surface in space uses
+:math:`\mathbf{N} = \mathbf{X}_{,\xi} \times \mathbf{X}_{,\eta} / |\mathbf{X}_{,\xi} \times \mathbf{X}_{,\eta}|`
+(for a curve extruded along :math:`z`, with :math:`\eta` along :math:`z`, the same as the IGA curve).
+A change of orientation must also change the sign of a prescribed
 nonzero :param:`h0` to preserve the same preferred curvature.
 
 .. table:: Surface membrane with bending stiffness - summary.
@@ -138,8 +141,8 @@ nonzero :param:`h0` to preserve the same preferred curvature.
    +--------------------+----------------------------------------------------------------------------------------------+
    | Supported modes    | 3dMat, through the surface elements and :param:`simplesurfacecs`                             |
    +--------------------+----------------------------------------------------------------------------------------------+
-   | Elements           | :param:`bsplineplanestrainsurfaceelement` and :param:`bsplineaxisymsurfaceelement` of degree |
-   |                    | at least 2.                                                                                  |
+   | Elements           | :param:`bsplineplanestrainsurfaceelement`, :param:`bsplineaxisymsurfaceelement` and          |
+   |                    | :param:`bspline3dsurfaceelement`, of degree at least 2 with :math:`C^1` continuity.          |
    +--------------------+----------------------------------------------------------------------------------------------+
    | Tests/Examples     | ``tests/sm/surface-membrane-parameters.in``,                                                 |
    |                    | ``tests/sm/surface-arclength-gamma.in``                                                      |

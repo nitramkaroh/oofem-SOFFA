@@ -364,6 +364,17 @@ public:
     double evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
     /**
+     * Tangential (covariant) Hessian of the basis functions on the surface,
+     * (N_,ab - Gamma^c_ab N_,c) A^a x A^b with the Christoffel symbols Gamma^c_ab = A^c . X_,ab, i.e.
+     * (N_,ab - X_,ab . grad_s N) A^a x A^b: answer is (p+1)(q+1) x 6 (xx, yy, zz, yz, xz, xy, no engineering
+     * factor 2). Both slots are tangential. The full surface derivative of the vector field grad_s N has the
+     * additional term N_,a B^a_b N x A^b with the curvature B of the reference surface, which is not included;
+     * the IGA surface element builds its second gradient from this projected Hessian, like the curves.
+     * Needs degree >= 2 in both directions.
+     */
+    void evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+    /**
      * Unit normal of the reference surface, A_1 x A_2 / |A_1 x A_2| (oriented by xi, eta with the right hand rule).
      * @return |A_1 x A_2|.
      */
@@ -382,13 +393,17 @@ private:
     /// Knot spans of lcoords: those of the geometry wrapper when given, otherwise found from lcoords.
     std::array<int, 2> giveSpans( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
     /**
-     * First derivatives of the nonzero basis functions in both directions (dersU is 2 x (p+1), dersV 2 x (q+1))
-     * and the tangents a1 = X_,xi, a2 = X_,eta of the reference surface. Stops for a degenerate surface (see
-     * the class description).
+     * Derivatives of the nonzero basis functions up to order nder (1 or 2) in both directions (dersU is
+     * (nder+1) x (p+1), dersV (nder+1) x (q+1)) and the tangents a1 = X_,xi, a2 = X_,eta of the reference
+     * surface; for nder = 2 also b = { X_,xixi, X_,etaeta, X_,xieta }. Stops for a degenerate surface (see the
+     * class description).
      * @return |a1 x a2|.
      */
-    double evalTangents( const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &dersU, FloatMatrix &dersV,
-        std::array<double, 3> &a1, std::array<double, 3> &a2 ) const;
+    double evalTangents( int nder, const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &dersU, FloatMatrix &dersV,
+        std::array<double, 3> &a1, std::array<double, 3> &a2, std::array<std::array<double, 3>, 3> *b = nullptr ) const;
+    /// Reciprocal tangents d1 = A^1 = (a2 x N) / J and d2 = A^2 = (N x a1) / J with N = (a1 x a2) / J and J = |a1 x a2|.
+    static void reciprocalTangents( const std::array<double, 3> &a1, const std::array<double, 3> &a2, double J,
+        const FloatArray &lcoords, std::array<double, 3> &d1, std::array<double, 3> &d2 );
 };
 
 } // end namespace oofem

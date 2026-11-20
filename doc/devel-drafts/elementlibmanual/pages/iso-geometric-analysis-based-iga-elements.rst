@@ -103,16 +103,21 @@ three coordinates and the degrees of freedom :math:`u, v, w`; the surface energy
 unit area of the reference surface. Its normal is
 :math:`\mathbf{N} = \mathbf{A}_1 \times \mathbf{A}_2 / |\mathbf{A}_1 \times \mathbf{A}_2|`
 with the tangents :math:`\mathbf{A}_1 = \partial \mathbf{X}/\partial \xi` and
-:math:`\mathbf{A}_2 = \partial \mathbf{X}/\partial \eta`. Only membranes are implemented
-so far: a bending material (second gradient), the anisotropic surface material and the
-clamp are rejected. As with the other IGA elements, the loads are applied as nodal loads
-in the control points.
+:math:`\mathbf{A}_2 = \partial \mathbf{X}/\partial \eta`. A bending material (second
+gradient) needs degree at least 2 and :math:`C^1` continuity in both directions (see
+below); the anisotropic surface material and the clamp are rejected. As with the other
+IGA elements, the loads are applied as nodal loads in the control points.
 
 The surface gradient uses the reciprocal tangents
 :math:`\mathbf{A}^1 = (\mathbf{A}_2 \times \mathbf{N})/J` and
 :math:`\mathbf{A}^2 = (\mathbf{N} \times \mathbf{A}_1)/J`, where
 :math:`J = |\mathbf{A}_1 \times \mathbf{A}_2|`. This avoids cancellation in the
 inverse metric on strongly skew patches. A zero or non-finite reference area is rejected.
+The second gradient is built from the tangential Hessian of the basis functions,
+:math:`(N_{,\alpha\beta} - \mathbf{X}_{,\alpha\beta} \cdot \nabla_s N)\, \mathbf{A}^\alpha \otimes \mathbf{A}^\beta`
+(the Christoffel symbols of the reference surface included). Its normal part is left out,
+as on the curves: the bending material uses the second gradient only through the current
+normal and tangential tensors, which the normal part does not reach.
 
 The normal of the curves is :math:`\mathbf{n} = (t_y, -t_x)/|\mathbf{t}|` with the
 tangent :math:`\mathbf{t} = \partial \mathbf{X}/\partial \xi`, so it points to the
@@ -129,14 +134,15 @@ Second gradient materials
 -------------------------
 
 The elements :param:`bsplineplanestrainelement`, :param:`bsplineaxisymelement`,
-:param:`bsplineplanestrainsurfaceelement` and :param:`bsplineaxisymsurfaceelement`
+:param:`bsplineplanestrainsurfaceelement`, :param:`bsplineaxisymsurfaceelement` and
+:param:`bspline3dsurfaceelement`
 support materials depending also on the gradient of the deformation gradient (e.g.
 :param:`gradientsimopistermat` and :param:`gradientmooneyrivlin` in the bulk, bending of
 :param:`surfacetensionmat2` on the surfaces). Such a material is detected automatically
 from the cross section of the element; an element that does not support the second
 gradient stops with an error. The second gradient needs :math:`C^1` continuity of the
 interpolation, i.e. degree at least 2 and internal knot multiplicities at most degree
-minus 1 in every parametric direction; the four elements check it and stop with an error
+minus 1 in every parametric direction; the five elements check it and stop with an error
 otherwise. It is implemented only for :param:`nlgeo` 1.
 
 Export to VTK
@@ -149,8 +155,9 @@ points per parametric direction, connected by lines on the curves and by quadril
 on the patches (planar or in space). Exported are the positions, the primary variable
 DisplacementVector and,
 for the surface elements with a bending material, the internal variable
-IST_CurvatureTensor (the current curvature, interpolated linearly between the Gauss
-points of the knot span). Other primary and internal variables and cell variables stop
+IST_CurvatureTensor (the current curvature :math:`\mathbf{K} = -\mathbf{n} \cdot \nabla\mathbf{F}`;
+on the curves interpolated linearly between the Gauss points of the knot span, on the
+surface in space evaluated at the export point). Other primary and internal variables and cell variables stop
 with an error. Gauss point values (:param:`ipvars`) are exported at the true positions
 of the integration points.
 
@@ -168,5 +175,8 @@ Tests/Examples: `tests/regression/sm/ex-bspline-01.in
 `tests/regression/sm/iga-surface3d-extruded.in`,
 `tests/regression/sm/iga-surface3d-skew.in`,
 `tests/regression/sm/iga-surface3d-nonlinear.in`,
+`tests/regression/sm/iga-surface3d-bending.in`,
+`tests/regression/sm/iga-surface3d-bending-extruded.in`,
+`tests/regression/sm/iga-surface-bending-curve.in`,
 `tests/regression/sm/iga-element-material.in`,
 `tests/regression/sm/iga-tspline-nip.in`.

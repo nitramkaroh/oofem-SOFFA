@@ -1,0 +1,95 @@
+iga-surface3d-bending-extruded.out
+Bending curve extruded in z as an IGA surface in space: the independent energy derivative
+StaticStructural nsteps 1 deltat 1.0 rtolv 1.e-11 maxiter 10 nmodules 1
+errorcheck
+domain 3d
+OutputManager tstep_all dofman_all
+ndofman 12 nelem 1 ncrosssect 1 nmat 1 nbc 12 nic 0 nltf 1 nset 12
+# The quadratic two-span curve of iga-surface-bending-curve.in extruded in z (rows z = 0, 0.4, 0.8, quadratic in z),
+# every row displaced in plane as the curve, w = 0. The sums of the reactions over the three rows of a column
+# are 0.8 times the curve reactions (a uniform variation in z); single rows differ, since moving one row
+# bends the surface in z. The sums of the w reactions are zero.
+# Reference values: the derivative (complex step) of the total energy integrated with the same Gauss rule
+# (4 points per span and direction) from the classical surface quantities, independently of the grad F
+# formulation of OOFEM: metrics A_ab, a_ab, J = sqrt(det a / det A), |F|^2 = A^ab a_ab, n = x_,1 x x_,2 / |.|,
+# H = a^ab (n . x_,ab) / 2, W = .4 J + .2 |F| + .5 (|F|^2/2 - 1 - ln J) + .6 (ln J)^2/2 + .3 (J - 1)^2/2
+# + .7/2 J (H - h0)^2 with h0 = 0.3 (useh0 2: its sign follows the normal, the same for the curve and the
+# surface, n = (t_y, -t_x, 0) for the tangent t along the curve).
+node 1 coords 3 0.0 0.0 0.0
+node 2 coords 3 0.3 0.4 0.0
+node 3 coords 3 0.7 0.5 0.0
+node 4 coords 3 1.0 0.2 0.0
+node 5 coords 3 0.0 0.0 0.4
+node 6 coords 3 0.3 0.4 0.4
+node 7 coords 3 0.7 0.5 0.4
+node 8 coords 3 1.0 0.2 0.4
+node 9 coords 3 0.0 0.0 0.8
+node 10 coords 3 0.3 0.4 0.8
+node 11 coords 3 0.7 0.5 0.8
+node 12 coords 3 1.0 0.2 0.8
+bspline3dsurfaceelement 1 nodes 12 1 2 3 4 5 6 7 8 9 10 11 12 crosssect 1 knotvectoru 3 0 0.5 1 knotvectorv 2 0 1 degree 2 2 2 nip 16 nlgeo 1
+simplesurfacecs 1 material 1
+surfacetensionmat2 1 gamma1 0.4 alpha1 0.2 mu 0.5 lambda 0.6 alphas 0.3 omega1 0.7 useh0 2 h0 0.3 d 1.0
+BoundaryCondition 1 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.0 0.0 0.0 set 1
+BoundaryCondition 2 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.03 0.05 0.0 set 2
+BoundaryCondition 3 loadTimeFunction 1 dofs 3 1 2 3 values 3 -0.02 0.08 0.0 set 3
+BoundaryCondition 4 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.06 -0.04 0.0 set 4
+BoundaryCondition 5 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.0 0.0 0.0 set 5
+BoundaryCondition 6 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.03 0.05 0.0 set 6
+BoundaryCondition 7 loadTimeFunction 1 dofs 3 1 2 3 values 3 -0.02 0.08 0.0 set 7
+BoundaryCondition 8 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.06 -0.04 0.0 set 8
+BoundaryCondition 9 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.0 0.0 0.0 set 9
+BoundaryCondition 10 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.03 0.05 0.0 set 10
+BoundaryCondition 11 loadTimeFunction 1 dofs 3 1 2 3 values 3 -0.02 0.08 0.0 set 11
+BoundaryCondition 12 loadTimeFunction 1 dofs 3 1 2 3 values 3 0.06 -0.04 0.0 set 12
+ConstantFunction 1 f(t) 1.0
+Set 1 nodes 1 1
+Set 2 nodes 1 2
+Set 3 nodes 1 3
+Set 4 nodes 1 4
+Set 5 nodes 1 5
+Set 6 nodes 1 6
+Set 7 nodes 1 7
+Set 8 nodes 1 8
+Set 9 nodes 1 9
+Set 10 nodes 1 10
+Set 11 nodes 1 11
+Set 12 nodes 1 12
+#%BEGIN_CHECK% tolerance 1.e-9
+#REACTION tStep 1 number 1 dof 1 value -0.0888717366060643
+#REACTION tStep 1 number 1 dof 2 value -0.2007493552670201
+#REACTION tStep 1 number 1 dof 3 value -0.18835979293469832
+#REACTION tStep 1 number 2 dof 1 value 0.5746375904869617
+#REACTION tStep 1 number 2 dof 2 value -0.06669579383924035
+#REACTION tStep 1 number 2 dof 3 value -0.38392298630362104
+#REACTION tStep 1 number 3 dof 1 value -0.5335581425691114
+#REACTION tStep 1 number 3 dof 2 value 0.3257106970338368
+#REACTION tStep 1 number 3 dof 3 value -0.44153015093169085
+#REACTION tStep 1 number 4 dof 1 value 0.04174373506175829
+#REACTION tStep 1 number 4 dof 2 value -0.456358589352855
+#REACTION tStep 1 number 4 dof 3 value -0.21689570818622472
+#REACTION tStep 1 number 5 dof 1 value -0.001382879520452507
+#REACTION tStep 1 number 5 dof 2 value -0.26542947718436516
+#REACTION tStep 1 number 5 dof 3 value -1.0242034369073293e-17
+#REACTION tStep 1 number 6 dof 1 value 0.5023640660233338
+#REACTION tStep 1 number 6 dof 2 value 0.4282097393838663
+#REACTION tStep 1 number 6 dof 3 value -6.908562222646306e-17
+#REACTION tStep 1 number 7 dof 1 value -0.5207696983272311
+#REACTION tStep 1 number 7 dof 2 value 1.0617447723156177
+#REACTION tStep 1 number 7 dof 3 value -1.7789921910373654e-17
+#REACTION tStep 1 number 8 dof 1 value 0.03188561907726041
+#REACTION tStep 1 number 8 dof 2 value -0.42833895166456143
+#REACTION tStep 1 number 8 dof 3 value -1.0947644252537632e-17
+#REACTION tStep 1 number 9 dof 1 value -0.0888717366060643
+#REACTION tStep 1 number 9 dof 2 value -0.2007493552670201
+#REACTION tStep 1 number 9 dof 3 value 0.18835979293469834
+#REACTION tStep 1 number 10 dof 1 value 0.5746375904869618
+#REACTION tStep 1 number 10 dof 2 value -0.06669579383924018
+#REACTION tStep 1 number 10 dof 3 value 0.3839229863036211
+#REACTION tStep 1 number 11 dof 1 value -0.5335581425691115
+#REACTION tStep 1 number 11 dof 2 value 0.3257106970338371
+#REACTION tStep 1 number 11 dof 3 value 0.44153015093169085
+#REACTION tStep 1 number 12 dof 1 value 0.04174373506175828
+#REACTION tStep 1 number 12 dof 2 value -0.456358589352855
+#REACTION tStep 1 number 12 dof 3 value 0.21689570818622467
+#%END_CHECK%

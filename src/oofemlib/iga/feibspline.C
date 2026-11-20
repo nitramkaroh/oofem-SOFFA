@@ -1033,16 +1033,20 @@ std::array<int, 2> BSpline3dSurfaceInterpolation::giveSpans( const FloatArray &l
 }
 
 
-double BSpline3dSurfaceInterpolation::evalTangents( const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &dersU,
-    FloatMatrix &dersV, std::array<double, 3> &a1, std::array<double, 3> &a2 ) const
+double BSpline3dSurfaceInterpolation::evalTangents( int nder, const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &dersU,
+    FloatMatrix &dersV, std::array<double, 3> &a1, std::array<double, 3> &a2, std::array<std::array<double, 3>, 3> *b ) const
 {
     auto span = this->giveSpans( lcoords, cellgeo );
-    this->dersBasisFuns( 1, lcoords[0], span[0], degree[0], knotVector[0], dersU );
-    this->dersBasisFuns( 1, lcoords[1], span[1], degree[1], knotVector[1], dersV );
+    this->dersBasisFuns( nder, lcoords[0], span[0], degree[0], knotVector[0], dersU );
+    this->dersBasisFuns( nder, lcoords[1], span[1], degree[1], knotVector[1], dersV );
 
-    // X_,xi and X_,eta summed over the control points of the span, u index fastest
+    // X_,xi and X_,eta (and for nder = 2 X_,xixi, X_,etaeta, X_,xieta) summed over the control points of the
+    // span, u index fastest
     a1 = { 0., 0., 0. };
     a2 = { 0., 0., 0. };
+    if ( b ) {
+        *b = { { { 0., 0., 0. }, { 0., 0., 0. }, { 0., 0., 0. } } };
+    }
     int ind = ( span[1] - degree[1] ) * numberOfControlPoints[0] + span[0] - degree[0] + 1;
     for ( int l = 0; l <= degree[1]; l++ ) {
         for ( int k = 0; k <= degree[0]; k++ ) {
@@ -1052,6 +1056,15 @@ double BSpline3dSurfaceInterpolation::evalTangents( const FloatArray &lcoords, c
             for ( int i = 0; i < 3; i++ ) {
                 a1[i] += dNdxi * X[i];
                 a2[i] += dNdeta * X[i];
+            }
+            if ( b && nder >= 2 ) {
+                double d2Ndxi2 = dersU( 2, k ) * dersV( 0, l ), d2Ndeta2 = dersU( 0, k ) * dersV( 2, l );
+                double d2Ndxideta = dersU( 1, k ) * dersV( 1, l );
+                for ( int i = 0; i < 3; i++ ) {
+                    ( *b )[0][i] += d2Ndxi2 * X[i];
+                    ( *b )[1][i] += d2Ndeta2 * X[i];
+                    ( *b )[2][i] += d2Ndxideta * X[i];
+                }
             }
         }
         ind += numberOfControlPoints[0];
@@ -1071,18 +1084,14 @@ double BSpline3dSurfaceInterpolation::evalTangents( const FloatArray &lcoords, c
 }
 
 
-double BSpline3dSurfaceInterpolation::evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+void BSpline3dSurfaceInterpolation::reciprocalTangents( const std::array<double, 3> &a1, const std::array<double, 3> &a2, double J,
+    const FloatArray &lcoords, std::array<double, 3> &d1, std::array<double, 3> &d2 )
 {
-    FloatMatrix dersU, dersV;
-    std::array<double, 3> a1, a2;
-    double J = this->evalTangents( lcoords, cellgeo, dersU, dersV, a1, a2 );
-
     // Reciprocal tangents A^1 = (A_2 x N) / J, A^2 = (N x A_1) / J, N = (A_1 x A_2) / J.
     // These are the same dual basis as the inverse metric gives, without subtracting nearly equal
     // metric terms on skew patches or squaring the tangent lengths and area.
     std::array<double, 3> normal = { ( a1[1] * a2[2] - a1[2] * a2[1] ) / J,
         ( a1[2] * a2[0] - a1[0] * a2[2] ) / J, ( a1[0] * a2[1] - a1[1] * a2[0] ) / J };
-    std::array<double, 3> d1, d2;
     for ( int i = 0; i < 3; i++ ) {
         int j = ( i + 1 ) % 3, k = ( i + 2 ) % 3;
         d1[i] = ( a2[j] * normal[k] - a2[k] * normal[j] ) / J;
@@ -1091,6 +1100,15 @@ double BSpline3dSurfaceInterpolation::evaldNdx( FloatMatrix &answer, const Float
             OOFEM_ERROR( "non-finite reciprocal tangents of a B-spline surface at (xi, eta) = (%g, %g)", lcoords[0], lcoords[1] );
         }
     }
+}
+
+
+double BSpline3dSurfaceInterpolation::evaldNdx( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    FloatMatrix dersU, dersV;
+    std::array<double, 3> a1, a2, d1, d2;
+    double J = this->evalTangents( 1, lcoords, cellgeo, dersU, dersV, a1, a2 );
+    reciprocalTangents( a1, a2, J, lcoords, d1, d2 );
 
     // surface gradient N_,xi A^1 + N_,eta A^2 of the nonzero basis functions, u index fastest
     answer.resize( ( degree[0] + 1 ) * ( degree[1] + 1 ), 3 );
@@ -1110,11 +1128,49 @@ double BSpline3dSurfaceInterpolation::evaldNdx( FloatMatrix &answer, const Float
 }
 
 
+void BSpline3dSurfaceInterpolation::evald2Ndx2( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    if ( degree[0] < 2 || degree[1] < 2 ) {
+        // dersBasisFuns gives derivatives only up to the degree
+        OOFEM_ERROR( "second derivatives of a B-spline surface need degree >= 2 in both directions (degrees %d, %d)", degree[0], degree[1] );
+    }
+    FloatMatrix dersU, dersV;
+    std::array<double, 3> a1, a2, d1, d2;
+    std::array<std::array<double, 3>, 3> b; // X_,xixi, X_,etaeta, X_,xieta
+    double J = this->evalTangents( 2, lcoords, cellgeo, dersU, dersV, a1, a2, &b );
+    reciprocalTangents( a1, a2, J, lcoords, d1, d2 );
+
+    // (N_,ab - X_,ab . grad_s N) A^a x A^b of the nonzero basis functions, u index fastest,
+    // columns xx, yy, zz, yz, xz, xy
+    static const int rows[6] = { 0, 1, 2, 1, 0, 0 }, cols[6] = { 0, 1, 2, 2, 2, 1 };
+    answer.resize( ( degree[0] + 1 ) * ( degree[1] + 1 ), 6 );
+    int cnt = 0;
+    for ( int l = 0; l <= degree[1]; l++ ) {
+        for ( int k = 0; k <= degree[0]; k++ ) {
+            double dNdxi = dersU( 1, k ) * dersV( 0, l ), dNdeta = dersU( 0, k ) * dersV( 1, l );
+            std::array<double, 3> gradN;
+            for ( int i = 0; i < 3; i++ ) {
+                gradN[i] = dNdxi * d1[i] + dNdeta * d2[i];
+            }
+            auto dot = [&gradN]( const std::array<double, 3> &x ) { return x[0] * gradN[0] + x[1] * gradN[1] + x[2] * gradN[2]; };
+            double c11 = dersU( 2, k ) * dersV( 0, l ) - dot( b[0] );
+            double c22 = dersU( 0, k ) * dersV( 2, l ) - dot( b[1] );
+            double c12 = dersU( 1, k ) * dersV( 1, l ) - dot( b[2] );
+            for ( int c = 0; c < 6; c++ ) {
+                int i = rows[c], j = cols[c];
+                answer( cnt, c ) = c11 * d1[i] * d1[j] + c22 * d2[i] * d2[j] + c12 * ( d1[i] * d2[j] + d2[i] * d1[j] );
+            }
+            cnt++;
+        }
+    }
+}
+
+
 double BSpline3dSurfaceInterpolation::evalSurfaceNormal( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
 {
     FloatMatrix dersU, dersV;
     std::array<double, 3> a1, a2;
-    double J = this->evalTangents( lcoords, cellgeo, dersU, dersV, a1, a2 );
+    double J = this->evalTangents( 1, lcoords, cellgeo, dersU, dersV, a1, a2 );
 
     answer = FloatArray{ ( a1[1] * a2[2] - a1[2] * a2[1] ) / J, ( a1[2] * a2[0] - a1[0] * a2[2] ) / J, ( a1[0] * a2[1] - a1[1] * a2[0] ) / J };
     return J;
@@ -1147,7 +1203,7 @@ double BSpline3dSurfaceInterpolation::giveTransformationJacobian( const FloatArr
 {
     FloatMatrix dersU, dersV;
     std::array<double, 3> a1, a2;
-    return this->evalTangents( lcoords, cellgeo, dersU, dersV, a1, a2 );
+    return this->evalTangents( 1, lcoords, cellgeo, dersU, dersV, a1, a2 );
 }
 
 

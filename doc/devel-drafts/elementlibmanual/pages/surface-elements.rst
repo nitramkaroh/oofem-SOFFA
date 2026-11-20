@@ -59,8 +59,8 @@ orientation of the normal.
 
 These elements are only :math:`C^0` continuous and provide no second gradient of the
 deformation, so they reject a material with bending stiffness (:param:`surfacetensionmat2`,
-even with a zero bending modulus); bending is available on the planar and axisymmetric
-IGA surface elements (curves) of degree at least 2.
+even with a zero bending modulus); bending is available on the IGA surface elements (the
+curves and the surface in space) of degree at least 2 with :math:`C^1` continuity.
 
 Planar surface elements
 -----------------------

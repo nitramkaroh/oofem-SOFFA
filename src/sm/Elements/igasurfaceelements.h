@@ -174,9 +174,9 @@ protected:
 
 /**
  * Surface energy on a B-spline surface in space (two parametric directions, control points with three
- * coordinates and the dofs u, v, w), per unit area of the reference surface. Membranes only: the second
- * gradient (bending) is not implemented, so the bending materials are rejected. Large strains only
- * (nlgeo 1); the cross section is a SimpleSurfaceCrossSection with a surface material.
+ * coordinates and the dofs u, v, w), per unit area of the reference surface. Bending materials (second
+ * gradient) need C1 continuity in both directions. Large strains only (nlgeo 1); the cross section is a
+ * SimpleSurfaceCrossSection with a surface material.
  */
 class Bspline3dSurfaceElement : public IGAElement, public Space3dStructuralSurfaceElementEvaluator
 {
@@ -216,6 +216,22 @@ public:
 
     /// Unit normal of the reference surface, X_,xi x X_,eta / |X_,xi x X_,eta|.
     FloatArray giveNormal( GaussPoint *gp ) const override;
+
+    /// IST_CurvatureTensor for the VTK export of IGAElement (bending materials only).
+    bool giveExportPointValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, int ir, TimeStep *tStep ) override
+    {
+        return this->giveCurvatureExportValue( answer, type, gp, tStep );
+    }
+
+    /**
+     * The second gradient (bending) needs C1 continuity in both directions: degree >= 2 and interior knot
+     * multiplicities <= degree - 1.
+     */
+    bool supportsSecondGradient() const override
+    {
+        return this->interpolation.giveInterpolationOrder() >= 2 && this->interpolation.giveMinimalContinuity( 1 ) >= 1 &&
+               this->interpolation.giveMinimalContinuity( 2 ) >= 1;
+    }
 
 protected:
     int giveNsd() override { return 2; }

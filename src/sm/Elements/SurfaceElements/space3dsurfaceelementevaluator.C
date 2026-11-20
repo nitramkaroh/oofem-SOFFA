@@ -45,6 +45,9 @@
 #include "crosssection.h"
 #include "mathfem.h"
 #include "iga/iga.h"
+#include "tensor/tensor1.h"
+#include "tensor/tensor2.h"
+#include "tensor/tensor3.h"
 
 namespace oofem {
 /* 3D Space Elements */
@@ -85,12 +88,73 @@ void Space3dStructuralSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp
     }
 }
 
+void Space3dStructuralSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatrix &answer )
+// Returns the [ 27 x (nno * 3) ] second gradient matrix of the receiver, evaluated at gp.
+{
+    // d2Ndx2 has the columns xx, yy, zz, yz, xz, xy of the tangential Hessian of the basis functions
+    Element *element = this->giveElement();
+    FloatMatrix d2Ndx2;
+    element->giveInterpolation()->evald2Ndx2( d2Ndx2, gp->giveNaturalCoordinates(),
+        FEIIGAElementGeometryWrapper( element, gp->giveIntegrationRule()->giveKnotSpan() ) );
+
+    // v[i][j]: position (1-based) of the component ij in the 9 component order 11, 22, 33, 23, 13, 12, 32, 31, 21
+    static const int v[3][3] = { { 1, 6, 5 }, { 9, 2, 4 }, { 8, 7, 3 } };
+    // c[j][k]: column of d2Ndx2 with the component jk of the symmetric Hessian
+    static const int c[3][3] = { { 0, 5, 4 }, { 5, 1, 3 }, { 4, 3, 2 } };
+
+    int nno = d2Ndx2.giveNumberOfRows();
+    answer.resize( 27, 3 * nno );
+    answer.zero();
+    for ( int a = 0; a < nno; a++ ) {
+        for ( int i = 0; i < 3; i++ ) { // dof (component of x) of node a
+            for ( int j = 0; j < 3; j++ ) {
+                for ( int k = 0; k < 3; k++ ) { // derivative direction: rows 9 k + 1 ... 9 k + 9
+                    answer.at( 9 * k + v[i][j], 3 * a + i + 1 ) = d2Ndx2( a, c[j][k] );
+                }
+            }
+        }
+    }
+}
+
+
 double Space3dStructuralSurfaceElementEvaluator::computeVolumeAround( GaussPoint *gp )
 {
     double determinant = fabs( this->giveElement()->giveInterpolation()->giveTransformationJacobian( gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( this->giveElement(),
             gp->giveIntegrationRule()->giveKnotSpan() ) ) );
     return determinant * gp->giveWeight();
+}
+
+
+bool Space3dStructuralSurfaceElementEvaluator::giveCurvatureExportValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, TimeStep *tStep )
+{
+    if ( type != IST_CurvatureTensor ) {
+        return false;
+    }
+    // only the bending (second gradient) materials have a curvature, and only then G is available
+    if ( !this->hasSecondGradient ) {
+        OOFEM_ERROR( "element %d: the curvature is computed only by the bending surface materials (surfacetensionmat2)",
+            this->giveElement()->giveNumber() );
+    }
+    FloatArray vF, vG;
+    this->computeDeformationGradientVector( vF, gp, tStep );
+    this->computeGradientOfDeformationGradientVector( vG, gp, tStep );
+    FloatArrayF<3> vN( static_cast<IGAElement *>( this->giveElement() )->giveNormal( gp ) );
+    FloatArrayF<9> vF9( vF );
+    FloatArrayF<27> vG27( vG );
+
+    // the current normal and curvature as in the bending material (surfacetensionmat2)
+    Tensor2_3d F( vF9 ), K;
+    Tensor2_3d cofF = F.compute_cofactor();
+    Tensor3_3d G( vG27 );
+    Tensor1_3d N( vN ), n;
+    n( i_3 ) = cofF( i_3, j_3 ) * N( j_3 );
+    n.normalize();
+    K( j_3, k_3 ) = -n( i_3 ) * G( i_3, j_3, k_3 );
+
+    // VTK tensors are written row by row
+    answer = { K( 0, 0 ), K( 0, 1 ), K( 0, 2 ), K( 1, 0 ), K( 1, 1 ), K( 1, 2 ), K( 2, 0 ), K( 2, 1 ), K( 2, 2 ) };
+    return true;
 }
 
 } // end namespace oofem

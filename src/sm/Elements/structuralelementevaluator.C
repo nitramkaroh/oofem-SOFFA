@@ -585,8 +585,8 @@ void StructuralElementEvaluator::setupEvaluator()
         }
         if ( !this->supportsSecondGradient() ) {
             OOFEM_ERROR( "Element %d (%s) does not support the second gradient required by material %d (%s); it is provided by the B-spline "
-                "elements bsplineplanestrainelement, bsplineaxisymelement, bsplineplanestrainsurfaceelement and bsplineaxisymsurfaceelement "
-                "with C1 continuity (degree >= 2, interior knot multiplicities <= degree - 1)",
+                "elements bsplineplanestrainelement, bsplineaxisymelement, bsplineplanestrainsurfaceelement, bsplineaxisymsurfaceelement "
+                "and bspline3dsurfaceelement with C1 continuity (degree >= 2, interior knot multiplicities <= degree - 1)",
                 elem->giveNumber(), elem->giveClassName(), needs->giveNumber(), needs->giveClassName() );
         }
         this->hasSecondGradient = true;
