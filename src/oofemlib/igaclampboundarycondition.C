@@ -147,19 +147,22 @@ void IGAClampBoundaryCondition ::giveSpanCodeNumbers( IntArray &answer, Element 
     // all nodes have the dofs of node 1, u and v first (the IGA surface elements have just these two)
     IntArray mask, nodeDofIDMask;
     elem->giveDofManDofIDMask( 1, nodeDofIDMask );
-    int dofmandof = nodeDofIDMask.giveSize();
+    int nNodeDofs = nodeDofIDMask.giveSize();
 
+    // mask: element node numbers of the nonzero basis functions of the span; node a has the element
+    // code numbers nNodeDofs (a - 1) + 1, + 2, ...
     elem->giveInterpolation()->giveKnotSpanBasisFuncMask( knotSpan, mask );
     answer.resize( 2 * mask.giveSize() );
     for ( int i = 1; i <= mask.giveSize(); i++ ) {
-        answer.at( 2 * i - 1 ) = dofmandof * ( mask.at( i ) - 1 ) + 1;
-        answer.at( 2 * i )     = dofmandof * ( mask.at( i ) - 1 ) + 2;
+        answer.at( 2 * i - 1 ) = nNodeDofs * ( mask.at( i ) - 1 ) + 1;
+        answer.at( 2 * i )     = nNodeDofs * ( mask.at( i ) - 1 ) + 2;
     }
 }
 
 
 void IGAClampBoundaryCondition ::giveSpanLocationArray( IntArray &answer, Element *elem, const IntArray &knotSpan, const UnknownNumberingScheme &s )
 {
+    // element code numbers of u_span mapped to equation numbers through the location array of the element
     IntArray lc, elemLoc;
     giveSpanCodeNumbers( lc, elem, knotSpan );
     elem->giveLocationArray( elemLoc, s );
@@ -172,6 +175,7 @@ void IGAClampBoundaryCondition ::giveSpanLocationArray( IntArray &answer, Elemen
 
 void IGAClampBoundaryCondition ::giveSpanDisplacements( FloatArray &answer, Element *elem, const IntArray &knotSpan, TimeStep *tStep )
 {
+    // the entries of u_span picked from the total displacements of the element
     IntArray lc;
     FloatArray u;
     giveSpanCodeNumbers( lc, elem, knotSpan );
@@ -236,7 +240,7 @@ void IGAClampBoundaryCondition ::assembleVector( FloatArray &answer, TimeStep *t
     giveSpanDisplacements( u, el, this->BcKnotSpan, tStep );
     giveSpanLocationArray( loc, el, this->BcKnotSpan, s );
 
-    // internal forces p c (c . u_span)
+    // internal forces p c (c . u_span), the gradient of the penalty energy p/2 (c . u_span)^2
     FloatArray f = c.dotProduct( u ) * c;
     f.times( this->penalty );
 

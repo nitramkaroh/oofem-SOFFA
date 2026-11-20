@@ -105,8 +105,8 @@ GradientMooneyRivlinCompressibleMaterial::give3dMaterialStiffnessMatrix_dAddF( M
     // The second-order stiffness dA/d(nabla F)
     // Since A = omega * G, the derivative is an isotropic 6th-order tensor scaled by omega.
 
-    FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d Identity3d( indent3d );
+    FloatArrayF<9> vI = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d Identity3d( vI );
 
     Tensor6_3d dA;
 

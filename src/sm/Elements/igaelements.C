@@ -143,6 +143,7 @@ void BsplinePlaneStrainElement ::initializeFrom( InputRecord &ir )
 
 int BsplinePlaneStrainElement ::checkConsistency()
 {
+    // the nodes are the control points of the patch, n_u x n_v of them
     BSplineInterpolation *interpol = static_cast<BSplineInterpolation *>( this->giveInterpolation() );
     if ( giveNumberOfDofManagers() != interpol->giveNumberOfControlPoints( 1 ) * interpol->giveNumberOfControlPoints( 2 ) ) {
         OOFEM_WARNING( "number of control points mismatch" );
@@ -166,6 +167,7 @@ void BsplineAxisymElement ::initializeFrom( InputRecord &ir )
 
 int BsplineAxisymElement ::checkConsistency()
 {
+    // the nodes are the control points of the patch, n_u x n_v of them
     BSplineInterpolation *interpol = static_cast<BSplineInterpolation *>( this->giveInterpolation() );
     if ( giveNumberOfDofManagers() != interpol->giveNumberOfControlPoints( 1 ) * interpol->giveNumberOfControlPoints( 2 ) ) {
         OOFEM_WARNING( "number of control points mismatch" );

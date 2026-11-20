@@ -107,6 +107,8 @@ void IGAElement ::initializeFrom( InputRecord &ir )
         int numberOfIntegrationRules = numberOfKnotSpansU;
         integrationRulesArray.resize( numberOfIntegrationRules );
 
+        // knot span of the rule: zero based index of the last copy of the distinct knot ui in the knot vector
+        // with multiplicities, i.e. the span [U_k, U_k+1) from the knot ui to the knot ui + 1
         knotSpan.at( 1 ) = -1;
         for ( int ui = 1; ui <= numberOfKnotSpansU; ui++ ) {
             double du = knotValuesU->at( ui + 1 ) - knotValuesU->at( ui );
@@ -118,6 +120,7 @@ void IGAElement ::initializeFrom( InputRecord &ir )
 
 
             // remap local subelement gp coordinates into knot span coordinates and update integration weight
+            // (the Gauss points on <-1, 1> mapped linearly onto the span, the weight times du / 2)
             for ( auto &gp : *integrationRulesArray[indx] ) {
                 const FloatArray &gpcoords = gp->giveNaturalCoordinates();
 
@@ -249,6 +252,7 @@ void IGAElement ::initializeFrom( InputRecord &ir )
         int numberOfIntegrationRules = numberOfKnotSpansU;
         ExportIntegrationRulesArray.resize( numberOfIntegrationRules );
 
+        // the same knot spans as the integration rules above
         knotSpan.at( 1 ) = -1;
         for ( int ui = 1; ui <= numberOfKnotSpansU; ui++ ) {
             double du = knotValuesU->at( ui + 1 ) - knotValuesU->at( ui );
@@ -302,18 +306,19 @@ void IGAElement ::initializeFrom( InputRecord &ir )
                 ExportIntegrationRulesArray[indx]->SetUpDummyPointsOnSquare( numExportPoints * numExportPoints, matMode );
 
 
-                // place the points on an equidistant grid in the knot span, u index running fastest
-                int countX   = 0;
-                int countY   = 0;
-                int countTot = 0;
+                // place the points on an equidistant grid in the knot span, u index running fastest:
+                // point ipoint has the grid indices iu (along u) and iv (along v)
+                int iu     = 0;
+                int iv     = 0;
+                int ipoint = 0;
                 for ( auto &gp : *ExportIntegrationRulesArray[indx] ) {
-                    countX              = countTot % ( numExportPoints );
-                    countY              = countTot / numExportPoints;
-                    newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du / ( numExportPoints - 1 ) * ( countX );
-                    newgpcoords.at( 2 ) = knotValuesV->at( vi ) + dv / ( numExportPoints - 1 ) * ( countY );
+                    iu                  = ipoint % ( numExportPoints );
+                    iv                  = ipoint / numExportPoints;
+                    newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du / ( numExportPoints - 1 ) * ( iu );
+                    newgpcoords.at( 2 ) = knotValuesV->at( vi ) + dv / ( numExportPoints - 1 ) * ( iv );
 
                     gp->setNaturalCoordinates( newgpcoords );
-                    countTot++;
+                    ipoint++;
                 }
 
                 indx++;
@@ -396,6 +401,8 @@ void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, Int
     // cells: VTK_LINE (3) between neighbouring points of a span, VTK_QUAD (9) of the n x n grid of a span
     int cell = 1, offset = 0;
     for ( int s = 0; s < numSpans; s++ ) {
+        // one based number of the first point of span s: every span has its own points, so the points on
+        // the boundary between two spans appear twice
         const int first = s * pointsPerSpan + 1;
         if ( nsd == 1 ) {
             for ( int i = 0; i < n - 1; i++ ) {
@@ -409,6 +416,7 @@ void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, Int
         } else {
             for ( int j = 0; j < n - 1; j++ ) {
                 for ( int i = 0; i < n - 1; i++ ) {
+                    // grid cell (i, j), counterclockwise in the parameter plane (u index fastest)
                     const int p    = first + j * n + i;
                     IntArray nodes = { p, p + 1, p + n + 1, p + n };
                     offset += 4;

@@ -201,6 +201,8 @@ public:
      * N_,vv, N_,uv. The knot span is taken from the geometry wrapper when given, otherwise found from lcoords.
      * The control points of the rows are given by giveKnotSpanBasisFuncMask.
      * NURBS and T-splines stop with an error (the rational functions are not implemented).
+     * Needs degree >= 2 in both directions (dersBasisFuns gives derivatives only up to the degree). It is not
+     * checked here; the elements require it through supportsSecondGradient before they use the second gradient.
      */
     virtual void evalSecondDerivatives(FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
 
@@ -235,7 +237,7 @@ protected:
      * @f]
      * Thus column j refers to the global basis function with index span-p+j.
      *
-     * @param n Highest derivative order to compute.
+     * @param n Highest derivative order to compute (at most p).
      * @param u Parametric value.
      * @param span Knot span index (zero based).
      * @param p Degree.

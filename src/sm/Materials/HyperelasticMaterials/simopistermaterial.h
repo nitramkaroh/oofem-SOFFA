@@ -116,7 +116,7 @@ public:
 class GradientSimoPisterMaterial : public SimoPisterMaterial
 {
 protected:
-    /// Stiffness of the gradient term
+    /// Stiffness omega of the gradient term 0.5 omega nabla F : nabla F (keyword omega)
     double omega;
 
 public:
@@ -127,8 +127,11 @@ public:
     const char *giveInputRecordName() const override { return _IFT_GradientSimoPisterMaterial_Name; }
     const char *giveClassName() const override { return "GradientSimoPisterMaterial"; }
 
+    /// A = omega nabla F (27) for F (9) and grad F (27); keeps grad F in the status.
     virtual FloatArrayF<27> giveSecondOrderStressVector_3d( const FloatArrayF<9> &reducedF, const FloatArrayF<27> &reducedG, GaussPoint *gp, TimeStep *tStep ) const override;
+    /// dA/dgradF = omega I (27 x 27).
     virtual FloatMatrixF<27, 27> give3dMaterialStiffnessMatrix_dAddF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const override;
+    /// dA/dF = 0 (27 x 9).
     virtual FloatMatrixF<27, 9> give3dMaterialStiffnessMatrix_dAdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const override;
 
     MaterialStatus *CreateStatus( GaussPoint *gp ) const override;

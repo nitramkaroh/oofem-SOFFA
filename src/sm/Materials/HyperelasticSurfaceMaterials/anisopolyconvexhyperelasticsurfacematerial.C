@@ -63,16 +63,17 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::giveFirstPKSurfaceStressVector
     Tensor2_3d F( vF );
     Tensor2_3d Piso = this->computeMembraneStress( F, giveSurfaceIdentity( normal ), tStep );
 
+    // fibre part: P_fib = eta d|F a|/dF + beta d sqrt(|C a|)/dF with the unit fibre a in the element frame
     Tensor1_3d a = this->computeLocalMaterialDirection( gp, tStep );
-    Tensor2_3d Paniso1, Paniso2, P, Pfull;
+    Tensor2_3d Paniso1, Paniso2, Pfib, Pfull;
     Paniso1( i_3, j_3 ) = this->compute_surface_d_normFa_dF( F, a )( i_3, j_3 );
     Paniso2( i_3, j_3 ) = this->compute_surface_d_SqrtNormCa_dF( F, a )( i_3, j_3 );
 
     double eta_t  = this->giveParameter( this->eta, calm_par_no, tStep );
     double beta_t = this->giveParameter( this->beta, calm_par_no, tStep );
-    P( i_3, j_3 ) = eta_t * Paniso1( i_3, j_3 ) + beta_t * Paniso2( i_3, j_3 );
+    Pfib( i_3, j_3 ) = eta_t * Paniso1( i_3, j_3 ) + beta_t * Paniso2( i_3, j_3 );
 
-    Pfull( i_3, j_3 ) = P( i_3, j_3 ) + Piso( i_3, j_3 );
+    Pfull( i_3, j_3 ) = Pfib( i_3, j_3 ) + Piso( i_3, j_3 );
     this->storeStress( gp, vF, F, Pfull );
     return Pfull.to_voigt_form();
 }
@@ -86,16 +87,17 @@ AnisotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffness
     Tensor2_3d F( vF );
     Tensor4_3d Aiso = this->computeMembraneTangent( F, giveSurfaceIdentity( normal ), tStep );
 
+    // fibre part: eta d2|F a|/dF2 + beta d2 sqrt(|C a|)/dF2
     Tensor1_3d a = this->computeLocalMaterialDirection( gp, tStep );
-    Tensor4_3d Aaniso1, Aaniso2, A, Afull;
+    Tensor4_3d Aaniso1, Aaniso2, Afib, Afull;
     Aaniso1( i_3, j_3, k_3, l_3 ) = this->compute_surface_d2_normFa_dF2( F, a )( i_3, j_3, k_3, l_3 );
     Aaniso2( i_3, j_3, k_3, l_3 ) = this->compute_surface_d2_SqrtNormCa_dF2( F, a )( i_3, j_3, k_3, l_3 );
 
     double eta_t  = this->giveParameter( this->eta, calm_par_no, tStep );
     double beta_t = this->giveParameter( this->beta, calm_par_no, tStep );
-    A( i_3, j_3, k_3, l_3 ) = eta_t * Aaniso1( i_3, j_3, k_3, l_3 ) + beta_t * Aaniso2( i_3, j_3, k_3, l_3 );
+    Afib( i_3, j_3, k_3, l_3 ) = eta_t * Aaniso1( i_3, j_3, k_3, l_3 ) + beta_t * Aaniso2( i_3, j_3, k_3, l_3 );
 
-    Afull( i_3, j_3, k_3, l_3 ) = A( i_3, j_3, k_3, l_3 ) + Aiso( i_3, j_3, k_3, l_3 );
+    Afull( i_3, j_3, k_3, l_3 ) = Afib( i_3, j_3, k_3, l_3 ) + Aiso( i_3, j_3, k_3, l_3 );
     auto answer = Afull.to_voigt_form();
     if ( this->checkTangentTolerance != 0. ) {
         this->checkTangentsByFiniteDifferences( answer, normal, gp, tStep );
@@ -188,7 +190,8 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
         }
     }
 
-    // Global to the frame of the element (first 3 x 3 block of its load rotation matrix); its third axis is the normal
+    // Global to the frame of the element (first 3 x 3 block of its load rotation matrix); its third axis is the normal.
+    // The rows of T are the axes e1, e2, e3 of the element frame, so local = T direction.
     FloatMatrix T;
     if ( !el->computeLoadGToLRotationMtrx( T ) || T.giveNumberOfRows() < 3 || T.giveNumberOfColumns() < 3 ) {
         OOFEM_ERROR( "element %d: the anisotropic material needs a 3D element frame", el->giveNumber() );
@@ -208,7 +211,7 @@ Tensor1_3d AnisotropicPolyconvexHyperelasticSurfaceMaterial::computeLocalMateria
                 el->giveNumber() );
         }
     }
-    const double a1 = local.at( 1 ) / length, a2 = local.at( 2 ) / length;
+    const double a1 = local.at( 1 ) / length, a2 = local.at( 2 ) / length; // the unit fibre is (a1, a2, 0)
     if ( !anisodirGiven && this->meridional ) {
         // rotated by 90 degrees in the element plane: from the parallel to the meridian
         return Tensor1_3d( FloatArrayF<3> { -a2, a1, 0. } );

@@ -72,24 +72,28 @@ void TriangularSurface ::initializeFrom( InputRecord &ir )
     numberOfGaussPoints = 1;
     Structural3DSurfaceElement ::initializeFrom( ir );
 
+    // prestrain 1 requires f0 (9 finite components, global coordinates, Voigt order 11 22 33 23 13 12 32 31 21);
+    // f0 without prestrain 1 is an input error
     IR_GIVE_OPTIONAL_FIELD( ir, this->prestrain, _IFT_TriangularSurface_prestrain );
     if ( !this->prestrain && ir.hasField( _IFT_TriangularSurface_f0 ) ) {
         throw ValueInputException( ir, _IFT_TriangularSurface_f0, "requires prestrain 1" );
     }
     if ( this->prestrain ) {
-        FloatArray F0_temp;
-        IR_GIVE_FIELD( ir, F0_temp, _IFT_TriangularSurface_f0 );
-        if ( F0_temp.giveSize() != 9 ) {
+        FloatArray vF0;
+        IR_GIVE_FIELD( ir, vF0, _IFT_TriangularSurface_f0 );
+        if ( vF0.giveSize() != 9 ) {
             throw ValueInputException( ir, _IFT_TriangularSurface_f0, "must have 9 components" );
         }
-        for ( double component : F0_temp ) {
+        for ( double component : vF0 ) {
             if ( !std::isfinite( component ) ) {
                 throw ValueInputException( ir, _IFT_TriangularSurface_f0, "must have finite components" );
             }
         }
-        this->F0 = FloatArrayF<9>( F0_temp );
+        this->F0 = FloatArrayF<9>( vF0 );
     }
 
+    // normal: the normal of the original configuration (global coordinates), only checked against F0 in
+    // checkConsistency; it needs the prestrain and is stored normalized
     FloatArray normal;
     IR_GIVE_OPTIONAL_FIELD( ir, normal, _IFT_TriangularSurface_normal );
     if ( normal.giveSize() > 0 ) {
@@ -118,6 +122,8 @@ void TriangularSurface ::initializeFrom( InputRecord &ir )
         this->isReferenceNormalGiven = 1;
     }
 
+    // anisodir: the fibre direction for the anisotropic surface material (global coordinates, finite and
+    // nonzero), stored as given; the material takes its part in the element plane and normalizes it
     FloatArray adir;
     IR_GIVE_OPTIONAL_FIELD( ir, adir, _IFT_TriangularSurface_anisodir );
     if ( adir.giveSize() > 0 ) {
@@ -145,15 +151,15 @@ void TriangularSurface::postInitialize()
     Structural3DSurfaceElement::postInitialize();
     if ( this->prestrain ) {
         // f0 is given in global coordinates; the element works in its frame, fixed by the reference geometry:
-        // R F0 R^T, computed once.
-        FloatArray v( this->F0 );
-        FloatMatrix R, Fmat, FRt, RFRt;
+        // R F0 R^T (R = global-to-element rotation, rows e1, e2, e3), computed once.
+        FloatArray vF0( this->F0 );
+        FloatMatrix R, F0g, F0Rt, RF0Rt;
         this->computeMaterialFrame( R );
-        Fmat.beMatrixForm( v );
-        FRt.beProductTOf( Fmat, R );
-        RFRt.beProductOf( R, FRt );
-        v.beVectorForm( RFRt );
-        this->F0frame = FloatArrayF<9>( v );
+        F0g.beMatrixForm( vF0 );
+        F0Rt.beProductTOf( F0g, R );
+        RF0Rt.beProductOf( R, F0Rt );
+        vF0.beVectorForm( RF0Rt );
+        this->F0frame = FloatArrayF<9>( vF0 );
     }
 }
 
@@ -174,10 +180,12 @@ int TriangularSurface::checkConsistency()
     if ( this->isReferenceNormalGiven ) {
         // the given normal must be the one the prestrain implies (up to the sign, which the energy does not see)
         GaussPoint *gp = this->giveDefaultIntegrationRulePtr()->getIntegrationPoint( 0 );
+        // N in the element frame does not depend on F: any F with F e3 = 0 will do, here I_s
         FloatArray vF = { 1., 1., 0., 0., 0., 0., 0., 0., 0. }, vFmat, N;
         Tensor2_3d F0s;
         double J0;
         this->giveMaterialKinematics( vF, gp, vFmat, N, F0s, J0 );
+        // the given (normalized) normal rotated to the element frame, compared with N: |given . N| = 1
         FloatMatrix R;
         FloatArray given( this->referenceNormal );
         this->computeMaterialFrame( R );
@@ -193,15 +201,14 @@ int TriangularSurface::checkConsistency()
 
 FloatArray TriangularSurface::giveNormal( GaussPoint *gp ) const
 {
-    FloatArray e1, e2, e3, help;
+    // the same e3 as in computeGtoLRotationMatrix: e1 = (X2 - X1) / |X2 - X1|, e3 = e1 x x31 normalized
+    FloatArray e1, e2, e3, x31;
     e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
-    help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+    x31.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
 
-    // let us normalize e1'
     e1.normalize();
 
-    // compute e3' : vector product of e1' x help
-    e3.beVectorProductOf( e1, help );
+    e3.beVectorProductOf( e1, x31 );
     e3.normalize();
 
     return e3;
@@ -244,23 +251,23 @@ TriangularSurface ::computeGtoLRotationMatrix()
 //
 // local coordinate (described by vector triplet e1',e2',e3') is defined as follows:
 //
-// e1'    : [N2-N1]    Ni - means i - th node
-// help   : [N3-N1]
-// e3'    : e1' x help
+// e1'    : [N2-N1]    Ni - means i - th node (normalized)
+// x31    : [N3-N1]
+// e3'    : e1' x x31 (normalized; the normal, right-hand rule with the node order)
 // e2'    : e3' x e1'
 {
     if ( GtoLRotationMatrix == NULL ) {
-        FloatArray e1, e2, e3, help;
+        FloatArray e1, e2, e3, x31;
 
-        // compute e1' = [N2-N1]  and  help = [N3-N1]
+        // compute e1' = [N2-N1]  and  x31 = [N3-N1]
         e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
-        help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+        x31.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
 
         // let us normalize e1'
         e1.normalize();
 
-        // compute e3' : vector product of e1' x help
-        e3.beVectorProductOf( e1, help );
+        // compute e3' : vector product of e1' x x31
+        e3.beVectorProductOf( e1, x31 );
         // let us normalize
         e3.normalize();
 
@@ -282,7 +289,7 @@ TriangularSurface ::computeGtoLRotationMatrix()
 
 bool TriangularSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
 // Returns the rotation matrix of the receiver of the size [9,9]
-// r(local) = T * r(global), for each node {u,v,w}(local) = R * {u,v,w}(global)
+// r(local) = T * r(global), for each node {u,v,w}(local) = R * {u,v,w}(global): T = diag(R, R, R)
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -313,7 +320,7 @@ int TriangularSurface::computeLoadGToLRotationMtrx( FloatMatrix &answer )
 int TriangularSurface::giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep )
 {
     if ( type == IST_PrestrainDeformationGradient ) {
-        // the prestrain in the element frame, R F0 R^T (the same as the material gets)
+        // the prestrain in the element frame, R F0 R^T, as giveMaterialKinematics applies it
         Tensor2_3d F0e;
         if ( this->givePrestrainDeformationGradient( F0e, gp ) ) {
             answer = F0e.to_voigt_form();

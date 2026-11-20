@@ -90,22 +90,22 @@ SimpleSurfaceCrossSection::giveRealSurfaceStress_3d( const FloatArrayF<6> &strai
 
 
 FloatArray
-SimpleSurfaceCrossSection::giveFirstPKSurfaceStresses( const FloatArray &fullF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+SimpleSurfaceCrossSection::giveFirstPKSurfaceStresses( const FloatArray &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
     MaterialMode mode = gp->giveMaterialMode();
     if ( mode == _3dMat ) {
-        return this->giveFirstPKSurfaceStress_3d( fullF, normal, gp, tStep );
+        return this->giveFirstPKSurfaceStress_3d( vF, normal, gp, tStep );
     } else {
         OOFEM_ERROR( "unsupported mode" );
     }
 }
 
 FloatArray
-SimpleSurfaceCrossSection::giveSecondOrderSurfaceStresses( const FloatArray &fullF, const FloatArray &fullG, const FloatArray &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
+SimpleSurfaceCrossSection::giveSecondOrderSurfaceStresses( const FloatArray &vF, const FloatArray &vG, const FloatArray &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
     MaterialMode mode = gp->giveMaterialMode();
     if ( mode == _3dMat ) {
-        return this->giveSecondOrderSurfaceStress_3d( fullF, fullG, gradI, normal, gp, tStep );
+        return this->giveSecondOrderSurfaceStress_3d( vF, vG, gradI, normal, gp, tStep );
     } else {
         OOFEM_ERROR( "unsupported mode" );
     }

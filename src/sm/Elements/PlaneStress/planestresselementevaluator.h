@@ -69,6 +69,7 @@ protected:
     void giveDofManDofIDMask(int inode, IntArray &answer) const {
         answer = {D_u, D_v};
     }
+    /// dP/dF of the material in the plane stress mode, 4 x 4 (rows and columns 11, 22, 12, 21 as BH).
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
 }; // end of PlaneStressStructuralElementEvaluator definition
@@ -105,6 +106,7 @@ protected:
     {
         answer = { D_u, D_v };
     }
+    /// dP/dF of the material in the plane strain mode, 5 x 5 (rows and columns 11, 22, 33, 12, 21 as BH).
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
     /// Second gradient matrix, 27 x (2 nno) (full 27 component grad F, see StructuralElementEvaluator).
@@ -144,6 +146,7 @@ protected:
     {
         answer = { D_u, D_v };
     }
+    /// dP/dF of the material in the full 3d mode, 9 x 9 (rows and columns as BH).
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
     // small strains (nlgeo 0) are not implemented; not reached, initializeFrom rejects nlgeo 0

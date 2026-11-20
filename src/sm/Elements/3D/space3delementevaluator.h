@@ -58,12 +58,14 @@ protected:
      * In case of IGAElements, B is assumed to contain only contribution from nonzero interpolation functions
      */
     void computeBMatrixAt(FloatMatrix &answer, GaussPoint *gp) override;
+    /// Displacement gradient matrix for nlgeo 1, 9 x (3 nno): rows 11, 22, 33, 23, 13, 12, 32, 31, 21 (H_ij = du_i/dX_j).
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
     double computeVolumeAround(GaussPoint *gp) override;
     void computeStressVector(FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep) override;
     void computeConstitutiveMatrixAt(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override;
 
+    /// dP/dF of the material in the 3d mode, 9 x 9 (rows and columns as BH).
     void computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep) override;
 
     void giveDofManDofIDMask(int inode, IntArray &answer) const {

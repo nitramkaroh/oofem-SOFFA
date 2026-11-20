@@ -344,6 +344,9 @@ void EffectiveTangentAssembler :: assembleFromActiveBC(SparseMtrx &k, ActiveBoun
 
 //////////////////////////////
 // for arc-length method
+// Internal forces of the elements whose material has an arc-length parameter (the material of the first
+// integration point decides); no contribution of the other elements. Used by StaticStructural::updateArcLengthInternalForces
+// while these materials return the controlled parameter alone.
 void ArcLengthInternalForceAssembler ::vectorFromElement( FloatArray &vec, Element &element, TimeStep *tStep, ValueModeType mode ) const
 {
     // The caller reuses vec between elements, including those with no material load parameter.

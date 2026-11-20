@@ -170,12 +170,12 @@ protected:
     virtual void computeStressVector(FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep) = 0;
     
     /**
-     * Computes the first Piola-Kirchhoff stress tensor on Voigt format. This method will
-     * be called if nlGeo = 1 and mode = TL. This method computes the deformation gradient F and passes
-     * it on to the crossection which then asks for the stress from the material.
+     * Computes the first Piola-Kirchhoff stress tensor on Voigt format, used for nlgeo 1 (total Lagrangian).
+     * This method computes the deformation gradient F and passes it on to the cross section which then asks
+     * for the stress from the material.
      * @note P is related to S through F*S.
      *
-     * @param answer Computed stress vector in Voigt form.
+     * @param answer Computed stress vector in Voigt form (a material may give all 9 components, see giveInternalForcesVector).
      * @param gp Gauss point at which the stress is evaluated.
      * @param tStep Time step.
      */
@@ -221,8 +221,10 @@ protected:
     void computeStrainVector(FloatArray &answer, GaussPoint *gp, TimeStep *tStep, FloatArray &u);
 
     /**
-     * Computes the deformation gradient in Voigt form at integration point ip and at time
-     * step tStep. Computes the displacement gradient and adds an identitiy tensor.
+     * Computes the deformation gradient in Voigt form at the integration point gp and at time
+     * step tStep: the displacement gradient H = BH u plus the identity tensor, in the reduced form of the
+     * material mode (3d: 11, 22, 33, 23, 13, 12, 32, 31, 21; plane strain: 11, 22, 33, 12, 21;
+     * plane stress: 11, 22, 12, 21; 1d: 11).
      *
      * @param answer Deformation gradient vector
      * @param gp Gauss point.
@@ -270,6 +272,7 @@ protected:
     friend void drawIGAPatchDeformedGeometry(Element *elem, StructuralElementEvaluator *se, oofegGraphicContext &gc, TimeStep *tStep, UnknownType);
 #endif
 public:
+    /// Reads nlgeo: 0 small strains (default), 1 first Piola-Kirchhoff (total Lagrangian); other values are rejected.
     virtual void initializeFrom( InputRecord &ir );
 
     /**

@@ -75,6 +75,7 @@ void LTRSpace ::initializeFrom( InputRecord &ir )
 {
     Structural3DElement ::initializeFrom( ir );
 
+    // optional prestrain: the material then works with F F0 (see NLStructuralElement::computeFirstPKStressVector)
     IR_GIVE_OPTIONAL_FIELD( ir, this->prestrain, _IFT_LTRSpace_prestrain );
     if ( this->prestrain ) {
         FloatArray F0_temp;
@@ -271,6 +272,7 @@ void LTRSpace :: HuertaErrorEstimatorI_computeNmatrixAt(GaussPoint *gp, FloatMat
 
 bool LTRSpace::givePrestrainDeformationGradient( Tensor2_3d &answer, GaussPoint *gp )
 {
+    // one F0 for the whole element, in global coordinates (the frame of F for this element)
     if ( !this->prestrain ) {
         return false;
     }

@@ -49,7 +49,8 @@ class FEI1dLin;
  *
  * The frame is the tangent e1 = (N2 - N1) / |N2 - N1| and the in-plane normal e2 = (-e1_y, e1_x), to the left of
  * the direction N1 -> N2 (the IGA curves use the normal to the right); the unknowns D_u, D_v of each node are
- * rotated to (u_t, u_n). BH is 9 x 4 with the hoop stretch 1 + u_R / R (see AxisymSurfaceElement),
+ * rotated to (u_t, u_n). The in-plane normal is the third axis of the material frame (see
+ * Structural2DSurfaceElement). BH is 9 x 4 with the hoop stretch 1 + u_R / R (see AxisymSurfaceElement),
  * 2 Gauss points by default (nip). No element specific input.
  */
 class AxiLineSurface : public AxisymSurfaceElement
@@ -76,16 +77,22 @@ public:
     const char *giveInputRecordName() const override { return _IFT_AxiLineSurface_Name; }
     const char *giveClassName() const override { return "AxiLineSurface"; }
 
+    /// In-plane normal (-e1_y, e1_x, 0) in global coordinates.
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
+    /// Vertex list geometry with the nodal coordinates in the element frame (see computeLocalNodalCoordinates).
     FEICellGeometry *giveCellGeometryWrapper() override;
+    /// Nodal coordinates rotated to the element frame, lxy[i] = R X_i (2 components, no translation).
     void computeLocalNodalCoordinates( std::vector<FloatArray> &lxy );
 
     int computeNumberOfDofs() override { return 4; }
     int computeNumberOfGlobalDofs() override { return 4; }
 
+    /// The cached 2 x 2 rotation R (rows e1 and the in-plane normal), computed on the first call.
     const FloatMatrix *computeGtoLRotationMatrix();
+    /// Rotation of the element unknowns, 4 x 4 block diagonal with R: (u_t, u_n) = R (u, v) in each node.
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override;
+    /// R itself (2 x 2): rotates the pointwise components of a body load, and gives the material frame.
     int computeLoadGToLRotationMtrx( FloatMatrix &answer ) override;
 
 protected:

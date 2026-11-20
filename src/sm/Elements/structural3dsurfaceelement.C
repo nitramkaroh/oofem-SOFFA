@@ -63,18 +63,18 @@ void Structural3DSurfaceElement ::computeBmatrixAt( GaussPoint *gp, FloatMatrix 
 // evaluated at gp: rows 1, 2, 6 = (epsilon_x, epsilon_y, gamma_xy) for r = ( u1, v1, w1, u2, v2, w2, ... );
 // the other three rows are zero.
 {
-    FloatMatrix dnx;
+    FloatMatrix dNdx;
     FEInterpolation *interp = this->giveInterpolation();
-    interp->evaldNdx( dnx, gp->giveNaturalCoordinates(), *this->giveCellGeometryWrapper() ); // nno x 2
+    interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(), *this->giveCellGeometryWrapper() ); // nno x 2
 
-    answer.resize( 6, dnx.giveNumberOfRows() * 3 );
+    answer.resize( 6, dNdx.giveNumberOfRows() * 3 );
     answer.zero();
 
-    for ( int i = 1; i <= dnx.giveNumberOfRows(); i++ ) {
-        answer.at( 1, 3 * i - 2 ) = dnx.at( i, 1 );
-        answer.at( 2, 3 * i - 1 ) = dnx.at( i, 2 );
-        answer.at( 6, 3 * i - 2 ) = dnx.at( i, 2 );
-        answer.at( 6, 3 * i - 1 ) = dnx.at( i, 1 );
+    for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
+        answer.at( 1, 3 * i - 2 ) = dNdx.at( i, 1 );
+        answer.at( 2, 3 * i - 1 ) = dNdx.at( i, 2 );
+        answer.at( 6, 3 * i - 2 ) = dNdx.at( i, 2 );
+        answer.at( 6, 3 * i - 1 ) = dNdx.at( i, 1 );
     }
 }
 
@@ -87,16 +87,16 @@ void Structural3DSurfaceElement ::computeBHmatrixAt( GaussPoint *gp, FloatMatrix
     FloatMatrix dNdx;
     FEInterpolation *interp = this->giveInterpolation();
     interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(), *this->giveCellGeometryWrapper() ); // nno x 2
-    answer.resize( 9, dNdx.giveNumberOfRows() * 3 );
+    answer.resize( 9, dNdx.giveNumberOfRows() * 3 ); // zero-filled
 
     for ( int i = 1; i <= dNdx.giveNumberOfRows(); i++ ) {
-        answer.at( 1, 3 * i - 2 ) = dNdx.at( i, 1 ); // du/dx - 1
-        answer.at( 2, 3 * i - 1 ) = dNdx.at( i, 2 ); // dv/dy - 2
+        answer.at( 1, 3 * i - 2 ) = dNdx.at( i, 1 ); // row 1 (11): du/dx
+        answer.at( 2, 3 * i - 1 ) = dNdx.at( i, 2 ); // row 2 (22): dv/dy
 
-        answer.at( 6, 3 * i - 2 ) = dNdx.at( i, 2 ); // du/dy - 6
-        answer.at( 7, 3 * i - 0 ) = dNdx.at( i, 2 ); // dw/dy - 7
-        answer.at( 8, 3 * i - 0 ) = dNdx.at( i, 1 ); // dw/dx - 8
-        answer.at( 9, 3 * i - 1 ) = dNdx.at( i, 1 ); // dv/dx - 9
+        answer.at( 6, 3 * i - 2 ) = dNdx.at( i, 2 ); // row 6 (12): du/dy
+        answer.at( 7, 3 * i - 0 ) = dNdx.at( i, 2 ); // row 7 (32): dw/dy
+        answer.at( 8, 3 * i - 0 ) = dNdx.at( i, 1 ); // row 8 (31): dw/dx
+        answer.at( 9, 3 * i - 1 ) = dNdx.at( i, 1 ); // row 9 (21): dv/dx
     }
 }
 

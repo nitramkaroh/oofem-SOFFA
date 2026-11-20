@@ -50,7 +50,8 @@
 
 namespace oofem {
 /**
- * Implementation of sparse matrix stored using Eigen library.
+ * Eigen's SimplicialLDLT (P A P^T = L D L^T with a fill-reducing permutation P) with access to the
+ * diagonal D, whose signs give the inertia of the symmetric matrix A.
  */
 template <typename _MatrixType, int _UpLo, typename _Ordering>
 // template <typename _MatrixType>
@@ -66,25 +67,34 @@ public:
     SimplicialLDLTderived() :
         Base() {}
 
-    /** Constructs and performs the LLT factorization of \a matrix */
+    /** Constructs and performs the LDL^T factorization of \a matrix */
     explicit SimplicialLDLTderived( const MatrixType &matrix ) :
         Base( matrix ) {}
 
-    bool updateD( double &minEig, const bool update, int &numNegEigs )
+    /**
+     * Inspects the diagonal D of the factorization. By Sylvester's law of inertia the number of its
+     * negative entries is the number of negative eigenvalues of the matrix.
+     * @param minPivot Smallest entry of D (a pivot: only its sign means the same as for an eigenvalue).
+     * @param update If true, the negative entries of D are replaced by their absolute values (used by
+     * the Cholesky bifurcation update of EigenSolverStability).
+     * @param numNegEigs Number of negative entries of D.
+     * @return True if D has a negative entry, i.e. the matrix is not positive semidefinite.
+     */
+    bool updateD( double &minPivot, const bool update, int &numNegEigs )
     {
         numNegEigs = 0;
-        bool answ  = false;
+        bool hasNegative = false;
         eigen_assert( this->m_factorizationIsOk && "Simplicial LDLT not factorized" );
-        minEig = this->m_diag.coeffRef( 0 );
+        minPivot = this->m_diag.coeffRef( 0 );
         for ( auto &Di : this->m_diag ) {
-            if ( Di < minEig ) minEig = Di;
+            if ( Di < minPivot ) minPivot = Di;
             if ( Di < 0 ) {
                 if ( update ) Di *= ( -1. );
-                answ = true;
+                hasNegative = true;
                 numNegEigs++;
             };
         };
-        return answ;
+        return hasNegative;
     }
 };
 
@@ -92,6 +102,7 @@ template <typename _MatrixType, int _UpLo = Eigen ::Lower, typename _Ordering = 
 class SimplicialLDLTderived;
 
 
+/// Factorizations of EigenMtrx (the index into its cache of factorizations).
 enum FactorizationType {
     FT_LLT,
     FT_LU,
@@ -99,17 +110,27 @@ enum FactorizationType {
     FT_LDLT
 };
 
+/**
+ * Sparse matrix stored with the Eigen library (Eigen::SparseMatrix<double>, type SMT_EigenMtrx).
+ * assemble only collects (row, column, value) triplets, skipping zero entries off the diagonal; the
+ * compressed matrix is built from them on demand (createMatrixFromTriplets, giveMatrix) whenever the
+ * version of the matrix has changed. The factorizations (LLT, LU, QR, LDL^T) are cached and recomputed
+ * after a change of the version. getBlock, the static condensations and removeRowsAndColumns take
+ * 1-based equation numbers.
+ */
 class OOFEM_EXPORT EigenMtrx : public SparseMtrx
 {
-    
+
 
 protected:
     Eigen::SparseMatrix<double> EigMat;
 
+    /// Whether each FactorizationType is computed for the version versionUpdate.
     std::vector<bool> areFactorized = { false, false, false, false };
     int versionUpdate;
 
     std::vector<Eigen::Triplet<double> > triplets; // Allocate vector of triplets
+    /// Version of the matrix from which EigMat was last built.
     int BuiltFromTripletsAtVersion = 0;
 
 
@@ -158,11 +179,13 @@ public:
     SparseMtrxType giveType() const override { return SMT_EigenMtrx; }
     bool isAsymmetric() const override { return true; }
 
+    /// Returns the Eigen matrix, built from the triplets first if the matrix has changed.
     Eigen::SparseMatrix<double>& giveMatrix();
 
     //template <typename Derived>
     //std::shared_ptr<Eigen::SparseSolverBase<Derived> > giveFactorization( FactorizationType factorizationType );
 
+    /// Returns the requested factorization, computed first if it does not belong to the current version.
     template <typename Derived>
     Eigen::SparseSolverBase<Derived>& giveFactorization( FactorizationType Factorization );
 
@@ -174,27 +197,41 @@ public:
 
     //std::shared_ptr<SimplicialLDLTderived<Eigen::SparseMatrix<double> > > giveLDLTFactorization();
     //    SimplicialLDLTderived<Eigen::SparseMatrix<double> >& EigenMtrx::giveLDLTFactorization();
+    /// Returns the LDL^T factorization (with access to D), computed first if needed.
     SimplicialLDLTderived<Eigen::SparseMatrix<double> >& giveLDLTFactorization();
 
+    /// Computes the given factorization of the current matrix and marks it valid for the current version.
     void computeFactorization( FactorizationType factorizationType );
-    
+
+    /// Returns true if the given factorization belongs to the current version of the matrix.
     bool isFactorized( FactorizationType factorizationType );
 
     void times( const FloatArray &x, FloatArray &answer ) const override;
 
+    /// Builds the compressed Eigen matrix from the triplets if the matrix has changed since the last build.
     void createMatrixFromTriplets();
 
     void printYourself() const override;
 
+    /// Writes the matrix in Eigen's text format to a file.
     void printToFile( const std::string &filename );
 
     ///////////
     //void getBlock( int i, int j, int p, int q, EigenMtrx &BlockMatrix );
+    /// Returns the block of p rows and q columns starting at row i, column j (taken from the stored Eigen matrix as it is).
     std::unique_ptr<EigenMtrx> getBlock( int i, int j, int p, int q );
+    /**
+     * Static condensation of the equations i, ..., n (block P) out of the matrix:
+     * returns the Schur complement K_UU - K_UP K_PP^-1 K_PU of the equations 1, ..., i-1
+     * (K_PP factorized by LDL^T, so it should be symmetric and nonsingular).
+     */
     std::unique_ptr<EigenMtrx> doStaticCondensation( int i );
+    /// The same Schur complement as doStaticCondensation (K_PP factorized by LU), stored in this matrix.
     void doStaticCondensationOwn( int i);
+    /// Returns the block K_UU of the equations 1, ..., i-1 only, without condensation.
     std::unique_ptr<EigenMtrx> doStaticCondensationLagrange( int i );
 
+    /// Returns the matrix without the rows and columns of the given equation numbers.
     std::unique_ptr<EigenMtrx> removeRowsAndColumns( const IntArray &indsToDelete );
     ///////////
 };

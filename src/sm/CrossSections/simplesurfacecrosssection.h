@@ -50,25 +50,31 @@ namespace oofem {
  * surface identity (27) and the unit reference normal to the surface material (HyperElasticSurfaceMaterial, see
  * there for the frame and the component order) and returns its stresses and tangents. Only the 3D material mode
  * is supported. Input as SimpleCrossSection; the thickness is not used by the surface elements.
+ * The ...Stresses functions check the material mode of the Gauss point and call the ..._3d ones, which call the
+ * material; the argument normal is always the unit reference normal N in the frame of F.
  */
 class OOFEM_EXPORT SimpleSurfaceCrossSection : public SimpleCrossSection
 {
 public:
     SimpleSurfaceCrossSection( int n, Domain *d ) : SimpleCrossSection( n, d ){};
 
+    /// A material given in the cross section has to be a HyperElasticSurfaceMaterial.
     int checkConsistency() override;
     /// Checked surface material access, also for cross sections which take the material from the element.
     HyperElasticSurfaceMaterial *giveSurfaceMaterial( GaussPoint *gp ) const;
 
     /// Small strains: stress (6) for the strain (6).
     FloatArray giveRealSurfaceStresses( const FloatArray &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    /// Small strains: stress (6) for the strain (6), from the material.
     FloatArrayF<6> giveRealSurfaceStress_3d( const FloatArrayF<6> &strain, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
     /// First Piola-Kirchhoff stress (9) for F (9).
     FloatArray giveFirstPKSurfaceStresses( const FloatArray &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
-    /// Second order stress (27) conjugate to grad F.
+    /// Second order stress (27) conjugate to grad F, for F (9), grad F (27) and the gradient of the reference surface identity (27).
     FloatArray giveSecondOrderSurfaceStresses( const FloatArray &vF, const FloatArray &vG, const FloatArray &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
 
+    /// First Piola-Kirchhoff stress (9) for F (9), from the material.
     FloatArrayF<9> giveFirstPKSurfaceStress_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
+    /// Second order stress (27), from the material.
     FloatArrayF<27> giveSecondOrderSurfaceStress_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vG, const FloatArrayF<27> &gradI, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const;
 
     /// Small strains: stiffness (6 x 6), not implemented by the current surface materials.

@@ -160,7 +160,8 @@ StaticStructural :: initializeFrom(InputRecord &ir)
 
 
     //////////////
-    // If load level guess is provided
+    // If load level guess is provided: the starting load level (ReachedLambda of the arc-length methods,
+    // the multiplier of the controlled material parameter for matcalm)
     double loadLevelTemp = this->loadLevel;
     IR_GIVE_OPTIONAL_FIELD( ir, loadLevelTemp, _IFT_StaticStructural_loadLevelGuess );
     this->loadLevel = loadLevelTemp;
@@ -240,7 +241,7 @@ void StaticStructural :: solveYourselfAt(TimeStep *tStep)
 
     this->field->advanceSolution(tStep);
     this->field->initialize(VM_Total, tStep, this->solution, EModelDefaultEquationNumbering() );
-    //
+    // solution at the start of the step, restored by restartYourself when the step is repeated
     this->solution_old = this->solution;
     //
     if ( !this->stiffnessMatrix ) {
@@ -359,6 +360,8 @@ void StaticStructural :: solveYourselfAt(TimeStep *tStep)
     }
     tStep->numberOfIterations = currentIterations;
     tStep->convergedReason = status;
+    // A failed step: with a time step reduction strategy, EngngModel::solveYourself catches the exception,
+    // shortens the step, calls restartYourself and repeats it; otherwise the analysis stops.
     if (status != CR_CONVERGED) {
         if ( this->timeStepController->giveCurrentMetaStep()->giveTimeStepReductionStrategy()->giveReductionFlag() ) {
             throw ConvergenceException("Nonlinear solver failed to converge at step " + std::to_string(tStep->giveNumber()));
@@ -381,6 +384,7 @@ void StaticStructural :: terminate(TimeStep *tStep)
 }
 
 
+// Back to the solution at the start of the step (solution_old), before the step is repeated.
 void StaticStructural :: restartYourself(TimeStep *tStep)
 {
     this->solution = this->solution_old;
@@ -391,7 +395,8 @@ void StaticStructural :: restartYourself(TimeStep *tStep)
 double StaticStructural :: giveUnknownComponent(ValueModeType mode, TimeStep *tStep, Domain *d, Dof *dof)
 {
     if (mode == VM_Residual) {
-        // evaluate the residual of momentum balance for specific unknown
+        // evaluate the residual of momentum balance for specific unknown:
+        // scale * referenceForces + externalForces - internalForces, scale = loadLevel (1 for matcalm)
         int eq = dof->__giveEquationNumber();
         if (eq && internalForces.isNotEmpty()) {
             double ans = -internalForces.at(eq);
@@ -453,6 +458,10 @@ void StaticStructural :: updateComponent(TimeStep *tStep, NumericalCmpn cmpn, Do
 }
 
 ////////////////////////
+// Internal forces of the controlled material parameter alone, for MaterialCylindricalALM: the materials with
+// an arc-length parameter are switched to that parameter at its input value (their other parameters zero), the
+// elements of these materials are assembled, and the materials are switched back. The temporary material
+// states are overwritten by this evaluation, until the next assembly of the full internal forces (InternalRhs).
 void StaticStructural::updateArcLengthInternalForces(FloatArray& answer, TimeStep* tStep, NumericalCmpn cmpn, Domain* d) {
     this->setCALMmaterial( false ); // assemble only the lambda-dependent term
 
@@ -469,6 +478,8 @@ void StaticStructural::updateArcLengthInternalForces(FloatArray& answer, TimeSte
     this->setCALMmaterial( true ); // all internal forces are assembled
 }
 
+// Switches every material with an arc-length parameter between all its parameters (returnAll true,
+// the controlled one multiplied by the load level) and the controlled parameter alone (false).
 void StaticStructural::setCALMmaterial( bool returnAll )
 {
     auto &matList = this->giveDomain( 1 )->giveMaterials();
@@ -491,6 +502,7 @@ StaticStructural :: computeExternalLoadReactionContribution(FloatArray &reaction
       reactions.zero();
       this->assembleVector( reactions, tStep, ReferenceForceAssembler(), VM_Total,
                             EModelDefaultPrescribedEquationNumbering(), this->giveDomain(di) );
+      // the reference load enters with the same factor as in the residual (loadLevel, 1 for matcalm)
       reactions.times(nMethod->giveReferenceLoadScale(loadLevel));
       this->assembleVector( reactions, tStep, ExternalForceAssembler(), VM_Total,
                             EModelDefaultPrescribedEquationNumbering(), this->giveDomain(di) );

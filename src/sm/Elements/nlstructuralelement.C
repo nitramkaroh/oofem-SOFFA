@@ -129,7 +129,8 @@ NLStructuralElement::computeFirstPKStressVector(FloatArray &answer, GaussPoint *
     this->computeDeformationGradientVector(vF, gp, tStep);
 
     // Prestrain (3d only, elements that have one): the material gets F F0 and P is mapped back,
-    // P F0^T / det F0. Without prestrain the material gets F and its P is used as it is.
+    // P F0^T / det F0 (the derivative of W(F F0) / det F0, the energy per unit volume of the mesh).
+    // Without prestrain the material gets F and its P is used as it is.
     Tensor2_3d F0;
     if ( this->giveMaterialMode() == _3dMat && this->givePrestrainDeformationGradient( F0, gp ) ) {
         FloatArray answerTmp = cs->giveFirstPKStresses( applyPrestrain( vF, F0 ), gp, tStep );
@@ -142,7 +143,8 @@ NLStructuralElement::computeFirstPKStressVector(FloatArray &answer, GaussPoint *
     }
 
     // update status, also without prestrain: some materials (e.g. LargeStrainMasterMaterial) do not store
-    // F and P themselves, but read the temporary F in their tangent
+    // F and P themselves, but read the temporary F in their tangent. With prestrain this replaces F F0 by the
+    // kinematic F, which Structural3DElement::computeConstitutiveMatrix_dPdF_At multiplies by F0 again.
     if ( this->giveMaterialMode() == _3dMat ) { // This should be changed
         auto mat                         = dynamic_cast<StructuralMaterial *>( cs->giveMaterial( gp ) );
         StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
@@ -558,6 +560,7 @@ NLStructuralElement::checkConsistency()
 
 FloatArray NLStructuralElement::applyPrestrain( const FloatArray &vF, const Tensor2_3d &F0 )
 {
+    // Fmod_ij = F_ik F0_kj
     FloatArrayF<9> vF2( vF );
     Tensor2_3d Fmod, Fcurrent( vF2 );
     Fmod( i_3, j_3 ) = Fcurrent( i_3, k_3 ) * F0( k_3, j_3 );
@@ -586,11 +589,13 @@ double NLStructuralElement::giveElementMaximumLineSearchStep( FloatArray &elemen
             Tensor2_3d Fls_T( vFls9 );
             auto [J_ls, cofF_ls] = Fls_T.compute_determinant_and_cofactor();
 
-            // solve the quadratic equation
+            // det(F + alpha H) = det F + alpha cof(F):H + alpha^2 cof(H):F + alpha^3 det H with H = Fls_T;
+            // solve the quadratic equation, with the cubic term det H taken into the linear coefficient
             c = J;
             b = J_ls + cofF( i_3, j_3 ) * Fls_T( i_3, j_3 );
             a = cofF_ls( i_3, j_3 ) * F( i_3, j_3 );
 
+            // roots: of two positive ones the smaller (the first zero for alpha > 0), otherwise the larger one
             Dsc = b * b - 4 * a * c;
             if ( Dsc > 0 ) {
                 alpha_1 = ( -b + sqrt( Dsc )) / 2. / a;

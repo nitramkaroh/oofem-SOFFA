@@ -69,15 +69,14 @@ FEInterpolation *TriangularSurfaceQuadratic ::giveInterpolation() const { return
 
 FloatArray TriangularSurfaceQuadratic::giveNormal( GaussPoint *gp ) const
 {
-    FloatArray e1, e2, e3, help;
+    // the same e3 as in computeGtoLRotationMatrix: e1 = (X2 - X1) / |X2 - X1|, e3 = e1 x x31 normalized
+    FloatArray e1, e2, e3, x31;
     e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
-    help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+    x31.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
 
-    // let us normalize e1'
     e1.normalize();
 
-    // compute e3' : vector product of e1' x help
-    e3.beVectorProductOf( e1, help );
+    e3.beVectorProductOf( e1, x31 );
     e3.normalize();
 
     return e3;
@@ -120,23 +119,23 @@ TriangularSurfaceQuadratic ::computeGtoLRotationMatrix()
 //
 // local coordinate (described by vector triplet e1',e2',e3') is defined as follows:
 //
-// e1'    : [N2-N1]    Ni - means i - th node
-// help   : [N3-N1]
-// e3'    : e1' x help
+// e1'    : [N2-N1]    Ni - means i - th node (normalized)
+// x31    : [N3-N1]
+// e3'    : e1' x x31 (normalized; the normal, right-hand rule with the node order)
 // e2'    : e3' x e1'
 {
     if ( GtoLRotationMatrix == NULL ) {
-        FloatArray e1, e2, e3, help;
+        FloatArray e1, e2, e3, x31;
 
-        // compute e1' = [N2-N1]  and  help = [N3-N1]
+        // compute e1' = [N2-N1]  and  x31 = [N3-N1]
         e1.beDifferenceOf( this->giveNode( 2 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
-        help.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
+        x31.beDifferenceOf( this->giveNode( 3 )->giveCoordinates(), this->giveNode( 1 )->giveCoordinates() );
 
         // let us normalize e1'
         e1.normalize();
 
-        // compute e3' : vector product of e1' x help
-        e3.beVectorProductOf( e1, help );
+        // compute e3' : vector product of e1' x x31
+        e3.beVectorProductOf( e1, x31 );
         // let us normalize
         e3.normalize();
 
@@ -159,7 +158,7 @@ TriangularSurfaceQuadratic ::computeGtoLRotationMatrix()
 
 bool TriangularSurfaceQuadratic ::computeGtoLRotationMatrix( FloatMatrix &answer )
 // Returns the rotation matrix of the receiver of the size [18,18]
-// r(local) = T * r(global), for each node {u,v,w}(local) = R * {u,v,w}(global)
+// r(local) = T * r(global), for each node {u,v,w}(local) = R * {u,v,w}(global): T = diag(R, ..., R), 6 blocks
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {

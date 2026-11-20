@@ -68,11 +68,12 @@ void Space2dStructuralSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp
     interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
 
-    int nRows = dNdx.giveNumberOfRows();
-    answer.resize( 9, nRows * 2 );
+    // one row of dNdx per nonzero basis function of the span; columns u, v of each control point
+    int nno = dNdx.giveNumberOfRows();
+    answer.resize( 9, nno * 2 );
     answer.zero();
 
-    for ( int i = 1; i <= nRows; i++ ) {
+    for ( int i = 1; i <= nno; i++ ) {
         answer.at( 1, 2 * i - 1 ) = dNdx.at( i, 1 ); // du/dx -1
         answer.at( 2, 2 * i - 0 ) = dNdx.at( i, 2 ); // dv/dy -2
         answer.at( 6, 2 * i - 1 ) = dNdx.at( i, 2 ); // du/dy -6
@@ -91,11 +92,13 @@ void Space2dStructuralSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp,
     interp->evald2Ndx2( d2Ndx2, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
 
-    int nRows = d2Ndx2.giveNumberOfRows();
-    answer.resize( 27, nRows * 2 );
+    // row 9 (k - 1) + v(i, j) holds d^2 x_i / dX_j dX_k; nothing depends on z, so rows 19-27 (k = z) and the
+    // components with i or j = z stay zero
+    int nno = d2Ndx2.giveNumberOfRows();
+    answer.resize( 27, nno * 2 );
     answer.zero();
 
-    for ( int i = 1; i <= nRows; i++ ) {
+    for ( int i = 1; i <= nno; i++ ) {
         // derivative with respect to x (rows 1-9)
         answer.at( 1, 2 * i - 1 ) = d2Ndx2.at( i, 1 ); // d2u/dxdx
         answer.at( 2, 2 * i - 0 ) = d2Ndx2.at( i, 3 ); // d2v/dydx
@@ -113,6 +116,7 @@ void Space2dStructuralSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp,
 
 double Space2dStructuralSurfaceElementEvaluator ::computeVolumeAround( GaussPoint *gp )
 {
+    // dL = |X_,xi| dxi; the Gauss weight already contains the length of the knot span in xi
     double determinant, weight, volume;
     determinant = fabs( this->giveElement()->giveInterpolation()->giveTransformationJacobian( gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( this->giveElement(),
@@ -127,7 +131,9 @@ double Space2dStructuralSurfaceElementEvaluator ::computeVolumeAround( GaussPoin
 void Space2dStructuralSurfaceElementEvaluator::computeCurvatureAt( FloatArray &answer, TimeStep *tStep, const FloatArray &lcoords, int RuleIndex )
 {
     double xiAns = lcoords.at( 1 );
-    // linear interpolation of the values at the Gauss points
+    // Linear interpolation of the values at the Gauss points of the rule (they are ordered by xi): between the
+    // last Gauss point at or before xiAns (L) and the next one (R); before the first or after the last Gauss
+    // point the line through the two nearest ones is extrapolated.
     FloatArray KvecR, KvecL;
     double xiR, xiL;
 
@@ -165,6 +171,7 @@ void Space2dStructuralSurfaceElementEvaluator::computeCurvatureAt( FloatArray &a
                 KvecR = matStat2->giveTempKVector();
             }
 
+            // K = K_L + (xi - xi_L) / (xi_R - xi_L) (K_R - K_L), 9 components
             answer = ( xiAns - xiL ) / ( xiR - xiL ) * ( KvecR - KvecL ) + KvecL;
             break;
         }
@@ -196,15 +203,16 @@ bool Space2dStructuralSurfaceElementEvaluator::giveCurvatureExportValue( FloatAr
 void AxisymSurfaceElementEvaluator::computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
 {
     // [ 9 x (nno*2) ] displacement gradient matrix: the plane one with the hoop part, F_33 = 1 + u / r
+    // (the hoop circumference grows from 2 pi r to 2 pi (r + u), r the reference radius at gp)
     Space2dStructuralSurfaceElementEvaluator::computeBHmatrixAt( gp, answer );
 
-    FloatArray n;
-    gp->giveElement()->giveInterpolation()->evalN( n, gp->giveNaturalCoordinates(),
+    FloatArray N; // nonzero basis functions of the span
+    gp->giveElement()->giveInterpolation()->evalN( N, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
     double r = this->computeRadiusAt( gp );
 
-    for ( int i = 0; i < n.giveSize(); i++ ) {
-        answer.at( 3, 2 * i + 1 ) = n.at( i + 1 ) / r; // u / r
+    for ( int i = 0; i < N.giveSize(); i++ ) {
+        answer.at( 3, 2 * i + 1 ) = N.at( i + 1 ) / r; // u / r
     }
 }
 
@@ -222,6 +230,7 @@ void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatri
     FEIIGAElementGeometryWrapper cellgeo( gp->giveElement(), knotSpan );
     interp->evalDerivatives( 2, ders, gp->giveNaturalCoordinates(), cellgeo );
 
+    // reference curve X(xi) = (R, Y) at gp: R_,xi, Y_,xi, R_,xixi, Y_,xixi and the radius R
     double Rxi = 0., Yxi = 0., Rxixi = 0., Yxixi = 0.;
     double R = 0.; // undeformed radius (X1)
 
@@ -244,20 +253,29 @@ void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatri
     }
     checkRadius( R, gp );
 
+    // The reference surface X(xi, theta) = R(xi) e_r(theta) + Y(xi) e_y has the tangents X_,xi and
+    // X_,theta = R e_theta, the dual vectors A^xi = g^11 X_,xi and A^theta = e_theta / R, and the nonzero
+    // Christoffel symbols Gamma^xi_xixi, Gamma^xi_thetatheta and Gamma^theta_xitheta = R_,xi / R. For the
+    // current position p = r e_r + y e_y (e_r,theta = e_theta, e_r,thetatheta = -e_r), grad F = G p is the
+    // covariant Hessian (p_,ab - Gamma^c_ab p_,c) (x) A^a (x) A^b, (x) the tensor product. At theta = 0, e_r, e_y
+    // and e_theta are the global x, y and z.
+
     // Inverse (contravariant) metric coefficient g^{11} = 1 / |X_,xi|^2
-    double G_11 = 1. / ( Rxi * Rxi + Yxi * Yxi ); // Same as 1/J^2
+    double gInv = 1. / ( Rxi * Rxi + Yxi * Yxi ); // Same as 1/J^2
 
-    // Christoffel symbol
-    double Gamma_XiXiXi       = G_11 * ( Rxi * Rxixi + Yxi * Yxixi );
-    double Gamma_XiThetaTheta = -G_11 * ( R * Rxi );
+    // Christoffel symbols Gamma^xi_xixi = g^11 X_,xi . X_,xixi and Gamma^xi_thetatheta = -g^11 R R_,xi
+    double Gamma_XiXiXi       = gInv * ( Rxi * Rxixi + Yxi * Yxixi );
+    double Gamma_XiThetaTheta = -gInv * ( R * Rxi );
 
-    // Create base vectors and covectors
+    // Base vectors e_r (Ir), e_y (Iy), e_theta (Is) and the dual vector A^xi (Exi_contra)
     FloatArrayF<3> IrFA = { 1., 0., 0. }, IyFA = { 0., 1., 0. }, IsFA = { 0., 0., 1. };
-    FloatArrayF<3> Exi_contraFA = G_11 * ( Rxi * IrFA + Yxi * IyFA );
+    FloatArrayF<3> Exi_contraFA = gInv * ( Rxi * IrFA + Yxi * IyFA );
 
     Tensor1_3d Ir( IrFA ), Iy( IyFA ), Is( IsFA ), Exi_contra( Exi_contraFA );
 
     // Create part proportional to r-coordinate (x_1)
+    // xi xi: e_r (x) A^xi (x) A^xi; xi theta: e_theta (x) e_theta (x) A^xi + e_theta (x) A^xi (x) e_theta;
+    // theta theta: e_r (x) e_theta (x) e_theta
     Tensor3_3d dF_r1, dF_r2, dF_r3;
     dF_r1( i_3, j_3, k_3 ) = Ir( i_3 ) * Exi_contra( j_3 ) * Exi_contra( k_3 );
     dF_r2( i_3, j_3, k_3 ) = Is( i_3 ) * Is( j_3 ) * Exi_contra( k_3 ) + Is( i_3 ) * Exi_contra( j_3 )* Is( k_3 );
@@ -269,6 +287,7 @@ void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatri
 
 
     // Create part proportional to y-coordinate (x_2)
+    // xi xi: e_y (x) A^xi (x) A^xi; theta theta: e_y (x) e_theta (x) e_theta
     Tensor3_3d dF_y1, dF_y2;
     dF_y1( i_3, j_3, k_3 ) = Iy( i_3 ) * Exi_contra( j_3 ) * Exi_contra( k_3 );
     dF_y2( i_3, j_3, k_3 ) = Iy( i_3 ) * Is( j_3 ) * Is( k_3 );
@@ -276,20 +295,25 @@ void AxisymSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMatri
     FloatArray dF_y1v = dF_y1.to_voigt_form_27();
     FloatArray dF_y2v = dF_y2.to_voigt_form_27();
 
-    int nRows = ders.giveNumberOfColumns();
-    answer.resize( 27, nRows * 2 );
+    int nno = ders.giveNumberOfColumns(); // nonzero basis functions of the span
+    answer.resize( 27, nno * 2 );
     answer.zero();
 
-    for ( int i = 1; i <= nRows; i++ ) {
-        double cF1 = ders( 2, i - 1 ) - ders( 1, i - 1 ) * Gamma_XiXiXi;
-        double cF2 = (ders( 1, i - 1 )*R - Rxi*ders( 0, i - 1 ))/R/R ;
-        double cF3 = -( ders( 1, i - 1 ) * Gamma_XiThetaTheta + ders(0, i - 1 ) ) / R / R;   
+    for ( int i = 1; i <= nno; i++ ) {
+        // coefficients of the radial dof (column 2i-1), with N, N', N'' = ders( 0..2, i - 1 ) of basis function
+        // i; each A^theta = e_theta / R gives a factor 1 / R:
+        // cR1 = N'' - Gamma^xi_xixi N', cR2 = (N' - Gamma^theta_xitheta N) / R = (N' R - R_,xi N) / R^2,
+        // cR3 = (-N - Gamma^xi_thetatheta N') / R^2 (the -N from e_r,thetatheta = -e_r)
+        double cR1 = ders( 2, i - 1 ) - ders( 1, i - 1 ) * Gamma_XiXiXi;
+        double cR2 = (ders( 1, i - 1 )*R - Rxi*ders( 0, i - 1 ))/R/R ;
+        double cR3 = -( ders( 1, i - 1 ) * Gamma_XiThetaTheta + ders(0, i - 1 ) ) / R / R;
 
-        double dF1 = cF1;
-        double dF2 = -( ders( 1, i - 1 ) * Gamma_XiThetaTheta ) / R / R;   
+        // coefficients of the axial dof (column 2i): e_y does not turn with theta
+        double cY1 = cR1;
+        double cY2 = -( ders( 1, i - 1 ) * Gamma_XiThetaTheta ) / R / R;
 
-        FloatArray col1 = cF1 * dF_r1v + cF2 * dF_r2v + cF3 * dF_r3v;
-        FloatArray col2 = dF1 * dF_y1v + dF2 * dF_y2v;
+        FloatArray col1 = cR1 * dF_r1v + cR2 * dF_r2v + cR3 * dF_r3v;
+        FloatArray col2 = cY1 * dF_y1v + cY2 * dF_y2v;
 
         answer.setColumn( col1,2*i-1);
         answer.setColumn( col2, 2 * i);

@@ -76,16 +76,22 @@ public:
     const char *giveInputRecordName() const override { return _IFT_QuadSurface_Name; }
     const char *giveClassName() const override { return "QuadSurface"; }
 
+    /// Unit normal e3 = e1 x (X3 - X1) / |...| in global coordinates.
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
+    /// Vertex list geometry with the nodal coordinates in the element frame (see computeLocalNodalCoordinates).
     FEICellGeometry *giveCellGeometryWrapper() override;
+    /// Nodal coordinates rotated to the element frame, lxy[i] = R X_i (no translation).
     void computeLocalNodalCoordinates( std::vector<FloatArray> &lxy );
 
     int computeNumberOfDofs() override { return 12; }
     int computeNumberOfGlobalDofs() override { return 12; }
 
+    /// The cached 3 x 3 rotation R (rows e1, e2, e3), computed on the first call.
     const FloatMatrix *computeGtoLRotationMatrix();
+    /// Rotation of the element unknowns, 12 x 12 block diagonal with R: (u, v, w)_local = R (u, v, w)_global.
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override;
+    /// R itself (3 x 3): rotates the pointwise components of a body load, and gives the material frame.
     int computeLoadGToLRotationMtrx( FloatMatrix &answer ) override;
 
 

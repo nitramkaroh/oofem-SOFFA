@@ -119,6 +119,7 @@ void Space3dStructuralSurfaceElementEvaluator::computeGMatrixAt( GaussPoint *gp,
 
 double Space3dStructuralSurfaceElementEvaluator::computeVolumeAround( GaussPoint *gp )
 {
+    // dA = |A_1 x A_2| dxi deta; the Gauss weight already contains the area of the knot span in (xi, eta)
     double determinant = fabs( this->giveElement()->giveInterpolation()->giveTransformationJacobian( gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( this->giveElement(),
             gp->giveIntegrationRule()->giveKnotSpan() ) ) );
@@ -136,6 +137,7 @@ bool Space3dStructuralSurfaceElementEvaluator::giveCurvatureExportValue( FloatAr
         OOFEM_ERROR( "element %d: the curvature is computed only by the bending surface materials (surfacetensionmat2)",
             this->giveElement()->giveNumber() );
     }
+    // F and grad F at the export point, in the knot span of its export rule
     FloatArray vF, vG;
     this->computeDeformationGradientVector( vF, gp, tStep );
     this->computeGradientOfDeformationGradientVector( vG, gp, tStep );
@@ -143,7 +145,8 @@ bool Space3dStructuralSurfaceElementEvaluator::giveCurvatureExportValue( FloatAr
     FloatArrayF<9> vF9( vF );
     FloatArrayF<27> vG27( vG );
 
-    // the current normal and curvature as in the bending material (surfacetensionmat2)
+    // the current normal and curvature as in the bending material (surfacetensionmat2):
+    // n = cof(F) N / |cof(F) N|, K_jk = -n_i (grad F)_ijk
     Tensor2_3d F( vF9 ), K;
     Tensor2_3d cofF = F.compute_cofactor();
     Tensor3_3d G( vG27 );

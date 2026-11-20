@@ -44,14 +44,14 @@ namespace oofem {
 
 /**
  * Second gradient extension of MooneyRivlinCompressibleMaterial: the energy W(F) of the Mooney-Rivlin material
- * (keywords c1, c2, k) plus 0.5 omega nabla F : nabla F, so the second order stress is A = omega nabla F
+ * (keywords c1, c2, k) plus 0.5 omega nabla F : nabla F (nabla F_ijk = dF_ij/dX_k), so the second order stress is A = omega nabla F
  * (27 components) with the constant dA/dgradF = omega I and dA/dF = 0. Keyword omega (default 0).
  * Needs an element supporting the second gradient (bsplineplanestrainelement, bsplineaxisymelement).
  */
 class GradientMooneyRivlinCompressibleMaterial : public MooneyRivlinCompressibleMaterial
 {
 protected:
-    /// Stiffness of the gradient term
+    /// Stiffness omega of the gradient term 0.5 omega nabla F : nabla F (keyword omega)
     double omega;
 
 public:
@@ -65,8 +65,11 @@ public:
     FloatMatrixF<9, 9> give3dMaterialStiffnessMatrix_dPdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const override;
 
     // Higher-order stress and stiffnesses
+    /// A = omega nabla F (27) for grad F vG (27); keeps grad F in the status.
     FloatArrayF<27> giveSecondOrderStressVector_3d( const FloatArrayF<9> &vF, const FloatArrayF<27> &vG, GaussPoint *gp, TimeStep *tStep ) const override;
+    /// dA/dgradF = omega I (27 x 27).
     FloatMatrixF<27, 27> give3dMaterialStiffnessMatrix_dAddF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const override;
+    /// dA/dF = 0 (27 x 9).
     FloatMatrixF<27, 9> give3dMaterialStiffnessMatrix_dAdF( MatResponseMode mode, GaussPoint *gp, TimeStep *tStep ) const override;
 
     const char *giveInputRecordName() const override { return _IFT_GradientMooneyRivlinCompressibleMaterial_Name; }

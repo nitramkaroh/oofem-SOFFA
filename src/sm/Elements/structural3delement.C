@@ -272,15 +272,16 @@ Structural3DElement::computeConstitutiveMatrix_dPdF_At(FloatMatrix &answer, MatR
     StructuralCrossSection *cs = this->giveStructuralCrossSection();
     Tensor2_3d F0;
     if ( this->givePrestrainDeformationGradient( F0, gp ) ) {
-        // Prestrain: the material takes F F0 from the status and the tangent is pulled back on both
-        // reference indices, F0 A F0 / det F0.
+        // Prestrain: the material takes F F0 from the status and its tangent A' (at F F0) is pulled back on
+        // both reference indices, A_ijkl = F0_jm A'_imkn F0_ln / det F0, the derivative of
+        // P = P'(F F0) F0^T / det F0 (see NLStructuralElement::computeFirstPKStressVector).
         auto mat = dynamic_cast<StructuralMaterial *>( cs->giveMaterial( gp ) );
         StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
-        FloatArrayF<9> vF( status->giveTempFVector() ); // Get F from status
+        FloatArrayF<9> vF( status->giveTempFVector() ); // the kinematic F, stored by computeFirstPKStressVector
 
-        status->letTempFVectorBe( applyPrestrain( vF, F0 ) ); // Update F in status
+        status->letTempFVectorBe( applyPrestrain( vF, F0 ) ); // F F0 for the material
         FloatMatrix answerTmp = cs->giveStiffnessMatrix_dPdF_3d( rMode, gp, tStep );
-        status->letTempFVectorBe( vF ); // get F in status to the previous state
+        status->letTempFVectorBe( vF ); // restore the kinematic F
 
         FloatMatrixF<9, 9> mA( answerTmp );
         Tensor4_3d A( mA ), Amod;

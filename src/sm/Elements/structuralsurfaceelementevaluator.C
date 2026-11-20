@@ -66,9 +66,10 @@ void StructuralSurfaceElementEvaluator::initializeFrom( InputRecord &ir )
 
 void StructuralSurfaceElementEvaluator::computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
+    // P = dW/dF of the surface material at F = I_s + BH u, with the reference normal N
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );
     SimpleSurfaceCrossSection *cs = static_cast<SimpleSurfaceCrossSection *>( elem->giveCrossSection() );
-    FloatArray normal = elem->giveNormal( gp ); 
+    FloatArray normal = elem->giveNormal( gp );
     FloatArray vF;
     this->computeDeformationGradientVector( vF, gp, tStep );
     answer = cs->giveFirstPKSurfaceStresses( vF, normal, gp, tStep );
@@ -79,11 +80,13 @@ void StructuralSurfaceElementEvaluator::computeSecondOrderStressVector( FloatArr
     IGAElement *elem              = static_cast<IGAElement *>( this->giveElement() );
     SimpleSurfaceCrossSection *cs = static_cast<SimpleSurfaceCrossSection *>( elem->giveCrossSection() );
     FloatArray normal             = elem->giveNormal( gp );
+    // F, grad F = G x (current positions) and grad I = G X (reference positions), 27 components each
     FloatArray vF, vG, vDI;
     this->computeDeformationGradientVector( vF, gp, tStep );
     this->computeGradientOfDeformationGradientVector( vG, gp, tStep );
     this->computeSurfaceIdentityGradient( vDI, gp, tStep );
 
+    // A = dW/d(grad F); the bending material also stores F, grad F, grad I and K in the temporary status
     answer = cs->giveSecondOrderSurfaceStresses( vF, vG, vDI, normal, gp, tStep );
 }
 
@@ -120,8 +123,8 @@ void StructuralSurfaceElementEvaluator::initializeReferenceGradients( GaussPoint
     auto cs = static_cast<SimpleSurfaceCrossSection *>( this->giveElement()->giveCrossSection() );
     auto status = static_cast<StructuralSurfaceMaterialStatus *>( cs->giveMaterial( gp )->giveStatus( gp ) );
     if ( status->giveTempdIVector().giveSize() == 0 ) {
-        // A fresh status represents the reference configuration F = I_s. Keep the usual
-        // status-based tangent policy after this first initialization.
+        // A fresh status represents the reference configuration F = I_s, where grad F = grad I. The tangents
+        // read both from the temporary status; after the first stress evaluation the material keeps them.
         FloatArray gradI;
         this->computeSurfaceIdentityGradient( gradI, gp, tStep );
         status->letTempGVectorBe( gradI );
@@ -142,20 +145,21 @@ void StructuralSurfaceElementEvaluator::computeDeformationGradientVector( FloatA
     this->giveSpanDisplacements( ur, gp, tStep );
     answer.beProductOf( B, ur );
 
-    // F = H + I_s with the reference surface identity I_s = I - N x N
+    // F = H + I_s with the reference surface identity I_s = I - N x N. The rows of H are surface gradients
+    // (tangential in the second index), so F N = 0.
     IGAElement *elem  = static_cast<IGAElement *>( this->giveElement() );
     FloatArray normal = elem->giveNormal( gp );
     FloatArrayF<9> du( answer );
     Tensor2_3d du_tens( du ), Ftens;
 
-    FloatArrayF<3> UDn( normal );
-    Tensor1_3d UDnormalT( UDn );
-    FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d Identity2d, Identity3d( indent3d );
-    Identity2d( i_3, j_3 ) = Identity3d( i_3, j_3 ) - UDnormalT( i_3 ) * UDnormalT( j_3 );
+    FloatArrayF<3> vN( normal );
+    Tensor1_3d N( vN );
+    FloatArrayF<9> vI = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d Is, Identity3d( vI );
+    Is( i_3, j_3 ) = Identity3d( i_3, j_3 ) - N( i_3 ) * N( j_3 );
 
-    Ftens( i_3, j_3 ) = du_tens( i_3, j_3 ) + Identity2d( i_3, j_3 );
-    
+    Ftens( i_3, j_3 ) = du_tens( i_3, j_3 ) + Is( i_3, j_3 );
+
     // reduce back to voigt
     answer = Ftens.to_voigt_form();
 }

@@ -50,6 +50,10 @@ namespace oofem {
  * returns the first Piola-Kirchhoff stress P (9 components) and the third order stress A (27 components).
  * The element must provide the normal and the derived evaluator the BH matrix (9 rows) and, for the
  * second gradient, the G matrix (27 rows).
+ *
+ * The bending material (second gradient) stores F, grad F and grad I in the temporary status when it computes
+ * A; P takes grad F and grad I from there (and checks that F is the same) and the tangents take all three, so
+ * StructuralElementEvaluator evaluates A before P.
  */
 class StructuralSurfaceElementEvaluator : public StructuralElementEvaluator
 {
@@ -73,9 +77,14 @@ protected:
      */
     virtual void computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
-    /// Third order stress A (27 components) conjugate to grad F, from F, grad F, grad I and the normal.
+    /**
+     * Third order stress A (27 components) conjugate to grad F, from F, grad F = G x (current positions),
+     * grad I = G X (reference positions) and the reference normal. The bending material also stores F, grad F,
+     * grad I and the curvature K in the temporary status.
+     */
     void computeSecondOrderStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
+    // small strains (nlgeo 0) are not implemented for the surface elements
     void computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep ) override{
         OOFEM_ERROR( "Small strains not implemented" );
         return;
@@ -90,6 +99,9 @@ protected:
         return;
     };
 
+    // The tangents below come from the material, which takes F (and for bending grad F and grad I) from the
+    // temporary status; initializeReferenceGradients supplies grad F and grad I of a fresh status first.
+
     /// dP/dF, 9 x 9.
     void computeConstitutiveMatrix_dPdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
@@ -99,7 +111,11 @@ protected:
     /// dA/dF, 27 x 9 (dP/d(grad F) is its transpose).
     void computeConstitutiveMatrix_dAdF_At( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
-    /// Initialize the reference grad F = grad I before a tangent is requested on a fresh status.
+    /**
+     * For a second gradient material: if the status is fresh (no grad I stored yet), stores grad F = grad I =
+     * G X, the values of the reference configuration F = I_s, in the temporary status, so that a tangent
+     * requested before the first stress evaluation finds them. Does nothing otherwise.
+     */
     void initializeReferenceGradients( GaussPoint *gp, TimeStep *tStep );
 
     /**
@@ -114,14 +130,18 @@ protected:
 
     /**
      * Current curvature K (the temporary value stored by the material at the Gauss points) at the local
-     * coordinates coords of the integration rule RuleIndex, for the VTK export.
+     * coordinates coords of the integration rule (knot span) RuleIndex, for the VTK export.
      */
     virtual void computeCurvatureAt( FloatArray &answer, TimeStep *tStep, const FloatArray &coords, int RuleIndex )
     {
         OOFEM_ERROR( "Not implemented for this element" );
     };
 
-    /// grad I = G X (27 components), as grad F with the reference positions X; it carries the reference curvature.
+    /**
+     * grad I = G X (27 components), as grad F with the reference positions X, i.e. grad F of the reference
+     * configuration. It carries the reference curvature: -N . grad I is the gradient of the reference normal
+     * (the bending material takes the reference mean curvature from it, useh0 1).
+     */
     void computeSurfaceIdentityGradient( FloatArray &answer, GaussPoint *gp, TimeStep *tStep );
 
 };

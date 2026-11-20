@@ -49,9 +49,9 @@ class FEI1dLin;
  *
  * The frame is the tangent e1 = (N2 - N1) / |N2 - N1| and the in-plane normal e2 = (-e1_y, e1_x), to the left of
  * the direction N1 -> N2 (the IGA curves use the normal to the right); the unknowns D_u, D_v of each node are
- * rotated to (u_t, u_n). BH is 9 x 4 in the frame of the surface material (see Structural2DSurfaceElement),
- * 2 Gauss points by default (nip). Only the large strain formulation (nlgeo 1) is implemented.
- * No element specific input.
+ * rotated to (u_t, u_n). The in-plane normal is the third axis of the material frame. BH is 9 x 4 in the frame
+ * of the surface material (see Structural2DSurfaceElement), 2 Gauss points by default (nip). Only the large
+ * strain formulation (nlgeo 1) is implemented. No element specific input.
  */
 class LinePlaneStrainSurface : public Structural2DSurfaceElement
 {
@@ -80,25 +80,36 @@ public:
     const char *giveInputRecordName() const override { return _IFT_LinePlaneStrainSurface_Name; }
     const char *giveClassName() const override { return "LinePlaneStrainSurface"; }
 
+    /// In-plane normal (-e1_y, e1_x, 0) in global coordinates.
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
+    /// Vertex list geometry with the nodal coordinates in the element frame (see computeLocalNodalCoordinates).
     FEICellGeometry *giveCellGeometryWrapper() override;
+    /// Nodal coordinates rotated to the element frame, lxy[i] = R X_i (2 components, no translation).
     void computeLocalNodalCoordinates( std::vector<FloatArray> &lxy );
 
     int computeNumberOfDofs() override { return 4; }
     int computeNumberOfGlobalDofs() override { return 4; }
 
+    /// The cached 2 x 2 rotation R (rows e1 and the in-plane normal), computed on the first call.
     const FloatMatrix *computeGtoLRotationMatrix();
+    /// Rotation of the element unknowns, 4 x 4 block diagonal with R: (u_t, u_n) = R (u, v) in each node.
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override;
+    /// R itself (2 x 2): rotates the pointwise components of a body load, and gives the material frame.
     int computeLoadGToLRotationMtrx( FloatMatrix &answer ) override;
 
 
+    /// _3dMat: the material gets the full 9-component F (out-of-plane stretch 1).
     MaterialMode giveMaterialMode() override { return _3dMat; }
+    /// Small-strain path, not implemented (stops with an error).
     void computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep ) override;
+    /// Small-strain path, not implemented (stops with an error).
     void computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
 protected:
+    /// Small-strain B, not implemented (stops with an error).
     void computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int lowerIndx = 1, int upperIndx = ALL_STRAINS ) override;
+    /// BH (9 x 4) with the rows 11 = du_t/ds and 31 = du_n/ds.
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
 
 

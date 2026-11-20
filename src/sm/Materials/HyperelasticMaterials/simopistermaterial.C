@@ -65,6 +65,8 @@ SimoPisterMaterial::give3dMaterialStiffnessMatrix_dPdF(MatResponseMode mode, Gau
     if ( this->bulk_ltf != 0 ) {
         bulkMult = domain->giveFunction( bulk_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
     }
+    // dP/dF = G (d2I1/dF2 / 2 + cof F x cof F / J^2 - (d cof F/dF) / J) + f(t) d2U/dF2,
+    // d cof F/dF = eps_ikm eps_jln F_mn (the tensor cross product)
     A( i_3, j_3, k_3, l_3 ) = G * ( 0.5 * this->compute_d2I1_C_dF2( F )( i_3, j_3, k_3, l_3 ) + 1 / J / J * cofF( i_3, j_3 ) * cofF( k_3, l_3 ) - 1. / J * F.compute_tensor_cross_product()( i_3, j_3, k_3, l_3 ) ) + bulkMult*this->compute_d2VolumetricEnergy_dF2( F )( i_3, j_3, k_3, l_3 );
     Afull( i_3, j_3, k_3, l_3 ) = A( i_3, j_3, k_3, l_3 );
 
@@ -83,7 +85,8 @@ SimoPisterMaterial::giveFirstPKStressVector_3d(const FloatArrayF< 9 > &vF, Gauss
 
     auto [ J, cofF ] = F.compute_determinant_and_cofactor();
 
-    // compute the first Piola-Kirchhoff; bulk_ltf scales the volumetric energy
+    // compute the first Piola-Kirchhoff P = G (dI1/dF / 2 - cof F / J) + f(t) dU/dF (dJ/dF = cof F);
+    // bulk_ltf scales the volumetric energy
     double bulkMult = 1.;
     if ( this->bulk_ltf != 0 ) {
         bulkMult = domain->giveFunction( bulk_ltf )->evaluateAtTime( tStep->giveIntrinsicTime() );
@@ -117,6 +120,8 @@ SimoPisterMaterial::initializeFrom(InputRecord &ir)
     IR_GIVE_OPTIONAL_FIELD( ir, bulk_ltf, _IFT_SimoPisterMaterial_bulkLTF );
 }
 
+
+// Second gradient extension: the Simo-Pister energy plus 0.5 omega nabla F : nabla F
 
 REGISTER_Material( GradientSimoPisterMaterial );
 

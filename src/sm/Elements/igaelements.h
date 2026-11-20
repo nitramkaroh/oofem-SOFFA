@@ -327,6 +327,7 @@ public:
     const char *giveClassName() const override { return "BsplineAxisymElement"; }
 
 
+    /// The material is evaluated in the full 3d mode (F with the hoop stretch F_33 = 1 + u / r).
     MaterialMode giveMaterialMode() override { return _3dMat; }
 
     /// The second gradient needs C1 continuity in both directions: degree >= 2 and interior knot multiplicities <= degree - 1.

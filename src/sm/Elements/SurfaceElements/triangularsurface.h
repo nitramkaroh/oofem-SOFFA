@@ -79,10 +79,10 @@ protected:
     FloatMatrix *GtoLRotationMatrix;
     FloatArrayF<9> F0; // prestrain deformation gradient f0 (global coordinates, one for the element)
     FloatArrayF<9> F0frame; // R F0 R^T, the prestrain in the element frame (set in postInitialize)
-    int prestrain = 0;
-    int isReferenceNormalGiven = 0;
+    int prestrain = 0; // 1: the element has the prestrain F0 (input prestrain 1 with f0)
+    int isReferenceNormalGiven = 0; // 1: the input normal is given (checked in checkConsistency)
     FloatArrayF<3> referenceNormal; // normal of the original configuration, checked against F0
-    int anisoDirGiven = 0;
+    int anisoDirGiven = 0; // 1: the input anisodir is given
     FloatArrayF<3> anisoDir; // direction of anisotropy (global coordinates, one for the element)
 
 
@@ -98,27 +98,38 @@ public:
     // definition & identification
     const char *giveInputRecordName() const override { return _IFT_TriangularSurface_Name; }
     const char *giveClassName() const override { return "TriangularSurface"; }
+    /// Reads and checks the optional prestrain, f0, normal and anisodir (see the class description).
     void initializeFrom( InputRecord &ir ) override;
+    /// Rotates the prestrain to the element frame, F0frame = R F0 R^T.
     void postInitialize() override;
 
+    /// F0frame, the prestrain in the element frame (the same for every Gauss point); false without prestrain.
     bool givePrestrainDeformationGradient( Tensor2_3d &answer, GaussPoint *gp ) override;
 
+    /// Unit normal e3 = e1 x (X3 - X1) / |...| in global coordinates.
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
+    /// Vertex list geometry with the nodal coordinates in the element frame (see computeLocalNodalCoordinates).
     FEICellGeometry *giveCellGeometryWrapper() override;
+    /// Nodal coordinates rotated to the element frame, lxy[i] = R X_i (no translation).
     void computeLocalNodalCoordinates( std::vector<FloatArray> &lxy );
 
     int computeNumberOfDofs() override { return 9; }
     int computeNumberOfGlobalDofs() override { return 9; }
 
+    /// The cached 3 x 3 rotation R (rows e1, e2, e3), computed on the first call.
     const FloatMatrix *computeGtoLRotationMatrix();
+    /// Rotation of the element unknowns, 9 x 9 block diagonal with R: (u, v, w)_local = R (u, v, w)_global.
     bool computeGtoLRotationMatrix( FloatMatrix &answer ) override;
+    /// R itself (3 x 3): rotates the pointwise components of a body load, and gives the material frame.
     int computeLoadGToLRotationMtrx( FloatMatrix &answer ) override;
 
 
 
+    /// Also gives IST_PrestrainDeformationGradient (F0frame) and IST_AnisotropyDirection (anisodir, global).
     int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
 
+    /// Besides the checks of the base classes: a given normal must be +-N, the normal that the prestrain implies.
     int checkConsistency() override;
 
 protected:

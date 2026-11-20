@@ -42,7 +42,8 @@ HyperElasticSurfaceMaterial::HyperElasticSurfaceMaterial( int n, Domain *d ) :
 FloatMatrixF<9, 9>
 HyperElasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
-    // Default implementation used if this method is not overloaded by the particular material model.
+    // Default implementation used if this method is not overloaded by the particular material model:
+    // the small-strain stiffness, taken as dS/dE, converted to dP/dF at the stored F and stress.
     auto status    = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
     const auto &vF = status->giveTempFVector();
     const auto &vS = status->giveTempStressVector();

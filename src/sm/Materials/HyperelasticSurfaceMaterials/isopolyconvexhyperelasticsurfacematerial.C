@@ -169,8 +169,8 @@ double IsotropicPolyconvexHyperelasticSurfaceMaterial::giveParameter( const Surf
 
 Tensor2_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::giveSurfaceIdentity( const FloatArray &normal )
 {
-    FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d Identity3d( indent3d ), Is;
+    FloatArrayF<9> vI = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d Identity3d( vI ), Is;
     FloatArrayF<3> vN( normal );
     Tensor1_3d N( vN );
     Is( i_3, j_3 ) = Identity3d( i_3, j_3 ) - N( i_3 ) * N( j_3 );
@@ -186,6 +186,7 @@ Tensor2_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::computeMembraneStress
     double lambda_t = this->giveParameter( this->lambda, calm_par_no, tStep );
     double mu_t     = this->giveParameter( this->mu, calm_par_no, tStep );
 
+    // P = dW/dF = gamma dJ/dF + alpha F / |F| + (lambda ln J - mu) / J dJ/dF + mu F + alphas (J - 1) dJ/dF
     Tensor2_3d dJdF, Pgamma, Palpha, Pnh, Palpha_s, P;
     dJdF( i_3, j_3 )   = this->compute_surface_cofactor( F, Is )( i_3, j_3 );
     Pgamma( i_3, j_3 ) = gamma_t * dJdF( i_3, j_3 );
@@ -211,8 +212,8 @@ Tensor4_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::computeMembraneTangen
     double lambda_t = this->giveParameter( this->lambda, calm_par_no, tStep );
     double mu_t     = this->giveParameter( this->mu, calm_par_no, tStep );
 
-    FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d Identity3d( indent3d ), dJdF, IdentityUD( Is );
+    FloatArrayF<9> vI = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d Identity3d( vI ), dJdF, IdentityUD( Is ); // IdentityUD: surface identity of the reference (undeformed) surface
     Tensor4_3d d2JdFdF, Anh, A_alpha_s, A;
 
     d2JdFdF( i_3, j_3, k_3, l_3 ) = this->compute_surface_dCof_dF( F, Is )( i_3, j_3, k_3, l_3 );
@@ -220,11 +221,15 @@ Tensor4_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::computeMembraneTangen
     double logJ                   = log( J );
     dJdF( i_3, j_3 )              = this->compute_surface_cofactor( F, Is )( i_3, j_3 );
 
+    // neo-Hookean part: lambda (ln J / J d2J/dF2 + (1 - ln J) / J^2 dJ/dF x dJ/dF)
+    //                   + mu (delta_ik Is_jl - d2J/dF2 / J + dJ/dF x dJ/dF / J^2), d(mu F)/dF with the second index projected
     Anh( i_3, j_3, k_3, l_3 ) = lambda_t * ( logJ / J * d2JdFdF( i_3, j_3, k_3, l_3 ) + ( 1 - logJ ) / J / J * dJdF( i_3, j_3 ) * dJdF( k_3, l_3 ) ) +
         mu_t * ( Identity3d( i_3, k_3 ) * IdentityUD( j_3, l_3 ) - 1 / J * d2JdFdF( i_3, j_3, k_3, l_3 ) + 1 / J / J * dJdF( i_3, j_3 ) * dJdF( k_3, l_3 ) );
 
+    // area part: alphas ((J - 1) d2J/dF2 + dJ/dF x dJ/dF)
     A_alpha_s( i_3, j_3, k_3, l_3 ) = alphaS_t * ( J - 1. ) * d2JdFdF( i_3, j_3, k_3, l_3 ) + alphaS_t * dJdF( i_3, j_3 ) * dJdF( k_3, l_3 );
 
+    // + gamma d2J/dF2 + alpha d2|F|/dF2
     A( i_3, j_3, k_3, l_3 ) = gamma_t * d2JdFdF( i_3, j_3, k_3, l_3 ) + alpha_t * this->compute_surface_d2_normF_dF2( F, Is )( i_3, j_3, k_3, l_3 ) +
         Anh( i_3, j_3, k_3, l_3 ) + A_alpha_s( i_3, j_3, k_3, l_3 );
     return A;
@@ -234,13 +239,13 @@ Tensor4_3d IsotropicPolyconvexHyperelasticSurfaceMaterial::computeMembraneTangen
 void IsotropicPolyconvexHyperelasticSurfaceMaterial::storeStress( GaussPoint *gp, const FloatArrayF<9> &vF, const Tensor2_3d &F, const Tensor2_3d &P ) const
 {
     auto status = static_cast<StructuralMaterialStatus *>( this->giveStatus( gp ) );
-    Tensor2_3d S, Pc( P ); // surface Cauchy stress; to_voigt_form is not const
-    S( i_3, j_3 ) = ( 1 / this->compute_surface_determinant( F ) ) * P( i_3, k_3 ) * F( j_3, k_3 );
+    Tensor2_3d sigma, Pc( P ); // surface Cauchy stress sigma = P F^T / J; to_voigt_form is not const
+    sigma( i_3, j_3 ) = ( 1 / this->compute_surface_determinant( F ) ) * P( i_3, k_3 ) * F( j_3, k_3 );
     auto vP       = Pc.to_voigt_form();
-    auto vS       = S.to_voigt_form();
+    auto vSigma   = sigma.to_voigt_form();
     status->letTempFVectorBe( vF );
     status->letTempPVectorBe( vP );
-    status->letTempCVectorBe( vS );
+    status->letTempCVectorBe( vSigma );
 }
 
 
@@ -271,7 +276,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial::give3dSurfaceMaterialStiffnessMa
 void IsotropicPolyconvexHyperelasticSurfaceMaterial::checkTangentsByFiniteDifferences( const FloatMatrixF<9, 9> &dPdF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const
 {
     auto status = static_cast<StructuralSurfaceMaterialStatus *>( this->giveStatus( gp ) );
-    // the perturbed evaluations overwrite the temporary status, which is restored at the end
+    // the perturbed evaluations overwrite the temporary status, which is restored at the end (s* = saved values)
     FloatArray sF = status->giveTempFVector(), sP = status->giveTempPVector(), sC = status->giveTempCVector();
     FloatArray sG = status->giveTempGVector(), sdI = status->giveTempdIVector(), sK = status->giveTempKVector();
 
@@ -290,6 +295,7 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::checkTangentsByFiniteDiffer
         dAdF = this->give3dSurfaceMaterialStiffnessMatrix_dAdF( TangentStiffness, normal, gp, tStep );
     }
 
+    // P and A at (F, grad F); A first, since P of the bending material reads grad F from the status
     auto evaluate = [&]( const FloatArrayF<9> &F, const FloatArrayF<27> &G, FloatArrayF<9> &P, FloatArrayF<27> &A ) {
         if ( bending ) {
             A = this->giveSecondOrderSurfaceStressVector_3d( F, G, vdI, normal, gp, tStep );
@@ -297,14 +303,15 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::checkTangentsByFiniteDiffer
         P = this->giveFirstPKSurfaceStressVector_3d( F, normal, gp, tStep );
     };
 
-    // tangent basis of the plane normal to N; the perturbations keep F N = 0
-    FloatArrayF<3> n( normal );
-    FloatArrayF<3> a = std::fabs( n[0] ) < 0.9 ? FloatArrayF<3>{ 1., 0., 0. } : FloatArrayF<3>{ 0., 1., 0. };
-    FloatArrayF<3> t1 = cross( n, a );
+    // tangent basis t1, t2 of the plane normal to N (seed: any vector not parallel to N); the perturbations keep F N = 0
+    FloatArrayF<3> vN( normal );
+    FloatArrayF<3> seed = std::fabs( vN[0] ) < 0.9 ? FloatArrayF<3>{ 1., 0., 0. } : FloatArrayF<3>{ 0., 1., 0. };
+    FloatArrayF<3> t1 = cross( vN, seed );
     t1 = t1 / norm( t1 );
-    FloatArrayF<3> t2 = cross( n, t1 );
+    FloatArrayF<3> t2 = cross( vN, t1 );
     FloatArrayF<3> t[2] = { t1, t2 };
 
+    // central difference steps for F and grad F
     double hF = 1.e-6 * std::max( 1., norm( vF ) );
     double hG = 1.e-6 * std::max( 1., norm( vG ) );
     // maximal difference and magnitude for the blocks dP/dF, dA/dF, dA/dgradF, dP/dgradF
@@ -330,6 +337,7 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::checkTangentsByFiniteDiffer
         }
     };
 
+    // perturbations dF = e_i x t_al: the columns of dP/dF and dA/dF in the tangent directions
     FloatArrayF<9> Pp, Pm;
     FloatArrayF<27> Ap, Am;
     for ( int i = 0; i < 3; i++ ) {
@@ -348,7 +356,7 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::checkTangentsByFiniteDiffer
         }
     }
     if ( bending ) {
-        // grad F is symmetric in the last two indices, and so are the perturbations
+        // grad F is symmetric in the last two indices, and so are the perturbations dG = e_i x sym(t_al x t_be)
         for ( int i = 0; i < 3; i++ ) {
             for ( int al = 0; al < 2; al++ ) {
                 for ( int be = al; be < 2; be++ ) {
@@ -376,6 +384,7 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial::checkTangentsByFiniteDiffer
     status->letTempdIVectorBe( sdI );
     status->letTempKVectorBe( sK );
 
+    // relative error of each block; a block much smaller than the largest one is measured against 1e-8 of that one
     double ref = std::max( { size[0], size[1], size[2], size[3], 1.e-300 } );
     double err[4];
     for ( int b = 0; b < 4; b++ ) {
@@ -420,6 +429,7 @@ void IsotropicPolyconvexHyperelasticSurfaceMaterial2::initializeFrom( InputRecor
 double IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveH0( const Tensor1_3d &N, const Tensor3_3d &gradIt ) const
 {
     if ( this->use_H0 == 1 ) {
+        // the curvature of the reference state, where F = I_s: K0 = -N . grad I_s, b0 = -K0 and H0 = tr b0 / 2
         Tensor2_3d K0, b0;
         K0( j_3, k_3 ) = -N( i_3 ) * gradIt( i_3, j_3, k_3 ); // gradient of the reference normal
         b0( j_3, l_3 ) = -K0( j_3, l_3 );
@@ -452,16 +462,16 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::computeBendingState( const Tens
     Tensor1_3d n    = compute_surface_deformed_normal( F, N );
     s.Finv( i_3, j_3 ) = Finv( i_3, j_3 );
     s.n( i_3 )         = n( i_3 );
-    s.B( j_3, m_3 )    = Finv( j_3, k_3 ) * Finv( m_3, k_3 );
+    s.B( j_3, m_3 )    = Finv( j_3, k_3 ) * Finv( m_3, k_3 ); // B = F^+ F^+T, the pseudoinverse of C
 
     // curvature, formulation with the bending strain (Dortdivanlioglu, Tomassetti)
     Tensor2_3d b;
     s.K( j_3, k_3 ) = -n( i_3 ) * G( i_3, j_3, k_3 ); // current curvature in the referential frame
-    b( j_3, l_3 )   = -Finv( k_3, j_3 ) * s.K( k_3, m_3 ) * Finv( m_3, l_3 );
-    s.H             = 0.5 * b( j_3, j_3 );
+    b( j_3, l_3 )   = -Finv( k_3, j_3 ) * s.K( k_3, m_3 ) * Finv( m_3, l_3 ); // b = -F^+T K F^+, spatial
+    s.H             = 0.5 * b( j_3, j_3 ); // H = tr b / 2 = -K : B / 2
     s.H0            = this->giveH0( N, gradIt );
 
-    // second order stress conjugate to K, M = de/dK
+    // second order stress conjugate to K, M = de/dK = omega J (H - H0) dH/dK with dH/dK = -B / 2
     s.M( i_3, j_3 ) = -0.5 * s.omega * s.J * ( s.H - s.H0 ) * s.B( i_3, j_3 );
     return s;
 }
@@ -474,15 +484,17 @@ Tensor2_3d IsotropicPolyconvexHyperelasticSurfaceMaterial2::computeBendingStress
     Tensor3_3d G( vG ), gradIt( vdI );
     BendingState s = this->computeBendingState( F, Is, N, G, gradIt, tStep );
 
-    // e = J omega / 2 (H - H0)^2; through J and F^+ at fixed K
-    Tensor2_3d dedF1, dedF2, P2, P;
+    // e = J omega / 2 (H - H0)^2; through J and F^+ at fixed K:
+    // dedF1 = e F^+T (dJ/dF = J F^+T), dedF2 = J omega (H - H0) dH/dF with dH/dF = F^+T K B
+    Tensor2_3d dedF1, dedF2, dedFn, P;
     double e          = s.J * ( 0.5 * s.omega * ( s.H - s.H0 ) * ( s.H - s.H0 ) );
     dedF1( i_3, j_3 ) = e * s.Finv( j_3, i_3 );
     dedF2( i_3, l_3 ) = s.J * s.omega * ( s.H - s.H0 ) * s.Finv( j_3, i_3 ) * s.K( j_3, k_3 ) * s.B( k_3, l_3 );
-    // through the dependence of the current normal in K on F
-    P2( p_3, q_3 ) = s.n( p_3 ) * s.Finv( q_3, k_3 ) * G( k_3, i_3, j_3 ) * s.M( i_3, j_3 );
+    // through the dependence of the current normal in K on F: M : dK/dF with dK_ij/dF_pq = n_p F^+_qk G_kij
+    // (dn_k/dF_pq = -n_p F^+_qk)
+    dedFn( p_3, q_3 ) = s.n( p_3 ) * s.Finv( q_3, k_3 ) * G( k_3, i_3, j_3 ) * s.M( i_3, j_3 );
 
-    P( i_3, j_3 ) = dedF1( i_3, j_3 ) + dedF2( i_3, j_3 ) + P2( i_3, j_3 );
+    P( i_3, j_3 ) = dedF1( i_3, j_3 ) + dedF2( i_3, j_3 ) + dedFn( i_3, j_3 );
     return P;
 }
 
@@ -532,7 +544,8 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::giveSecondOrderSurfaceStressVec
     Tensor3_3d A, G( vG ), gradIt( gradI );
     BendingState s = this->computeBendingState( F, Is, N, G, gradIt, tStep );
 
-    // the third order stress conjugate to grad F
+    // the third order stress conjugate to grad F: A = M : dK/dG with dK_lm/dG_ijk = -n_i delta_lj delta_mk
+    // (K = -n . G at fixed F), so A_ijk = -n_i M_jk
     A( i_3, j_3, k_3 ) = -s.n( i_3 ) * s.M( j_3, k_3 );
     auto vA            = A.to_voigt_form_27();
 
@@ -557,20 +570,24 @@ Tensor4_3d IsotropicPolyconvexHyperelasticSurfaceMaterial2::computeBendingTangen
     Tensor1_3d &n_def = s.n;
     const double J = s.J, H = s.H, H0 = s.H0, omega_t = s.omega;
 
-    Tensor4_3d d2e_dKdK;
+    // e(F, K(F)): dP/dF = d2e/dF2 + d2e/dFdK : T + T^T : (d2e/dKdF + d2e/dK2 : T) + M : dT/dF, with the partial
+    // derivatives at fixed K or F, T = dK/dF (through the current normal) and M = de/dK.
+    // The derivative of the pseudoinverse is used as dF^+_ja/dF_cd = -F^+_jc F^+_da + B_jd n_c n_a
+    // (the N x N part does not act on variations with dF N = 0), and dn_i/dF_cd = -n_c F^+_di.
+    Tensor4_3d d2e_dKdK; // d2e/dK2 = omega J B x B / 4
     d2e_dKdK( a_3, b_3, c_3, d_3 ) = 0.25 * J * omega_t * B( a_3, b_3 ) * B( c_3, d_3 );
 
     double e = J * ( 0.5 * omega_t * ( H - H0 ) * ( H - H0 ) );
 
-    Tensor2_3d dHdF;
+    Tensor2_3d dHdF; // dH/dF = F^+T K B at fixed K
     dHdF( i_3, l_3 ) = Finv( j_3, i_3 ) * K( j_3, k_3 ) * B( k_3, l_3 );
 
-    Tensor2_3d dedF1, dedF2, dedF;
+    Tensor2_3d dedF1, dedF2, dedF; // de/dF at fixed K, see computeBendingStress
     dedF1( i_3, j_3 ) = e * Finv( j_3, i_3 );
     dedF2( i_3, l_3 ) = J * omega_t * ( H - H0 ) * dHdF( i_3, l_3 );
     dedF( i_3, j_3 )  = dedF1( i_3, j_3 ) + dedF2( i_3, j_3 );
 
-    // d2e/dFdF at fixed K
+    // d2e/dFdF at fixed K: derivative of e F^+T + J omega (H - H0) dH/dF; d2H/dF2 from dF^+ and dB = dF^+ F^+T + F^+ dF^+T
     Tensor4_3d d2H_dFdF, d2e_dFdF;
     d2H_dFdF( a_3, b_3, c_3, d_3 ) = ( -Finv( o_3, c_3 ) * Finv( d_3, a_3 ) + B( o_3, d_3 ) * n_def( a_3 ) * n_def( c_3 ) ) * K( o_3, p_3 ) * B( p_3, b_3 ) +
         Finv( o_3, a_3 ) * K( o_3, p_3 ) * ( -Finv( p_3, c_3 ) * B( b_3, d_3 ) - B( p_3, d_3 ) * Finv( b_3, c_3 ) );
@@ -581,17 +598,17 @@ Tensor4_3d IsotropicPolyconvexHyperelasticSurfaceMaterial2::computeBendingTangen
         J * omega_t * ( H - H0 ) * dHdF( a_3, b_3 ) * Finv( d_3, c_3 ) +
         J * omega_t * ( H - H0 ) * d2H_dFdF( a_3, b_3, c_3, d_3 );
 
-    // mixed derivatives
+    // mixed derivatives: d2e/dKdF = dM/dF at fixed K, M = -omega J (H - H0) B / 2
     Tensor4_3d d2e_dKdF, d2e_dFdK;
     d2e_dKdF( a_3, b_3, c_3, d_3 ) = -0.5 * J * omega_t * ( H - H0 ) * B( a_3, b_3 ) * Finv( d_3, c_3 ) +
         0.5 * J * omega_t * ( H - H0 ) * ( Finv( a_3, c_3 ) * B( b_3, d_3 ) + B( a_3, d_3 ) * Finv( b_3, c_3 ) ) -
         0.5 * J * omega_t * B( a_3, b_3 ) * dHdF( c_3, d_3 );
     d2e_dFdK( a_3, b_3, c_3, d_3 ) = d2e_dKdF( c_3, d_3, a_3, b_3 );
 
-    // K depends on F through the current normal: dK/dF = T
+    // K depends on F through the current normal: dK/dF = T, T_ijpq = n_p F^+_qk G_kij
     Tensor4_3d T;
     T( i_3, j_3, p_3, q_3 ) = ( n_def( p_3 ) * Finv( q_3, k_3 ) ) * G( k_3, i_3, j_3 );
-    Tensor6_3d dTdF;
+    Tensor6_3d dTdF; // derivative of T through n and F^+
     dTdF( i_3, j_3, k_3, l_3, m_3, n_3 ) = ( -Finv( l_3, m_3 ) * Finv( n_3, a_3 ) + B( l_3, n_3 ) * n_def( a_3 ) * n_def( m_3 ) ) * ( G( a_3, i_3, j_3 ) * n_def( k_3 ) ) -
         ( Finv( l_3, a_3 ) * Finv( n_3, k_3 ) ) * ( G( a_3, i_3, j_3 ) * n_def( m_3 ) );
 
@@ -638,6 +655,8 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::give3dSurfaceMaterialStiffnessM
     Tensor3_3d G( vG ), gradIt( vdI );
     BendingState s = this->computeBendingState( F, Is, N, G, gradIt, tStep );
 
+    // A_ijk = -n_i M_jk, n does not depend on G and dK_pq/dG_lmn = -n_l delta_pm delta_qn, so
+    // dA_ijk/dG_lmn = n_i n_l d2e/dK_jk dK_mn with d2e/dK2 = omega J B x B / 4
     Tensor4_3d d2e_dKdK;
     d2e_dKdK( a_3, b_3, c_3, d_3 ) = 0.25 * s.J * s.omega * s.B( a_3, b_3 ) * s.B( c_3, d_3 );
 
@@ -663,8 +682,10 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::give3dSurfaceMaterialStiffnessM
     Tensor1_3d &n_def = s.n;
     const double J = s.J, H = s.H, H0 = s.H0, omega_t = s.omega;
 
-    Tensor4_3d dAK; // d2e/dK2
-    dAK( a_3, b_3, c_3, d_3 ) = 0.25 * J * omega_t * B( a_3, b_3 ) * B( c_3, d_3 );
+    // A_ijk = -n_i M_jk: dA_ijk/dF_ab = -dn_i/dF_ab M_jk - n_i dM_jk/dF_ab with dn_i/dF_ab = -n_a F^+_bi and the total
+    // dM/dF = d2e/dKdF + d2e/dK2 : T (T = dK/dF, as in computeBendingTangent)
+    Tensor4_3d d2e_dKdK; // d2e/dK2
+    d2e_dKdK( a_3, b_3, c_3, d_3 ) = 0.25 * J * omega_t * B( a_3, b_3 ) * B( c_3, d_3 );
 
     Tensor2_3d dHdF;
     dHdF( i_3, l_3 ) = Finv( j_3, i_3 ) * K( j_3, k_3 ) * B( k_3, l_3 );
@@ -679,7 +700,7 @@ IsotropicPolyconvexHyperelasticSurfaceMaterial2::give3dSurfaceMaterialStiffnessM
 
     Tensor5_3d dA;
     dA( i_3, j_3, k_3, a_3, b_3 ) = ( Mk( j_3, k_3 ) * n_def( a_3 ) ) * Finv( b_3, i_3 ) -
-        ( d2e_dKdF( j_3, k_3, a_3, b_3 ) + dAK( j_3, k_3, o_3, p_3 ) * T( o_3, p_3, a_3, b_3 ) ) * n_def( i_3 );
+        ( d2e_dKdF( j_3, k_3, a_3, b_3 ) + d2e_dKdK( j_3, k_3, o_3, p_3 ) * T( o_3, p_3, a_3, b_3 ) ) * n_def( i_3 );
 
     return dA.to_voigt_form_27x9();
 }

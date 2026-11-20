@@ -79,6 +79,8 @@ int BsplinePlaneStrainSurfaceElement ::checkConsistency()
 
 FloatArray BsplinePlaneStrainSurfaceElement::giveNormal( GaussPoint *gp ) const
 {
+    // (t_y, -t_x, 0) / |t| in the knot span of the rule of gp (an interior knot takes the tangent of that span);
+    // the boundary number of boundaryEvalNormal is ignored by BSpline2dLineInterpolation
     FloatArray normal;
     this->interpolation.boundaryEvalNormal( normal, 1, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
     return normal;
@@ -119,6 +121,7 @@ int BsplineAxisymSurfaceElement ::checkConsistency()
 
 FloatArray BsplineAxisymSurfaceElement::giveNormal( GaussPoint *gp ) const
 {
+    // as for the plane strain curve: (t_y, -t_x, 0) / |t| in the knot span of the rule of gp
     FloatArray normal;
     this->interpolation.boundaryEvalNormal( normal, 1, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
     return normal;
@@ -144,6 +147,7 @@ void Bspline3dSurfaceElement ::initializeFrom( InputRecord &ir )
 
 int Bspline3dSurfaceElement ::checkConsistency()
 {
+    // nu x nv control points (u index fastest), one node each
     int nu = this->interpolation.giveNumberOfControlPoints( 1 );
     int nv = this->interpolation.giveNumberOfControlPoints( 2 );
     if ( giveNumberOfDofManagers() != nu * nv ) {
@@ -170,6 +174,7 @@ int Bspline3dSurfaceElement ::checkConsistency()
 
 FloatArray Bspline3dSurfaceElement::giveNormal( GaussPoint *gp ) const
 {
+    // A_1 x A_2 / |A_1 x A_2| in the knot spans of the rule of gp (one-sided tangents on a knot line)
     FloatArray normal;
     this->interpolation.evalSurfaceNormal( normal, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
     return normal;

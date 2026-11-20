@@ -53,21 +53,24 @@ class GaussPoint;
 class OOFEM_EXPORT StructuralSurfaceMaterialStatus : public StructuralMaterialStatus
 {
 protected:
-    FloatArray GVector; ///< grad F
-    FloatArray tempGVector;
+    FloatArray GVector; ///< grad F, dF_ij/dX_k (27 components, see HyperElasticSurfaceMaterial for the order)
+    FloatArray tempGVector; ///< grad F of the current iteration
 
-    FloatArray KVector; ///< Current curvature K = -n . grad F, in the reference frame
-    FloatArray tempKVector;
+    FloatArray KVector; ///< Current curvature K = -n . grad F, in the reference frame (9 components)
+    FloatArray tempKVector; ///< K of the current iteration
 
-    FloatArray dIVector; ///< Gradient of the reference surface identity
-    FloatArray tempdIVector;
+    FloatArray dIVector; ///< Gradient of the reference surface identity (27 components)
+    FloatArray tempdIVector; ///< Gradient of the reference surface identity of the current iteration
 
 public:
     /// Constructor. Creates new StructuralSurfaceMaterialStatus with IntegrationPoint g.
     StructuralSurfaceMaterialStatus( GaussPoint *g );
 
+    /// Also copies the committed K, grad F, grad I and the surface Cauchy stress to the temporary ones.
     void initTempStatus() override;
+    /// Also commits K, grad F, grad I and the surface Cauchy stress.
     void updateYourself( TimeStep *tStep ) override;
+    /// Prints all nine components of F and P, in the frame of the material evaluation (see above).
     void printOutputAt( FILE *file, TimeStep *tStep ) const override;
 
     const FloatArray &giveKVector() const { return KVector; }

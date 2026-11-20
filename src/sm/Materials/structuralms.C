@@ -66,6 +66,8 @@ StructuralMaterialStatus :: StructuralMaterialStatus(GaussPoint *g) :
       }
     }
 
+    // IGA elements are not NLStructuralElements; their evaluators work with F and P: start from F = I, P = 0
+    // (the surface status replaces F by the surface identity)
     if ( IGAElement *el = dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
             PVector.resize( 9 );
             FVector.resize( 9 );
@@ -83,6 +85,7 @@ void StructuralMaterialStatus :: printOutputAt(FILE *File, TimeStep *tStep) cons
     FloatArray helpVec;
 
     MaterialStatus :: printOutputAt(File, tStep);
+    // F and P for the large-strain NLStructuralElements; other elements (also IGA) print the strains and stresses
     auto el = dynamic_cast<NLStructuralElement *>( gp->giveElement() );
     if ( el && el->giveGeometryMode() == 1 ) {
       fprintf(File, "  F ");
@@ -205,7 +208,8 @@ void StructuralMaterialStatus :: addStateVariables(const MaterialStatus &iStatus
 
 
 ////////////////
-// Second gradients
+// Second gradients: status of the bulk second gradient materials (gradientsimopistermat, gradientmooneyrivlin),
+// which also keeps grad F (27 components, as left by the last evaluation of the second order stress)
 
 GradientStructuralMaterialStatus::GradientStructuralMaterialStatus( GaussPoint *g ) :
     StructuralMaterialStatus( g ), GVector(), tempGVector()

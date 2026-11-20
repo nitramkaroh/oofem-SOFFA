@@ -72,20 +72,29 @@ public:
     virtual ~Structural3DSurfaceElement();
 
 
+    /// _3dMat: the material gets the full 9-component F.
     MaterialMode giveMaterialMode() override;
+    /// D_u, D_v, D_w in every node.
     void giveDofManDofIDMask( int inode, IntArray &answer ) const override;
+    /// Area attached to gp: the Jacobian of the 2D interpolation in the element plane times the weight (no thickness).
     double computeVolumeAround( GaussPoint *gp ) override;
 
     /// In-plane material directions from elemLocalCS or the element geometry (reserved for the small-strain path, currently unused).
     void giveMaterialOrientationAt( FloatArray &x, FloatArray &y, const FloatArray &lcoords );
+    /// Small-strain stress, reference normal e3 (not used: checkConsistency requires nlgeo 1).
     void computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep ) override;
+    /// Small-strain stiffness, reference normal e3 (not used: checkConsistency requires nlgeo 1).
     void computeConstitutiveMatrixAt( FloatMatrix &answer, MatResponseMode rMode, GaussPoint *gp, TimeStep *tStep ) override;
 
+    /// Geometry for the interpolation; the derived elements give the nodal coordinates in the element frame.
     virtual FEICellGeometry *giveCellGeometryWrapper();
 
 protected:
+    /// Small-strain B (6 x 3 nno, in-plane rows 1, 2, 6 only), reserved for the small-strain path.
     void computeBmatrixAt( GaussPoint *gp, FloatMatrix &answer, int lowerIndx = 1, int upperIndx = ALL_STRAINS ) override;
+    /// Displacement gradient matrix BH (9 x 3 nno) in the element frame, for the rotated unknowns (u, v, w).
     void computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer ) override;
+    /// One Gauss integration rule with numberOfGaussPoints points (the element default or nip).
     void computeGaussPoints() override;
 };
 } // end namespace oofem

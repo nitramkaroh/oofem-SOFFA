@@ -437,8 +437,8 @@ int TSplineInterpolation :: giveKnotSpanBasisFuncMask(const IntArray &knotSpan, 
 {
     FloatArray knotStart(nsd), knotEnd(nsd);
 
-    // reserve the size corresponding to BSpline case
-    // but there may be more nonzero basis functions
+    // start from an empty mask (the loop below appends to it) and reserve the size corresponding to
+    // BSpline case, but there may be more nonzero basis functions
     mask.clear();
     if ( nsd == 2 ) {
         mask.preallocate( ( degree [ 0 ] + 1 ) * ( degree [ 1 ] + 1 ) );
@@ -518,8 +518,8 @@ int TSplineInterpolation :: giveKnotSpanBasisFuncMask(const IntArray &startKnotS
     int nonzero;
     FloatArray knotStart(nsd), knotEnd(nsd);
 
-    // reserve the size corresponding to BSpline case
-    // but there may be more nonzero basis functions
+    // start from an empty mask (the loop below appends to it) and reserve the size corresponding to
+    // BSpline case, but there may be more nonzero basis functions
     mask.clear();
     if ( nsd == 2 ) {
         mask.preallocate( ( degree [ 0 ] + 1 ) * ( degree [ 1 ] + 1 ) );

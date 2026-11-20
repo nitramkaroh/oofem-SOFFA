@@ -60,6 +60,8 @@ namespace oofem {
  *
  * The normal and the basis derivatives are evaluated in the explicitly given knot span, so a clamp at
  * an internal knot uses the side chosen in the input. The location is checked in postInitialize.
+ * The matrix couples only dofs of the clamped element, which its own location array already puts into the
+ * sparse matrix, so no extra location arrays are needed (giveLocationArrays is not overridden).
  *
  * Input: numel (element number), locpos (curve parameter, not a physical coordinate; the knot values of the
  * element are divided by the length of its knot vector, so e.g. the middle knot of knotvectoru 3 0 2 4 is
@@ -81,7 +83,9 @@ public:
     /// Destructor.
     virtual ~IGAClampBoundaryCondition() {};
 
+    /// Reads numel, locpos, bcknotspan and the optional penalty p (positive and finite).
     void initializeFrom( InputRecord &ir ) override;
+    /// Checks the clamp location (checkClampLocation) once the elements of the domain have been read.
     void postInitialize() override;
 
     /**
@@ -95,7 +99,10 @@ public:
     /**
      * The clamp vector c of the knot span: n . du/dxi (localPosition) = c . u_span, with the unit normal n of
      * the reference curve in the span and u_span the u, v displacements of the control points of the span
-     * (2 per point, in the order of the nonzero basis functions). The element is checked by checkClampLocation.
+     * (2 per point, in the order of the nonzero basis functions), i.e. c = (N_1' n_x, N_1' n_y, N_2' n_x, ...)
+     * with N_a' = dN_a/dxi. The element is checked by checkClampLocation.
+     * @param localPosition One component, the curve parameter xi of the clamp.
+     * @param knotSpan One component, the zero-based knot index of the span (as BcKnotSpan).
      */
     static void computeClampVector( FloatArray &answer, Element *elem, const FloatArray &localPosition, const IntArray &knotSpan );
     /// Element-local code numbers of u_span (the first two dofs, u and v, of each control point of the knot span).
@@ -105,7 +112,7 @@ public:
     /// Total displacements u_span of the knot span.
     static void giveSpanDisplacements( FloatArray &answer, Element *elem, const IntArray &knotSpan, TimeStep *tStep );
 
-    /// Assembles the penalty matrix for the tangent, secant and elastic stiffness; other types are ignored.
+    /// Assembles the penalty matrix p c c^T (times scale) for the tangent, secant and elastic stiffness; other types are ignored.
     void assemble( SparseMtrx &answer, TimeStep *tStep,
         CharType type, const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s, double scale = 1.0,
         void *lock = nullptr ) override;

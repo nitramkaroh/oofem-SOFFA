@@ -70,11 +70,11 @@ FEInterpolation *LinePlaneStrainSurface ::giveInterpolation() const { return &in
 
 FloatArray LinePlaneStrainSurface::giveNormal( GaussPoint *gp ) const
 {
+    // e1 = (X2 - X1) / |X2 - X1| in the xy plane; the normal (-e1_y, e1_x, 0) points to its left
     FloatArray e1, normal;
     e1 = { this->giveNode( 2 )->giveCoordinate( 1 ) - this->giveNode( 1 )->giveCoordinate( 1 ),
         this->giveNode( 2 )->giveCoordinate( 2 ) - this->giveNode( 1 )->giveCoordinate( 2 ) };
 
-    // let us normalize e1'
     e1.normalize();
     normal.resize( 3 );
     normal.at( 1 ) = -e1.at( 2 );
@@ -117,19 +117,18 @@ void LinePlaneStrainSurface ::computeLocalNodalCoordinates( std::vector<FloatArr
 const FloatMatrix *
 LinePlaneStrainSurface ::computeGtoLRotationMatrix()
 // Returns the rotation matrix of the receiver of the size [2,2], rows e1 = (N2 - N1) / |N2 - N1| and
-// the in-plane normal e2 = (-e1_y, e1_x)
+// the in-plane normal e2 = (-e1_y, e1_x) (the third axis of the material frame, see computeMaterialFrame)
 // coords(local) = T * coords(global)
 {
     if ( GtoLRotationMatrix == NULL ) {
         FloatArray e1, e2;
 
-        // compute e1' = [N2-N1]
+        // e1 = (X2 - X1) / |X2 - X1|, the unit tangent (x, y components)
         e1 = { this->giveNode( 2 )->giveCoordinate( 1 ) - this->giveNode( 1 )->giveCoordinate( 1 ),
         this->giveNode( 2 )->giveCoordinate( 2 ) - this->giveNode( 1 )->giveCoordinate( 2 ) };
-        // let us normalize e1'
         e1.normalize();
 
-        // Compute e2
+        // e2 = e1 rotated by +90 degrees, the in-plane normal to the left of N1 -> N2
         e2.resize( 2 );
         e2.at( 1 ) = -e1.at( 2 );
         e2.at( 2 ) = e1.at( 1 );
@@ -149,7 +148,7 @@ LinePlaneStrainSurface ::computeGtoLRotationMatrix()
 
 bool LinePlaneStrainSurface ::computeGtoLRotationMatrix( FloatMatrix &answer )
 // Returns the rotation matrix of the receiver of the size [4,4]
-// r(local) = T * r(global), for each node {u_t, u_n} = R * {u, v}
+// r(local) = T * r(global), for each node {u_t, u_n} = R * {u, v}: T = diag(R, R)
 {
     // test if previously computed
     if ( GtoLRotationMatrix == NULL ) {
@@ -188,19 +187,21 @@ void LinePlaneStrainSurface::computeBHmatrixAt( GaussPoint *gp, FloatMatrix &ans
 // in the frame of the surface material (1 = tangent, 2 = out-of-plane, 3 = in-plane normal)
 // for the local nodal unknowns (u_t, u_n). Voigt rows: 1 (11) = du_t/ds, 8 (31) = du_n/ds;
 // the out-of-plane stretch is 1 (plane strain) and comes from the surface identity only.
+// dN/ds are the derivatives along the segment: the interpolation works with the nodal coordinates in the
+// element frame, whose first axis is the tangent.
 {
-    FloatMatrix dnx;
+    FloatMatrix dNdx;
     FEInterpolation1d *interp = static_cast<FEInterpolation1d *>( this->giveInterpolation() );
 
-    interp->evaldNdx( dnx, gp->giveNaturalCoordinates(), *this->giveCellGeometryWrapper() );
+    interp->evaldNdx( dNdx, gp->giveNaturalCoordinates(), *this->giveCellGeometryWrapper() );
 
-    int nRows = dnx.giveNumberOfRows();
-    answer.resize( 9, nRows * 2 );
+    int nno = dNdx.giveNumberOfRows();
+    answer.resize( 9, nno * 2 );
     answer.zero();
 
-    for ( int i = 1; i <= nRows; i++ ) {
-        answer.at( 1, 2 * i - 1 ) = dnx.at( i, 1 ); // du_t/ds
-        answer.at( 8, 2 * i )     = dnx.at( i, 1 ); // du_n/ds
+    for ( int i = 1; i <= nno; i++ ) {
+        answer.at( 1, 2 * i - 1 ) = dNdx.at( i, 1 ); // du_t/ds
+        answer.at( 8, 2 * i )     = dNdx.at( i, 1 ); // du_n/ds
     }
 }
 

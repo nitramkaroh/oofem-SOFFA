@@ -45,64 +45,70 @@ double BaseHyperElasticSurfaceMaterial::compute_surface_determinant( const Tenso
     CtC( i_3, j_3 ) = C( k_3, i_3 ) * C( k_3, j_3 );
     double trC      = C( i_3, i_3 );
     double trCtC    = CtC( i_3, i_3 );
-    double J2       = std::sqrt( 0.5 * ( trC * trC - trCtC ) );
+    double J        = std::sqrt( 0.5 * ( trC * trC - trCtC ) );
 
-    return J2;
+    return J;
 };
 
-Tensor1_3d BaseHyperElasticSurfaceMaterial::compute_surface_deformed_normal( const Tensor2_3d &F, const Tensor1_3d &Nud ) const
+Tensor1_3d BaseHyperElasticSurfaceMaterial::compute_surface_deformed_normal( const Tensor2_3d &F, const Tensor1_3d &N ) const
 {
+    // n = cof(F) N / |cof(F) N|: cof(F) maps the reference area vector N dA to the current one n da
     Tensor2_3d cofF = F.compute_cofactor();
     Tensor1_3d n;
-    n( i_3 ) = cofF( i_3, j_3 ) * Nud( j_3 );
+    n( i_3 ) = cofF( i_3, j_3 ) * N( j_3 );
     n.normalize();
     return n;
 };
 
 Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_pseudoinverse( const Tensor2_3d &F, const Tensor2_3d &I ) const
 {
-    Tensor2_3d JFinv = this->compute_surface_cofactor( F, I );
+    // dJ/dF = J F^+T, so F^+ = (dJ/dF)^T / J
+    Tensor2_3d dJdF = this->compute_surface_cofactor( F, I );
     Tensor2_3d Finv;
-    Finv( i_3, k_3 ) = JFinv( k_3, i_3 ) / this->compute_surface_determinant( F);
+    Finv( i_3, k_3 ) = dJdF( k_3, i_3 ) / this->compute_surface_determinant( F);
     return Finv;
 };
 
 
 Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_cofactor( const Tensor2_3d &F, const Tensor2_3d &I ) const
 {
-    Tensor2_3d cofF, C, cofF2;
+    // J^2 = ((tr C)^2 - tr C^2) / 2 gives 2 J dJ/dF = 2 F (tr C I - C); F I = F because F N = 0
+    Tensor2_3d cofF, C, JcofF;
     C( i_3, j_3 )     = F( k_3, i_3 ) * F( k_3, j_3 );
     auto trC          = C( i_3, i_3 );
-    cofF2( i_3, k_3 ) = F( i_3, j_3 ) * ( trC * I( j_3, k_3 ) - C( j_3, k_3 ) );
-    cofF( i_3, j_3 )  = 1. / this->compute_surface_determinant( F ) * cofF2( i_3, j_3 );
+    JcofF( i_3, k_3 ) = F( i_3, j_3 ) * ( trC * I( j_3, k_3 ) - C( j_3, k_3 ) ); // J dJ/dF
+    cofF( i_3, j_3 )  = 1. / this->compute_surface_determinant( F ) * JcofF( i_3, j_3 );
 
     return cofF;
 };
 
 Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_dCof_dF( const Tensor2_3d &F, const Tensor2_3d &I ) const
 {
-    // d2J/dF2 = ( d(F (tr C I - C))/dF - dJ/dF x dJ/dF ) / J
+    // d2J/dF2 = ( d(F (tr C I - C))/dF - dJ/dF x dJ/dF ) / J, where (B = F F^T)
+    // d(F (tr C I - C))_ij / dF_kl = tr C delta_ik I_jl - delta_ik C_jl + 2 F_ij F_kl - F_il F_kj - B_ik I_jl.
+    // The exact derivative has delta_jl instead of I_jl in the first and the last term; the difference
+    // (tr C delta_ik - B_ik) N_j N_l does not act on variations with dF N = 0.
     Tensor4_3d A2;
     Tensor2_3d cofF          = this->compute_surface_cofactor( F, I );
-    A2( i_3, j_3, k_3, l_3 ) = -cofF( i_3, j_3 ) * cofF( k_3, l_3 );
+    A2( i_3, j_3, k_3, l_3 ) = -cofF( i_3, j_3 ) * cofF( k_3, l_3 ); // -dJ/dF x dJ/dF
 
-    Tensor4_3d A3, A4, A5, A6, A_alt;
+    Tensor4_3d A3, A4, A5, A6, d2J;
     Tensor2_3d C, B;
     C( i_3, j_3 )         = F( k_3, i_3 ) * F( k_3, j_3 );
     B( i_3, j_3 )         = F( i_3, k_3 ) * F( j_3, k_3 );
-    FloatArrayF<9> indent = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d Ib( indent );
+    FloatArrayF<9> vI     = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d Ib( vI ); // 3D identity
     Tensor2_3d Is( I );
     auto trC = C( i_3, i_3 );
 
-    A3( i_3, j_3, k_3, l_3 ) = trC * Ib( i_3, k_3 ) * Is( j_3, l_3 ) - Ib( i_3, k_3 ) * C( j_3, l_3 );
-    A4( i_3, j_3, k_3, l_3 ) = 2 * F( i_3, j_3 ) * F( k_3, l_3 );
-    A5( i_3, j_3, k_3, l_3 ) = -F( i_3, l_3 ) * F( k_3, j_3 );
+    A3( i_3, j_3, k_3, l_3 ) = trC * Ib( i_3, k_3 ) * Is( j_3, l_3 ) - Ib( i_3, k_3 ) * C( j_3, l_3 ); // from dF (tr C I - C)
+    A4( i_3, j_3, k_3, l_3 ) = 2 * F( i_3, j_3 ) * F( k_3, l_3 ); // from d tr C = 2 F : dF
+    A5( i_3, j_3, k_3, l_3 ) = -F( i_3, l_3 ) * F( k_3, j_3 ); // A5 + A6 from -F dC, dC = dF^T F + F^T dF
     A6( i_3, j_3, k_3, l_3 ) = -B( i_3, k_3 ) * Is( j_3, l_3 );
 
-    A_alt( i_3, j_3, k_3, l_3 ) = 1. / this->compute_surface_determinant( F ) * ( A2( i_3, j_3, k_3, l_3 ) + A3( i_3, j_3, k_3, l_3 ) + A4( i_3, j_3, k_3, l_3 ) + A5( i_3, j_3, k_3, l_3 ) + A6( i_3, j_3, k_3, l_3 ) );
+    d2J( i_3, j_3, k_3, l_3 ) = 1. / this->compute_surface_determinant( F ) * ( A2( i_3, j_3, k_3, l_3 ) + A3( i_3, j_3, k_3, l_3 ) + A4( i_3, j_3, k_3, l_3 ) + A5( i_3, j_3, k_3, l_3 ) + A6( i_3, j_3, k_3, l_3 ) );
 
-    return A_alt;
+    return d2J;
 };
 
 
@@ -123,9 +129,10 @@ Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_normF_dF2( const 
     Tensor4_3d answer, part1, part2;
     double normF = this->compute_surface_NormF( F );
 
-    FloatArrayF<9> indent = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d Ib( indent );
+    FloatArrayF<9> vI = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d Ib( vI ); // 3D identity
 
+    // derivative of F / |F|: delta_ik I_jl / |F| (second index projected by I) - F_ij F_kl / |F|^3
     part1( i_3, j_3, k_3, l_3 ) = 1. / normF * Ib( i_3, k_3 ) * I( j_3, l_3 );
     part2( i_3, j_3, k_3, l_3 ) = -1. / pow( normF, 3 ) * F( i_3, j_3 ) * F( k_3, l_3 );
 
@@ -136,6 +143,7 @@ Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_normF_dF2( const 
 
 Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_d_normFa_dF( const Tensor2_3d &F, const Tensor1_3d &a ) const
 {
+    // |F a| = sqrt(F a . F a), so d|F a|/dF = (F a) x a / |F a|
     Tensor1_3d Fa;
     Tensor2_3d answer;
     Fa( i_3 ) = F( i_3, j_3 ) * a( j_3 );
@@ -146,8 +154,9 @@ Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_d_normFa_dF( const T
 
  Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_normFa_dF2( const Tensor2_3d &F, const Tensor1_3d &a ) const
 {
-     FloatArrayF<9> indent3D = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-     Tensor2_3d Identity( indent3D ), aoa;
+     // derivative of (F a) x a / |F a|: delta_ik a_j a_l / |F a| - (F a)_i a_j (F a)_k a_l / |F a|^3
+     FloatArrayF<9> vI = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+     Tensor2_3d Identity( vI ), aoa;
      Tensor1_3d Fa;
      Tensor4_3d answer;
      Fa( i_3 )     = F( i_3, j_3 ) * a( j_3 );
@@ -160,6 +169,8 @@ Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_d_normFa_dF( const T
 
 Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_d_SqrtNormCa_dF( const Tensor2_3d &F, const Tensor1_3d &a ) const
 {
+    // d|C a|/dF = F (C a x a + a x C a) / |C a| (from d(C a)_j / dF_il = delta_jl (F a)_i + F_ij a_l),
+    // so d sqrt(|C a|)/dF = F (C a x a + a x C a) / (2 |C a|^(3/2))
     Tensor2_3d answer, C;
     Tensor1_3d Ca;
     C( i_3, j_3 ) = F( k_3, i_3 ) * F( k_3, j_3 );
@@ -172,10 +183,13 @@ Tensor2_3d BaseHyperElasticSurfaceMaterial::compute_surface_d_SqrtNormCa_dF( con
 
 Tensor4_3d BaseHyperElasticSurfaceMaterial::compute_surface_d2_SqrtNormCa_dF2( const Tensor2_3d &F, const Tensor1_3d &a ) const
 {
+    // Derivative with respect to F_op of 0.5 |C a|^(-3/2) F_ij ((C a)_j a_l + a_j (C a)_l), in three terms:
+    // _a from the factor |C a|^(-3/2), _b from C a in the bracket (d(C a)_j / dF_op = delta_jp (F a)_o + F_oj a_p),
+    // _c from F_ij itself.
     Tensor4_3d answer, Aaniso2_a, Aaniso2_b, Aaniso2_c;
     Tensor1_3d Ca, Fa;
-    FloatArrayF<9> indent3D = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-    Tensor2_3d Identity( indent3D ), aoa, C, aFa, Faa;
+    FloatArrayF<9> vI = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+    Tensor2_3d Identity( vI ), aoa, C, aFa, Faa;
 
     aoa( i_3, j_3 ) = a( i_3 ) * a( j_3 );
     C( i_3, j_3 )   = F( k_3, i_3 ) * F( k_3, j_3 );

@@ -79,7 +79,7 @@ void PlaneStressStructuralElementEvaluator :: computeBMatrixAt(FloatMatrix &answ
 void PlaneStressStructuralElementEvaluator::computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
 {
     // Returns the [ 4 x (nno*2) ] displacement gradient matrix {BH} of the receiver,
-    // evaluated at gp.
+    // evaluated at gp: rows 11, 22, 12, 21 (the comments give the index in the full 9 component form).
     /// @todo not checked if correct
 
     FloatMatrix dNdx;
@@ -147,7 +147,8 @@ void PlaneStrainStructuralElementEvaluator ::computeBMatrixAt( FloatMatrix &answ
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
     interp->evaldNdx( d, gp->giveNaturalCoordinates(),
         FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
-    
+
+    // rows eps_xx, eps_yy, eps_zz (zero in plane strain), gamma_xy
     answer.resize( 4, d.giveNumberOfRows() * 2 );
     answer.zero();
 
@@ -239,23 +240,23 @@ void PlaneStrainStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, Fl
     // Evaluate reference coordinate derivatives from the control points of the knot span
     for ( int k = 0; k < ders.giveNumberOfRows(); k++ ) {
         const auto &vertexCoords = cellgeo.giveVertexCoordinates( mask.at( k + 1 ) );
-        double vertexCoord_1     = vertexCoords[0];
-        double vertexCoord_2     = vertexCoords[1];
+        double xk                = vertexCoords[0]; // x of control point k
+        double yk                = vertexCoords[1]; // y of control point k
         // first derivatives
-        R_rho += ders( k, 1 ) * vertexCoord_1;
-        Y_rho += ders( k, 1 ) * vertexCoord_2;
+        R_rho += ders( k, 1 ) * xk;
+        Y_rho += ders( k, 1 ) * yk;
 
-        R_xi += ders( k, 2 ) * vertexCoord_1;
-        Y_xi += ders( k, 2 ) * vertexCoord_2;
+        R_xi += ders( k, 2 ) * xk;
+        Y_xi += ders( k, 2 ) * yk;
         // second derivatives
-        R_rho_rho += ders( k, 3 ) * vertexCoord_1;
-        Y_rho_rho += ders( k, 3 ) * vertexCoord_2;
+        R_rho_rho += ders( k, 3 ) * xk;
+        Y_rho_rho += ders( k, 3 ) * yk;
 
-        R_xi_xi += ders( k, 4 ) * vertexCoord_1;
-        Y_xi_xi += ders( k, 4 ) * vertexCoord_2;
+        R_xi_xi += ders( k, 4 ) * xk;
+        Y_xi_xi += ders( k, 4 ) * yk;
 
-        R_rho_xi += ders( k, 5 ) * vertexCoord_1;
-        Y_rho_xi += ders( k, 5 ) * vertexCoord_2;
+        R_rho_xi += ders( k, 5 ) * xk;
+        Y_rho_xi += ders( k, 5 ) * yk;
     }
     double R_xi_rho = R_rho_xi;
     double Y_xi_rho = Y_rho_xi;
@@ -263,6 +264,13 @@ void PlaneStrainStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, Fl
     // Parts of grad F multiplying the derivatives of the basis functions, for the x (r) and y nodal
     // values, in the Cartesian basis (the plane strain counterpart of the axisymmetric version, without
     // the hoop terms); J = R_rho Y_xi - R_xi Y_rho
+    // With the parameters theta^a = (rho, xi) and the inverse map rho_,x = Y_xi / J, rho_,y = -R_xi / J,
+    // xi_,x = -Y_rho / J, xi_,y = R_rho / J, a nodal field N u has the second derivatives
+    //   (N u)_,jk = ( N_,ab theta^a_,j theta^b_,k + N_,a theta^a_,jk ) u.
+    // dFcyl_<c>_<a>_<b>( i, j, k ) is the coefficient of N_,ab (theta^a_,j theta^b_,k, for the mixed one the sum
+    // of both orders), dFcyl_<c>_<a>( i, j, k ) the coefficient theta^a_,jk of N_,a, for the nodal value in
+    // the direction c (r = x: i = 0, y: i = 1); grad F_ijk = d F_ij / dX_k. The expressions are not simplified,
+    // hence the common denominator J^3.
     Tensor3_3d dFcyl_r_rho_rho;
     Tensor3_3d dFcyl_r_xi_rho;
     Tensor3_3d dFcyl_r_xi_xi;
@@ -354,6 +362,7 @@ void PlaneStrainStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, Fl
     answer.resize( 27, nRows * 2 );
     answer.zero();
 
+    // columns 2i - 1 and 2i of G belong to the x and y nodal values of the basis function i
     double N_rho, N_xi, N_rho_rho, N_xi_xi, N_rho_xi, N_xi_rho;
     FloatArray col1, col2;
     for ( int i = 1; i <= nRows; i++ ) {
@@ -402,7 +411,8 @@ void AxisymStructuralElementEvaluator ::computeNMatrixAt( FloatMatrix &answer, G
 void AxisymStructuralElementEvaluator::computeBHmatrixAt( GaussPoint *gp, FloatMatrix &answer )
 {
     // Returns the [ 9 x (nno*2) ] displacement gradient matrix {BH} of the receiver,
-    // evaluated at gp.
+    // evaluated at gp: full 3d order 11, 22, 33, 23, 13, 12, 32, 31, 21 with 1 = r, 2 = y, 3 = theta
+    // (rows 4, 5, 7, 8 stay zero in the axisymmetric deformation).
     FloatArray n;
     FloatMatrix dNdx;
     FEInterpolation *interp = gp->giveElement()->giveInterpolation();
@@ -480,25 +490,25 @@ void AxisymStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMa
     // Evaluate reference coordinate derivatives from the control points of the knot span
     for ( int k = 0; k < ders.giveNumberOfRows(); k++ ) {
         const auto &vertexCoords = cellgeo.giveVertexCoordinates( mask.at( k + 1 ) );
-        double vertexCoord_1     = vertexCoords[0];
-        double vertexCoord_2     = vertexCoords[1];
+        double xk                = vertexCoords[0]; // radius of control point k
+        double yk                = vertexCoords[1]; // axial coordinate of control point k
         // position
-        R += vertexCoord_1 * ders( k, 0 ); // compute radial coordinate at the gauss point
+        R += xk * ders( k, 0 ); // compute radial coordinate at the gauss point
         // first derivatives
-        R_rho += ders( k, 1 ) * vertexCoord_1;
-        Y_rho += ders( k, 1 ) * vertexCoord_2;
+        R_rho += ders( k, 1 ) * xk;
+        Y_rho += ders( k, 1 ) * yk;
 
-        R_xi += ders( k, 2) * vertexCoord_1;
-        Y_xi += ders( k, 2) * vertexCoord_2;
+        R_xi += ders( k, 2) * xk;
+        Y_xi += ders( k, 2) * yk;
         // second derivatives
-        R_rho_rho += ders( k, 3 ) * vertexCoord_1;
-        Y_rho_rho += ders( k, 3 ) * vertexCoord_2;
+        R_rho_rho += ders( k, 3 ) * xk;
+        Y_rho_rho += ders( k, 3 ) * yk;
 
-        R_xi_xi += ders( k, 4 ) * vertexCoord_1;
-        Y_xi_xi += ders( k, 4 ) * vertexCoord_2;
+        R_xi_xi += ders( k, 4 ) * xk;
+        Y_xi_xi += ders( k, 4 ) * yk;
 
-        R_rho_xi += ders( k, 5 ) * vertexCoord_1;
-        Y_rho_xi += ders( k, 5 ) * vertexCoord_2;
+        R_rho_xi += ders( k, 5 ) * xk;
+        Y_rho_xi += ders( k, 5 ) * yk;
     }
     checkRadius( R, gp );
     double R_xi_rho = R_rho_xi;
@@ -507,6 +517,12 @@ void AxisymStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMa
     // Parts of grad F multiplying the basis functions and their derivatives, for the radial (r) and axial
     // (y) nodal values, in the cylindrical basis {e_r, e_y, e_theta}: the components of grad F in the
     // curvilinear basis {G_i} x {G^j} x {G^k} transformed to it and written out (J = R_rho Y_xi - R_xi Y_rho)
+    // The in-plane components (indices 0, 1) are those of PlaneStrainStructuralElementEvaluator::computeGMatrixAt.
+    // The hoop terms (index 2, t = e_theta) come from F_tt = 1 + u_r / R and from the rotation of the
+    // cylindrical basis with theta:
+    //   F_tt,R = u_r,R / R - u_r / R^2,   F_tt,Y = u_r,Y / R,
+    //   (grad F)_rtt = (grad F)_trt = ( F_rr - F_tt ) / R,   (grad F)_tyt = F_ry / R,   (grad F)_ytt = F_yr / R;
+    // dFcyl_r holds the coefficients of N itself (the u_r / R terms).
     Tensor3_3d dFcyl_r_rho_rho;
     Tensor3_3d dFcyl_r_xi_rho;
     Tensor3_3d dFcyl_r_xi_xi;
@@ -618,6 +634,7 @@ void AxisymStructuralElementEvaluator::computeGMatrixAt( GaussPoint *gp, FloatMa
     answer.resize( 27, nRows * 2 );
     answer.zero();
 
+    // columns 2i - 1 and 2i of G belong to the radial and axial nodal values of the basis function i
     double N, N_rho, N_xi, N_rho_rho, N_xi_xi, N_rho_xi, N_xi_rho;
     FloatArray col1, col2;
     for ( int i = 1; i <= nRows; i++ ) {

@@ -82,20 +82,22 @@ namespace oofem {
 class AnisotropicPolyconvexHyperelasticSurfaceMaterial : public IsotropicPolyconvexHyperelasticSurfaceMaterial
 {
 protected:
-    FloatArray P1, P2;
+    FloatArray P1, P2; ///< Points p_1, p_2 on the axis of the fibres (global coordinates).
     bool axisGiven  = false; ///< p_1 and p_2 are given
     bool meridional = false; ///< fibres along the meridians of the axis p_1 p_2 instead of the parallels
-    SurfaceMaterialParameter beta, eta;
+    SurfaceMaterialParameter beta, eta; ///< Fibre coefficients beta, eta with their time functions.
 
 public:
     AnisotropicPolyconvexHyperelasticSurfaceMaterial( int n, Domain *d );
 
     void initializeFrom( InputRecord &ir ) override;
 
+    /// dP/dF of the membrane plus eta d2|F a|/dF2 + beta d2 sqrt(|C a|)/dF2.
     FloatMatrixF<9, 9> give3dSurfaceMaterialStiffnessMatrix_dPdF( MatResponseMode mode, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
+    /// P of the membrane plus eta d|F a|/dF + beta d sqrt(|C a|)/dF.
     FloatArrayF<9> giveFirstPKSurfaceStressVector_3d( const FloatArrayF<9> &vF, const FloatArray &normal, GaussPoint *gp, TimeStep *tStep ) const override;
 
-    /// Unit fibre direction in the frame of the element, in its plane (see the class description).
+    /// Unit fibre direction a = (a1, a2, 0) in the frame of the element, in its plane (see the class description).
     Tensor1_3d computeLocalMaterialDirection( GaussPoint *gp, TimeStep *tStep ) const;
 
     const char *giveInputRecordName() const override { return _IFT_AnisotropicPolyconvexHyperelasticSurfaceMaterial_Name; }

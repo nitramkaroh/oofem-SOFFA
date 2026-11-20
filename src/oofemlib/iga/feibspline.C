@@ -816,6 +816,8 @@ void BSplineInterpolation::evalSecondDerivatives( FloatMatrix &answer, const Flo
 
     answer.resize( count, 6 ); // 6 columns for all derivatives, 1 - N, 2 - dN/du, 3 - dN/dv, 4 - d2N/du2, 5 - d2N/dv2,6 - d2N/dudv
 
+    // tensor product N(u, v) = N_k(u) N_l(v): every derivative is a product of the 1D ones (row r of ders[i]
+    // holds the r-th derivatives), rows of answer with the u index fastest
     int cnt = 0;
     for ( int l = 0; l <= degree[1]; l++ ) {
         for ( int k = 0; k <= degree[0]; k++ ) {
@@ -876,7 +878,7 @@ void BSpline2dLineInterpolation::evalTangent( int nder, const FloatArray &lcoord
     // X_,xi and X_,xixi summed over the p+1 control points of the span
     a = { 0., 0. };
     b = { 0., 0. };
-    int ind = span - degree[0] + 1;
+    int ind = span - degree[0] + 1; // one based number of the first control point of the span (functions span-p .. span)
     for ( int k = 0; k <= degree[0]; k++ ) {
         const auto &vertexCoords = cellgeo.giveVertexCoordinates( ind + k );
         a[0] += ders( 1, k ) * vertexCoords[0];
@@ -911,17 +913,17 @@ double BSpline2dLineInterpolation::evaldNdx( FloatMatrix &answer, const FloatArr
     this->evalTangent( 1, lcoords, cellgeo, ders, a, b );
 
     // inverse (contravariant) metric coefficient g^11 = 1 / |X_,xi|^2
-    double G_11 = 1. / ( a[0] * a[0] + a[1] * a[1] );
+    double gInv = 1. / ( a[0] * a[0] + a[1] * a[1] );
 
     // surface gradient dN_k/dX = N_k' g^11 X_,xi
     answer.resize( degree[0] + 1, 2 );
     for ( int k = 0; k <= degree[0]; k++ ) {
         for ( int l = 0; l < 2; l++ ) {
-            answer( k, l ) = a[l] * ders( 1, k ) * G_11;
+            answer( k, l ) = a[l] * ders( 1, k ) * gInv;
         }
     }
 
-    return 1. / sqrt( G_11 ); // |X_,xi|
+    return 1. / sqrt( gInv ); // |X_,xi|
 }
 
 
@@ -935,16 +937,16 @@ void BSpline2dLineInterpolation::evald2Ndx2( FloatMatrix &answer, const FloatArr
     double dXprod[3] = { a[0] * a[0], a[1] * a[1], a[1] * a[0] };
 
     // inverse (contravariant) metric coefficient g^11 = 1 / |X_,xi|^2
-    double G_11 = 1. / ( a[0] * a[0] + a[1] * a[1] );
+    double gInv = 1. / ( a[0] * a[0] + a[1] * a[1] );
 
     // Christoffel symbol Gamma^1_11 = g^11 X_,xi . X_,xixi; d2N/ds2 = ( N'' - Gamma N' ) g^11 along the arc length s
-    double Gamma = G_11 * ( a[0] * b[0] + a[1] * b[1] );
+    double Gamma = gInv * ( a[0] * b[0] + a[1] * b[1] );
 
-    // d2N_k/dX2 = d2N_k/ds2 t x t (xx, yy, xy)
+    // d2N_k/dX2 = d2N_k/ds2 t x t (xx, yy, xy) with t x t = g^11 X_,xi x X_,xi, hence g^11 twice
     answer.resize( degree[0] + 1, 3 );
     for ( int k = 0; k <= degree[0]; k++ ) {
         for ( int l = 0; l < 3; l++ ) {
-            answer( k, l ) = dXprod[l] * ( ders( 2, k ) - ders( 1, k ) * Gamma ) * G_11 * G_11;
+            answer( k, l ) = dXprod[l] * ( ders( 2, k ) - ders( 1, k ) * Gamma ) * gInv * gInv;
         }
     }
 }
@@ -1047,6 +1049,8 @@ double BSpline3dSurfaceInterpolation::evalTangents( int nder, const FloatArray &
     if ( b ) {
         *b = { { { 0., 0., 0. }, { 0., 0., 0. }, { 0., 0., 0. } } };
     }
+    // one based number of the first control point of the span: row span[1] - q, column span[0] - p of the
+    // control net; ind moves to the next row after each l
     int ind = ( span[1] - degree[1] ) * numberOfControlPoints[0] + span[0] - degree[0] + 1;
     for ( int l = 0; l <= degree[1]; l++ ) {
         for ( int k = 0; k <= degree[0]; k++ ) {
@@ -1093,7 +1097,7 @@ void BSpline3dSurfaceInterpolation::reciprocalTangents( const std::array<double,
     std::array<double, 3> normal = { ( a1[1] * a2[2] - a1[2] * a2[1] ) / J,
         ( a1[2] * a2[0] - a1[0] * a2[2] ) / J, ( a1[0] * a2[1] - a1[1] * a2[0] ) / J };
     for ( int i = 0; i < 3; i++ ) {
-        int j = ( i + 1 ) % 3, k = ( i + 2 ) % 3;
+        int j = ( i + 1 ) % 3, k = ( i + 2 ) % 3; // cyclic: (u x v)_i = u_j v_k - u_k v_j
         d1[i] = ( a2[j] * normal[k] - a2[k] * normal[j] ) / J;
         d2[i] = ( normal[j] * a1[k] - normal[k] * a1[j] ) / J;
         if ( !std::isfinite( d1[i] ) || !std::isfinite( d2[i] ) ) {
@@ -1141,7 +1145,7 @@ void BSpline3dSurfaceInterpolation::evald2Ndx2( FloatMatrix &answer, const Float
     reciprocalTangents( a1, a2, J, lcoords, d1, d2 );
 
     // (N_,ab - X_,ab . grad_s N) A^a x A^b of the nonzero basis functions, u index fastest,
-    // columns xx, yy, zz, yz, xz, xy
+    // columns xx, yy, zz, yz, xz, xy: column c is the component (rows[c], cols[c]) of the symmetric 3 x 3 tensor
     static const int rows[6] = { 0, 1, 2, 1, 0, 0 }, cols[6] = { 0, 1, 2, 2, 2, 1 };
     answer.resize( ( degree[0] + 1 ) * ( degree[1] + 1 ), 6 );
     int cnt = 0;
@@ -1153,6 +1157,7 @@ void BSpline3dSurfaceInterpolation::evald2Ndx2( FloatMatrix &answer, const Float
                 gradN[i] = dNdxi * d1[i] + dNdeta * d2[i];
             }
             auto dot = [&gradN]( const std::array<double, 3> &x ) { return x[0] * gradN[0] + x[1] * gradN[1] + x[2] * gradN[2]; };
+            // covariant components c_ab = N_,ab - X_,ab . grad_s N (X_,ab . grad_s N = Gamma^c_ab N_,c), c21 = c12
             double c11 = dersU( 2, k ) * dersV( 0, l ) - dot( b[0] );
             double c22 = dersU( 0, k ) * dersV( 2, l ) - dot( b[1] );
             double c12 = dersU( 1, k ) * dersV( 1, l ) - dot( b[2] );

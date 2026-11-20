@@ -65,8 +65,8 @@ public HuertaErrorEstimatorInterface
 {
 protected:
     static FEI3dTetLin interpolation;
-    FloatArrayF<9> F0; // Prestrain for single GP only
-    int prestrain = 0;
+    FloatArrayF<9> F0; // prestrain deformation gradient f0 (global coordinates, one for the element, all Gauss points)
+    int prestrain = 0; // 1: the element has the prestrain F0 (input prestrain 1 with f0)
 
 public:
     LTRSpace(int n, Domain * d);
@@ -74,6 +74,7 @@ public:
 
     FEInterpolation *giveInterpolation() const override;
 
+    /// Also reads the optional prestrain: prestrain 1 f0 9 ... (F0 in global coordinates, Voigt order 11 22 33 23 13 12 32 31 21).
     void initializeFrom( InputRecord &ir ) override;
 
     void computeLumpedMassMatrix(FloatMatrix &answer, TimeStep *tStep) override;
@@ -110,6 +111,7 @@ public:
                                                           HuertaErrorEstimator :: AnalysisMode aMode) override;
     void HuertaErrorEstimatorI_computeNmatrixAt(GaussPoint *gp, FloatMatrix &answer) override;
 
+    /// Also gives IST_PrestrainDeformationGradient (F0, global) when the element has a prestrain.
     int giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep ) override;
 
     /// The prestrain f0 of the element (prestrain 1), in global coordinates.

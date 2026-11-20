@@ -75,7 +75,7 @@ protected:
     double nu = 0;
     /// Shear modulus.
     double G = 0;
-    /// Alpha
+    /// Coefficient of thermal dilatation alpha (keyword talpha).
     double a = 0;
 
 public:
@@ -101,8 +101,9 @@ public:
 
     /**
      * Initializes receiver according to object description stored in input record.
-     * The E modulus (keyword "E"), Poisson ratio ("nu") and coefficient of thermal dilatation
-     * alpha ("talpha") are read. The parent class instanciateFrom method is called.
+     * The E modulus (keyword "e"), Poisson ratio ("n") and coefficient of thermal dilatation
+     * alpha ("talpha") are read after the parent class initializeFrom. Then the input stops with an error,
+     * since the material is not implemented (see the class description).
      */
     void initializeFrom( InputRecord &ir ) override;
     void giveInputRecord( DynamicInputRecord &input ) override;
@@ -110,7 +111,8 @@ public:
     void saveContext( DataStream &stream, ContextMode mode ) override;
     void restoreContext( DataStream &stream, ContextMode mode ) override;
 
-    /// Initialized fixed size tangents. Called by ctor and initializeFrom.
+    /// Initializes the fixed size tangents (3D isotropic Hooke matrix 2 G I_dev + K I x I) and alpha. Called by the
+    /// constructor with E and nu, initializeFrom and restoreContext.
     void initTangents();
 
     double give( int aProperty, GaussPoint *gp ) const override;

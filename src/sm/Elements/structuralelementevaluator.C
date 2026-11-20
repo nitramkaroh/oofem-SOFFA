@@ -315,6 +315,8 @@ void StructuralElementEvaluator :: giveInternalForcesVector(FloatArray &answer, 
             double dV = this->computeVolumeAround(gp);
 
             if ( nlGeometry == 1 ) { // First Piola-Kirchhoff stress
+                // f = int( BH^T P + G^T A ) dV; BH has the rows of the reduced form of the material mode, so a
+                // P with all 9 components (e.g. stored in the status) is reduced first (in 3d this changes nothing)
                 if ( stress.giveSize() == 9 ) {
                     FloatArray stressTemp;
                     StructuralMaterial::giveReducedVectorForm( stressTemp, stress, gp->giveMaterialMode() );
@@ -468,6 +470,11 @@ void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, M
             }
 
 
+            // Second gradient: the linearization of int( BH^T P + G^T A ) dV adds
+            //   G^T dA/d(grad F) G + G^T dA/dF BH + BH^T dP/d(grad F) G
+            // to BH^T dP/dF BH above. The two mixed terms are transposes of each other (dP/d(grad F) = (dA/dF)^T),
+            // so their sum is symmetric: copying the upper triangle to the lower one after the loop (matStiffSymmFlag)
+            // keeps it.
             if ( this->hasSecondGradient ) {
                 dAG.beProductOf( dAddF, Gmat ); // G^T dA/d(grad F) G
                 if ( matStiffSymmFlag ) { // the upper triangle is mirrored below, after the loop
@@ -483,10 +490,10 @@ void StructuralElementEvaluator :: computeStiffnessMatrix(FloatMatrix &answer, M
                 dAB.beProductOf( dAdF, bj ); // G^T dA/dF BH
                 m->plusProductUnsym( Gmat, dAB, dV );
 
-                FloatMatrix dAG2, dAdFt;
+                FloatMatrix dPG, dAdFt;
                 dAdFt.beTranspositionOf( dAdF );
-                dAG2.beProductOf( dAdFt, Gmat ); // BH^T dP/d(grad F) G with dP/d(grad F) = (dA/dF)^T
-                m->plusProductUnsym( bj, dAG2, dV );
+                dPG.beProductOf( dAdFt, Gmat ); // BH^T dP/d(grad F) G with dP/d(grad F) = (dA/dF)^T
+                m->plusProductUnsym( bj, dPG, dV );
             }
         }
 
@@ -533,7 +540,8 @@ void StructuralElementEvaluator::computeDeformationGradientVector( FloatArray &a
     this->giveSpanDisplacements( ur, gp, tStep );
     answer.beProductOf( B, ur );
 
-    // Deformation gradient F = H + I
+    // Deformation gradient F = H + I; the diagonal components come first in every reduced form
+    // (plane strain 11, 22, 33, 12, 21; plane stress 11, 22, 12, 21; 1d 11)
     MaterialMode matMode = gp->giveMaterialMode();
     if ( matMode == _3dMat || matMode == _PlaneStrain ) {
         answer.at( 1 ) += 1.0;

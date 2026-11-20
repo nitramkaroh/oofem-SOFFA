@@ -57,15 +57,17 @@ public:
     /**
      * IST_CurvatureTensor at the VTK export point gp, evaluated there from the displacements:
      * K = -n . grad F with the current unit normal n = cof(F) N / |cof(F) N| (as in the bending material),
-     * 9 components row by row. Stops with an error unless the element has a bending material.
+     * 9 components row by row. An export point on a knot line uses the knot span of its export rule, so K
+     * may jump between neighbouring spans (the second derivatives of a C1 basis do). Stops with an error
+     * unless the element has a bending material.
      * @return false for the other types.
      */
     bool giveCurvatureExportValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, TimeStep *tStep );
 
 protected:
     /**
-     * Assemble interpolation matrix at given IP
-     * In case of IGAElements, N is assumed to contain only nonzero interpolation functions
+     * Interpolation matrix 3 x (3 nno), [N1 0 0 N2 ...; 0 N1 0 0 N2 ...; 0 0 N1 0 0 N2 ...], of the nno nonzero
+     * basis functions of the knot span of gp.
      */
     void computeNMatrixAt( FloatMatrix &answer, GaussPoint *gp ) override;
     /**
@@ -86,6 +88,7 @@ protected:
     /// Area of the reference surface around gp (|X_,xi x X_,eta| times the weight).
     double computeVolumeAround( GaussPoint *gp ) override;
 
+    /// Dofs u, v, w of every control point.
     void giveDofManDofIDMask( int inode, IntArray &answer ) const
     {
         answer = { D_u, D_v, D_w };

@@ -53,14 +53,14 @@ StructuralSurfaceMaterialStatus ::StructuralSurfaceMaterialStatus( GaussPoint *g
     if ( IGAElement *el = dynamic_cast<IGAElement *>( gp->giveElement() ) ) {
         // IGA surfaces work in the global frame: I - N x N of the reference normal
         FloatArray normal = el->giveNormal( g );
-        FloatArrayF<3> UDn( normal );
-        Tensor1_3d Nt( UDn );
-        Tensor2_3d id2D;
-        FloatArrayF<9> indent3d = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
-        Tensor2_3d Identity3d( indent3d );
+        FloatArrayF<3> vN( normal );
+        Tensor1_3d N( vN );
+        Tensor2_3d Is;
+        FloatArrayF<9> vI = { 1., 1., 1., 0., 0., 0., 0., 0., 0. };
+        Tensor2_3d Identity3d( vI );
 
-        id2D( i_3, j_3 ) = Identity3d( i_3, j_3 ) - Nt( i_3 ) * Nt( j_3 );
-        FVector          = id2D.to_voigt_form();
+        Is( i_3, j_3 ) = Identity3d( i_3, j_3 ) - N( i_3 ) * N( j_3 );
+        FVector          = Is.to_voigt_form();
     }
     tempFVector = FVector;
     KVector.resize( 9 );

@@ -113,6 +113,9 @@ public:
      * be called if nlGeo = 1 and mode = TL. This method computes the deformation gradient F and passes
      * it on to the crossection which then asks for the stress from the material.
      * @note P is related to S through F*S.
+     * @note In the 3D material mode, an element with a prestrain F0 (givePrestrainDeformationGradient) passes
+     * F * F0 to the material and returns P F0^T / det F0; the kinematic F and the returned P are then stored
+     * in the material status (temporary values), also without prestrain.
      *
      * @param answer Computed stress vector in Voigt form.
      * @param gp Gauss point at which the stress is evaluated.
@@ -252,10 +255,23 @@ public:
      * in the frame in which the element evaluates F. Only elements with a prestrain override this (opt-in):
      * the material then gets F * F0 and the stress and the tangent are pulled back to F. When it returns
      * false, F0 is not set and the material gets F itself.
+     * @param F0 The prestrain deformation gradient (set only when true is returned).
+     * @param gp Integration point.
+     * @return Whether the element has a prestrain.
      */
     virtual bool givePrestrainDeformationGradient( Tensor2_3d &F0, GaussPoint *gp ) { return false; }
-    /// F * F0 in the 9-component Voigt order (11, 22, 33, 23, 13, 12, 32, 31, 21).
+    /// F * F0 in the 9-component Voigt order (11, 22, 33, 23, 13, 12, 32, 31, 21); vF has 9 components in this order.
     static FloatArray applyPrestrain( const FloatArray &vF, const Tensor2_3d &F0 );
+    /**
+     * Step length alpha along the increment element_ddX at which det(F + alpha H) of a Gauss point
+     * reaches zero, H = BH * element_ddX, from the quadratic a alpha^2 + b alpha + c = 0 with
+     * c = det F, b = det H + cof(F) : H, a = cof(H) : F (the cubic term of det(F + alpha H) is lumped
+     * into the linear coefficient). Of two positive roots the smaller one is taken, otherwise the larger;
+     * 1e9 when the discriminant is not positive. Only elements with a single integration rule are evaluated
+     * (otherwise 1e9), and the value of the last Gauss point is returned.
+     * @param element_ddX Increment of the element unknowns (in the order of the element DOFs).
+     * @param tStep Time step (for the current F).
+     */
     double giveElementMaximumLineSearchStep( FloatArray &element_ddX, TimeStep *tStep );
 
 protected:

@@ -151,7 +151,7 @@ void IGAClampBoundaryConditionLagrange ::assembleVector( FloatArray &answer, Tim
     // forces lambda c of the multiplier on the span dofs and the residual c . u_span of the constraint
     double lambda = ( *this->lmdm->begin() )->giveUnknown( mode, tStep );
     FloatArray fe = lambda * c;
-    FloatArray der = { c.dotProduct( u ) };
+    FloatArray constraint = { c.dotProduct( u ) };
     IntArray lambdaLoc = { s.giveDofEquationNumber( *this->lmdm->begin() ) };
 
 #ifdef _OPENMP
@@ -160,7 +160,7 @@ void IGAClampBoundaryConditionLagrange ::assembleVector( FloatArray &answer, Tim
     }
 #endif
     answer.assemble( fe, loc );
-    answer.assemble( der, lambdaLoc );
+    answer.assemble( constraint, lambdaLoc );
 #ifdef _OPENMP
     if ( lock ) {
         omp_unset_lock( static_cast<omp_lock_t *>( lock ) );
@@ -171,8 +171,8 @@ void IGAClampBoundaryConditionLagrange ::assembleVector( FloatArray &answer, Tim
 void IGAClampBoundaryConditionLagrange ::giveLagrangianMultiplierLocationArray( const UnknownNumberingScheme &r_s, IntArray &answer )
 {
     answer.resize( 1 );
-    int l  = r_s.giveDofEquationNumber( *this->lmdm->begin() );
-    answer.at( 1 ) = l;
+    int eq = r_s.giveDofEquationNumber( *this->lmdm->begin() );
+    answer.at( 1 ) = eq;
 }
 
 void IGAClampBoundaryConditionLagrange ::giveLocationArrays( std ::vector<IntArray> &rows, std ::vector<IntArray> &cols, CharType type, const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s )

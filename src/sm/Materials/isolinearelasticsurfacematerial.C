@@ -87,7 +87,7 @@ void IsotropicLinearElasticSurfaceMaterial ::initTangents()
     this->computesSubTangents();
     this->alpha = {
         a, a, 0., 0., 0., 0.
-    }; // CHANGED
+    }; // thermal dilatation only in the plane of the surface (11, 22)
     //this->alpha = {
     //    a, a, a, 0., 0., 0.
     //};

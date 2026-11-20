@@ -142,6 +142,8 @@ public:
     /**
      * Scale of externally assembled reference forces. Ordinary arc-length methods use the load level;
      * a material-driven method may keep these forces fixed while scaling an internal material term.
+     * @param loadLevel Current load level.
+     * @return Factor of the reference load in the residual and in the reactions of the engineering model.
      */
     virtual double giveReferenceLoadScale(double loadLevel) const { return loadLevel; }
     /**

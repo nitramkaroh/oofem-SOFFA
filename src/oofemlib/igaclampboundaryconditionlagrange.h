@@ -55,6 +55,9 @@ namespace oofem {
  * dof manager of this boundary condition. With c = dN/dxi projected to the reference normal n (over the
  * u, v dofs of the control points of the selected knot span) it adds the blocks c and c^T coupling the
  * span dofs and lambda to the stiffness matrix, and lambda c and c . u to the internal forces.
+ * These are the derivatives of the term lambda (c . u_span) added to the energy; lambda is the reaction
+ * conjugate to the constraint value c . u_span. The lambda-lambda entry of the matrix stays zero (it is
+ * only reserved in giveLocationArrays).
  */
 class OOFEM_EXPORT IGAClampBoundaryConditionLagrange : public ActiveBoundaryCondition
 {
@@ -70,10 +73,12 @@ public:
     /// Destructor.
     virtual ~IGAClampBoundaryConditionLagrange() {};
 
+    /// Reads numel, locpos and bcknotspan and creates the internal dof manager with the multiplier (one dof with a new dof id).
     void initializeFrom( InputRecord &ir ) override;
+    /// Checks the clamp location (IGAClampBoundaryCondition::checkClampLocation) once the elements of the domain have been read.
     void postInitialize() override;
 
-    /// Assembles the multiplier blocks for the tangent, secant and elastic stiffness; other types are ignored.
+    /// Assembles the multiplier blocks c and c^T (times scale) for the tangent, secant and elastic stiffness; other types are ignored.
     void assemble( SparseMtrx &answer, TimeStep *tStep,
         CharType type, const UnknownNumberingScheme &r_s, const UnknownNumberingScheme &c_s, double scale = 1.0,
         void *lock = nullptr ) override;

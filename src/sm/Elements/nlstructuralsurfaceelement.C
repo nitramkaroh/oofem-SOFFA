@@ -62,6 +62,7 @@ NLStructuralSurfaceElement::NLStructuralSurfaceElement( int n, Domain *aDomain )
 
 void NLStructuralSurfaceElement::computeNmatrixAt( const FloatArray &lcoords, FloatMatrix &answer )
 {
+    // ndofs x (ndofs nno): each shape function multiplies every translational DOF of its node (2 or 3 per node)
     FloatArray N;
     this->giveInterpolation()->evalN( N, lcoords, FEIElementGeometryWrapper( this ) );
     IntArray dofs;
@@ -102,8 +103,9 @@ void NLStructuralSurfaceElement::computeMaterialFrame( FloatMatrix &answer )
     if ( R.giveNumberOfRows() == 3 && R.giveNumberOfColumns() == 3 ) {
         answer = R;
     } else if ( R.giveNumberOfRows() == 2 && R.giveNumberOfColumns() == 2 ) {
-        // The nodal frame is (tangent, left normal). The material axes are (tangent, out of plane, normal).
-        // Choosing the second axis opposite to global z makes this a right-handed spatial frame.
+        // The nodal frame is (tangent t, left normal n). The material axes are (tangent, out of plane, normal):
+        // rows e1 = (t_x, t_y, 0), e2 = (0, 0, -1), e3 = (n_x, n_y, 0). Choosing the second axis opposite to
+        // global z makes this a right-handed spatial frame (e1 x e2 = e3).
         answer.resize( 3, 3 );
         answer.at( 1, 1 ) = R.at( 1, 1 );
         answer.at( 1, 2 ) = R.at( 1, 2 );
@@ -118,6 +120,7 @@ void NLStructuralSurfaceElement::computeMaterialFrame( FloatMatrix &answer )
 int NLStructuralSurfaceElement::giveIPValue( FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep )
 {
     if ( type == IST_DisplacementVector ) {
+        // u = N * u_global at gp: the unknowns come in the element frame, R^T rotates them back
         FloatArray u;
         FloatMatrix N, R;
         this->computeVectorOf( VM_Total, tStep, u );
@@ -126,15 +129,17 @@ int NLStructuralSurfaceElement::giveIPValue( FloatArray &answer, GaussPoint *gp,
         }
         this->computeNmatrixAt( gp->giveSubPatchCoordinates(), N );
         answer.beProductOf( N, u );
-        answer.resizeWithValues( 3 );
+        answer.resizeWithValues( 3 ); // planar elements: (u, v, 0)
         return 1;
     } else if ( type == IST_GlobalDeformationGradientTensor ) {
         auto *status = static_cast<StructuralMaterialStatus *>( this->giveCrossSection()->giveMaterial( gp )->giveStatus( gp ) );
         FloatArray vFmat, normal;
         Tensor2_3d F0s;
         double J0;
-        // The element restores the kinematic F in the status after a constitutive call. Apply prestrain once.
+        // The status holds the kinematic F (the element stores it after the constitutive call), so the
+        // prestrain is applied exactly once here: vFmat = F * F0 in the element frame.
         this->giveMaterialKinematics( status->giveFVector(), gp, vFmat, normal, F0s, J0 );
+        // to global coordinates: F_global = R^T (F F0) R, R = global-to-element rotation (rows e1, e2, e3)
         FloatMatrix R, F, FR, globalF;
         this->computeMaterialFrame( R );
         F.beMatrixForm( vFmat );
@@ -159,8 +164,10 @@ bool NLStructuralSurfaceElement::giveMaterialKinematics( const FloatArray &vF, G
     }
     vFmat = applyPrestrain( vF, F0 );
 
-    // F maps e3 to zero, so only the part of F0 in the element plane counts; this part maps the plane
-    // of the original configuration onto the element plane and its normal N to zero: cof(F0s) = J0 e3 x N.
+    // F maps e3 to zero (F = F I_s), so F F0 = F F0s with F0s = I_s F0, the rows 1, 2 of F0: only the part of
+    // F0 in the element plane counts. F0s maps the plane of the original configuration onto the element plane
+    // and its normal N to zero. With the third row zero, the only nonzero row of cof(F0s) is the third one,
+    // row1(F0) x row2(F0) = J0 N, i.e. cof(F0s) = J0 e3 N^T: N = cof(F0s)^T e3 / J0 and J0 its length.
     F0s = Tensor2_3d( F0( 0, 0 ), F0( 0, 1 ), F0( 0, 2 ), F0( 1, 0 ), F0( 1, 1 ), F0( 1, 2 ), 0., 0., 0. );
     Tensor2_3d cofF0 = F0s.compute_cofactor();
     normal           = { cofF0( 2, 0 ), cofF0( 2, 1 ), cofF0( 2, 2 ) };
@@ -176,31 +183,34 @@ bool NLStructuralSurfaceElement::giveMaterialKinematics( const FloatArray &vF, G
 void NLStructuralSurfaceElement::computeFirstPKStressVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep )
 {
     auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
-    FloatArray vF, vFmod, normal;
+    FloatArray vF, vFmat, normal;
     this->computeDeformationGradientVector( vF, gp, tStep );
 
-    // The material sees Fmod = F * F0 with the normal of its reference configuration; the returned
+    // The material sees vFmat = F * F0 with the normal of its reference configuration; the returned
     // stress is pulled back to the kinematic F.
-    Tensor2_3d F0;
+    Tensor2_3d F0s;
     double J0;
-    bool prestrained = this->giveMaterialKinematics( vF, gp, vFmod, normal, F0, J0 );
+    bool prestrained = this->giveMaterialKinematics( vF, gp, vFmat, normal, F0s, J0 );
 
-    FloatArray answerTmp = cs->giveFirstPKSurfaceStresses( vFmod, normal, gp, tStep );
+    FloatArray vPmat = cs->giveFirstPKSurfaceStresses( vFmat, normal, gp, tStep );
 
     if ( prestrained ) {
-        FloatArrayF<9> vP( answerTmp );
+        // The energy per unit area of the mesh is W(F F0) / J0 and F F0 = F F0s, so by the chain rule
+        // P = P_material(F F0) F0s^T / J0.
+        FloatArrayF<9> vP( vPmat );
         Tensor2_3d P( vP ), Pmod;
-        Pmod( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0( j_3, k_3 ); // P_element = P_material * F0^T / J0.
+        Pmod( i_3, j_3 ) = 1. / J0 * P( i_3, k_3 ) * F0s( j_3, k_3 );
         answer = Pmod.to_voigt_form();
     } else {
-        // P I_s: drop the components with the reference index 3 (Voigt 33, 23, 13).
-        answer = answerTmp;
+        // P I_s: drop the components with the reference index 3 (Voigt 33, 23, 13), which BH does not use.
+        answer = vPmat;
         answer.at( 3 ) = 0.;
         answer.at( 4 ) = 0.;
         answer.at( 5 ) = 0.;
     }
 
-    // Store work-conjugate F and P in the same frame as BH, including for cached reactions.
+    // Store the work-conjugate F and P in the frame of BH: the internal forces and reactions computed
+    // from the status (cached stresses) use this P.
     auto mat = cs->giveMaterial( gp );
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
     status->letTempFVectorBe( vF );
@@ -213,11 +223,12 @@ void NLStructuralSurfaceElement::computeConstitutiveMatrix_dPdF_At( FloatMatrix 
     auto cs  = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
     auto mat = cs->giveMaterial( gp );
     StructuralMaterialStatus *status = static_cast<StructuralMaterialStatus *>( mat->giveStatus( gp ) );
-    FloatArray vF( status->giveTempFVector() ), vFmod, normal;
+    // the kinematic F, stored by computeFirstPKStressVector
+    FloatArray vF( status->giveTempFVector() ), vFmat, normal;
 
-    Tensor2_3d F0;
+    Tensor2_3d F0s;
     double J0;
-    if ( !this->giveMaterialKinematics( vF, gp, vFmod, normal, F0, J0 ) ) {
+    if ( !this->giveMaterialKinematics( vF, gp, vFmat, normal, F0s, J0 ) ) {
         // No prestrain: the status already holds F; F0 = I_s on both reference indices only drops the rows
         // and columns with the reference index 3 (Voigt 33, 23, 13).
         answer = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );
@@ -230,20 +241,22 @@ void NLStructuralSurfaceElement::computeConstitutiveMatrix_dPdF_At( FloatMatrix 
         return;
     }
 
-    status->letTempFVectorBe( vFmod ); // the material takes F from the status
-    FloatMatrix answerTmp = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );
+    status->letTempFVectorBe( vFmat ); // the material takes F from the status: give it F * F0
+    FloatMatrix Amat = cs->giveSurfaceStiffnessMatrix_dPdF_3d( rMode, normal, gp, tStep );
     status->letTempFVectorBe( vF ); // Restore kinematic F after the constitutive evaluation.
 
-    // Chain rule for W(F * F0) / J0: apply F0 to both reference indices.
-    FloatMatrixF<9, 9> mA( answerTmp );
+    // Chain rule for P = P_material(F F0s) F0s^T / J0: F0s on both reference indices,
+    // A_ijkl = F0s_jm A_material_imkn F0s_ln / J0.
+    FloatMatrixF<9, 9> mA( Amat );
     Tensor4_3d A( mA ), Amod;
-    Amod( i_3, j_3, k_3, l_3 ) = 1. / J0 * F0( j_3, m_3 ) * A( i_3, m_3, k_3, n_3 ) * F0( l_3, n_3 );
+    Amod( i_3, j_3, k_3, l_3 ) = 1. / J0 * F0s( j_3, m_3 ) * A( i_3, m_3, k_3, n_3 ) * F0s( l_3, n_3 );
     answer = Amod.to_voigt_form();
 }
 
 
 void NLStructuralSurfaceElement ::computeStressVector( FloatArray &answer, const FloatArray &strain, GaussPoint *gp, TimeStep *tStep )
 {
+    // small-strain path (not reached: checkConsistency requires nlgeo 1)
     auto cs = dynamic_cast<SimpleSurfaceCrossSection *>( this->giveStructuralCrossSection() );
     FloatArray normal = { 0., 0., 1. }; // the reference normal in the frame of the element
     answer = cs->giveRealSurfaceStresses( strain, normal, gp, tStep );
@@ -288,11 +301,11 @@ void NLStructuralSurfaceElement::computeDeformationGradientVector( FloatArray &a
         u.subtract( *initialDisplacements );
     }
 
-    // Surface displacement gradient in the element's reference surface frame.
-    FloatMatrix B;
-    this->computeBHmatrixAt( gp, B );
- 
-    answer.beProductOf( B, u );
+    // Surface displacement gradient in the element's reference surface frame, H = BH u.
+    FloatMatrix BH;
+    this->computeBHmatrixAt( gp, BH );
+
+    answer.beProductOf( BH, u );
 
     // Surface deformation gradient F = H + I_s, where I_s = diag(1, 1, 0).
     answer.at( 1 ) += 1.0;

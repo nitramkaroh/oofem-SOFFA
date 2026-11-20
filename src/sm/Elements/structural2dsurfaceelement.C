@@ -107,7 +107,8 @@ Structural2DSurfaceElement::giveDofManDofIDMask(int inode, IntArray &answer) con
 double
 Structural2DSurfaceElement::computeVolumeAround(GaussPoint *gp)
 {
-    // Surface measure of the gp: |dX/ds| * weight (per unit length out of the plane, no thickness).
+    // Surface measure of the gp: |dX/dxi| * weight, the Jacobian of the parametric coordinate xi
+    // (per unit length out of the plane, no thickness).
 
     double weight = gp->giveWeight();
     const FloatArray &lCoords = gp->giveNaturalCoordinates(); // local/natural coords of the gp (parent domain)
@@ -145,7 +146,8 @@ AxisymSurfaceElement::computeVolumeAround(GaussPoint *gp)
 // Returns the portion of the receiver which is attached to gp.
 {
     // Reference surface measure per radian: R * |X_,xi| * weight.
-    // The interpolation supplies only the line Jacobian; R is interpolated from the global nodal radii.
+    // The interpolation supplies only the line Jacobian; R is interpolated from the global nodal radii
+    // (the x coordinates), R = sum_i N_i x_i.
     FloatArray N;
     FloatArray lcoords = gp->giveNaturalCoordinates();
     FEInterpolation1d* interpolation = static_cast<FEInterpolation1d *>( this->giveInterpolation() );
@@ -184,16 +186,19 @@ AxisymSurfaceElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
 // in the frame of the surface material (1 = tangent, 2 = circumferential, 3 = in-plane normal)
 // for the local nodal unknowns (u_t, u_n). Voigt rows: 1 (11) = du_t/ds, 8 (31) = du_n/ds,
 // 2 (22) = u_R/R, where the circumferential stretch r/R = 1 + u_R/R holds for large deformations.
+// dN/ds are the derivatives along the segment: the interpolation works with the nodal coordinates in the
+// element frame, whose first axis is the tangent.
 {
-    FloatArray n;
-    FloatMatrix dnx, Q;
+    FloatArray N;
+    FloatMatrix dNdx, Q;
     FEInterpolation1d *interp = static_cast< FEInterpolation1d * >( this->giveInterpolation() );
 
-    interp->evalN(n, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
-    interp->evaldNdx(dnx, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
+    interp->evalN(N, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
+    interp->evaldNdx(dNdx, gp->giveNaturalCoordinates(), * this->giveCellGeometryWrapper() );
 
     // u_local = Q u_global, so the global radial displacement of node i is
     // u_R = Q(2i-1, 2i-1) u_t + Q(2i, 2i-1) u_n, whatever the orientation of the element is
+    // (the first column of the 2 x 2 block of node i: the x components of the tangent and of the normal)
     if ( !this->computeGtoLRotationMatrix(Q) ) {
         OOFEM_ERROR( "the unknowns are expected in the element local frame" );
     }
@@ -201,22 +206,22 @@ AxisymSurfaceElement::computeBHmatrixAt(GaussPoint *gp, FloatMatrix &answer)
     // reference radius, interpolated from the global radial coordinates of the nodes
     double r = 0.;
     for ( int i = 1; i <= this->giveNumberOfDofManagers(); i++ ) {
-        r += this->giveNode(i)->giveCoordinate(1) * n.at(i);
+        r += this->giveNode(i)->giveCoordinate(1) * N.at(i);
     }
 
     if ( !std::isfinite( r ) || !( r > 0. ) ) {
         OOFEM_ERROR( "element %d: the axisymmetric reference radius must be finite and positive at integration points", this->giveNumber() );
     }
 
-    int nRows = dnx.giveNumberOfRows();
-    answer.resize(9, nRows * 2);
+    int nno = dNdx.giveNumberOfRows();
+    answer.resize(9, nno * 2);
     answer.zero();
 
-    for ( int i = 1; i <= nRows; i++ ) {
-        answer.at( 1, 2 * i - 1 ) = dnx.at( i, 1 ); // du_t/ds
-        answer.at( 8, 2 * i )     = dnx.at( i, 1 ); // du_n/ds
-        answer.at( 2, 2 * i - 1 ) = Q.at( 2 * i - 1, 2 * i - 1 ) * n.at( i ) / r; // u_R/R
-        answer.at( 2, 2 * i )     = Q.at( 2 * i, 2 * i - 1 ) * n.at( i ) / r;
+    for ( int i = 1; i <= nno; i++ ) {
+        answer.at( 1, 2 * i - 1 ) = dNdx.at( i, 1 ); // du_t/ds
+        answer.at( 8, 2 * i )     = dNdx.at( i, 1 ); // du_n/ds
+        answer.at( 2, 2 * i - 1 ) = Q.at( 2 * i - 1, 2 * i - 1 ) * N.at( i ) / r; // u_R/R
+        answer.at( 2, 2 * i )     = Q.at( 2 * i, 2 * i - 1 ) * N.at( i ) / r;
     }
 }
 

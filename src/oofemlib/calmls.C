@@ -95,6 +95,8 @@ CylindricalALM :: CylindricalALM(Domain *d, EngngModel *m) :
     // linesearch default off
     lsFlag = 0;
 
+    // Line search tolerance: a bound of the absolute directional residual in
+    // MaterialCylindricalALM::solve_linesearch, of the ratio |s_i / s_0| in do_lineSearch.
     ls_tolerance = 1e-6;
     amplifFactor = 2.5;
     maxEta = 8.5;
@@ -403,6 +405,8 @@ restart:
 
         converged = this->checkConvergence(R, R0, F, X, ddX, Lambda, RR0, RR, drProduct,
                                            internalForcesEBENorm, nite, errorOutOfRangeFlag);
+        // Restart when maxiter iterations did not converge (convergence in the last allowed iteration
+        // is accepted) or when an error is out of range.
         if ( ( nite >= nsmax && !( converged && nite >= minIterations ) ) || errorOutOfRangeFlag ) {
             irest++;
             if ( irest <= maxRestarts ) {
@@ -448,7 +452,9 @@ restart:
     // printf ("\nCALM - step iteration finished") ;
 #endif
 
-    // A failed attempt must not advance the accepted load level or displacement history.
+    // A failed attempt must not advance the accepted load level or displacement history: return the
+    // last equilibrium (X, element state increments, internal forces) and let the engineering model
+    // retry the step or stop.
     if ( status == CR_DIVERGED_ITS ) {
         X = XInitial;
         dX.zero();
@@ -718,6 +724,7 @@ CylindricalALM :: initializeFrom(InputRecord &ir)
 
     nsmax = 30;
     IR_GIVE_OPTIONAL_FIELD(ir, nsmax, _IFT_CylindricalALM_maxiter);
+    // maxiter is used as given, without a lower bound
     //if ( nsmax < 30 ) {
     //    nsmax = 30;
     //}
@@ -834,17 +841,20 @@ CylindricalALM :: initializeFrom(InputRecord &ir)
     IR_GIVE_OPTIONAL_FIELD(ir, lsFlag, _IFT_CylindricalALM_linesearch);
 
     ////////
+    // type of the line search solver object (giveLineSearchSolver), default LST_Default
     int valLS = 1;
     if ( this->lsFlag ) IR_GIVE_OPTIONAL_FIELD( ir, valLS, _IFT_CylindricalALM_linesearchtype );
     this->LsType = (LineSearchType)valLS;
     ////////
 
 
+    // the line search solver object reads its own copies of lsearchtol, lsearchamp and lsearchmaxeta
     if ( this->lsFlag ) {
         this->giveLineSearchSolver()->initializeFrom( ir );
     }
 
     IR_GIVE_OPTIONAL_FIELD(ir, ls_tolerance, _IFT_CylindricalALM_lsearchtol);
+    // ls_tolerance is used without clamping (see the constructor for its two meanings)
     //if ( ls_tolerance < 0.6 ) {
     //    ls_tolerance = 0.6;
     //}
@@ -1097,6 +1107,9 @@ CylindricalALM :: computeDeltaLambda(double &deltaLambda, const FloatArray &dX, 
 
         // solution of quadratic eqn.
         double discr = a2 * a2 - 4.0 * a1 * a3;
+        // a1 = eta^2 ||deltaXt||^2 + Psi^2 ||R||^2 (over the HPC DOFs with hpcmode 1) must be positive and the
+        // coefficients finite. Return value 1: solve restarts the step with a shorter arc length,
+        // do_lineSearch falls back to eta = 1.
         if ( !std::isfinite( a1 ) || a1 <= 0. || !std::isfinite( discr ) ) {
             OOFEM_WARNING("invalid arc-length constraint, restarting the step");
             deltaLambda = 0.;
@@ -1470,7 +1483,7 @@ MaterialCylindricalALM ::MaterialCylindricalALM( Domain *d, EngngModel *m ) :
 {
 }
 
-void MaterialCylindricalALM::setCALMmaterial( bool returnAll ){ // maybe not used
+void MaterialCylindricalALM::setCALMmaterial( bool returnAll ){ // not called: StaticStructural::setCALMmaterial is used
     auto& matList = this->domain->giveMaterials();
     for ( auto &imat : matList ) {
         auto iface = dynamic_cast<ArcLengthMaterialInterface*>( imat->giveInterface( ArcLengthMaterialInterfaceType ));
@@ -1499,6 +1512,15 @@ MaterialCylindricalALM ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
     const FloatArray &internalForcesEBENorm, double &ReachedLambda, referenceLoadInputModeType rlm,
     int &nite, TimeStep *tStep )
 {
+    // One step of the material arc length (see the class description), following the steps of
+    // CylindricalALM::solve with -Fint_lam in place of the reference load:
+    // A. predictor: Fint_lam at the last equilibrium, K deltaXt = -Fint_lam, DeltaLambda from the
+    //    constraint, the materials set to Lambda = ReachedLambda + DeltaLambda and K dX = R + R0 - F;
+    // B. corrector: K deltaX_ = R + R0 - F, deltaLambda from the linearised constraint (computeDeltaLambda),
+    //    ddX = deltaX_ + deltaLambda deltaXt or the exact line search, convergence check and stability
+    //    treatment;
+    // a failed attempt restarts from the last equilibrium with deltaL * CALM_RESET_STEP_REDUCE, at most
+    // maxRestarts times, then returns CR_DIVERGED_ITS with the last equilibrium restored.
     FloatArray rhs, deltaXt, deltaX_, dXm1, XInitial;
     FloatArray ddX; // total increment of displacements in iteration
     // double Bergan_k0 = 1.0, bk;
@@ -1514,6 +1536,7 @@ MaterialCylindricalALM ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
     // print iteration header
 
     ///////////
+    // total external load, not scaled by Lambda (used by the line searches)
     FloatArray RT = R + *R0;
     ///////////
 
@@ -1575,6 +1598,8 @@ MaterialCylindricalALM ::solve( SparseMtrx &k, FloatArray &R, FloatArray *R0,
     //
     
     /////////////
+    // Internal forces of the controlled material parameter alone (dF/dLambda when F is linear in it);
+    // -Fint_lam plays the role of the reference load R of CylindricalALM.
     FloatArray Fint_lam;
     Fint_lam.resize( neq );
 
@@ -1652,7 +1677,8 @@ restart:
     Lambda = ReachedLambda;
     if ( rootselectiontype == RST_Cos ) {
         /* XR is unscaled Bergan's param of current stiffness XR = deltaXt^T k deltaXt
-         * this is used to test whether k has negative or positive slope */
+         * this is used to test whether k has negative or positive slope
+         * (here k deltaXt = -Fint_lam) */
 
         //XR = parallel_context->localDotProduct( deltaXt, R );
         XR = parallel_context->localDotProduct( deltaXt, -1. * Fint_lam );
@@ -1665,6 +1691,9 @@ restart:
         }
     }
     ///////////////
+    // Predictor load level increment: with p = sqrt( ||deltaXt||^2 + Psi^2 ||Fint_lam||^2 ) (over the HPC
+    // DOFs with hpcmode 1) the predictor DeltaLambda deltaXt has the arc length deltaL (p = w . deltaXt
+    // for the linearised hpcmode 2); the sign follows XR.
     //if ( abs( p ) < 1e-8) {
     //    DeltaLambda = 0.;
     //} else {
@@ -1682,6 +1711,8 @@ restart:
     //////////
     engngModel->updateComponent( tStep, InternalRhs, domain ); // since lambda has changed
 
+    // Predictor displacement: K dX = R + R0 - F(X0, Lambda). The last equilibrium has
+    // F(X0, ReachedLambda) = R + R0, so to first order dX = DeltaLambda deltaXt.
     rhs = R;
     /*rhs.times( DeltaLambda );*/
     if ( R0 ) {
@@ -1701,7 +1732,7 @@ restart:
     engngModel->updateComponent( tStep, InternalRhs, domain );
 
         //////////////////
-    // bifurcatiuon modification
+    // stability treatment, only with a linear solver that implements BifurcationInterface
     BifurcationInterface *stabSolver = dynamic_cast<BifurcationInterface *>( this->linSolver.get() ); // Check if bifurcation solver is used
     if ( stabSolver ) {
         // Discard the definiteness recorded for the previous step, or for a previous
@@ -1709,10 +1740,10 @@ restart:
         stabSolver->resetPDStatus();
     }
     bool isBifurcationSet            = false;
-    double alphaStability = 1e-6, alphamax = 1e8; // eigenvector multiplicator
+    double alphaStability = 1e-6, alphamax = 1e8; // eigenvector amplitude: increment (or perturbation) and upper bound
 
-    bool LDLTbif = false; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
-     bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation/eigenvectorpostbif. LS options
+    bool LDLTbif = false; // LDL^T (Cholesky) update in the stability solver; off: the deflation / eigenvector variants
+     bool deflationBifurcation = true, eigenvectorBifurcation = true, postBifurcationLineSearch = true; // deflation of the unstable solution, move along the eigenvector, exact line search after a critical point
     //bool deflationBifurcation = false, eigenvectorBifurcation = false, postBifurcationLineSearch = false; // deflation/eigenvector/postbif. LS options
     std::vector<bool> bifurcTypes( { LDLTbif, deflationBifurcation, eigenvectorBifurcation } );
 
@@ -1746,6 +1777,7 @@ restart:
             // InternalRhs
             //
             ///////////
+            // Fint_lam and RR at the current state; with the new tangent K deltaXt = -Fint_lam below
             engngModel->updateArcLengthInternalForces( Fint_lam, tStep, InternalRhs, domain );
             RR = parallel_context->localNorm( Fint_lam );
             RR *= RR; // RR now changes
@@ -1768,7 +1800,7 @@ restart:
         }
 
         // B.2.
-        //
+        // residual with the external loads not scaled by Lambda: K deltaX_ = R + R0 - F(X, Lambda)
 
         rhs = R;
         //rhs.times( Lambda );
@@ -1782,14 +1814,14 @@ restart:
         eta = 1.0;
         //
         // B.3.
+        // deltaLambda from the linearised constraint, with Fint_lam and RR = ||Fint_lam||^2 in place of R
         //
         if ( this->computeDeltaLambda( deltaLambda, dX, deltaXt, deltaX_, Fint_lam, RR, eta, deltaL, DeltaLambda, neq ) ) {
             irest++;
             if ( irest <= maxRestarts ) {
-                // convergence problems
-                // there must be step restart followed by decrease of step length
+                // the linearised arc-length constraint has no solution: restart the step with a
+                // shorter arc length (the restart label returns to the last equilibrium)
                 // status |= NM_ForceRestart;
-                // reduce step length
                 deltaL = deltaL * CALM_RESET_STEP_REDUCE;
                 if ( deltaL < minStepLength ) {
                     deltaL = minStepLength;
@@ -1827,6 +1859,7 @@ restart:
 
             ////////////////////////
             //// line search
+            // exact line search along deltaX_ + deltaLambda deltaXt; sets X, dX, ddX, Lambda and the materials
             // this->solve_linesearch( X, XInitial, ddX, F, RT, tStep, k, ReachedLambda, Lambda, DeltaLambda, DeltaLambdam1, deltaLambda, deltaX_, deltaXt, dX, dXm1 );
             //if ( stabSolver && stabSolver->giveX0Defl().giveSize() > 0 ) {
             //    this->solve_linesearch( X, XInitial, ddX, F, RT, tStep, k, ReachedLambda, Lambda, DeltaLambda, DeltaLambdam1, deltaLambda,
@@ -1884,18 +1917,18 @@ restart:
         //converged = CylindricalALM::checkConvergence( R, R0, F, X, ddX, Lambda, RR0, RR, drProduct,
         //    internalForcesEBENorm, nite, errorOutOfRangeFlag );
 
-        // bifurcatiuon modification
+        // stability treatment: definiteness at a converged state, deflation, move past a critical point
         if ( stabSolver ) this->performBifurcationAnalysis( k, X, dX, F, internalForcesEBENorm, rlm, nite, tStep, rhs, converged, R, *R0,
             errorOutOfRangeFlag, stabSolver, isBifurcationSet, alphamax, alphaStability, ddX, bifurcTypes, postBifurcationLineSearch, Lambda, RR0, RR, drProduct );
-        ////////////////// 
+        //////////////////
 
+        // Restart when maxiter iterations did not converge (convergence in the last allowed iteration
+        // is accepted) or when an error is out of range.
         if ( ( nite >= nsmax && !( converged && nite >= minIterations ) ) || errorOutOfRangeFlag ) {
             irest++;
             if ( irest <= maxRestarts ) {
-                // convergence problems
-                // there must be step restart followed by decrease of step length
+                // restart the step with a shorter arc length (the restart label returns to the last equilibrium)
                 // status |= NM_ForceRestart;
-                // reduce step length
                 deltaL = deltaL * CALM_RESET_STEP_REDUCE;
                 if ( deltaL < minStepLength ) {
                     deltaL = minStepLength;
@@ -1964,6 +1997,8 @@ restart:
     //
     // if (irest > 0) nite = nsmax;
 
+    // Next arc length: deltaL * nreq / nite after more than nreq = reqiterations iterations, otherwise
+    // deltaL * (nreq / nite)^(1/4); clamped to [minsteplength, steplength] below.
     if ( nite > numberOfRequiredIterations ) {
         deltaL = deltaL * numberOfRequiredIterations / nite;
     } else {
@@ -2011,11 +2046,11 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
     FloatArray &ddX, std::vector<bool> &bifurcTypes, bool &postBifurcationLineSearch, double Lambda, double RR0, double RR, double drProduct )
 {
     // Choose bifurcation type
-    bool LDLTbif                          = bifurcTypes[0]; // Only if choelsky bifurcation should be performed, if FALSE, bifurcation using eigenvectors is done
-    bool deflationBifurcation             = bifurcTypes[1]; // only if deflation bifurcation if performed
-    bool eigenvectorBifurcation           = bifurcTypes[2]; // only if deflation bifurcation if performed
+    bool LDLTbif                          = bifurcTypes[0]; // LDL^T (Cholesky) update in the stability solver
+    bool deflationBifurcation             = bifurcTypes[1]; // deflation of the unstable solution X0
+    bool eigenvectorBifurcation           = bifurcTypes[2]; // move along the eigenvector at a critical point
     //bool postDeflation                    = false;
-    bool postDeflation                    = false;
+    bool postDeflation                    = false; // keep the deflation after the line search past a critical point
     bool exactLineSearchBeforeBifurcation = true;
 
 
@@ -2025,11 +2060,13 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
     int maxBifIte = 100, count = 0;
 
 
-    FloatArray RT = R + R0;
+    FloatArray RT = R + R0; // total external load
 
     // bifurcation analysis modifications
     if ( stabSolver && performBifurcation ) {
         if ( deflationBifurcation && isBifurcationSet ) { // If deflation, modify residuum and recheck convergence
+            // Deflated residual M (R + R0 - F), M = ||X0||^p / ||X - X0||^p + 1, which grows near the
+            // unstable solution X0: R, R0 and F are scaled by M before the convergence check.
             double dx_defl_Norm = ( X - stabSolver->giveX0Defl() ).computeNorm();
             double p            = stabSolver->give_p();
             //double factor       = ( 1. / pow( dx_defl_Norm, p ) + 1 );
@@ -2092,16 +2129,17 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
             ///////////////////////
 
             ///////////////
-            // condense the pressure DOFs
+            // condense the pressure DOFs: with mixed u-p elements the tangent is a saddle-point matrix,
+            // so the definiteness of the Schur complement K_uu - K_up K_pp^-1 K_pu decides
             int indPressure = 0;
-            bool exVal      = this->findPressureDofIndex( indPressure ); // thios goves starting index of pressure dofs
+            bool hasPressure = this->findPressureDofIndex( indPressure ); // first equation of the pressure DOFs
 
             IntArray pinds;
             bool exVal2 = findPressureDofIndices( pinds );
 
             EigenMtrx *k_eigmat = dynamic_cast<EigenMtrx *>( &k );
-            if ( exVal && k_eigmat ) {
-                std::unique_ptr<EigenMtrx> k_condensed = k_eigmat->doStaticCondensation( indPressure ); // Doesn work if pressure dofs are not at end!!
+            if ( hasPressure && k_eigmat ) {
+                std::unique_ptr<EigenMtrx> k_condensed = k_eigmat->doStaticCondensation( indPressure ); // assumes the pressure equations are numbered last
                 // k_condensed->printYourself();
                 isPD = stabSolver->checkPD( *k_condensed );
                 //////////////////
@@ -2151,7 +2189,7 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
                         engngModel->updateComponent( tStep, NonLinearLhs, domain );
                         // applyConstraintsToStiffness( k );
 
-                        if ( exVal && k_eigmat ) {
+                        if ( hasPressure && k_eigmat ) {
                             // EigenMtrx *k_eigmat2 = dynamic_cast<EigenMtrx *>( &k );
                             // k.printYourself();
 
@@ -2176,7 +2214,7 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
                     direction = -1. * direction * deltaL / dDir;
 
                     X -= dX;
-                    if ( exVal ) {
+                    if ( hasPressure ) {
                         for ( int i = 1; i < indPressure; i++ ) {
                             dX.at( i ) = direction.at( i );
                         }
@@ -2218,38 +2256,41 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
                     double norm = ( X - stabSolver->giveX0Defl() ).computeNorm();
                     OOFEM_LOG_INFO( "dXdefl =  %f\n", norm );
                 }
-                
+
                 /////////
                 //double tfun = this->engngModel->giveDomain( 1 )->giveFunction( 3 )->evaluateAtTime( tStep->giveIntrinsicTime() );
                 //OOFEM_LOG_INFO( "gamma=%f\n", tfun );
+                // A critical point: remember it, switch on the post-bifurcation line search and switch off the
+                // ordinary one (restored when a converged tangent is positive definite again, see below).
                 stabSolver->setFoundLimitPoint( true );
                 stabSolver->setPostBifurcationLineSearchSolver( postBifurcationLineSearch ); // Set the post bifurcation exact linesearch
                 // this->setExactPreBifurcationLineSearch( false ); // turn off the pre Bifurcational LS
                 stabSolver->setLineSearchState( this->lsFlag ); // remember linesearch status
                 /////////////////////////
-                this->lsFlag = false; // turn off the pre Bifurcational LS /// THIS IS CHANGED!
+                this->lsFlag = false; // turn off the pre-bifurcation line search
                 //////////////////////////
 
                 if ( !isBifurcationSet ) { // If first time not PD
-                    stabSolver->setBifurcation( true ); // perform bifurcation anaysis
-                    stabSolver->setAlpha( alphaStability0 - alphaStability ); // set eigenvector multiplicator to starting value
+                    stabSolver->setBifurcation( true ); // perform bifurcation analysis
+                    stabSolver->setAlpha( alphaStability0 - alphaStability ); // eigenvector amplitude back to its starting value (zero)
                     isBifurcationSet = true; // Not sure if correct
                 }
 
                 if ( deflationBifurcation || eigenvectorBifurcation ) {
+                    // The converged state is unstable: continue the iterations from it towards another solution.
                     converged = false;
                     ////
                     stabSolver->incrementNumFoundSols();
                     ////
-                    FloatArray X0 = X; // Store the instable root
-                    stabSolver->setX0Defl( X0 ); // set the instable root to the solver
+                    FloatArray X0 = X; // Store the unstable root
+                    stabSolver->setX0Defl( X0 ); // set the unstable root to the solver
 
                     // Find out if eigenvalues should be recomputed
                     if ( stabSolver->getXeigs().giveSize() == 0 || ( X - stabSolver->getXeigs() ).computeNorm() > 1e-8 ) { // if not the same, recompute the eigenvectors
                         engngModel->updateComponent( tStep, NonLinearLhs, domain );
                         //applyConstraintsToStiffness( k );
 
-                        if ( exVal && k_eigmat ) {
+                        if ( hasPressure && k_eigmat ) {
                             //EigenMtrx *k_eigmat2 = dynamic_cast<EigenMtrx *>( &k );
                             //k.printYourself();
 
@@ -2258,8 +2299,10 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
                         } else {
                             stabSolver->setEigenValuesVectors( k, X );
                         }
-                        
+
                     }
+                    // the last stored eigenvector (EigenSolverStability stores one, of the eigenvalue nearest to zero);
+                    // of the condensed matrix when there are pressure DOFs
                     FloatArray direction; // get eigenvectors
                     stabSolver->getEigenVectors().copyColumn( direction, stabSolver->getEigenVectors().giveNumberOfColumns() );
 
@@ -2329,7 +2372,7 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
 
                     if ( !eigenvectorBifurcation ) { // Only deflation (but initial perturbation by eigenvectors)
                         ddX = alphaStability * direction; // perturbation in direction of eigenvector
-                        X   = X + ddX; // Perturbe the solution with chosen amplitude
+                        X   = X + ddX; // Perturb the solution with the chosen amplitude
                         dX  = dX + ddX;
                         stabSolver->compute_dx_defl( X ); // compute deflation difference
 
@@ -2341,6 +2384,8 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
                     } else { // Eigenvector bifurcation with/without deflation
                         if ( deflationBifurcation ) { // If combination of deflation and eigenvector bifurcation
                             // if ( false ) this->provisionalOutput( X, F, tStep, RT, direction, X0 ); // PROVISIONAL output residual
+                            // Exact line search from X0 along the eigenvector with the residual deflated at X0;
+                            // it returns the step in ddX (the whole eigenvector if it does not converge).
                             ddX = direction;
                             IntArray dummyInt( 0 );
                             this->giveSetPostBifurcationLineSearchSolver( X0, true, stabSolver->give_p() )->solve( X, ddX, F, RT, dummyInt, tStep, k ); // Do linesearch with deflation
@@ -2364,6 +2409,8 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
                             }
                             /////////////////////
                         } else if ( count < maxBifIte ) { // if just eigenvectors
+                            // The next linear solve of the stability solver returns alpha times the eigenvector
+                            // instead of the solution; alpha grows by alphaStability, halved near alphamax.
                             count++;
                             if ( stabSolver->giveAlpha() + alphaStability >= alphamax ) alphaStability = alphaStability / 2;
                             stabSolver->setAlpha( stabSolver->giveAlpha() + alphaStability ); // increase alpha (eigenvector multiplicator)
@@ -2375,10 +2422,11 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
                     }
                 }
             } else { // is PD,
+                // a stable converged state: the bifurcation treatment ends, the ordinary line search is restored
                 ////////////////
                 stabSolver->nullNumFoundSols();
                 ////////////////
-                // Compute distance from the instable solution
+                // Compute distance from the unstable solution
                 if ( stabSolver->getBifurcation() ) {
                     FloatArray solDif;
                     solDif.beDifferenceOf( X, stabSolver->giveX0Defl() );
@@ -2398,9 +2446,11 @@ void MaterialCylindricalALM::performBifurcationAnalysis( SparseMtrx &k, FloatArr
             stabSolver->setDeflation( deflationBifurcation ); // This should be done only once
             isBifurcationSet = stabSolver->getBifurcation();
         } else if ( stabSolver->getBifurcation() && deflationBifurcation ) {
+            // deflation active: update X - X0 used by the deflated solves of the stability solver
             stabSolver->compute_dx_defl( X );
 
         } else if ( stabSolver->giveFoundLimitPoint() && ( stabSolver->givePostBifurcationLineSearchSolver() ) ) { // if limit point found and exact post bif LS should be done
+            // redo the last increment ddX with the exact line search (keeps the previous X0)
             X  = X - ddX;
             dX = dX - ddX;
             FloatArray dummy( 0 );
@@ -2437,8 +2487,9 @@ bool MaterialCylindricalALM::findPressureDofIndex( int &indMin )
 {
     EModelDefaultEquationNumbering dn;
     indMin         = INT_MAX;
-    bool ReturnVal = false;
+    bool hasPressure = false;
 
+    // the pressure DOFs of the mixed u-p elements live in their internal DOF managers
     for ( auto &elem : domain->giveElements() ) {
         for ( int idofman = 1; idofman <= elem->giveNumberOfInternalDofManagers(); idofman++ ) {
             DofManager *dofman = elem->giveInternalDofManager( idofman );
@@ -2448,7 +2499,7 @@ bool MaterialCylindricalALM::findPressureDofIndex( int &indMin )
                     int eq = dof->giveEquationNumber( dn );
                     if ( eq < indMin ) {
                         indMin    = eq;
-                        ReturnVal = true;
+                        hasPressure = true;
                     }
                 }
             }
@@ -2473,7 +2524,7 @@ bool MaterialCylindricalALM::findPressureDofIndex( int &indMin )
     //         }
     //     }
     // }
-    return ReturnVal;
+    return hasPressure;
 }
 
 
@@ -2481,7 +2532,7 @@ bool MaterialCylindricalALM::findPressureDofIndices( IntArray &pinds )
 {
     pinds.resize(0);
     EModelDefaultEquationNumbering dn;
-    bool ReturnVal = false;
+    bool hasPressure = false;
 
     for ( auto &elem : domain->giveElements() ) {
         for ( int idofman = 1; idofman <= elem->giveNumberOfInternalDofManagers(); idofman++ ) {
@@ -2491,22 +2542,22 @@ bool MaterialCylindricalALM::findPressureDofIndices( IntArray &pinds )
                 if ( dofIdType == P_f ) {
                     int eq = dof->giveEquationNumber( dn );
                     pinds.followedBy( eq );
-                    ReturnVal = true;
+                    hasPressure = true;
                 }
             }
         }
     }
 
-    return ReturnVal;
+    return hasPressure;
 }
 
 void MaterialCylindricalALM::getCondensedMatrixPressure( SparseMtrx &k )
 {
     int indPressure = 0;
-    bool exVal      = this->findPressureDofIndex( indPressure );
+    bool hasPressure = this->findPressureDofIndex( indPressure );
 
     EigenMtrx *k_eigmat = dynamic_cast<EigenMtrx *>( &k );
-    if ( exVal && k_eigmat ) {
+    if ( hasPressure && k_eigmat ) {
         k_eigmat->doStaticCondensationOwn( indPressure );
 
     } 
@@ -2534,7 +2585,8 @@ void MaterialCylindricalALM ::solve_linesearch( FloatArray &X, const FloatArray 
     const FloatArray &deltaX_, const FloatArray &deltaXt, FloatArray &dX, const FloatArray &dXm1, bool deflation , const FloatArray &Xdefl)
 {
     int max_iter = 20;
-    // Normalize the direction
+    // Newton iterations for the step length eta along d = deltaX_ + deltaLambda deltaXt (not normalized):
+    // RHS(eta) = (RT - F(Xinitial + dXm1 + eta d)) . d = 0, with dRHS/deta = -d^T K d.
     int neq                  = X.giveSize();
     FloatArray direction, rhs, Ku( neq ), dx_Defl, rhsDefl, Fint_lam( neq );
 
@@ -2550,7 +2602,7 @@ void MaterialCylindricalALM ::solve_linesearch( FloatArray &X, const FloatArray 
     //double deltaX__d, deltaXt_d, RR;
     double RR;
 
-    // do exact linesearch including delfation
+    // do exact linesearch including deflation
     int p = 2;
     double RHS, ResNormLS, RHSdefl, deta, alph_defl = 1., dx_norm, gamma, dx_normSq, kdefl;
 
@@ -2578,6 +2630,7 @@ void MaterialCylindricalALM ::solve_linesearch( FloatArray &X, const FloatArray 
         RHSdefl = RHS;
 
         if ( deflation ) { // Compute deflated residuum
+        // M RHS with M = 1 / ||X - Xdefl||^2 + 1, which grows near Xdefl
         dx_Defl   = X - Xdefl;
         dx_normSq = dx_Defl.dotProduct( dx_Defl );
         RHSdefl *= 1. / dx_normSq + 1.;
@@ -2588,7 +2641,7 @@ void MaterialCylindricalALM ::solve_linesearch( FloatArray &X, const FloatArray 
         }
 
 
-        // Update F_lambda
+        // Update F_lambda (Fint_lam and RR are not used by this search)
         engngModel->updateArcLengthInternalForces( Fint_lam, tStep, InternalRhs, domain );
         RR = parallel_context->localNorm( Fint_lam );
         RR *= RR; // RR now changes
@@ -2606,6 +2659,8 @@ void MaterialCylindricalALM ::solve_linesearch( FloatArray &X, const FloatArray 
             break;
         }
 
+        // Newton step for M RHS = 0 (the factor M cancels): eta += RHS / ( d^T K d + gamma RHS (X - Xdefl) . d ),
+        // gamma = p / ( s + s^p ) with s = ||X - Xdefl||^2 (p = 2, alph_defl = 1); without deflation eta += RHS / d^T K d.
         engngModel->updateComponent( tStep, NonLinearLhs, domain );
         k.times( direction, Ku );
         kdefl = Ku.dotProduct( direction );
@@ -2636,7 +2691,7 @@ void MaterialCylindricalALM ::solve_linesearch( FloatArray &X, const FloatArray 
         //dX += ddX;
         //X  += ddX;
     }
-    // No update of X, dX, ddX, and lambdas
+    // Not converged or NaN: back to ddX and deltaLambda of the entry (the internal forces are not recomputed)
     ddX = ddXold;
     dX  = dXm1 + ddX;
     X   = Xinitial + dX;
@@ -2670,14 +2725,14 @@ bool MaterialCylindricalALM ::checkConvergence( const FloatArray &R, const Float
     answer          = true;
     errorOutOfRange = false;
 
-    // compute residual vector
+    // compute residual vector R + R0 - F (the external loads are not scaled by Lambda)
     rhs = R;
     //rhs.times( Lambda );
     if ( R0 ) {
         rhs.add( *R0 );
     }
     //
-    double normExternal = rhs.computeNorm();
+    double normExternal = rhs.computeNorm(); // ||R + R0||, not squared
     //
     rhs.subtract( F );
 
@@ -2820,6 +2875,7 @@ bool MaterialCylindricalALM ::checkConvergence( const FloatArray &R, const Float
         //    forceErr = sqrt( forceErr );
         //}
         //////////////////////
+        // forceErr = sqrt( ||R + R0 - F||^2 / ||R + R0|| ), or ||R + R0 - F|| for a vanishing external load
         if ( ( normExternal ) > calm_SMALL_ERROR_NUM ) {
             forceErr = sqrt( forceErr / normExternal );
         //} else if ( eNorm > calm_SMALL_ERROR_NUM ) { // dont know this, so not considering
@@ -2831,6 +2887,7 @@ bool MaterialCylindricalALM ::checkConvergence( const FloatArray &R, const Float
 
         //
         // compute displacement error
+        // dispErr = ||ddX|| / ||X|| (drProduct = ||ddX||^2), or ||ddX||^2 for a vanishing X
         //
         if ( dXX < calm_SMALL_ERROR_NUM ) {
             dispErr = drProduct;
@@ -3173,7 +3230,8 @@ restart:
     Lambda = ReachedLambda;
     if ( rootselectiontype == RST_Cos ) {
         /* XR is unscaled Bergan's param of current stiffness XR = deltaXt^T k deltaXt
-         * this is used to test whether k has negative or positive slope */
+         * this is used to test whether k has negative or positive slope;
+         * pathDirection = -1 reverses the traversal */
         XR = this->pathDirection * parallel_context->localDotProduct( deltaXt, R );
     } else {
         if ( old_dX.giveSize() ) {
@@ -3363,7 +3421,8 @@ restart:
             // Make a copy of the stiffness matrix
             EigenMtrx Kcopy( *eigenK );
             // Remove the DOFs held fixed by the stability check whenever such a set is
-            // available, see givePDConstrainedDofMask.
+            // available, see givePDConstrainedDofMask. This check runs after the one of the
+            // full tangent above, so it is the one the solver records and printState reports.
             const IntArray &pdMask = this->givePDConstrainedDofMask();
             if ( pdMask.giveSize() ) {
                 std::unique_ptr<EigenMtrx> Kdel = Kcopy.removeRowsAndColumns( pdMask );
