@@ -63,6 +63,8 @@
 #include <include/Spectra/SymEigsShiftSolver.h>
 #include <include/Spectra/MatOp/SparseSymShiftSolve.h>
 
+#include <exception>
+
 namespace oofem {
 REGISTER_SparseLinSolver( EigenSolverStability, ST_EigenStability );
 
@@ -102,24 +104,36 @@ bool EigenSolverStability::checkPD( SparseMtrx &A )
         OOFEM_ERROR( "definiteness check requires an EigenMtrx, got %s", A.giveClassName() );
     }
 
+    const int n = Ae->giveNumberOfRows();
+    if ( n == 0 ) {
+        // no equations: there is no direction in which the matrix could fail to be positive
+        this->storePDStatus( true, 0, 0., 0 );
+        return true;
+    }
+
     SimplicialLDLTderived<Eigen::SparseMatrix<double> >& A_factorization = Ae->giveLDLTFactorization();
 
+    // The success of the factorization is checked before D is used: after a breakdown the
+    // entries of D past the zero pivot are undefined (stale or uninitialized memory).
     double minLam  = 0.;
-    bool negEig;
     int numNegEigs = 0;
-    negEig = A_factorization.updateD( minLam, false, numNegEigs );
+    bool isPD;
+    if ( A_factorization.giveInertia( minLam, numNegEigs ) ) {
+        isPD = numNegEigs == 0; // all pivots finite and nonzero: positive definite iff none is negative
+    } else {
+        // LDL^T broke down on a zero pivot (or produced non-finite pivots). A positive definite matrix
+        // has no zero pivot, so the matrix is reported as not positive definite; the number of negative
+        // pivots counts only those computed before the breakdown and is a lower bound.
+        OOFEM_WARNING( "LDL^T factorization of the checked matrix (size %d) did not succeed: it is reported as not positive definite, the number of negative pivots is only a lower bound", n );
+        isPD = false;
+    }
 
     // Keep the inertia of the factorization, so that the definiteness of the converged
     // solution can be reported in the .out file after the step has been completed.
-    // The values are recorded even when the factorization is not reliable, so that the
-    // reported verdict always agrees with the one the solver itself acted upon.
-    if ( A_factorization.info() != Eigen::Success ) {
-        OOFEM_WARNING( "LDL^T factorization did not succeed, definiteness check is unreliable" );
-    }
+    // The values recorded are those the verdict returned to the solver is based on.
+    this->storePDStatus( isPD, numNegEigs, minLam, n );
 
-    this->storePDStatus( !negEig, numNegEigs, minLam, Ae->giveNumberOfRows() );
-
-    return !negEig;
+    return isPD;
 }
 
 int EigenSolverStability::computeEigenValues( SparseMtrx &Ag, FloatArray &evaluesFA )
@@ -135,25 +149,45 @@ int EigenSolverStability::computeEigenValues( SparseMtrx &Ag, FloatArray &evalue
     int nconv = 0, count = 0;
 
     int Asize = (int)A.rows();
+    if ( Asize < 2 ) {
+        // Spectra needs more equations than requested eigenvalues; a 1x1 matrix is its own eigenvalue
+        if ( Asize == 1 ) {
+            evaluesFA.resize( 1 );
+            evaluesFA.at( 1 ) = A.coeff( 0, 0 );
+            return 1;
+        }
+        return 0;
+    }
+
     //Spectra::SparseSymShiftSolve<double> op( A );
     Spectra::SparseSymMatProd<double> op( A );
 
-    while ( nconv == 0 && count < maxTrials ) {
-        int ncv2 = std::min( ncv, Asize );
-        //Spectra::SymEigsShiftSolver<Spectra::SparseSymShiftSolve<double> > eigs( op, neigs, ncv2, 1e-8 );
-        Spectra::SymEigsSolver<Spectra::SparseSymMatProd<double> > eigs( op, neigs, ncv2 );
-        eigs.init();
+    try {
+        while ( nconv == 0 && count < maxTrials ) {
+            int ncv2 = std::min( ncv, Asize );
+            //Spectra::SymEigsShiftSolver<Spectra::SparseSymShiftSolve<double> > eigs( op, neigs, ncv2, 1e-8 );
+            Spectra::SymEigsSolver<Spectra::SparseSymMatProd<double> > eigs( op, neigs, ncv2 );
+            eigs.init();
 
-        nconv = eigs.compute( Spectra::SortRule::SmallestAlge );
-        if ( eigs.info() == Spectra::CompInfo::Successful ) {
-            Eigen::VectorXd evalues = eigs.eigenvalues();
-            evaluesFA               = FloatArray( evalues.begin(), evalues.end() );
-        } else {
-            count++;
-            ncv = (int)ncvMult * ncv;
-            OOFEM_LOG_INFO( "eigenvalues not found\n" );
-            OOFEM_LOG_INFO( "ncv =  %i\n", ncv );
+            nconv = eigs.compute( Spectra::SortRule::SmallestAlge );
+            if ( eigs.info() == Spectra::CompInfo::Successful ) {
+                Eigen::VectorXd evalues = eigs.eigenvalues();
+                evaluesFA               = FloatArray( evalues.begin(), evalues.end() );
+            } else {
+                count++;
+                OOFEM_LOG_INFO( "eigenvalues not found\n" );
+                if ( ncv2 == Asize ) {
+                    // ncv cannot grow any more and init() always starts from the same vector: a retry would repeat this trial
+                    break;
+                }
+                ncv = (int)ncvMult * ncv;
+                OOFEM_LOG_INFO( "ncv =  %i\n", ncv );
+            }
         }
+    } catch ( const std::exception &e ) {
+        // e.g. sizes Spectra does not accept: reported as not computed instead of stopping the analysis
+        OOFEM_WARNING( "eigenvalue computation failed: %s", e.what() );
+        return 0;
     }
 
     return nconv;
@@ -174,47 +208,70 @@ int EigenSolverStability ::computeEigenValuesVectors( SparseMtrx &Ag, FloatArray
     int nconv = 0, count = 0;
 
     int Asize = (int)A.rows();
+    if ( Asize < 2 ) {
+        // Spectra needs more equations than requested eigenvalues; a 1x1 matrix is its own eigenpair
+        if ( Asize == 1 ) {
+            evaluesFA.resize( 1 );
+            evaluesFA.at( 1 ) = A.coeff( 0, 0 );
+            evectorsFM.resize( 1, 1 );
+            evectorsFM.at( 1, 1 ) = 1.;
+            return 1;
+        }
+        return 0;
+    }
+
     //Spectra::SparseSymMatProd<double> op( A );
     Spectra::SparseSymShiftSolve<double> op( A );
 
     evectorsFM.resize( Asize, neigs );
     evaluesFA.resize( neigs );
 
-    while ( nconv == 0 && count < maxTrials ) { // if ncv is too small, increase it ti find solution
-        int ncv2 = std::min( ncv, Asize );
-        //Spectra::SymEigsSolver<Spectra::SparseSymMatProd<double> > eigs( op, neigs, ncv2 );
-        Spectra::SymEigsShiftSolver<Spectra::SparseSymShiftSolve<double> > eigs( op, neigs, ncv2, 0.0 );
-        
-        eigs.init();
+    try {
+        while ( nconv == 0 && count < maxTrials ) { // if ncv is too small, increase it ti find solution
+            int ncv2 = std::min( ncv, Asize );
+            //Spectra::SymEigsSolver<Spectra::SparseSymMatProd<double> > eigs( op, neigs, ncv2 );
+            Spectra::SymEigsShiftSolver<Spectra::SparseSymShiftSolve<double> > eigs( op, neigs, ncv2, 0.0 );
 
-        nconv = eigs.compute( Spectra::SortRule::SmallestAlge ); // Compute eigenvalues
-        if ( eigs.info() == Spectra::CompInfo::Successful ) { // If succesfull, retrieve results
-            // allocate some objects
-            this->setNcv0( ncv );
-            Eigen::VectorXd evector;
-            Eigen::MatrixXd evectors;
-            FloatArray evectorFA;
-            evectorFA.resize( Asize * neigs );
+            eigs.init();
 
-            Eigen::VectorXd evalues = eigs.eigenvalues();
-            evaluesFA               = FloatArray( evalues.begin(), evalues.end() ); // eigenvalues in floatarray
+            nconv = eigs.compute( Spectra::SortRule::SmallestAlge ); // Compute eigenvalues
+            if ( eigs.info() == Spectra::CompInfo::Successful ) { // If succesfull, retrieve results
+                // allocate some objects
+                this->setNcv0( ncv );
+                Eigen::VectorXd evector;
+                Eigen::MatrixXd evectors;
+                FloatArray evectorFA;
+                evectorFA.resize( Asize * neigs );
 
-            evectors  = eigs.eigenvectors(); // vectors in matrix
-            evector   = Eigen::Map<Eigen::VectorXd>( evectors.data(), evectors.cols() * evectors.rows() ); // map to vector
-            evectorFA = FloatArray( evector.begin(), evector.end() ); // eigenvectors in floatarray
+                Eigen::VectorXd evalues = eigs.eigenvalues();
+                evaluesFA               = FloatArray( evalues.begin(), evalues.end() ); // eigenvalues in floatarray
 
-            // eigenvectors in float matrix
-            for ( size_t j = 0; j < neigs; j++ ) {
-                for ( size_t k = 0; k < evectors.rows(); k++ ) {
-                    evectorsFM.at( k + 1, j + 1 ) = evectorFA.at( k + 1 + evectors.rows() * j ); // Eigenvectors to float matrix
+                evectors  = eigs.eigenvectors(); // vectors in matrix
+                evector   = Eigen::Map<Eigen::VectorXd>( evectors.data(), evectors.cols() * evectors.rows() ); // map to vector
+                evectorFA = FloatArray( evector.begin(), evector.end() ); // eigenvectors in floatarray
+
+                // eigenvectors in float matrix
+                for ( size_t j = 0; j < neigs; j++ ) {
+                    for ( size_t k = 0; k < evectors.rows(); k++ ) {
+                        evectorsFM.at( k + 1, j + 1 ) = evectorFA.at( k + 1 + evectors.rows() * j ); // Eigenvectors to float matrix
+                    }
                 }
+            } else { // if not succesfull
+                count++;
+                OOFEM_LOG_INFO( "eigenvalues not found\n" );
+                if ( ncv2 == Asize ) {
+                    // ncv cannot grow any more and init() always starts from the same vector: a retry would repeat this trial
+                    break;
+                }
+                ncv = (int)ncvMult * ncv; // Increase ncv
+                OOFEM_LOG_INFO( "ncv =  %i\n", ncv );
             }
-        } else { // if not succesfull
-            count++;
-            ncv = (int)ncvMult * ncv; // Increase ncv
-            OOFEM_LOG_INFO( "eigenvalues not found\n" );
-            OOFEM_LOG_INFO( "ncv =  %i\n", ncv );
         }
+    } catch ( const std::exception &e ) {
+        // e.g. the shift-invert factorization fails because the matrix is singular (sigma = 0):
+        // reported as not computed instead of stopping the analysis
+        OOFEM_WARNING( "eigenpair computation failed: %s", e.what() );
+        return 0;
     }
     return nconv;
 }
@@ -230,9 +287,15 @@ void EigenSolverStability::CholeskyUpdate( SparseMtrx &Ag, FloatArray &b, FloatA
     double minLam                                                        = 0.;
     int numNegEigs                                                       = 0;
     SimplicialLDLTderived<Eigen::SparseMatrix<double> > &A_factorization = Ae->giveLDLTFactorization(); // compute factorization and get it
-    bool negEig                                                          = A_factorization.updateD( minLam, true, numNegEigs );
+    bool complete                                                        = A_factorization.giveInertia( minLam, numNegEigs );
     OOFEM_LOG_INFO( "numNegEigs = %i\n", numNegEigs );
-    Eigen::VectorXd xeig = A_factorization.solve( b_eig ); // Solve the system
+    if ( !complete ) {
+        OOFEM_WARNING( "LDL^T factorization did not succeed, the solution is left unchanged by the Cholesky update" );
+        return;
+    }
+    // Solve with |D| (the matrix made positive definite). The cached factorization is not modified,
+    // so that it keeps describing the matrix itself, e.g. for a later checkPD of the same matrix.
+    Eigen::VectorXd xeig = A_factorization.solveWithAbsolutePivots( b_eig ); // Solve the system
     x                    = FloatArray( xeig.begin(), xeig.end() );
     // this->setBifurcation( false );
 }

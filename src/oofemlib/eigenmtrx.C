@@ -44,7 +44,9 @@
 #include <iostream>
 #include <iomanip>
 
+#include <algorithm>
 #include <set>
+#include <utility>
 
 
 #include <Eigen/Dense>
@@ -62,20 +64,23 @@ EigenMtrx ::EigenMtrx( int n ) :
     EigMat = Eigen::SparseMatrix<double>( n, n );
 }
 
-EigenMtrx ::EigenMtrx( Eigen::SparseMatrix<double> &EigMatInput ) :
-    SparseMtrx( EigMatInput.rows(), EigMatInput.cols() ),
-    EigMat( EigMatInput )
+EigenMtrx ::EigenMtrx( Eigen::SparseMatrix<double> matrix ) :
+    SparseMtrx( (int)matrix.rows(), (int)matrix.cols() ),
+    EigMat( std::move( matrix ) )
 {
+    // A ready matrix is the value itself: there are no pending contributions to build it from,
+    // so it must never be rebuilt from the (empty) triplets.
+    EigMat.makeCompressed();
+    this->version = 1;
 }
 
 EigenMtrx ::EigenMtrx( const EigenMtrx &EigenMtrxInput ) :
-    SparseMtrx( EigenMtrxInput.giveNumberOfRows(), EigenMtrxInput.giveNumberOfColumns() ),
-    EigMat( EigenMtrxInput.EigMat ),
-    triplets( EigenMtrxInput.triplets )
+    SparseMtrx( EigenMtrxInput.giveNumberOfRows(), EigenMtrxInput.giveNumberOfColumns() )
 {
+    // The current values are copied: giveMatrix adds the pending contributions of the source first,
+    // so values changed after the assembly (through at()) are kept, not rebuilt from old triplets.
+    this->EigMat  = EigenMtrxInput.giveMatrix();
     this->version = EigenMtrxInput.version;
-    this->createMatrixFromTriplets();
-
 }
 
 //EigenMtrx &EigenMtrx ::operator=( Eigen::SparseMatrix<double> &EigMat )
@@ -88,8 +93,10 @@ int EigenMtrx ::buildInternalStructure( EngngModel *eModel, int di, const Unknow
     Domain *domain = eModel->giveDomain( di );
     int neq        = eModel->giveNumberOfDomainEquations( di, s );
 
-    EigMat.resize( neq, neq ); // Resize the matrix
+    EigMat.resize( neq, neq ); // Resize the matrix (all values are dropped)
+    triplets.clear(); // contributions to the previous structure would not fit the new one
     triplets.reserve( 500*neq );
+    tripletsPending = false;
 
     nRows = nColumns = neq;
 
@@ -98,7 +105,7 @@ int EigenMtrx ::buildInternalStructure( EngngModel *eModel, int di, const Unknow
     //std ::vector<std ::set<int> > columns( neq );
 
     //// Eigen::Triplet<double> T;
-    
+
 
     //for ( auto &elem : domain->giveElements() ) {
     //    elem->giveLocationArray( loc, s );
@@ -177,9 +184,8 @@ int EigenMtrx ::assemble( const IntArray &loc, const FloatMatrix &mat )
                     // Structural zeros are not stored. An IGA patch element matrix is
                     // mostly zero, since each knot span couples only its own basis
                     // functions, so storing them inflates the triplet list by an order
-                    // of magnitude. Diagonal entries are kept unconditionally: at() maps
-                    // onto coeffRef, which would have to insert into a compressed matrix
-                    // if the entry were missing.
+                    // of magnitude. Diagonal entries are kept unconditionally, so that
+                    // at() finds them without inserting into the compressed matrix.
                     if ( mat( i, j ) != 0. || ii == jj ) {
                         // when set from triplets
                         this->triplets.push_back( Eigen::Triplet<double>( ii - 1, jj - 1, mat( i, j ) ) ); // Add to vector of triplets
@@ -189,6 +195,7 @@ int EigenMtrx ::assemble( const IntArray &loc, const FloatMatrix &mat )
         }
     }
 
+    this->tripletsPending = true;
     this->version++;
     return 1;
 }
@@ -206,9 +213,8 @@ int EigenMtrx ::assemble( const IntArray &rloc, const IntArray &cloc, const Floa
                     // Structural zeros are not stored. An IGA patch element matrix is
                     // mostly zero, since each knot span couples only its own basis
                     // functions, so storing them inflates the triplet list by an order
-                    // of magnitude. Diagonal entries are kept unconditionally: at() maps
-                    // onto coeffRef, which would have to insert into a compressed matrix
-                    // if the entry were missing.
+                    // of magnitude. Diagonal entries are kept unconditionally, so that
+                    // at() finds them without inserting into the compressed matrix.
                     if ( mat( i, j ) != 0. || ii == jj ) {
                         // when set from triplets
                         this->triplets.push_back( Eigen::Triplet<double>( ii - 1, jj - 1, mat( i, j ) ) ); // Add to vector of triplets
@@ -218,6 +224,7 @@ int EigenMtrx ::assemble( const IntArray &rloc, const IntArray &cloc, const Floa
         }
     }
 
+    this->tripletsPending = true;
     this->version++;
     return 1;
 }
@@ -226,39 +233,56 @@ void EigenMtrx ::zero()
 {
     EigMat.setZero();
     this->triplets.clear(); // When set from triplets
+    this->tripletsPending = false;
     this->version++;
+}
+
+void EigenMtrx ::checkBounds( int i, int j ) const
+{
+    if ( i < 1 || i > this->giveNumberOfRows() || j < 1 || j > this->giveNumberOfColumns() ) {
+        OOFEM_ERROR( "Array accessing exception -- (%d,%d) out of bounds (%d x %d)", i, j, this->giveNumberOfRows(), this->giveNumberOfColumns() );
+    }
+}
+
+bool EigenMtrx ::hasStoredEntry( int r, int c ) const
+{
+    // in a compressed matrix the row indices of every column are sorted
+    const int *outer = EigMat.outerIndexPtr();
+    const int *inner = EigMat.innerIndexPtr();
+    return std::binary_search( inner + outer[c], inner + outer[c + 1], r );
 }
 
 double &EigenMtrx ::at( int i, int j )
 {
-    this->version++;
-    if ( i > this->giveNumberOfRows() && j > this->giveNumberOfColumns() ) {
-        OOFEM_ERROR( "Array accessing exception -- (%d,%d) out of bounds", i, j );
-    } else {
-        return this->giveMatrix().coeffRef( i, j );
+    this->checkBounds( i, j );
+    this->createMatrixFromTriplets();
+    if ( !EigMat.isCompressed() ) {
+        EigMat.makeCompressed();
     }
+
+    const int r = i - 1, c = j - 1; // at() is 1-based, Eigen is 0-based
+    if ( !this->hasStoredEntry( r, c ) ) {
+        // Inserting makes the matrix uncompressed; it is compressed again before the reference is taken,
+        // so that the reference stays valid until the next change of the structure.
+        EigMat.insert( r, c ) = 0.;
+        EigMat.makeCompressed();
+    }
+
+    // The caller may change the value through the returned reference.
+    this->version++;
+    return EigMat.coeffRef( r, c );
 }
 
 
 double EigenMtrx ::at( int i, int j ) const
 {
-    // Create copy
-    Eigen::SparseMatrix<double> EigMatCopy( this->EigMat );
-    if ( this->BuiltFromTripletsAtVersion != this->version ) {
-        EigMatCopy.setFromTriplets( this->triplets.begin(), this->triplets.end() );
-    }
-
-    if ( i > this->giveNumberOfRows() && j > this->giveNumberOfColumns() ) {
-        OOFEM_ERROR( "Array accessing exception -- (%d,%d) out of bounds", i, j );
-    } else {
-        //return EigMat.coeff( i, j );
-        return EigMatCopy.coeff( i, j );
-    }
+    this->checkBounds( i, j );
+    return this->giveMatrix().coeff( i - 1, j - 1 ); // at() is 1-based, Eigen is 0-based
 }
 
-Eigen::SparseMatrix<double>& EigenMtrx::giveMatrix()
+const Eigen::SparseMatrix<double> &EigenMtrx::giveMatrix() const
 {
-    this->createMatrixFromTriplets(); // When the matrix is created from triplets
+    this->createMatrixFromTriplets(); // add the pending contributions
     return EigMat;
 }
 
@@ -299,35 +323,38 @@ SimplicialLDLTderived<Eigen::SparseMatrix<double> > &EigenMtrx::giveLDLTFactoriz
 }
 
 
-bool EigenMtrx::isFactorized( FactorizationType factorizationType )
+bool EigenMtrx::isFactorized( FactorizationType factorizationType ) const
 {
-    if ( this->versionUpdate != this->version ) {
-        areFactorized = { false, false, false, false };
+    if ( (int)factorizationType < (int)FT_LLT || (int)factorizationType > (int)FT_LDLT ) {
+        OOFEM_ERROR( "Unknown factorization type" );
     }
-    return this->areFactorized[factorizationType];
+    // each factorization remembers the version it was computed for, so a change of the values
+    // (or the factorization of another type) can never leave a stale one marked as current
+    return this->factorizedAtVersion[factorizationType] == this->version;
 }
 
 
 void EigenMtrx::computeFactorization( FactorizationType factorizationType )
 {
+    const Eigen::SparseMatrix<double> &A = this->giveMatrix();
     switch ( factorizationType ) {
     case FT_LLT:
-        this->LLT_factorization.compute( this->giveMatrix() );
+        this->LLT_factorization.compute( A );
         break;
     case FT_LU:
-        this->LU_factorization.compute( this->giveMatrix() );
+        this->LU_factorization.compute( A );
         break;
     case FT_QR:
-        this->QR_factorization.compute( this->giveMatrix() );
+        this->QR_factorization.compute( A );
         break;
     case FT_LDLT:
-        this->LDLT_factorization.compute( this->giveMatrix() );
+        this->LDLT_factorization.compute( A );
         break;
     default:
         OOFEM_ERROR( "Unknown factorization type" );
     }
-    this->versionUpdate                    = this->version;
-    this->areFactorized[factorizationType] = true;
+    // recorded also when the factorization failed (its info() says so), so it is not recomputed in vain
+    this->factorizedAtVersion[factorizationType] = this->version;
 }
 
 
@@ -347,55 +374,71 @@ void EigenMtrx::computeFactorization( FactorizationType factorizationType )
 
 void EigenMtrx::times( const FloatArray &x, FloatArray &answer ) const
 {
-    // Create a copy
-    Eigen::SparseMatrix<double> EigMatCopy(this->EigMat);
-    if ( this->BuiltFromTripletsAtVersion != this->version ) {
-        EigMatCopy.setFromTriplets( this->triplets.begin(), this->triplets.end() );
+    if ( x.giveSize() != this->giveNumberOfColumns() ) {
+        OOFEM_ERROR( "dimension mismatch: matrix %d x %d, vector %d", this->giveNumberOfRows(), this->giveNumberOfColumns(), x.giveSize() );
     }
 
-    FloatArray xcopy          = x;
-    Eigen::VectorXd xeig      = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>( xcopy.givePointer(), x.giveSize() );
-
-    //Eigen::VectorXd answereig = this->EigMat * xeig;
-    Eigen::VectorXd answereig = EigMatCopy * xeig; // If set from triplets
+    // no copy of the matrix or of x
+    Eigen::Map<const Eigen::VectorXd> xeig( x.givePointer(), x.giveSize() );
+    Eigen::VectorXd answereig = this->giveMatrix() * xeig;
 
     answer                    = FloatArray( answereig.begin(), answereig.end() );
 }
 
-void EigenMtrx::createMatrixFromTriplets()
+void EigenMtrx::createMatrixFromTriplets() const
 {
-    if ( this->BuiltFromTripletsAtVersion != this->version || this->version  == 0) {
-        this->EigMat.setFromTriplets( this->triplets.begin(), this->triplets.end() );
-        this->EigMat.makeCompressed();
-        BuiltFromTripletsAtVersion = this->version;
+    if ( !this->tripletsPending ) {
+        return;
     }
+
+    if ( this->EigMat.nonZeros() == 0 ) {
+        // the usual case after zero(): the matrix is the sum of the assembled contributions
+        this->EigMat.setFromTriplets( this->triplets.begin(), this->triplets.end() );
+    } else {
+        // contributions assembled into a matrix that already has values: they are added to them
+        Eigen::SparseMatrix<double> contributions( this->EigMat.rows(), this->EigMat.cols() );
+        contributions.setFromTriplets( this->triplets.begin(), this->triplets.end() );
+        this->EigMat += contributions;
+    }
+    this->EigMat.makeCompressed();
+
+    this->triplets.clear(); // the capacity is kept for the next assembly
+    this->tripletsPending = false;
 }
 
 void EigenMtrx::printYourself() const
 {
-    std::cout << this->EigMat << std::endl;
+    std::cout << this->giveMatrix() << std::endl;
 }
 
 //void EigenMtrx::getBlock( int i, int j, int p, int q, EigenMtrx& BlockMatrix )
-std::unique_ptr<EigenMtrx> EigenMtrx::getBlock( int i, int j, int p, int q )
+std::unique_ptr<EigenMtrx> EigenMtrx::getBlock( int i, int j, int p, int q ) const
 {
     // i and j start from 1
-    Eigen::SparseMatrix<double> subMat = this->EigMat.block(i-1,j-1, p, q );
-    EigenMtrx BlockMatrix( subMat );
-    return std::make_unique<EigenMtrx>( BlockMatrix );
+    if ( i < 1 || j < 1 || p < 0 || q < 0 || i - 1 + p > this->giveNumberOfRows() || j - 1 + q > this->giveNumberOfColumns() ) {
+        OOFEM_ERROR( "block at (%d,%d) of size %d x %d is outside the %d x %d matrix", i, j, p, q, this->giveNumberOfRows(), this->giveNumberOfColumns() );
+    }
+    Eigen::SparseMatrix<double> subMat = this->giveMatrix().block( i - 1, j - 1, p, q );
+    return std::make_unique<EigenMtrx>( std::move( subMat ) );
 }
 
-std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensation( int i )
+Eigen::SparseMatrix<double> EigenMtrx::computeSchurComplement( int i ) const
 {
     // i is position were the PP block starts
-    int uuSize = i - 1;
     int matSize = this->giveNumberOfRows();
+    if ( i < 1 || i > matSize + 1 ) {
+        OOFEM_ERROR( "the condensed block must start at an equation from 1 to %d, got %d", matSize + 1, i );
+    }
+    int uuSize = i - 1;
     int ppSize  = matSize - uuSize;
 
-    auto eigmat = this->giveMatrix();
+    const Eigen::SparseMatrix<double> &eigmat = this->giveMatrix();
 
     Eigen::SparseMatrix<double> UU = eigmat.block( 0, 0, uuSize, uuSize );
-    Eigen::SparseMatrix<double> UP = eigmat.block( 0, i - 1, uuSize, ppSize );   
+    if ( ppSize == 0 ) {
+        return UU; // nothing to condense
+    }
+    Eigen::SparseMatrix<double> UP = eigmat.block( 0, i - 1, uuSize, ppSize );
     Eigen::SparseMatrix<double> PU = eigmat.block( i - 1, 0, ppSize, uuSize );
     Eigen::SparseMatrix<double> PP = eigmat.block( i - 1, i - 1, ppSize, ppSize );
 
@@ -407,49 +450,53 @@ std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensation( int i )
     //std::cout << this->EigMat << std::endl;
     ////////////////
 
-    // create factorization
-    //Eigen::SparseLU<Eigen::SparseMatrix<double> > A_factorization( PP );
+    // K_PP^-1 K_PU: LDL^T (no pivoting) breaks down on a zero pivot, which a nonsingular indefinite
+    // K_PP may still have; LU with pivoting is used then. Without a check, a failed factorization
+    // would silently leave K_UU (or garbage) as the result.
+    Eigen::SparseMatrix<double> temp;
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > A_factorization( PP );
+    if ( A_factorization.info() == Eigen::Success ) {
+        temp = A_factorization.solve( PU ); // Solve the system
+    } else {
+        Eigen::SparseLU<Eigen::SparseMatrix<double> > LU_PP( PP );
+        if ( LU_PP.info() != Eigen::Success ) {
+            OOFEM_ERROR( "block K_PP of the equations %d to %d is singular: the Schur complement does not exist", i, matSize );
+        }
+        temp = LU_PP.solve( PU );
+    }
 
-    Eigen::SparseMatrix<double> temp = A_factorization.solve( PU ); // Solve the system
-    Eigen::SparseMatrix<double> Kcond = UU - UP * temp;
-    EigenMtrx KcondOOFEM( Kcond );
+    return UU - UP * temp;
+}
 
-    //std::cout << PP << std::endl;
-    return std::make_unique<EigenMtrx>( KcondOOFEM );
+std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensation( int i ) const
+{
+    // the condensed matrix is a ready matrix: wrapped by the constructor that takes it as built
+    return std::make_unique<EigenMtrx>( this->computeSchurComplement( i ) );
 }
 
 void EigenMtrx::doStaticCondensationOwn( int i)
 {
-    // i is position were the PP block starts
-    int uuSize = i - 1;
-    int matSize = this->giveNumberOfRows();
-    int ppSize  = matSize - uuSize;
+    Eigen::SparseMatrix<double> Kcond = this->computeSchurComplement( i );
 
-    auto eigmat = this->giveMatrix();
-
-    Eigen::SparseMatrix<double> UU = eigmat.block( 0, 0, uuSize, uuSize );
-    Eigen::SparseMatrix<double> UP = eigmat.block( 0, i - 1, uuSize, ppSize );   
-    Eigen::SparseMatrix<double> PU = eigmat.block( i - 1, 0, ppSize, uuSize );
-    Eigen::SparseMatrix<double> PP = eigmat.block( i - 1, i - 1, ppSize, ppSize );
-
-    // create factorization
-    Eigen::SparseLU<Eigen::SparseMatrix<double> > A_factorization( PP );
-    Eigen::SparseMatrix<double> temp = A_factorization.solve( PU ); // Solve the system
-    Eigen::SparseMatrix<double> Kcond = UU - UP * temp;
-
-    this->EigMat = Kcond;
+    // the whole state changes consistently: values, size, no pending contributions, new version
+    this->EigMat = std::move( Kcond );
+    this->EigMat.makeCompressed();
+    this->triplets.clear();
+    this->tripletsPending = false;
+    this->nRows = this->nColumns = (int)this->EigMat.rows();
+    this->version++;
 }
 
-std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensationLagrange( int i )
+std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensationLagrange( int i ) const
 {
     // i is position were the PP block starts
-    int uuSize  = i - 1;
     int matSize = this->giveNumberOfRows();
-    int ppSize  = matSize - uuSize;
-    auto eigmat                    = this->giveMatrix();
+    if ( i < 1 || i > matSize + 1 ) {
+        OOFEM_ERROR( "the multiplier block must start at an equation from 1 to %d, got %d", matSize + 1, i );
+    }
+    int uuSize  = i - 1;
 
-    Eigen::SparseMatrix<double> UU = eigmat.block( 0, 0, uuSize, uuSize );
+    Eigen::SparseMatrix<double> UU = this->giveMatrix().block( 0, 0, uuSize, uuSize );
     //Eigen::SparseMatrix<double> UP = this->EigMat.block( 0, i - 1, uuSize, ppSize );
     //Eigen::SparseMatrix<double> PU = this->EigMat.block( i - 1, 0, ppSize, uuSize );
     //Eigen::SparseMatrix<double> PP = this->EigMat.block( i - 1, i - 1, ppSize, ppSize );
@@ -458,10 +505,9 @@ std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensationLagrange( int i )
     //Eigen::SparseLU<Eigen::SparseMatrix<double> > A_factorization( PP );
     //Eigen::SparseMatrix<double> temp  = A_factorization.solve( PU ); // Solve the system
     //Eigen::SparseMatrix<double> Kcond = UU - UP * temp;
-    EigenMtrx KcondOOFEM( UU );
 
     // std::cout << PP << std::endl;
-    return std::make_unique<EigenMtrx>( KcondOOFEM );
+    return std::make_unique<EigenMtrx>( std::move( UU ) );
 
 }
 
@@ -557,11 +603,11 @@ std::unique_ptr<EigenMtrx> EigenMtrx::doStaticCondensationLagrange( int i )
 //
 //}
 
-std::unique_ptr<EigenMtrx> EigenMtrx::removeRowsAndColumns( const IntArray &indsToDelete )
+std::unique_ptr<EigenMtrx> EigenMtrx::removeRowsAndColumns( const IntArray &indsToDelete ) const
 {
-    Eigen::SparseMatrix<double> &A = this->giveMatrix();
+    const Eigen::SparseMatrix<double> &A = this->giveMatrix();
 
-    const int n = A.rows();
+    const int n = (int)A.rows();
 
     std::vector<bool> remove( n, false );
     for ( int i = 1; i <= indsToDelete.giveSize(); ++i ) {
@@ -582,13 +628,10 @@ std::unique_ptr<EigenMtrx> EigenMtrx::removeRowsAndColumns( const IntArray &inds
         }
     }
 
-    auto result = std::make_unique<EigenMtrx>( newSize );
-    result->version = 1;
-
     Eigen::SparseMatrix<double> reduced( newSize, newSize );
 
-    std::vector<Eigen::Triplet<double> > triplets;
-    triplets.reserve( A.nonZeros() );
+    std::vector<Eigen::Triplet<double> > reducedTriplets;
+    reducedTriplets.reserve( A.nonZeros() );
 
     for ( int k = 0; k < A.outerSize(); ++k ) {
         for ( Eigen::SparseMatrix<double>::InnerIterator it( A, k ); it; ++it ) {
@@ -597,36 +640,29 @@ std::unique_ptr<EigenMtrx> EigenMtrx::removeRowsAndColumns( const IntArray &inds
                 continue;
             }
 
-            triplets.emplace_back(
+            reducedTriplets.emplace_back(
                 map[it.row()],
                 map[it.col()],
                 it.value() );
         }
     }
 
-    reduced.setFromTriplets( triplets.begin(), triplets.end() );
-    reduced.makeCompressed();
+    reduced.setFromTriplets( reducedTriplets.begin(), reducedTriplets.end() );
 
-    result->giveMatrix().swap( reduced );
-    result->triplets = triplets;
-    result->version  = 1;
-    result->BuiltFromTripletsAtVersion = result->version;
-    
-
-    return result;
+    // a ready matrix, wrapped by the constructor that takes it as built
+    return std::make_unique<EigenMtrx>( std::move( reduced ) );
 }
 
 #include <fstream>
 
-void EigenMtrx::printToFile( const std::string &filename ) 
+void EigenMtrx::printToFile( const std::string &filename ) const
 {
     std::ofstream file( filename );
 
     if ( !file.is_open() ) {
         OOFEM_ERROR( "Cannot open file '%s' for writing.", filename.c_str() );
     }
-    this->createMatrixFromTriplets(); // Ensure the matrix is up-to-date
-    file << this->EigMat << std::endl;
+    file << this->giveMatrix() << std::endl; // pending contributions are added first
 
     file.close();
 }
