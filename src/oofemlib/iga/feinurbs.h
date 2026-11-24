@@ -75,5 +75,46 @@ public:
 
     const char *giveClassName() const { return "NURBSInterpolation"; }
 };
+
+
+/**
+ * NURBS surface in space: the surface of BSpline3dSurfaceInterpolation with one weight w_A per control point
+ * (keyword weights, u index fastest, finite and positive), i.e. with the rational basis functions
+ * R_A = w_A N_A / W, W = sum_B w_B N_B, which represent conic sections such as the circles of a surface of
+ * revolution exactly. All services of the base class (tangents, surface gradient, Hessian, normal, area element)
+ * use the rational functions and their parametric derivatives up to the second order; the displacements are
+ * interpolated with them as well.
+ */
+class OOFEM_EXPORT NURBS3dSurfaceInterpolation : public BSpline3dSurfaceInterpolation
+{
+protected:
+    /// Weight of each control point, u index fastest, divided by the largest input weight (in (0, 1]).
+    FloatArray weights;
+
+    /**
+     * The rational functions of evalBasis: with W, W_,a and W_,ab the sums of w_A times the B-spline values,
+     * R = w N / W, R_,a = (w N_,a - R W_,a) / W and R_,ab = (w N_,ab - R_,a W_,b - R_,b W_,a - R W_,ab) / W.
+     */
+    void evalBasis( int nder, const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &answer, IntArray &cps ) const override;
+
+public:
+    NURBS3dSurfaceInterpolation() : BSpline3dSurfaceInterpolation() {}
+
+    /**
+     * Reads the B-spline data (degree >= 1 in both directions) and one weight per control point (finite and
+     * positive). The weights are divided by the largest one, which leaves the surface unchanged and keeps the
+     * computation independent of a common factor; a ratio of the smallest to the largest weight below the normal
+     * range of double is rejected.
+     */
+    void initializeFrom( InputRecord &ir ) override;
+    /// The rational basis functions of the knot span of lcoords, u index fastest.
+    void evalN( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+    /// Position on the surface (three coordinates) from the rational basis.
+    void local2global( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+    /// The rational functions with their derivatives up to the second order, in the layout of BSplineInterpolation.
+    void evalSecondDerivatives( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
+
+    const char *giveClassName() const { return "NURBS3dSurfaceInterpolation"; }
+};
 } // end namespace oofem
 #endif // feinurbs_h

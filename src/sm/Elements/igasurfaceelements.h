@@ -46,9 +46,12 @@
 #include "matresponsemode.h"
 #include "mathfem.h"
 
+#include <memory>
+
 #define _IFT_BsplinePlaneStrainSurfaceElement_Name "bsplineplanestrainsurfaceelement"
 #define _IFT_BsplineAxisymSurfaceElement_Name "bsplineaxisymsurfaceelement"
 #define _IFT_Bspline3dSurfaceElement_Name "bspline3dsurfaceelement"
+#define _IFT_Nurbs3dSurfaceElement_Name "nurbs3dsurfaceelement"
 namespace oofem {
 
 /**
@@ -214,7 +217,11 @@ protected:
 class Bspline3dSurfaceElement : public IGAElement, public Space3dStructuralSurfaceElementEvaluator
 {
 protected:
-    BSpline3dSurfaceInterpolation interpolation;
+    /// The patch: B-splines here, NURBS in Nurbs3dSurfaceElement.
+    std::unique_ptr<BSpline3dSurfaceInterpolation> interpolation;
+
+    /// Element with the interpolation interp (Nurbs3dSurfaceElement).
+    Bspline3dSurfaceElement( int n, Domain *aDomain, std::unique_ptr<BSpline3dSurfaceInterpolation> interp );
 
 public:
     Bspline3dSurfaceElement( int n, Domain *aDomain );
@@ -236,7 +243,7 @@ public:
         Space3dStructuralSurfaceElementEvaluator ::giveCharacteristicVector( answer, type, mode, t );
     }
 
-    FEInterpolation *giveInterpolation() const override { return const_cast<BSpline3dSurfaceInterpolation *>( &this->interpolation ); }
+    FEInterpolation *giveInterpolation() const override { return this->interpolation.get(); }
     Element *giveElement() override { return this; }
     void giveDofManDofIDMask( int inode, IntArray &answer ) const override
     {
@@ -269,12 +276,28 @@ public:
      */
     bool supportsSecondGradient() const override
     {
-        return this->interpolation.giveInterpolationOrder() >= 2 && this->interpolation.giveMinimalContinuity( 1 ) >= 1 &&
-               this->interpolation.giveMinimalContinuity( 2 ) >= 1;
+        return this->interpolation->giveInterpolationOrder() >= 2 && this->interpolation->giveMinimalContinuity( 1 ) >= 1 &&
+               this->interpolation->giveMinimalContinuity( 2 ) >= 1;
     }
 
 protected:
     int giveNsd() override { return 2; }
+};
+
+
+/**
+ * Surface energy on a NURBS surface in space: Bspline3dSurfaceElement with the rational basis of
+ * NURBS3dSurfaceInterpolation, i.e. with one weight per control point (keyword weights, u index fastest, finite and
+ * positive). Represents conic sections exactly, e.g. the circles of a surface of revolution (a quarter circle of
+ * radius r: control points (r, 0), (r, r), (0, r) with the weights 1, 1/sqrt(2), 1 and the knots 0 0 0 1 1 1).
+ */
+class Nurbs3dSurfaceElement : public Bspline3dSurfaceElement
+{
+public:
+    Nurbs3dSurfaceElement( int n, Domain *aDomain );
+
+    const char *giveInputRecordName() const override { return _IFT_Nurbs3dSurfaceElement_Name; }
+    const char *giveClassName() const override { return "Nurbs3dSurfaceElement"; }
 };
 
 } // end namespace oofem

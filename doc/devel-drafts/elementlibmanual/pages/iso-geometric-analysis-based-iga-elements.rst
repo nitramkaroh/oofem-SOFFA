@@ -83,7 +83,7 @@ for second gradient materials also bending). The first two are planar B-spline c
 on the boundary of a two-dimensional B-spline patch: :param:`degree` has a single
 entry, :param:`knotvectoru` and :param:`nodes` describe the curve, and to couple it with
 the bulk it has to use the control points (nodes) of the patch boundary with the same
-degree and knots. The third one is a B-spline surface in space. The cross section is a
+degree and knots. The other two are a B-spline and a NURBS surface in space. The cross section is a
 :param:`simplesurfacecs` with a surface material. Only the large strain formulation is
 available, so :param:`nlgeo` has to be 1.
 
@@ -107,6 +107,26 @@ with the tangents :math:`\mathbf{A}_1 = \partial \mathbf{X}/\partial \xi` and
 gradient) needs degree at least 2 and :math:`C^1` continuity in both directions (see
 below); the anisotropic surface material and the clamp are rejected. As with the other
 IGA elements, the loads are applied as nodal loads in the control points.
+
+**Keyword**: :param:`nurbs3dsurfaceelement`  **Parameters**: :elemparam:`weights{ra}`
+NURBS surface in space: as :param:`bspline3dsurfaceelement`, with one weight per control
+point (finite and positive, in the order of the nodes; only their ratios matter, they are
+divided by the largest one); the geometry and the displacements are interpolated by the
+rational basis functions. They represent conic sections exactly, e.g. the circles of a
+surface of revolution: a quarter circle of radius :math:`r` in one knot span of degree 2
+has the control points :math:`(r, 0)`, :math:`(r, r)`, :math:`(0, r)` with the weights
+:math:`1, 1/\sqrt{2}, 1` (the VTK export samples this exact surface and connects the
+samples by flat cells). A surface of revolution can thus be compared with
+:param:`bsplineaxisymsurfaceelement` on the same generatrix: for an axisymmetric
+deformation the generalized reactions of the two models agree up to the Gauss quadrature of
+the arc length (regression test ``iga-nurbs-axisym-checks.sh``). A bending material needs
+:math:`C^1` continuity (see below), which neither the usual full circle of degree 2 with
+double knots at the quarters nor a closed surface across its seam has; model a quarter or a
+half with symmetry conditions instead. For bending these include the slope: at a coordinate
+plane of symmetry met perpendicularly by the surface (as by the quarter circle), the control
+points next to the edge get the displacements of the edge points in the directions of the
+plane (simple slave dofs, ``doftype`` and ``mastermask`` of the nodes), besides the zero
+normal displacement of the edge.
 
 The surface gradient uses the reciprocal tangents
 :math:`\mathbf{A}^1 = (\mathbf{A}_2 \times \mathbf{N})/J` and
@@ -134,15 +154,15 @@ Second gradient materials
 -------------------------
 
 The elements :param:`bsplineplanestrainelement`, :param:`bsplineaxisymelement`,
-:param:`bsplineplanestrainsurfaceelement`, :param:`bsplineaxisymsurfaceelement` and
-:param:`bspline3dsurfaceelement`
+:param:`bsplineplanestrainsurfaceelement`, :param:`bsplineaxisymsurfaceelement`,
+:param:`bspline3dsurfaceelement` and :param:`nurbs3dsurfaceelement`
 support materials depending also on the gradient of the deformation gradient (e.g.
 :param:`gradientsimopistermat` and :param:`gradientmooneyrivlin` in the bulk, bending of
 :param:`surfacetensionmat2` on the surfaces). Such a material is detected automatically
 from the cross section of the element; an element that does not support the second
 gradient stops with an error. The second gradient needs :math:`C^1` continuity of the
 interpolation, i.e. degree at least 2 and internal knot multiplicities at most degree
-minus 1 in every parametric direction; the five elements check it and stop with an error
+minus 1 in every parametric direction; the six elements check it and stop with an error
 otherwise. It is implemented only for :param:`nlgeo` 1.
 
 Export to VTK

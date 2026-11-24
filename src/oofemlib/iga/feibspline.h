@@ -350,6 +350,8 @@ private:
  * The methods that need the tangents stop with an error when the area |A_1 x A_2| is zero or not finite
  * (e.g. coinciding control points). The surface gradient uses reciprocal cross products rather than
  * inverse metric combinations to avoid cancellation on skew patches and unnecessary squared norms.
+ * All services take the basis functions and their parametric derivatives from evalBasis, which
+ * NURBS3dSurfaceInterpolation replaces by the rational functions.
  */
 class OOFEM_EXPORT BSpline3dSurfaceInterpolation : public BSplineInterpolation
 {
@@ -391,21 +393,29 @@ public:
     /// Stops with an error: the tangents of a surface in space form no square matrix (see giveTransformationJacobian).
     void giveJacobianMatrixAt( FloatMatrix &jacobianMatrix, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const override;
 
-private:
+protected:
     /// Knot spans of lcoords: those of the geometry wrapper when given, otherwise found from lcoords.
     std::array<int, 2> giveSpans( const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const;
     /**
-     * Derivatives of the nonzero basis functions up to order nder (1 or 2) in both directions (dersU is
-     * (nder+1) x (p+1), dersV (nder+1) x (q+1)) and the tangents a1 = X_,xi, a2 = X_,eta of the reference
-     * surface; for nder = 2 also b = { X_,xixi, X_,etaeta, X_,xieta }. Stops for a degenerate surface (see the
-     * class description).
+     * The nonzero basis functions of the knot span of lcoords and their derivatives with respect to xi and eta up
+     * to the order nder (0, 1 or 2): answer is (p+1)(q+1) x 6 with the columns N, N_,xi, N_,eta, N_,xixi,
+     * N_,etaeta, N_,xieta (the columns above the order nder are zero), rows u index fastest; cps gets the one
+     * based numbers of their control points. Here the tensor products of the B-spline functions.
+     */
+    virtual void evalBasis( int nder, const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &answer, IntArray &cps ) const;
+    /**
+     * The basis of evalBasis up to the order nder (1 or 2) and the tangents a1 = X_,xi, a2 = X_,eta of the
+     * reference surface; for nder = 2 also b = { X_,xixi, X_,etaeta, X_,xieta }. Stops for a degenerate surface
+     * (see the class description).
      * @return |a1 x a2|.
      */
-    double evalTangents( int nder, const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &dersU, FloatMatrix &dersV,
+    double evalTangents( int nder, const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &basis, IntArray &cps,
         std::array<double, 3> &a1, std::array<double, 3> &a2, std::array<std::array<double, 3>, 3> *b = nullptr ) const;
     /// Reciprocal tangents d1 = A^1 = (a2 x N) / J and d2 = A^2 = (N x a1) / J with N = (a1 x a2) / J and J = |a1 x a2|.
     static void reciprocalTangents( const std::array<double, 3> &a1, const std::array<double, 3> &a2, double J,
         const FloatArray &lcoords, std::array<double, 3> &d1, std::array<double, 3> &d2 );
+    /// Coordinates of control point i of the cell; a surface in space needs three (further ones are not used).
+    static const FloatArray &giveControlPointCoordinates( const FEICellGeometry &cellgeo, int i );
 };
 
 } // end namespace oofem

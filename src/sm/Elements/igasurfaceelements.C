@@ -45,6 +45,7 @@
 #include "crosssection.h"
 #include "mathfem.h"
 #include "iga/iga.h"
+#include "iga/feinurbs.h"
 #include "classfactory.h"
 
 namespace oofem {
@@ -135,7 +136,11 @@ REGISTER_Element( Bspline3dSurfaceElement );
 
 
 Bspline3dSurfaceElement ::Bspline3dSurfaceElement( int n, Domain *aDomain ) :
-    IGAElement( n, aDomain ), Space3dStructuralSurfaceElementEvaluator() {}
+    Bspline3dSurfaceElement( n, aDomain, std::make_unique<BSpline3dSurfaceInterpolation>() ) {}
+
+
+Bspline3dSurfaceElement ::Bspline3dSurfaceElement( int n, Domain *aDomain, std::unique_ptr<BSpline3dSurfaceInterpolation> interp ) :
+    IGAElement( n, aDomain ), Space3dStructuralSurfaceElementEvaluator(), interpolation( std::move( interp ) ) {}
 
 
 void Bspline3dSurfaceElement ::initializeFrom( InputRecord &ir )
@@ -148,8 +153,8 @@ void Bspline3dSurfaceElement ::initializeFrom( InputRecord &ir )
 int Bspline3dSurfaceElement ::checkConsistency()
 {
     // nu x nv control points (u index fastest), one node each
-    int nu = this->interpolation.giveNumberOfControlPoints( 1 );
-    int nv = this->interpolation.giveNumberOfControlPoints( 2 );
+    int nu = this->interpolation->giveNumberOfControlPoints( 1 );
+    int nv = this->interpolation->giveNumberOfControlPoints( 2 );
     if ( giveNumberOfDofManagers() != nu * nv ) {
         OOFEM_WARNING( "element %d (%s): %d nodes given, the knot vectors and degrees need %d x %d control points",
             this->giveNumber(), this->giveClassName(), giveNumberOfDofManagers(), nu, nv );
@@ -176,9 +181,19 @@ FloatArray Bspline3dSurfaceElement::giveNormal( GaussPoint *gp ) const
 {
     // A_1 x A_2 / |A_1 x A_2| in the knot spans of the rule of gp (one-sided tangents on a knot line)
     FloatArray normal;
-    this->interpolation.evalSurfaceNormal( normal, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
+    this->interpolation->evalSurfaceNormal( normal, gp->giveNaturalCoordinates(), FEIIGAElementGeometryWrapper( gp->giveElement(), gp->giveIntegrationRule()->giveKnotSpan() ) );
     return normal;
 }
+
+
+//////////////////
+// NURBS surface in space
+
+REGISTER_Element( Nurbs3dSurfaceElement );
+
+
+Nurbs3dSurfaceElement ::Nurbs3dSurfaceElement( int n, Domain *aDomain ) :
+    Bspline3dSurfaceElement( n, aDomain, std::make_unique<NURBS3dSurfaceInterpolation>() ) {}
 
 
 } // end namespace oofem

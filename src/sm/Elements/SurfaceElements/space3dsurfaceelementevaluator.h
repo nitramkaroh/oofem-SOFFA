@@ -41,7 +41,8 @@
 namespace oofem {
 /**
  * Evaluator of a surface energy on a surface in space (interpolation with two parametric directions and
- * control points with three coordinates, BSpline3dSurfaceInterpolation; dofs u, v, w), per unit area of the
+ * control points with three coordinates, BSpline3dSurfaceInterpolation or NURBS3dSurfaceInterpolation; dofs u, v,
+ * w), per unit area of the
  * reference surface. F and P are in the global basis with 9 components (11, 22, 33, 23, 13, 12, 32, 31, 21).
  * The derivatives dN/dx of the interpolation are surface gradients, so H = BH u is tangential in its second
  * index and F = I_s + H satisfies F N = 0. The second gradient (bending) is built from the tangential Hessian

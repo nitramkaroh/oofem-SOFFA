@@ -9,9 +9,10 @@ defined on the nodes of the bulk elements on the boundary, so that the surface d
 together with the bulk, and it takes a surface material (see the surface materials in the
 Material Library Manual) from a :param:`simplesurfacecs` cross section. The elements on
 this page interpolate the displacements by Lagrange polynomials; the IGA surface elements
-:param:`bsplineplanestrainsurfaceelement`, :param:`bsplineaxisymsurfaceelement` and
-:param:`bspline3dsurfaceelement` (a B-spline surface in space) are described with the IGA
-elements (:doc:`iso-geometric-analysis-based-iga-elements`).
+:param:`bsplineplanestrainsurfaceelement`, :param:`bsplineaxisymsurfaceelement`,
+:param:`bspline3dsurfaceelement` and :param:`nurbs3dsurfaceelement` (B-spline and NURBS
+surfaces in space) are described with the IGA elements
+(:doc:`iso-geometric-analysis-based-iga-elements`).
 
 Kinematics
 ----------

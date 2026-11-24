@@ -37,7 +37,9 @@
 #include "floatmatrix.h"
 #include "iga.h"
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace oofem {
 
@@ -691,4 +693,108 @@ void NURBSInterpolation :: giveJacobianMatrixAt(FloatMatrix &jacobian, const Flo
     }
 
 }
+
+
+///////////////////////
+// NURBS3dSurfaceInterpolation
+
+void NURBS3dSurfaceInterpolation::initializeFrom( InputRecord &ir )
+{
+    BSpline3dSurfaceInterpolation::initializeFrom( ir );
+
+    IR_GIVE_FIELD( ir, weights, _IFT_NURBSInterpolation_weights );
+    if ( weights.giveSize() != numberOfControlPoints[0] * numberOfControlPoints[1] ) {
+        throw ValueInputException( ir, _IFT_NURBSInterpolation_weights, "the number of weights must equal the number of control points" );
+    }
+    // the rational basis functions are divided by sum(N*w)
+    double wmax = 0.;
+    for ( double w : weights ) {
+        if ( !std::isfinite( w ) || w <= 0. ) {
+            throw ValueInputException( ir, _IFT_NURBSInterpolation_weights, "weights must be finite and positive" );
+        }
+        wmax = std::max( wmax, w );
+    }
+    // Only the ratios of the weights matter. Divided by the largest one they lie in (0, 1], so the weighted sums of the
+    // B-spline derivatives in evalBasis stay in their range (a common factor like 1e307 would overflow them). A division,
+    // since 1/wmax may itself overflow; exact when the largest weight is 1. A ratio below the normal range of double
+    // would lose its precision or vanish.
+    for ( double &w : weights ) {
+        w /= wmax;
+        if ( !( w >= std::numeric_limits< double >::min() ) ) {
+            throw ValueInputException( ir, _IFT_NURBSInterpolation_weights,
+                "the ratio of the smallest to the largest weight is below the range of double" );
+        }
+    }
+}
+
+
+void NURBS3dSurfaceInterpolation::evalBasis( int nder, const FloatArray &lcoords, const FEICellGeometry &cellgeo, FloatMatrix &answer,
+    IntArray &cps ) const
+{
+    BSpline3dSurfaceInterpolation::evalBasis( nder, lcoords, cellgeo, answer, cps );
+
+    // W = sum w N and its derivatives, in the columns of answer (W > 0: positive weights, B-splines >= 0 summing to 1)
+    int count = answer.giveNumberOfRows();
+    double W[6] = { 0., 0., 0., 0., 0., 0. };
+    for ( int a = 0; a < count; a++ ) {
+        double w = this->weights.at( cps[a] );
+        for ( int c = 0; c < 6; c++ ) {
+            W[c] += w * answer( a, c );
+        }
+    }
+
+    // R = w N / W and its derivatives from R W = w N: columns N, N_,xi, N_,eta, N_,xixi, N_,etaeta, N_,xieta
+    for ( int a = 0; a < count; a++ ) {
+        double w  = this->weights.at( cps[a] );
+        double R  = w * answer( a, 0 ) / W[0];
+        double Ru = ( w * answer( a, 1 ) - R * W[1] ) / W[0];
+        double Rv = ( w * answer( a, 2 ) - R * W[2] ) / W[0];
+        if ( nder >= 2 ) {
+            answer( a, 3 ) = ( w * answer( a, 3 ) - 2. * Ru * W[1] - R * W[3] ) / W[0];
+            answer( a, 4 ) = ( w * answer( a, 4 ) - 2. * Rv * W[2] - R * W[4] ) / W[0];
+            answer( a, 5 ) = ( w * answer( a, 5 ) - Ru * W[2] - Rv * W[1] - R * W[5] ) / W[0];
+        }
+        answer( a, 0 ) = R;
+        if ( nder >= 1 ) {
+            answer( a, 1 ) = Ru;
+            answer( a, 2 ) = Rv;
+        }
+    }
+}
+
+
+void NURBS3dSurfaceInterpolation::evalN( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    FloatMatrix basis;
+    IntArray cps;
+    this->evalBasis( 0, lcoords, cellgeo, basis, cps );
+    answer.resize( basis.giveNumberOfRows() );
+    for ( int a = 0; a < basis.giveNumberOfRows(); a++ ) {
+        answer[a] = basis( a, 0 );
+    }
+}
+
+
+void NURBS3dSurfaceInterpolation::local2global( FloatArray &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    FloatMatrix basis;
+    IntArray cps;
+    this->evalBasis( 0, lcoords, cellgeo, basis, cps );
+    answer.resize( 3 );
+    answer.zero();
+    for ( int a = 0; a < basis.giveNumberOfRows(); a++ ) {
+        const auto &X = giveControlPointCoordinates( cellgeo, cps[a] );
+        for ( int i = 0; i < 3; i++ ) {
+            answer[i] += basis( a, 0 ) * X[i];
+        }
+    }
+}
+
+
+void NURBS3dSurfaceInterpolation::evalSecondDerivatives( FloatMatrix &answer, const FloatArray &lcoords, const FEICellGeometry &cellgeo ) const
+{
+    IntArray cps;
+    this->evalBasis( 2, lcoords, cellgeo, answer, cps );
+}
+
 } // end namespace oofem
