@@ -149,10 +149,14 @@ Export to VTK
 -------------
 
 The composite VTK export (:param:`vtkxml`) is implemented for the B-spline and NURBS
-elements with one or two parametric dimensions (not for :param:`nurbs3delement` and
-:param:`tsplineplanestresselement`): every knot span is sampled in :param:`numexp`
-points per parametric direction, connected by lines on the curves and by quadrilaterals
-on the patches (planar or in space). Exported are the positions, the primary variable
+elements (not for :param:`tsplineplanestresselement`): every knot span is sampled in
+:param:`numexp` points per parametric direction, connected by lines on the curves, by
+quadrilaterals on the patches with two parametric dimensions (planar or in space) and by
+hexahedra on :param:`nurbs3delement`. A hexahedron with a negative volume (a left-handed
+parametrization) is written with the reversed vertex order. The export checks the
+Jacobian of every hexahedron at its corners, Gauss points and centre: if it changes sign
+or vanishes inside, the export points are too coarse for the patch (e.g. a strongly
+twisted one) and a warning asks for a larger :param:`numexp`. Exported are the positions, the primary variable
 DisplacementVector and,
 for the surface elements with a bending material, the internal variable
 IST_CurvatureTensor (the current curvature :math:`\mathbf{K} = -\mathbf{n} \cdot \nabla\mathbf{F}`,

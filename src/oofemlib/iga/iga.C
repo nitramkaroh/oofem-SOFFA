@@ -82,6 +82,23 @@ int IGAIntegrationElement ::SetUpDummyPointsOnSquare( int nPoints, MaterialMode 
     return this->giveNumberOfIntegrationPoints();
 }
 
+int IGAIntegrationElement ::SetUpDummyPointsOnCube( int nPoints, MaterialMode mode )
+{
+    // the largest n with n^3 <= nPoints, in integers (a rounded cube root could give n - 1 for nPoints = n^3)
+    int nPoints_xi = 1;
+    while ( ( nPoints_xi + 1 ) * ( nPoints_xi + 1 ) * ( nPoints_xi + 1 ) <= nPoints ) {
+        nPoints_xi++;
+    }
+    const int numberOfPoints = nPoints_xi * nPoints_xi * nPoints_xi;
+    this->gaussPoints.resize( numberOfPoints );
+    for ( int i = 0; i < numberOfPoints; i++ ) {
+        this->gaussPoints[i] = new GaussPoint( this, i + 1, { 0., 0., 0. }, 0., mode );
+    }
+
+    this->intdomain = _Cube;
+    return this->giveNumberOfIntegrationPoints();
+}
+
 void IGAElement ::initializeFrom( InputRecord &ir )
 {
     int indx            = 0;
@@ -324,9 +341,58 @@ void IGAElement ::initializeFrom( InputRecord &ir )
                 indx++;
             }
         }
+    } else if ( nsd == 3 ) {
+        int numberOfKnotSpansU            = this->giveInterpolation()->giveNumberOfKnotSpans( 1 );
+        int numberOfKnotSpansV            = this->giveInterpolation()->giveNumberOfKnotSpans( 2 );
+        int numberOfKnotSpansW            = this->giveInterpolation()->giveNumberOfKnotSpans( 3 );
+        const IntArray *knotMultiplicityU = this->giveInterpolation()->giveKnotMultiplicity( 1 );
+        const IntArray *knotMultiplicityV = this->giveInterpolation()->giveKnotMultiplicity( 2 );
+        const IntArray *knotMultiplicityW = this->giveInterpolation()->giveKnotMultiplicity( 3 );
+        const FloatArray *knotValuesU     = this->giveInterpolation()->giveKnotValues( 1 );
+        const FloatArray *knotValuesV     = this->giveInterpolation()->giveKnotValues( 2 );
+        const FloatArray *knotValuesW     = this->giveInterpolation()->giveKnotValues( 3 );
+
+        FloatArray newgpcoords( 3 );
+        IntArray knotSpan( 3 );
+        const int n = numExportPoints;
+
+        ExportIntegrationRulesArray.resize( numberOfKnotSpansU * numberOfKnotSpansV * numberOfKnotSpansW );
+
+        // the same knot spans in the same order (u fastest, w slowest) as the integration rules above
+        knotSpan.at( 3 ) = -1;
+        for ( int wi = 1; wi <= numberOfKnotSpansW; wi++ ) {
+            double dw = knotValuesW->at( wi + 1 ) - knotValuesW->at( wi );
+            knotSpan.at( 3 ) += knotMultiplicityW->at( wi );
+
+            knotSpan.at( 2 ) = -1;
+            for ( int vi = 1; vi <= numberOfKnotSpansV; vi++ ) {
+                double dv = knotValuesV->at( vi + 1 ) - knotValuesV->at( vi );
+                knotSpan.at( 2 ) += knotMultiplicityV->at( vi );
+
+                knotSpan.at( 1 ) = -1;
+                for ( int ui = 1; ui <= numberOfKnotSpansU; ui++ ) {
+                    double du = knotValuesU->at( ui + 1 ) - knotValuesU->at( ui );
+                    knotSpan.at( 1 ) += knotMultiplicityU->at( ui );
+
+                    ExportIntegrationRulesArray[indx] = std::make_unique<IGAIntegrationElement>( indx, this, knotSpan );
+                    ExportIntegrationRulesArray[indx]->SetUpDummyPointsOnCube( n * n * n, _3dMat );
+
+                    // place the points on an equidistant grid in the knot span, u index running fastest, then v, then w
+                    int ipoint = 0;
+                    for ( auto &gp : *ExportIntegrationRulesArray[indx] ) {
+                        newgpcoords.at( 1 ) = knotValuesU->at( ui ) + du / ( n - 1 ) * ( ipoint % n );
+                        newgpcoords.at( 2 ) = knotValuesV->at( vi ) + dv / ( n - 1 ) * ( ( ipoint / n ) % n );
+                        newgpcoords.at( 3 ) = knotValuesW->at( wi ) + dw / ( n - 1 ) * ( ipoint / ( n * n ) );
+                        gp->setNaturalCoordinates( newgpcoords );
+                        ipoint++;
+                    }
+
+                    indx++;
+                }
+            }
+        }
     }
-    // nsd == 3: export points are not implemented for 3D IGA elements, so none are created;
-    // the element still works for the analysis. Other values of nsd were rejected above.
+    // other values of nsd were rejected above
 
 #ifdef __PARALLEL_MODE
     // read optional knot span parallel mode
@@ -368,11 +434,67 @@ Interface *IGAElement ::giveInterface( InterfaceType it )
 }
 
 
+namespace {
+/**
+ * Orientation and validity of the VTK hexahedron through the points vertex[0..7] of piece (VTK order: the base
+ * 0-1-2-3 and above it 4-5-6-7), from the Jacobian J of its trilinear map of the unit cube.
+ * @param leftHanded set to true if the volume of the cell (the integral of J, exact with 2 x 2 x 2 Gauss
+ * points) is negative; the cell has to be written top face first then.
+ * @return false if, in the orientation given by the volume, J is not positive at the 8 Gauss points and the
+ * centre or negative at a corner (zero is accepted at the corners: a collapsed edge of a degenerate patch).
+ * J is only sampled, so true does not prove that it is positive everywhere.
+ */
+bool checkVTKHexahedron( VTKPiece &piece, const IntArray &vertex, bool &leftHanded )
+{
+    // local coordinates of the vertices in the unit cube
+    static const double corner[8][3] = { { 0., 0., 0. }, { 1., 0., 0. }, { 1., 1., 0. }, { 0., 1., 0. },
+        { 0., 0., 1. }, { 1., 0., 1. }, { 1., 1., 1. }, { 0., 1., 1. } };
+    auto jacobian = [&piece, &vertex]( const double t[3] ) {
+        double J[3][3] = {}; // J[i][d] = d x_i / d t_d
+        for ( int a = 0; a < 8; a++ ) {
+            const FloatArray &x = piece.giveNodeCoords( vertex[a] );
+            double f[3], df[3];
+            for ( int d = 0; d < 3; d++ ) {
+                f[d]  = corner[a][d] > 0. ? t[d] : 1. - t[d];
+                df[d] = corner[a][d] > 0. ? 1. : -1.;
+            }
+            const double dN[3] = { df[0] * f[1] * f[2], f[0] * df[1] * f[2], f[0] * f[1] * df[2] };
+            for ( int i = 0; i < 3 && i < x.giveSize(); i++ ) {
+                for ( int d = 0; d < 3; d++ ) {
+                    J[i][d] += dN[d] * x[i];
+                }
+            }
+        }
+        return J[0][0] * ( J[1][1] * J[2][2] - J[1][2] * J[2][1] ) - J[0][1] * ( J[1][0] * J[2][2] - J[1][2] * J[2][0] ) +
+               J[0][2] * ( J[1][0] * J[2][1] - J[1][1] * J[2][0] );
+    };
+
+    const double g[2] = { 0.5 - 0.5 / std::sqrt( 3. ), 0.5 + 0.5 / std::sqrt( 3. ) };
+    double gaussJ[8], volume = 0.;
+    for ( int a = 0; a < 8; a++ ) {
+        const double t[3] = { g[a % 2], g[( a / 2 ) % 2], g[a / 4] };
+        gaussJ[a]         = jacobian( t );
+        volume += gaussJ[a] / 8.;
+    }
+    leftHanded        = volume < 0.;
+    const double sign = leftHanded ? -1. : 1.;
+    const double tol  = 1e-10 * std::fabs( volume ); // a vanishing J (a cell pinched to a line) is not valid
+
+    const double centre[3] = { 0.5, 0.5, 0.5 };
+    bool valid             = sign * jacobian( centre ) > tol;
+    for ( int a = 0; a < 8; a++ ) {
+        valid = valid && sign * gaussJ[a] > tol && sign * jacobian( corner[a] ) >= -tol;
+    }
+    return valid;
+}
+} // end anonymous namespace
+
+
 void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, IntArray &primaryVarsToExport, IntArray &internalVarsToExport, IntArray cellVarsToExport, TimeStep *tStep )
 {
     const int nsd = this->giveNsd();
-    if ( this->ExportIntegrationRulesArray.empty() || ( nsd != 1 && nsd != 2 ) ) {
-        OOFEM_ERROR( "element %d (%s) has no VTK export points (only B-spline and NURBS curves and patches with two parametric directions have them)",
+    if ( this->ExportIntegrationRulesArray.empty() || nsd < 1 || nsd > 3 ) {
+        OOFEM_ERROR( "element %d (%s) has no VTK export points (only the B-spline and NURBS elements have them)",
             this->giveNumber(), this->giveClassName() );
     }
     for ( int type : primaryVarsToExport ) {
@@ -387,9 +509,10 @@ void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, Int
 
     const int n             = this->numExportPoints;
     const int numSpans      = (int)this->ExportIntegrationRulesArray.size();
-    const int pointsPerSpan = nsd == 1 ? n : n * n;
-    const int cellsPerSpan  = nsd == 1 ? n - 1 : ( n - 1 ) * ( n - 1 );
+    const int pointsPerSpan = nsd == 1 ? n : nsd == 2 ? n * n : n * n * n;
+    const int cellsPerSpan  = nsd == 1 ? n - 1 : nsd == 2 ? ( n - 1 ) * ( n - 1 ) : ( n - 1 ) * ( n - 1 ) * ( n - 1 );
     const int numPoints     = pointsPerSpan * numSpans;
+    FEInterpolation *interp = this->giveInterpolation();
 
     vtkPieces.resize( 1 );
     VTKPiece &piece = vtkPieces[0];
@@ -398,44 +521,13 @@ void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, Int
     piece.setNumberOfPrimaryVarsToExport( primaryVarsToExport, numPoints );
     piece.setNumberOfInternalVarsToExport( internalVarsToExport, numPoints );
 
-    // cells: VTK_LINE (3) between neighbouring points of a span, VTK_QUAD (9) of the n x n grid of a span
-    int cell = 1, offset = 0;
-    for ( int s = 0; s < numSpans; s++ ) {
-        // one based number of the first point of span s: every span has its own points, so the points on
-        // the boundary between two spans appear twice
-        const int first = s * pointsPerSpan + 1;
-        if ( nsd == 1 ) {
-            for ( int i = 0; i < n - 1; i++ ) {
-                IntArray nodes = { first + i, first + i + 1 };
-                offset += 2;
-                piece.setConnectivity( cell, nodes );
-                piece.setOffset( cell, offset );
-                piece.setCellType( cell, 3 );
-                cell++;
-            }
-        } else {
-            for ( int j = 0; j < n - 1; j++ ) {
-                for ( int i = 0; i < n - 1; i++ ) {
-                    // grid cell (i, j), counterclockwise in the parameter plane (u index fastest)
-                    const int p    = first + j * n + i;
-                    IntArray nodes = { p, p + 1, p + n + 1, p + n };
-                    offset += 4;
-                    piece.setConnectivity( cell, nodes );
-                    piece.setOffset( cell, offset );
-                    piece.setCellType( cell, 9 );
-                    cell++;
-                }
-            }
-        }
-    }
-
     // points: position and displacements interpolated from the control points of the knot span, in the
-    // directions of the dofs of the element (u, v in the xy plane; u, v, w for a surface in space)
+    // directions of the dofs of the element (u, v in the xy plane; u, v, w for a surface in space and a
+    // patch with three parametric directions); set before the cells, which orient the hexahedra by them
     IntArray dofMask;
     this->giveDofManDofIDMask( 1, dofMask );
     const int ncomp               = dofMask.giveSize(); // D_u, D_v, D_w are 1, 2, 3
     const bool exportDisplacement = primaryVarsToExport.giveSize() > 0;
-    FEInterpolation *interp       = this->giveInterpolation();
     int point = 1;
     for ( int s = 0; s < numSpans; s++ ) {
         IGAIntegrationElement *rule = this->ExportIntegrationRulesArray[s].get();
@@ -470,6 +562,73 @@ void IGAElement ::giveCompositeExportData( std::vector<VTKPiece> &vtkPieces, Int
             }
             point++;
         }
+    }
+
+    // cells: VTK_LINE (3) between neighbouring points of a span, VTK_QUAD (9) of the n x n grid of a span,
+    // VTK_HEXAHEDRON (12) of the n x n x n grid of a span
+    int cell = 1, offset = 0, invalidCells = 0;
+    for ( int s = 0; s < numSpans; s++ ) {
+        // one based number of the first point of span s: every span has its own points, so the points on
+        // the boundary between two spans appear twice
+        const int first = s * pointsPerSpan + 1;
+        if ( nsd == 1 ) {
+            for ( int i = 0; i < n - 1; i++ ) {
+                IntArray nodes = { first + i, first + i + 1 };
+                offset += 2;
+                piece.setConnectivity( cell, nodes );
+                piece.setOffset( cell, offset );
+                piece.setCellType( cell, 3 );
+                cell++;
+            }
+        } else if ( nsd == 2 ) {
+            for ( int j = 0; j < n - 1; j++ ) {
+                for ( int i = 0; i < n - 1; i++ ) {
+                    // grid cell (i, j), counterclockwise in the parameter plane (u index fastest)
+                    const int p    = first + j * n + i;
+                    IntArray nodes = { p, p + 1, p + n + 1, p + n };
+                    offset += 4;
+                    piece.setConnectivity( cell, nodes );
+                    piece.setOffset( cell, offset );
+                    piece.setCellType( cell, 9 );
+                    cell++;
+                }
+            }
+        } else {
+            // A VTK hexahedron has the base 0-1-2-3 counterclockwise seen from the opposite face 4-5-6-7, i.e. a
+            // positive volume when the edges 0-1, 0-3 and 0-4 form a right-handed triple. The grid cells have
+            // these edges along u, v and w; a cell with a negative volume of its own (a left-handed
+            // parametrization) is given top face (higher w) first. The sign of the Jacobian of the patch is not
+            // enough: too few export points on a strongly curved or twisted patch can give a tangled cell.
+            for ( int k = 0; k < n - 1; k++ ) {
+                for ( int j = 0; j < n - 1; j++ ) {
+                    for ( int i = 0; i < n - 1; i++ ) {
+                        // grid cell (i, j, k): p its vertex with the lowest u, v and w, q the vertex above p in w
+                        const int p     = first + k * n * n + j * n + i;
+                        const int q     = p + n * n;
+                        IntArray nodes  = { p, p + 1, p + n + 1, p + n, q, q + 1, q + n + 1, q + n };
+                        bool leftHanded = false;
+                        if ( !checkVTKHexahedron( piece, nodes, leftHanded ) ) {
+                            invalidCells++;
+                        }
+                        if ( leftHanded ) {
+                            nodes = IntArray{ q, q + 1, q + n + 1, q + n, p, p + 1, p + n + 1, p + n };
+                        }
+                        offset += 8;
+                        piece.setConnectivity( cell, nodes );
+                        piece.setOffset( cell, offset );
+                        piece.setCellType( cell, 12 );
+                        cell++;
+                    }
+                }
+            }
+        }
+    }
+    if ( invalidCells > 0 && !this->exportCellWarningGiven ) {
+        // the exported (reference) geometry does not change, so one warning per element is enough
+        OOFEM_WARNING( "element %d (%s): %d of the %d VTK hexahedra do not follow the geometry (their Jacobian, "
+                       "sampled at the corners, Gauss points and centre, changes sign or vanishes inside); increase numexp",
+            this->giveNumber(), this->giveClassName(), invalidCells, cellsPerSpan * numSpans );
+        this->exportCellWarningGiven = true;
     }
 }
 

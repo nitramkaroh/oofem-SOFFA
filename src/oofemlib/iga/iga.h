@@ -89,13 +89,16 @@ public:
     const IntArray *giveKnotSpan() override { return & this->knotSpan; }
 
     /**
-     * Creates nPoints points (on a line) or floor(sqrt(nPoints))^2 points (on a square) with zero
-     * coordinates and weights, to be placed by the caller (the VTK export points of IGAElement).
+     * Creates nPoints points (on a line), floor(sqrt(nPoints))^2 points (on a square) or n^3 points with the
+     * largest n such that n^3 <= nPoints (in a cube) with zero coordinates and weights, to be placed by the
+     * caller (the VTK export points of IGAElement).
      * @return Number of created points.
      */
     int SetUpDummyPointsOnLine( int nPoints, MaterialMode mode );
     /// @copydoc SetUpDummyPointsOnLine
     int SetUpDummyPointsOnSquare( int nPoints, MaterialMode mode );
+    /// @copydoc SetUpDummyPointsOnLine
+    int SetUpDummyPointsOnCube( int nPoints, MaterialMode mode );
 };
 
 
@@ -105,10 +108,12 @@ public:
 class OOFEM_EXPORT IGAElement : public Element, public VTKXMLExportModuleElementInterface
 {
 protected:
-    /// VTK export points, one rule per nonzero knot span (one or two parametric directions only).
+    /// VTK export points, one rule per nonzero knot span (B-spline and NURBS elements, not T-splines).
     std::vector<std ::unique_ptr<IGAIntegrationElement> > ExportIntegrationRulesArray;
     /// Number of export points per knot span and parametric direction (numexp).
     int numExportPoints = 2;
+    /// Set when the warning about VTK hexahedra that do not follow the geometry was given (once per element).
+    bool exportCellWarningGiven = false;
 
 #ifdef __PARALLEL_MODE
     IntArray knotSpanParallelMode;
@@ -140,11 +145,15 @@ public:
     /// Composite geometry, exported by giveCompositeExportData.
     Element_Geometry_Type giveGeometryType() const override { return EGT_Composite; }
     /**
-     * VTK export of a curve (nsd 1) or a patch with two parametric directions (nsd 2, planar or a surface in
-     * space) sampled at the export points: numexp points per knot span and parametric direction, u index
-     * fastest, giving numexp - 1 lines or (numexp - 1)^2 quads per knot span. The positions and
-     * DisplacementVector (padded to 3 components) are interpolated from the control points of the span in the
-     * directions of the dofs of the element (u, v or u, v, w), the internal variables come from
+     * VTK export of a curve (nsd 1), a patch with two parametric directions (nsd 2, planar or a surface in
+     * space) or a patch with three (nsd 3) sampled at the export points: numexp points per knot span and
+     * parametric direction, u index fastest, giving numexp - 1 lines, (numexp - 1)^2 quads or (numexp - 1)^3
+     * hexahedra per knot span. A hexahedron with a negative volume of its own (a left-handed parametrization)
+     * is written top face first, so that its volume is positive in the VTK convention. If the Jacobian of a
+     * hexahedron, sampled at its corners, Gauss points and centre, changes sign or vanishes inside, the export
+     * points are too coarse for the patch: a warning (once per element) asks for a larger numexp. The
+     * positions and DisplacementVector (padded to 3 components) are interpolated from the control points of
+     * the span in the directions of the dofs of the element (u, v or u, v, w), the internal variables come from
      * giveExportPointValue. Other primary variables, unsupported internal variables and cell variables stop
      * with an error.
      */
