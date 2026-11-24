@@ -107,8 +107,8 @@ public:
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
     /**
-     * IST_CurvatureTensor for the VTK export of IGAElement (bending materials only): the curvature of the
-     * Gauss points of the knot span ir, interpolated to the export point gp.
+     * IST_CurvatureTensor for the VTK export of IGAElement (bending materials only), evaluated at the export
+     * point gp from the displacements (ir is not needed).
      */
     bool giveExportPointValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, int ir, TimeStep *tStep ) override
     {
@@ -180,8 +180,8 @@ public:
     FloatArray giveNormal( GaussPoint *gp ) const override;
 
     /**
-     * IST_CurvatureTensor for the VTK export of IGAElement (bending materials only): the curvature of the
-     * Gauss points of the knot span ir, interpolated to the export point gp.
+     * IST_CurvatureTensor for the VTK export of IGAElement (bending materials only), evaluated at the export
+     * point gp from the displacements (ir is not needed).
      */
     bool giveExportPointValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, int ir, TimeStep *tStep ) override
     {

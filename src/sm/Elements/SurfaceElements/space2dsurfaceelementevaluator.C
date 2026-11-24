@@ -47,6 +47,9 @@
 #include "iga/iga.h"
 #include "iga/feibspline.h"
 #include "sm/Materials/structuralsurfacems.h"
+#include "tensor/tensor1.h"
+#include "tensor/tensor2.h"
+#include "tensor/tensor3.h"
 
 namespace oofem {
 void Space2dStructuralSurfaceElementEvaluator ::computeNMatrixAt( FloatMatrix &answer, GaussPoint *gp )
@@ -128,71 +131,36 @@ double Space2dStructuralSurfaceElementEvaluator ::computeVolumeAround( GaussPoin
 }
 
 
-void Space2dStructuralSurfaceElementEvaluator::computeCurvatureAt( FloatArray &answer, TimeStep *tStep, const FloatArray &lcoords, int RuleIndex )
-{
-    double xiAns = lcoords.at( 1 );
-    // Linear interpolation of the values at the Gauss points of the rule (they are ordered by xi): between the
-    // last Gauss point at or before xiAns (L) and the next one (R); before the first or after the last Gauss
-    // point the line through the two nearest ones is extrapolated.
-    FloatArray KvecR, KvecL;
-    double xiR, xiL;
-
-    Element *elem          = this->giveElement();
-    IntegrationRule *iRule = elem->giveIntegrationRule( RuleIndex );
-    int nIP                = iRule->giveNumberOfIntegrationPoints();
-    for ( int i = 0; i < nIP ; i++){
-        GaussPoint * gp = iRule->getIntegrationPoint( i );
-        FloatArray gpCoords = gp->giveNaturalCoordinates();
-        double dxi   = gpCoords.at( 1 ) - xiAns;
-
-        if ( nIP == 1 ) {
-            StructuralSurfaceMaterialStatus *matStat = static_cast<StructuralSurfaceMaterialStatus *>( gp->giveMaterialStatus() );
-            answer                                   = matStat->giveTempKVector();
-            break;
-        }
-
-        if ( dxi > 0. || i == nIP -1) { // first GP after lcoords (or the last GP)
-            StructuralSurfaceMaterialStatus *matStat = static_cast<StructuralSurfaceMaterialStatus *>( gp->giveMaterialStatus() );
-            FloatArray Kvec = matStat->giveTempKVector();
-            GaussPoint *gp2;
-            if (i > 0) { // not the first gp, get back to the previous GP
-                KvecR = Kvec;
-                xiR   = gpCoords.at( 1 );
-                gp2  = iRule->getIntegrationPoint( i - 1 );
-                xiL  = gp2->giveNaturalCoordinates().at( 1 );
-                StructuralSurfaceMaterialStatus *matStat2 = static_cast<StructuralSurfaceMaterialStatus *>( gp2->giveMaterialStatus() );
-                KvecL = matStat2->giveTempKVector();
-            } else { // The first GP, go to the next one
-                KvecL = Kvec;
-                xiL = gpCoords.at( 1 );
-                gp2 = iRule->getIntegrationPoint( i + 1 );
-                xiR  = gp2->giveNaturalCoordinates().at( 1 );
-                StructuralSurfaceMaterialStatus *matStat2 = static_cast<StructuralSurfaceMaterialStatus *>( gp2->giveMaterialStatus() );
-                KvecR = matStat2->giveTempKVector();
-            }
-
-            // K = K_L + (xi - xi_L) / (xi_R - xi_L) (K_R - K_L), 9 components
-            answer = ( xiAns - xiL ) / ( xiR - xiL ) * ( KvecR - KvecL ) + KvecL;
-            break;
-        }
-    } // end loop over the Gauss points
-}
-
-
 bool Space2dStructuralSurfaceElementEvaluator::giveCurvatureExportValue( FloatArray &answer, InternalStateType type, GaussPoint *gp, int RuleIndex, TimeStep *tStep )
 {
     if ( type != IST_CurvatureTensor ) {
         return false;
     }
-    // only the bending (second gradient) materials compute K; the status of a membrane keeps zeros there
+    // only the bending (second gradient) materials have a curvature, and only then G is available
     if ( !this->hasSecondGradient ) {
         OOFEM_ERROR( "element %d: the curvature is computed only by the bending surface materials (surfacetensionmat2)",
             this->giveElement()->giveNumber() );
     }
-    FloatArray K;
-    this->computeCurvatureAt( K, tStep, gp->giveNaturalCoordinates(), RuleIndex );
-    // K has the 9 component order 11, 22, 33, 23, 13, 12, 32, 31, 21; VTK tensors are written row by row
-    answer = { K.at( 1 ), K.at( 6 ), K.at( 5 ), K.at( 9 ), K.at( 2 ), K.at( 4 ), K.at( 8 ), K.at( 7 ), K.at( 3 ) };
+    // F and grad F at the export point, in the knot span of its export rule
+    FloatArray vF, vG;
+    this->computeDeformationGradientVector( vF, gp, tStep );
+    this->computeGradientOfDeformationGradientVector( vG, gp, tStep );
+    FloatArrayF<3> vN( static_cast<IGAElement *>( this->giveElement() )->giveNormal( gp ) );
+    FloatArrayF<9> vF9( vF );
+    FloatArrayF<27> vG27( vG );
+
+    // the current normal and curvature as in the bending material (surfacetensionmat2):
+    // n = cof(F) N / |cof(F) N|, K_jk = -n_i (grad F)_ijk
+    Tensor2_3d F( vF9 ), K;
+    Tensor2_3d cofF = F.compute_cofactor();
+    Tensor3_3d G( vG27 );
+    Tensor1_3d N( vN ), n;
+    n( i_3 ) = cofF( i_3, j_3 ) * N( j_3 );
+    n.normalize();
+    K( j_3, k_3 ) = -n( i_3 ) * G( i_3, j_3, k_3 );
+
+    // VTK tensors are written row by row
+    answer = { K( 0, 0 ), K( 0, 1 ), K( 0, 2 ), K( 1, 0 ), K( 1, 1 ), K( 1, 2 ), K( 2, 0 ), K( 2, 1 ), K( 2, 2 ) };
     return true;
 }
 

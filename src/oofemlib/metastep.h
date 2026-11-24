@@ -48,7 +48,7 @@
 #define _IFT_MetaStep_finalT "finalt"
 #define _IFT_MetaStep_deltaT "deltat"
 #define _IFT_MetaStep_prescribedTimes "prescribedtimes"
-#define _IFT_MetaStep_requiredTimes "requiredtimes"
+#define _IFT_MetaStep_requiredTimes "requiredtimes" ///< Times always reached by a step boundary (the deltat increment is shortened; not used with dtfunction, discrete or prescribed times).
 #define _IFT_MetaStep_dtFunction "dtfunction" ///< Function that determines size of time step.
 
 #define _IFT_MetaStep_timeReductionStrategyType "treductiontype"
@@ -159,7 +159,14 @@ public:
     
     /// Returns the time step length.
     double giveDeltaT(){return this->deltaT;}
+    /**
+     * Increment of step n following previousStep. With requiredtimes the deltat increment is shortened so that
+     * the step does not pass a required time (also in the first step of the metastep) and kept as deltat, so
+     * that a reduction of the step starts from it.
+     */
     double giveDeltaT(int n, std::unique_ptr<TimeStep> &previousStep);
+    /// dT shortened so that a step from time t does not pass any required time: the nearest one ahead is reached.
+    double shortenToRequiredTimes(double dT, double t) const;
     /// Set the time step length.
     void setDeltaT(double dT){this->deltaT = dT;}
     /**

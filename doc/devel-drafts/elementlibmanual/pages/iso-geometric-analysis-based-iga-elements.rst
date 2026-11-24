@@ -155,9 +155,8 @@ points per parametric direction, connected by lines on the curves and by quadril
 on the patches (planar or in space). Exported are the positions, the primary variable
 DisplacementVector and,
 for the surface elements with a bending material, the internal variable
-IST_CurvatureTensor (the current curvature :math:`\mathbf{K} = -\mathbf{n} \cdot \nabla\mathbf{F}`;
-on the curves interpolated linearly between the Gauss points of the knot span, on the
-surface in space evaluated at the export point). Other primary and internal variables and cell variables stop
+IST_CurvatureTensor (the current curvature :math:`\mathbf{K} = -\mathbf{n} \cdot \nabla\mathbf{F}`,
+on the curves and on the surface in space evaluated at the export point). Other primary and internal variables and cell variables stop
 with an error. Gauss point values (:param:`ipvars`) are exported at the true positions
 of the integration points.
 

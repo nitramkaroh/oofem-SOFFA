@@ -34,6 +34,8 @@
 
 #include "sm/Materials/structuralsurfacems.h"
 #include "sm/Materials/structuralmaterial.h"
+#include "datastream.h"
+#include "contextioerr.h"
 #include "gausspoint.h"
 #include "iga/iga.h"
 #include "tensor/tensor1.h"
@@ -93,6 +95,33 @@ void StructuralSurfaceMaterialStatus ::initTempStatus()
     tempCVector = CVector;
     tempKVector = KVector;
     tempGVector = GVector;
+    tempdIVector = dIVector;
+}
+
+
+void StructuralSurfaceMaterialStatus::saveContext( DataStream &stream, ContextMode mode )
+{
+    StructuralMaterialStatus::saveContext( stream, mode );
+    for ( const FloatArray *value : { &GVector, &KVector, &dIVector } ) {
+        contextIOResultType result = value->storeYourself( stream );
+        if ( result != CIO_OK ) {
+            THROW_CIOERR( result );
+        }
+    }
+}
+
+
+void StructuralSurfaceMaterialStatus::restoreContext( DataStream &stream, ContextMode mode )
+{
+    StructuralMaterialStatus::restoreContext( stream, mode );
+    for ( FloatArray *value : { &GVector, &KVector, &dIVector } ) {
+        contextIOResultType result = value->restoreYourself( stream );
+        if ( result != CIO_OK ) {
+            THROW_CIOERR( result );
+        }
+    }
+    tempGVector = GVector;
+    tempKVector = KVector;
     tempdIVector = dIVector;
 }
 

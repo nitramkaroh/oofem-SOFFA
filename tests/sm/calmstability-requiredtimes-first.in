@@ -1,0 +1,41 @@
+calmstability-requiredtimes-first.out
+calmstability: arc length = time increment (timeasarclength), metastep requiredtimes with a required time inside the first step
+# Two unit bars: node 2 carries the reference load (u2 = lambda), node 4 a fixed load 1 (u4 = 1).
+# The required time 1.25 lies inside the first step (deltat 1.5).
+# Psi 0: |dX| = dL = dT. Step 1 (0 -> 1.25, shortened before the first step): lambda = sqrt(1.25^2 - 1) = 0.75, u4 = 1.
+# Step 2: adaptTimeStep doubles dT to 2.5, requiredtimes shortens it to 1.25 (t = 2.5): lambda = 2.0.
+# Step 3 (2.5 -> 4.0, clipped by finalt): lambda = 3.5.
+StaticStructural solverType "calmstability" timeasarclength finalt 4.0 deltat 1.5 treductiontype "SimpleReduction" dtmin 0.01 dtmax 10.0 requiredtimes 2 1.25 2.5 stepLength 1.5 Psi 0. MaxIter 30 rtolv 1.e-10 manrmsteps 1 nmodules 1
+errorcheck
+domain 1dtruss
+OutputManager tstep_all dofman_all
+ndofman 4 nelem 2 ncrosssect 1 nmat 1 nbc 3 nic 0 nltf 1 nset 4
+node 1 coords 3 0.0 0.0 0.0
+node 2 coords 3 1.0 0.0 0.0
+node 3 coords 3 2.0 0.0 0.0
+node 4 coords 3 3.0 0.0 0.0
+truss1d 1 nodes 2 1 2
+truss1d 2 nodes 2 3 4
+SimpleCS 1 thick 1.0 width 1.0 material 1 set 1
+IsoLE 1 d 1.0 E 1.0 n 0.2 tAlpha 0.0
+BoundaryCondition 1 loadTimeFunction 1 dofs 1 1 values 1 0.0 set 2
+NodalLoad 2 loadTimeFunction 1 dofs 1 1 components 1 1.0 set 3 reference
+NodalLoad 3 loadTimeFunction 1 dofs 1 1 components 1 1.0 set 4
+ConstantFunction 1 f(t) 1.0
+Set 1 elementranges {(1 2)}
+Set 2 nodes 2 1 3
+Set 3 nodes 1 2
+Set 4 nodes 1 4
+#%BEGIN_CHECK% tolerance 1.e-9
+#LOADLEVEL tStep 1 value 0.75
+#NODE tStep 1 number 2 dof 1 unknown d value 0.75
+#NODE tStep 1 number 4 dof 1 unknown d value 1.0
+#LOADLEVEL tStep 2 value 2.0
+#NODE tStep 2 number 2 dof 1 unknown d value 2.0
+#NODE tStep 2 number 4 dof 1 unknown d value 1.0
+#LOADLEVEL tStep 3 value 3.5
+#NODE tStep 3 number 2 dof 1 unknown d value 3.5
+#NODE tStep 3 number 4 dof 1 unknown d value 1.0
+#REACTION tStep 3 number 1 dof 1 value -3.5
+#REACTION tStep 3 number 3 dof 1 value -1.0
+#%END_CHECK%

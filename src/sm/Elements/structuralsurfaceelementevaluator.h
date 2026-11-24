@@ -129,15 +129,6 @@ protected:
     void computeDeformationGradientVector( FloatArray &answer, GaussPoint *gp, TimeStep *tStep ) override;
 
     /**
-     * Current curvature K (the temporary value stored by the material at the Gauss points) at the local
-     * coordinates coords of the integration rule (knot span) RuleIndex, for the VTK export.
-     */
-    virtual void computeCurvatureAt( FloatArray &answer, TimeStep *tStep, const FloatArray &coords, int RuleIndex )
-    {
-        OOFEM_ERROR( "Not implemented for this element" );
-    };
-
-    /**
      * grad I = G X (27 components), as grad F with the reference positions X, i.e. grad F of the reference
      * configuration. It carries the reference curvature: -N . grad I is the gradient of the reference normal
      * (the bending material takes the reference mean curvature from it, useh0 1).

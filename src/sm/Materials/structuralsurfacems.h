@@ -47,7 +47,7 @@ class GaussPoint;
  * last evaluation of the second order stress; the stress and the tangents of the bending material read them; empty
  * in a fresh status until the IGA surface evaluator sets both to the reference grad I before the first tangent), and
  * for postprocessing the curvature K = -n . grad F (9 components, stored by the bending material;
- * the 2D surface evaluator interpolates K between Gauss points). The initial F is the
+ * VTK evaluates K directly at the export point). The initial F is the
  * surface identity of the element frame: diag(1, 1, 0) for the Lagrange elements, I - N x N for the IGA elements.
  */
 class OOFEM_EXPORT StructuralSurfaceMaterialStatus : public StructuralMaterialStatus
@@ -72,6 +72,11 @@ public:
     void updateYourself( TimeStep *tStep ) override;
     /// Prints all nine components of F and P, in the frame of the material evaluation (see above).
     void printOutputAt( FILE *file, TimeStep *tStep ) const override;
+
+    /// Also stores the committed second gradients and curvature.
+    void saveContext( DataStream &stream, ContextMode mode ) override;
+    /// Also restores the committed second gradients and curvature and their temporary values.
+    void restoreContext( DataStream &stream, ContextMode mode ) override;
 
     const FloatArray &giveKVector() const { return KVector; }
     const FloatArray &giveTempKVector() const { return tempKVector; }

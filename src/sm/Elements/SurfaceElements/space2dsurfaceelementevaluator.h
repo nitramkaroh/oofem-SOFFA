@@ -86,15 +86,7 @@ protected:
 
 public:
     /**
-     * Current curvature K (temporary value stored by the material at the Gauss points of the integration rule
-     * RuleIndex) at lcoords, interpolated linearly between the two neighbouring Gauss points (before the first
-     * or after the last Gauss point extrapolated from the two nearest ones); used for the VTK export. A rule
-     * with one point gives its value.
-     */
-    void computeCurvatureAt( FloatArray &answer, TimeStep *tStep, const FloatArray &lcoords, int RuleIndex ) override;
-
-    /**
-     * IST_CurvatureTensor at the VTK export point gp of the knot span RuleIndex (see computeCurvatureAt), as
+     * IST_CurvatureTensor evaluated directly at the VTK export point gp of the knot span RuleIndex, as
      * 9 components row by row; stops with an error unless the element has a bending material (only those
      * compute the curvature). @return false for the other types.
      */
