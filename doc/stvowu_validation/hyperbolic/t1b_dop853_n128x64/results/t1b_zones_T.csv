@@ -1,0 +1,7 @@
+dataset,zone,nodal_rms,max,energy_frac
+family 64->128 @T (n64 nodes),"cornerA (0,1)/(2,0)",1.385568e-04,7.484989e-04,6.584318e-01
+family 64->128 @T (n64 nodes),"cornerB (0,0)/(2,1)",9.041429e-05,4.531846e-04,2.803686e-01
+family 64->128 @T (n64 nodes),remainder,2.434121e-05,1.431509e-04,6.119961e-02
+OOFEM n32x16 vs proxy128 @T,"cornerA (0,1)/(2,0)",9.198735e-04,2.957438e-03,7.461304e-01
+OOFEM n32x16 vs proxy128 @T,"cornerB (0,0)/(2,1)",4.011205e-04,1.375130e-03,1.418758e-01
+OOFEM n32x16 vs proxy128 @T,remainder,2.054527e-04,7.233770e-04,1.119938e-01

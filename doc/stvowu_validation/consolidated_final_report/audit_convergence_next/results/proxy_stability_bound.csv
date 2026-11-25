@@ -1,0 +1,13 @@
+mesh,metric,triangle_bound_mine,abs_diff_mine,bound>=abs_diff,ratio
+n8x4,bulk_fe_rms,3.694653e-05,2.930704e-05,SI,1.26
+n8x4,bulk_max,1.976025e-07,1.976025e-07,SI,1.00
+n8x4,surf_fe_rms,7.908893e-05,6.405205e-05,SI,1.23
+n8x4,surf_max,1.949127e-04,1.949127e-04,SI,1.00
+n16x8,bulk_fe_rms,4.893982e-05,2.850415e-05,SI,1.72
+n16x8,bulk_max,3.012610e-05,3.012610e-05,SI,1.00
+n16x8,surf_fe_rms,1.462447e-04,9.448161e-05,SI,1.55
+n16x8,surf_max,4.805288e-04,4.805288e-04,SI,1.00
+n32x16,bulk_fe_rms,4.566042e-05,3.189733e-05,SI,1.43
+n32x16,bulk_max,1.657716e-04,1.657716e-04,SI,1.00
+n32x16,surf_fe_rms,1.605602e-04,8.927485e-05,SI,1.80
+n32x16,surf_max,4.805288e-04,3.977833e-04,SI,1.21

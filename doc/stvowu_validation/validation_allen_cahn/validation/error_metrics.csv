@@ -1,0 +1,21 @@
+benchmark,test,metric,value,units,details
+parabolic,okumura_ch4_example2,total_energy_initial_t_0.001,77.42047359415844,-,Q1 FE total energy J(u)+F(u(0))+F(u(L)) from OOFEM output; 3x3-Gauss quadrature post-processing (parabolic/okumura_example2_energy.csv)
+parabolic,okumura_ch4_example2,total_energy_final_t_0.7,2.219357171842687e-06,-,same energy definition at final time
+parabolic,okumura_ch4_example2,max_energy_increment_over_all_steps,-9.695043511930922e-08,-,max over 699 consecutive steps of E(t+dt)-E(t); negative = no single increase; discrete energy dissipation holds
+parabolic,okumura_ch4_example2,energy_monotone_nonincreasing,True,-,checked on all 700 exported frames
+parabolic,okumura_ch4_example2,y_variation_across_strip,0.0,-,max |u(x,y=0)-u(x,y=1)| over all frames and nodes; confirms the 2D strip reduces exactly to the 1D problem
+parabolic,okumura_ch4_example2,final_field_value_range,0.9998982 .. 0.9999997,-,u(x,0.7) min..max over nodes; field relaxed to the +1 phase as in the paper's Fig. 4.3
+parabolic,okumura_ch4_example2,RMSE_vs_digitized_fig44,0.9881048219018264,energy units,over 0.01 <= t <= 0.4 against the digitized paper curve (663 samples; axis 0..90); paper scheme is finite differences (N=700 uniform nodes) vs OOFEM Q1 BE; digitization uncertainty not separately quantified
+parabolic,okumura_ch4_example2,MAE_vs_digitized_fig44,0.8803680411631917,energy units,same interval and curve
+parabolic,okumura_ch4_example2,max_abs_error_vs_digitized_fig44,1.832295199199237,energy units,same interval and curve; on the 0..90 axis this is ~2% of the axis range
+parabolic,okumura_ch4_example2,literature_digitized_energy_at_first_sample,75.10948905109488,energy units,paper curve value at t ~= 0.004 (parabolic/literature_okumura_fig44_digitized.csv); reference value only - not an OOFEM output
+hyperbolic,nizovtseva_eq29_traveling_wave,exact_solution_max_PDE_residual,1.665e-16,-,max |tau u_tt + u_t - u_xx - u + u^3| of the analytical wave on a fine grid (hyperbolic/scripts/check_exact_residual.py); verifies the reference is an exact solution of the PDE
+hyperbolic,nizovtseva_eq29_traveling_wave,rms_full_at_T_n80,2.918311384156078e-05,-,RMS |u_OOFEM - u_exact| over the full domain [−12;12] at T = 0.2; Q1 h = 0.3
+hyperbolic,nizovtseva_eq29_traveling_wave,max_full_at_T_n80,1.1578978006165919e-04,-,same comparison; max norm
+hyperbolic,nizovtseva_eq29_traveling_wave,rms_full_at_T_n160,7.323071979294976e-06,-,Q1 h = 0.15
+hyperbolic,nizovtseva_eq29_traveling_wave,max_full_at_T_n160,2.888978006165832e-05,-,Q1 h = 0.15
+hyperbolic,nizovtseva_eq29_traveling_wave,rms_full_at_T_n320,1.8620658773059325e-06,-,Q1 h = 0.075
+hyperbolic,nizovtseva_eq29_traveling_wave,max_full_at_T_n320,7.189780061700457e-06,-,Q1 h = 0.075
+hyperbolic,nizovtseva_eq29_traveling_wave,interface_x0_error_at_T_n320,3.0318e-05,-,|x0_OOFEM(T) - c T| with x0 the u = 1/2 level set; x0_exact = 0.3077935056255463; x0_OOFEM = 0.3078238237032819
+hyperbolic,nizovtseva_eq29_traveling_wave,relative_speed_error_n320,9.85e-05,-,|c_OOFEM/c_exact - 1| from the final interface position; c_exact = 3/sqrt(2+9*0.2) = 1.5389675281277313
+hyperbolic,nizovtseva_eq29_traveling_wave,dynamic_boundary_condition,not_exercised,-,the traveling-wave benchmark has no boundary condition; the OOFEM dynamic boundary law is NOT validated by this test (see comparison_report.md)

@@ -1,0 +1,13 @@
+nx,h,t_eval,rms_vs_n400_ref,max_vs_n400_ref,observed_order,note
+50,0.02,0.3,0.0001802789695520413,0.00031890000000001084,,
+100,0.01,0.3,4.2931228680748856e-05,7.620000000008176e-05,2.070,
+200,0.005,0.3,8.576367506226704e-06,1.5300000000051384e-05,2.324,
+400,0.0025,0.3,0.0,0.0,,reference (finest) mesh
+50,0.02,0.5,7.202736408115359e-06,1.4400000000081015e-05,,
+100,0.01,0.5,1.6907728621287206e-06,3.4000000000977693e-06,,differences within export precision (6 significant digits); no order assigned
+200,0.005,0.5,3.356140877883633e-07,7.000000000756401e-07,,differences within export precision (6 significant digits); no order assigned
+400,0.0025,0.5,0.0,0.0,,reference (finest) mesh
+50,0.02,0.7,1.407264067892277e-07,3.0000000006413785e-07,,differences within export precision (6 significant digits); no order assigned
+100,0.01,0.7,4.874666781452504e-08,1.0000000005838672e-07,,differences within export precision (6 significant digits); no order assigned
+200,0.005,0.7,1.4106912317577618e-08,1.0000000005838672e-07,,differences within export precision (6 significant digits); no order assigned
+400,0.0025,0.7,0.0,0.0,,reference (finest) mesh

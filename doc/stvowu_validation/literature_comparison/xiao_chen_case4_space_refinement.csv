@@ -1,0 +1,9 @@
+metric,value
+RMS nodal difference N20 vs N40,0.07883954816780633
+max nodal difference N20 vs N40,0.25815093
+N20 bottom x-left,0.2577440929418935
+N20 bottom x-right,0.7422559070581065
+N20 top y at x=0.5,0.49227296377457974
+N40 bottom x-left,0.2679122773701551
+N40 bottom x-right,0.732087722629845
+N40 top y at x=0.5,0.48208775980683155

@@ -1,0 +1,2 @@
+step,time,E_bulk,E_surface,E_total,u_min,u_max,top_y_xmid_u0,bottom_left_u0,bottom_right_u0
+100,0.0625,24.80916357911469,34.14386577996903,58.95302935908372,-1.004005,1.007994,0.5166664455282863,0.25,0.75

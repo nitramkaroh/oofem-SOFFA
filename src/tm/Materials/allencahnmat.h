@@ -19,6 +19,9 @@
 #define _IFT_AllenCahnMaterial_mmsLy "mmsly"
 #define _IFT_AllenCahnMaterial_mmsTemporal "mmstemporal"
 #define _IFT_AllenCahnMaterial_mmsSpatial "mmsspatial"
+#define _IFT_AllenCahnMaterial_hyperbolic "hyperbolic"
+#define _IFT_AllenCahnMaterial_rho "rho"
+#define _IFT_AllenCahnMaterial_surfaceCapacity "surfacecapacity"
 
 namespace oofem {
 
@@ -39,6 +42,9 @@ protected:
     // dynamic-boundary source. For a boundary material this is the bulk k.
     double normalConductivity = 1.0;
     double capacity = 1.0;
+    bool hyperbolic = false;
+    double density = 1.0;
+    double surfaceCapacity = 1.0;
     double mobility = 1.0;
     // Multiplier for the double-well potential and reaction on line elements.
     double surfaceBeta = 1.0;
@@ -51,7 +57,7 @@ protected:
     double mmsLy = 1.0;
     // 0: exp(-rate*t), 1: sin(rate*t); used by manufactured solutions.
     int mmsTemporal = 0;
-    // 0: existing cosine/sine mixed profile, 1: sine(x)*sine(y) profile.
+    // 0: cosine/sine mixed profile, 1: sine(x)*sine(y), 2: x*y profile.
     int mmsSpatial = 0;
 
     double computeManufacturedSource(GaussPoint *gp, TimeStep *tStep) const;

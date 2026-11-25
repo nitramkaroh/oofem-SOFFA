@@ -1,0 +1,3 @@
+tag,xmin,xmax,h,rms_exact_common,max_exact_common,rms_exact_inner_absx_le6,max_exact_inner_absx_le6,rms_vs_long_common,max_vs_long_common
+truncated_domain_minus8_plus8,-8,8,0.1,2.2601116949613387e-05,0.0001715517162492468,4.592260494993265e-06,1.2789780061694955e-05,2.2253129410274687e-05,0.0001715776
+reference_domain_minus12_plus12,-12,12,0.1,3.98131866670182e-06,1.2789780061694955e-05,4.592260494993265e-06,1.2789780061694955e-05,0.0,0.0

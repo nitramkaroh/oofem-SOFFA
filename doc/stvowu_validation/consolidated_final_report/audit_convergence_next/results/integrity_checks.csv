@@ -1,0 +1,173 @@
+check,detail,value,status
+assembly_xcheck,n8 Mb vs fj.assemble_fixed,max_rel_diff=0.000e+00,OK
+assembly_xcheck,n8 Ms vs fj.assemble_fixed,max_rel_diff=1.665e-16,OK
+assembly_xcheck,n16 Mb vs fj.assemble_fixed,max_rel_diff=0.000e+00,OK
+assembly_xcheck,n16 Ms vs fj.assemble_fixed,max_rel_diff=1.665e-16,OK
+assembly_xcheck,n32 Mb vs fj.assemble_fixed,max_rel_diff=0.000e+00,OK
+assembly_xcheck,n32 Ms vs fj.assemble_fixed,max_rel_diff=1.665e-16,OK
+assembly_xcheck,n64 Mb vs fj.assemble_fixed,max_rel_diff=0.000e+00,OK
+assembly_xcheck,n64 Ms vs fj.assemble_fixed,max_rel_diff=1.665e-16,OK
+quadrature_n128,coords npz == mesh canonica (mio builder),max_diff=0.00e+00,OK
+quadrature_n128,Mb1=AREA,2,OK
+quadrature_n128,Ms1=PERIM,6,OK
+quadrature_n128,rowsum Kb=0,1.832e-15,OK
+quadrature_n128,rowsum Ks=0,0.000e+00,OK
+ref_integrita,n16 tempi,N=153 max|t-canonical|=0.00e+00,OK
+ref_integrita,n16 IC esatta,max|U0-IC|=0.00e+00,OK
+ref_integrita,n16 finitezza U,all_finite=True,OK
+ref_integrita,n16 V0=0 e finitezza V,max|V0|=0.00e+00 finite=True,OK
+ref_integrita,n32 tempi,N=561 max|t-canonical|=0.00e+00,OK
+ref_integrita,n32 IC esatta,max|U0-IC|=0.00e+00,OK
+ref_integrita,n32 finitezza U,all_finite=True,OK
+ref_integrita,n32 V0=0 e finitezza V,max|V0|=0.00e+00 finite=True,OK
+ref_integrita,n64 tempi,N=2145 max|t-canonical|=0.00e+00,OK
+ref_integrita,n64 IC esatta,max|U0-IC|=0.00e+00,OK
+ref_integrita,n64 finitezza U,all_finite=True,OK
+ref_integrita,n64 V0=0 e finitezza V,max|V0|=0.00e+00 finite=True,OK
+ref_integrita,n128 tempi,N=8385 max|t-canonical|=0.00e+00,OK
+ref_integrita,n128 IC esatta,max|U0-IC|=0.00e+00,OK
+ref_integrita,n128 finitezza U,all_finite=True,OK
+ref_integrita,n128 V0=0 e finitezza V,max|V0|=0.00e+00 finite=True,OK
+restrizione,mappe concatenate n8->...->n128,costruite (d2<1e-26),OK
+VTU,OOFEM n8 step 1,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n8 step 10,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n8 step 20,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n8 step 30,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n8 step 39,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n8 step 40,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n8 step 50,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n8 step 60,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n8 step 70,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n8 step 80,node=45 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 1,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 10,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 20,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 30,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 39,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 40,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 50,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 60,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 70,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n16 step 80,node=153 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 1,node=561 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 10,node=561 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 20,node=561 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 30,node=561 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 39,node=561 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 40,node=561 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 50,node=561 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 60,node=561 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 70,node=561 max_d2=0.0e+00,OK
+VTU,OOFEM n32 step 80,node=561 max_d2=0.0e+00,OK
+metriche_T,family 32->64 bulk_fe_rms @T (family_level_diff),mine=4.141362e-04 arch=4.141362e-04 rel_diff=7.17e-08,OK
+metriche_T,family 32->64 bulk_max @T (family_level_diff),mine=3.123389e-03 arch=3.123389e-03 rel_diff=4.70e-08,OK
+metriche_T,family 32->64 surf_fe_rms @T (family_level_diff),mine=9.264513e-04 arch=9.264513e-04 rel_diff=2.85e-08,OK
+metriche_T,family 32->64 surf_max @T (family_level_diff),mine=2.229713e-03 arch=2.229713e-03 rel_diff=1.75e-07,OK
+metriche_T,family 64->128 bulk_fe_rms @T (family_level_diff),mine=4.874007e-05 arch=4.874007e-05 rel_diff=1.01e-07,OK
+metriche_T,family 64->128 bulk_max @T (family_level_diff),mine=7.484989e-04 arch=7.484989e-04 rel_diff=4.25e-08,OK
+metriche_T,family 64->128 surf_fe_rms @T (family_level_diff),mine=1.642138e-04 arch=1.642138e-04 rel_diff=1.65e-07,OK
+metriche_T,family 64->128 surf_max @T (family_level_diff),mine=4.826234e-04 arch=4.826234e-04 rel_diff=4.68e-09,OK
+ordini_T,8->16 bulk_fe_rms @T (vs proxy128),mine=0.7173 arch=0.7173,OK
+ordini_T,16->32 bulk_fe_rms @T (vs proxy128),mine=1.0478 arch=1.0478,OK
+ordini_T,family 32->64 bulk_fe_rms @T,mine=3.0869 arch=3.0869,OK
+ordini_T,8->16 bulk_max @T (vs proxy128),mine=-1.1946 arch=-1.1946,OK
+ordini_T,16->32 bulk_max @T (vs proxy128),mine=-0.6305 arch=-0.6305,OK
+ordini_T,family 32->64 bulk_max @T,mine=2.0610 arch=2.0610,OK
+ordini_T,8->16 surf_fe_rms @T (vs proxy128),mine=0.4007 arch=0.4007,OK
+ordini_T,16->32 surf_fe_rms @T (vs proxy128),mine=1.1825 arch=1.1825,OK
+ordini_T,family 32->64 surf_fe_rms @T,mine=2.4961 arch=2.4961,OK
+ordini_T,8->16 surf_max @T (vs proxy128),mine=0.4622 arch=0.4622,OK
+ordini_T,16->32 surf_max @T (vs proxy128),mine=1.2183 arch=1.2183,OK
+ordini_T,family 32->64 surf_max @T,mine=2.2079 arch=2.2079,OK
+proxy_stability,n8x4 bound bulk FE,bound=3.694653e-05 abs_diff=2.930704e-05,OK
+proxy_stability,n8x4 bound surf FE,bound=7.908893e-05 abs_diff=6.405205e-05,OK
+proxy_stability,n8x4 bound bulk max,bound=1.976025e-07 abs_diff=1.976025e-07,OK
+proxy_stability,n8x4 bound surf max,bound=1.949127e-04 abs_diff=1.949127e-04,OK
+proxy_stability,n16x8 bound bulk FE,bound=4.893982e-05 abs_diff=2.850415e-05,OK
+proxy_stability,n16x8 bound surf FE,bound=1.462447e-04 abs_diff=9.448161e-05,OK
+proxy_stability,n16x8 bound bulk max,bound=3.012610e-05 abs_diff=3.012610e-05,OK
+proxy_stability,n16x8 bound surf max,bound=4.805288e-04 abs_diff=4.805288e-04,OK
+proxy_stability,n32x16 bound bulk FE,bound=4.566042e-05 abs_diff=3.189733e-05,OK
+proxy_stability,n32x16 bound surf FE,bound=1.605602e-04 abs_diff=8.927485e-05,OK
+proxy_stability,n32x16 bound bulk max,bound=1.657716e-04 abs_diff=1.657716e-04,OK
+proxy_stability,n32x16 bound surf max,bound=4.805288e-04 abs_diff=3.977833e-04,OK
+zone,"family 64->128 @T (n64 nodes) cornerA (0,1)/(2,0)",mine=6.584318e-01 arch=0.6584318,OK
+zone,"family 64->128 @T (n64 nodes) cornerB (0,0)/(2,1)",mine=2.803686e-01 arch=0.2803686,OK
+zone,family 64->128 @T (n64 nodes) remainder,mine=6.119961e-02 arch=0.06119961,OK
+zone,"OOFEM n32x16 vs proxy128 @T cornerA (0,1)/(2,0)",mine=7.461304e-01 arch=0.7461304,OK
+zone,"OOFEM n32x16 vs proxy128 @T cornerB (0,0)/(2,1)",mine=1.418758e-01 arch=0.1418758,OK
+zone,OOFEM n32x16 vs proxy128 @T remainder,mine=1.119938e-01 arch=0.1119938,OK
+moving_max,"fit 4pt (serie mista, come T1-B)",p=-0.0159,OK
+moving_max,"fit 3pt (solo OOFEM, stesso punto fisico per mesh)",p=-0.9125,OK
+fissocorner,"nodo (1.75,0.25) OOFEM n8",-8.346605e-04,OK
+fissocorner,"nodo (1.75,0.25) OOFEM n16",3.342395e-04,OK
+fissocorner,"nodo (1.75,0.25) OOFEM n32",2.723954e-05,OK
+fissocorner,"nodo (1.75,0.25) fam |U32-U64| @fn",2.741964e-05,OK
+fissocorner,"nodo (1.75,0.25) fam |U64-U128| @fn",1.976025e-07,OK
+fissocorner,"nodo (1.75,0.25) fam |U16-U32| @fn",3.069877e-04,OK
+fissocorner,"nodo (1.75,0.25) Richardson 3-livello @fn (T)",5.3007,OK
+floor,OOFEM n16x8 vs DOP853 n16x8 step 39 bulk_fe,2.099453e-08,OK
+floor,OOFEM n16x8 vs DOP853 n16x8 step 80 bulk_fe,2.444096e-08,OK
+floor,OOFEM n32x16 (T1-A) vs DOP853 n32x16 step 39 bulk_fe,2.597176e-08,OK
+floor,OOFEM n32x16 (T1-A) vs DOP853 n32x16 step 80 bulk_fe,2.916141e-08,OK
+provenienza,OOFEM n16 vs riferimento BUGGY originale (max nodale),"3.452e-03 (atteso O(1e-3), NON usato dai calcoli T1-B)",OK
+serie_tempo,80/80 step coerenti con t1b_orders_time_64_128.csv,"D32_64, D64_128, p_high",OK
+serie_tempo,D32_64(s): monotono crescente?,True 2.494e-07 -> 4.141e-04,OK
+serie_tempo,D64_128(s): monotono?,False picco step 44 (t=0.01100) = 1.550e-04; valore a T = 4.874e-05; D(T)/D(picco) = 0.315,OK
+serie_tempo,p_low(t) range,-0.439 .. 0.501 a T: 0.501,OK
+serie_tempo,p_high(t) range,-0.446 .. 3.087 a T: 3.087,OK
+serie_tempo,"step con p_low e p_high entrambi in [1.5,2.5]",0 di 80,OK
+serie_tempo,step con |p_low - p_high| < 0.25,22 di 80,OK
+energia,E0,1.9327101889e+00,OK
+energia,ET,1.9274638141e+00,OK
+energia,variazione relativa totale,-0.27145%,OK
+energia,monotona decrescente (80 passi),True,OK
+energia,cinetica t=0 -> T,0.000e+00 -> 2.4766801329e-03,OK
+energia,max|E_mine - E_arch| su 81 step,4.992e-11,OK
+energia,"max|E_mine - fj.energy_fixed| (s=0,40,80)",7.216e-15,OK
+nodale_n32,max|floor_nodale| = max|u32 - U32|,4.423e-07,OK
+nodale_n32,frazione nodi interni con |floor| < 1e-7,0.987097,OK
+nodale_n32,correlazione Pearson |e| vs |famiglia| (nodi interni),1.000000,OK
+nodale_n32,nodi interni con |e - fam| > 1e-7,6,OK
+nodale_n32,argmax|e| nodo,"[0.0625, 0.9375] valore=2.957438e-03",OK
+nodale_n32,argmax|fam| nodo,"[0.0625, 0.9375] valore=2.957618e-03",OK
+ordini_10t,step 1 ord8_16_bulk_fe_rms,mine=0.5954 arch=0.5954,OK
+ordini_10t,step 1 ord16_32_bulk_fe_rms,mine=0.6956 arch=0.6956,OK
+ordini_10t,step 1 ord8_16_surf_fe_rms,mine=0.1955 arch=0.1955,OK
+ordini_10t,step 1 ord16_32_surf_fe_rms,mine=0.2963 arch=0.2963,OK
+ordini_10t,step 10 ord8_16_bulk_fe_rms,mine=0.4713 arch=0.4713,OK
+ordini_10t,step 10 ord16_32_bulk_fe_rms,mine=0.6514 arch=0.6514,OK
+ordini_10t,step 10 ord8_16_surf_fe_rms,mine=0.0446 arch=0.0446,OK
+ordini_10t,step 10 ord16_32_surf_fe_rms,mine=0.2310 arch=0.2310,OK
+ordini_10t,step 20 ord8_16_bulk_fe_rms,mine=0.4757 arch=0.4757,OK
+ordini_10t,step 20 ord16_32_bulk_fe_rms,mine=0.6783 arch=0.6783,OK
+ordini_10t,step 20 ord8_16_surf_fe_rms,mine=0.0479 arch=0.0479,OK
+ordini_10t,step 20 ord16_32_surf_fe_rms,mine=0.2671 arch=0.2671,OK
+ordini_10t,step 30 ord8_16_bulk_fe_rms,mine=0.4961 arch=0.4961,OK
+ordini_10t,step 30 ord16_32_bulk_fe_rms,mine=0.7327 arch=0.7327,OK
+ordini_10t,step 30 ord8_16_surf_fe_rms,mine=0.0732 arch=0.0732,OK
+ordini_10t,step 30 ord16_32_surf_fe_rms,mine=0.3411 arch=0.3411,OK
+ordini_10t,step 39 ord8_16_bulk_fe_rms,mine=0.5214 arch=0.5214,OK
+ordini_10t,step 39 ord16_32_bulk_fe_rms,mine=0.7906 arch=0.7906,OK
+ordini_10t,step 39 ord8_16_surf_fe_rms,mine=0.1060 arch=0.1060,OK
+ordini_10t,step 39 ord16_32_surf_fe_rms,mine=0.4243 arch=0.4243,OK
+ordini_10t,step 40 ord8_16_bulk_fe_rms,mine=0.5251 arch=0.5251,OK
+ordini_10t,step 40 ord16_32_bulk_fe_rms,mine=0.7973 arch=0.7973,OK
+ordini_10t,step 40 ord8_16_surf_fe_rms,mine=0.1108 arch=0.1108,OK
+ordini_10t,step 40 ord16_32_surf_fe_rms,mine=0.4345 arch=0.4345,OK
+ordini_10t,step 50 ord8_16_bulk_fe_rms,mine=0.5685 arch=0.5685,OK
+ordini_10t,step 50 ord16_32_bulk_fe_rms,mine=0.8658 arch=0.8658,OK
+ordini_10t,step 50 ord8_16_surf_fe_rms,mine=0.1682 arch=0.1682,OK
+ordini_10t,step 50 ord16_32_surf_fe_rms,mine=0.5507 arch=0.5507,OK
+ordini_10t,step 60 ord8_16_bulk_fe_rms,mine=0.6169 arch=0.6169,OK
+ordini_10t,step 60 ord16_32_bulk_fe_rms,mine=0.9393 arch=0.9393,OK
+ordini_10t,step 60 ord8_16_surf_fe_rms,mine=0.2367 arch=0.2367,OK
+ordini_10t,step 60 ord16_32_surf_fe_rms,mine=0.7073 arch=0.7073,OK
+ordini_10t,step 70 ord8_16_bulk_fe_rms,mine=0.6678 arch=0.6678,OK
+ordini_10t,step 70 ord16_32_bulk_fe_rms,mine=1.0064 arch=1.0064,OK
+ordini_10t,step 70 ord8_16_surf_fe_rms,mine=0.3150 arch=0.3150,OK
+ordini_10t,step 70 ord16_32_surf_fe_rms,mine=0.9157 arch=0.9157,OK
+ordini_10t,step 80 ord8_16_bulk_fe_rms,mine=0.7173 arch=0.7173,OK
+ordini_10t,step 80 ord16_32_bulk_fe_rms,mine=1.0478 arch=1.0478,OK
+ordini_10t,step 80 ord8_16_surf_fe_rms,mine=0.4007 arch=0.4007,OK
+ordini_10t,step 80 ord16_32_surf_fe_rms,mine=1.1825 arch=1.1825,OK

@@ -1,0 +1,32 @@
+fit,metric,a,b,resid_max_pct,note
+"e=a*h^2+b*h (3 pt, MIXED times)",bulk FE RMS,-2.0418e-03,5.9002e-03,71.86,"n8,n16 @ t=0.02; n32 @ t=0.00975 (n32 @ t=0.02 unavailable)"
+pair order log2(e_coarse/e_fine),bulk FE RMS,-0.6984 (8->16 @0.02),-0.7606 (16->32 @0.00975),,same-time-consistent intervals
+"e=C*h^p (3 pt log-log, MIXED times)",bulk FE RMS,C=9.7312e-03,p=1.3309,,single-exponent contrast
+"e=a*h^2+b*h (3 pt, MIXED times)",surf FE RMS,-2.5242e-02,1.6795e-02,68.47,"n8,n16 @ t=0.02; n32 @ t=0.00975 (n32 @ t=0.02 unavailable)"
+pair order log2(e_coarse/e_fine),surf FE RMS,-0.3670 (8->16 @0.02),-0.7181 (16->32 @0.00975),,same-time-consistent intervals
+"e=C*h^p (3 pt log-log, MIXED times)",surf FE RMS,C=1.3869e-02,p=1.0941,,single-exponent contrast
+n8x4 all nodes,symmetry,,,n=45,max|err(p) - err(p_sym)| = 6.698e-16 (180-deg)
+n8x4 interior,r_c<0.75,,-3.78,n=8,
+n8x4 boundary,r_c<0.75,,-1.32,n=8,
+n8x4 interior (all 4 corners),d4<0.33,,,n=0,"too few points, fit skipped"
+n8x4 interior (all 4 corners),d4<0.5,,3.67,n=4,dist to nearest of ALL 4 corners
+n16x8 all nodes,symmetry,,,n=153,max|err(p) - err(p_sym)| = 6.601e-16 (180-deg)
+n16x8 interior,r_c<0.33,,-5.15,n=6,
+n16x8 interior,r_c<0.5,,-2.21,n=16,
+n16x8 interior,r_c<0.75,,-2.85,n=44,
+n16x8 boundary,r_c<0.33,,-0.32,n=8,
+n16x8 boundary,r_c<0.5,,-0.42,n=12,
+n16x8 boundary,r_c<0.75,,-0.76,n=20,
+n16x8 interior (all 4 corners),d4<0.33,,-3.40,n=12,dist to nearest of ALL 4 corners
+n16x8 interior (all 4 corners),d4<0.5,,-3.05,n=32,dist to nearest of ALL 4 corners
+n32x16 all nodes,symmetry,,,n=561,max|err(p) - err(p_sym)| = 2.220e-16 (180-deg)
+n32x16 interior,r_c<0.25,,-2.73,n=16,
+n32x16 interior,r_c<0.33,,-1.95,n=34,
+n32x16 interior,r_c<0.5,,-2.65,n=80,
+n32x16 interior,r_c<0.75,,-2.10,n=146,
+n32x16 boundary,r_c<0.25,,-0.14,n=12,
+n32x16 boundary,r_c<0.33,,-0.19,n=20,
+n32x16 boundary,r_c<0.5,,-0.30,n=28,
+n32x16 boundary,r_c<0.75,,-0.62,n=44,
+n32x16 interior (all 4 corners),d4<0.33,,-2.05,n=66,dist to nearest of ALL 4 corners
+n32x16 interior (all 4 corners),d4<0.5,,-2.77,n=148,dist to nearest of ALL 4 corners

@@ -1,0 +1,13 @@
+order,value
+8->16 bulk_fe_rms @T (vs proxy128),0.7173
+16->32 bulk_fe_rms @T (vs proxy128),1.0478
+family 32->64 bulk_fe_rms @T,3.0869
+8->16 bulk_max @T (vs proxy128),-1.1946
+16->32 bulk_max @T (vs proxy128),-0.6305
+family 32->64 bulk_max @T,2.0610
+8->16 surf_fe_rms @T (vs proxy128),0.4007
+16->32 surf_fe_rms @T (vs proxy128),1.1825
+family 32->64 surf_fe_rms @T,2.4961
+8->16 surf_max @T (vs proxy128),0.4622
+16->32 surf_max @T (vs proxy128),1.2183
+family 32->64 surf_max @T,2.2079

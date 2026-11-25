@@ -4,6 +4,7 @@
 #include "gausspoint.h"
 #include "inputrecord.h"
 #include "materialmode.h"
+#include "node.h"
 #include "timestep.h"
 #include <cmath>
 
@@ -23,6 +24,9 @@ AllenCahnMaterial::initializeFrom(InputRecord &ir)
     IR_GIVE_OPTIONAL_FIELD(ir, capacity, _IFT_AllenCahnMaterial_c);
     IR_GIVE_OPTIONAL_FIELD(ir, mobility, _IFT_AllenCahnMaterial_mobility);
     IR_GIVE_OPTIONAL_FIELD(ir, surfaceBeta, _IFT_AllenCahnMaterial_surfaceBeta);
+    IR_GIVE_OPTIONAL_FIELD(ir, hyperbolic, _IFT_AllenCahnMaterial_hyperbolic);
+    IR_GIVE_OPTIONAL_FIELD(ir, density, _IFT_AllenCahnMaterial_rho);
+    IR_GIVE_OPTIONAL_FIELD(ir, surfaceCapacity, _IFT_AllenCahnMaterial_surfaceCapacity);
     IR_GIVE_OPTIONAL_FIELD(ir, manufactured, _IFT_AllenCahnMaterial_manufactured);
     IR_GIVE_OPTIONAL_FIELD(ir, mmsBase, _IFT_AllenCahnMaterial_mmsBase);
     IR_GIVE_OPTIONAL_FIELD(ir, mmsAmplitude, _IFT_AllenCahnMaterial_mmsAmplitude);
@@ -38,10 +42,13 @@ AllenCahnMaterial::initializeFrom(InputRecord &ir)
     if ( surfaceBeta <= 0.0 ) {
         OOFEM_ERROR("Allen-Cahn surfacebeta must be positive");
     }
+    if ( density <= 0.0 || surfaceCapacity <= 0.0 ) {
+        OOFEM_ERROR("Allen-Cahn rho and surfacecapacity must be positive");
+    }
     if ( mmsTemporal != 0 && mmsTemporal != 1 ) {
         OOFEM_ERROR("Unknown manufactured Allen-Cahn temporal profile %d", mmsTemporal);
     }
-    if ( mmsSpatial != 0 && mmsSpatial != 1 ) {
+    if ( mmsSpatial < 0 || mmsSpatial > 3 ) {
         OOFEM_ERROR("Unknown manufactured Allen-Cahn spatial profile %d", mmsSpatial);
     }
 }
@@ -53,8 +60,9 @@ AllenCahnMaterial::computeManufacturedSource(GaussPoint *gp, TimeStep *tStep) co
         return 0.0;
     }
 
-    // Exact field on [0,mmsLx] x [0,mmsLy]:
-    // u*=mmsBase+b(t)[cos(pi*x/Lx)cos(pi*y/Ly)+beta sin(pi*x/Lx)sin(pi*y/Ly)].
+    // Exact fields on [0,mmsLx] x [0,mmsLy]:
+    // 0: mixed cosine/sine profile; 1: sin(pi*x/Lx)sin(pi*y/Ly);
+    // 2: (x/Lx)(y/Ly); 3: x*y on a polygonal disk.
     // Its trace is smooth around the rectangle corners, and its normal derivative
     // is nonzero on the edges when beta != 0. This option is only for MMS checks.
     const auto &coords = gp->giveGlobalCoordinates();
@@ -68,32 +76,69 @@ AllenCahnMaterial::computeManufacturedSource(GaussPoint *gp, TimeStep *tStep) co
     const double eta = M_PI * y / mmsLy;
     const double c = mmsSpatial == 0
         ? std::cos(xi) * std::cos(eta) + beta * std::sin(xi) * std::sin(eta)
-        : std::sin(xi) * std::sin(eta);
+        : ( mmsSpatial == 1 ? std::sin(xi) * std::sin(eta)
+            : ( mmsSpatial == 2 ? (x / mmsLx) * (y / mmsLy) : x * y ) );
     const double u = mmsBase + b * c;
     const double u_t = mmsTemporal == 0 ? -mmsRate * b * c
                                         : mmsAmplitude * mmsRate * std::cos(mmsRate * time) * c;
+    const double u_tt = mmsTemporal == 0 ? mmsRate * mmsRate * b * c
+                                         : -mmsAmplitude * mmsRate * mmsRate * std::sin(mmsRate * time) * c;
 
     if ( gp->giveElement()->giveGeometryType() == EGT_line_1 ) {
-        // On each straight edge, the trace has Delta_Gamma u = -pi^2 b c.
+        if ( mmsSpatial == 3 ) {
+            Element *edge = gp->giveElement();
+            const FloatArray &x1 = edge->giveNode(1)->giveCoordinates();
+            const FloatArray &x2 = edge->giveNode(2)->giveCoordinates();
+            const double dx = x2.at(1) - x1.at(1);
+            const double dy = x2.at(2) - x1.at(2);
+            const double length = std::sqrt(dx * dx + dy * dy);
+            const double tx = dx / length;
+            const double ty = dy / length;
+            double nx = ty;
+            double ny = -tx;
+            const double xm = 0.5 * (x1.at(1) + x2.at(1));
+            const double ym = 0.5 * (x1.at(2) + x2.at(2));
+            if ( nx * xm + ny * ym < 0.0 ) {
+                nx = -nx;
+                ny = -ny;
+            }
+            const double surfaceLaplacian = 2.0 * b * tx * ty;
+            const double normalDerivative = b * (y * nx + x * ny);
+            return capacity * u_t - conductivity * surfaceLaplacian
+                - surfaceBeta * mobility * (u - u * u * u)
+                + normalConductivity * normalDerivative;
+        }
+        // On each straight edge, the sine profiles have a tangential Laplacian;
+        // the polynomial x*y profile is affine along each edge, hence Delta_Gamma u=0.
         const bool horizontalEdge = std::abs(y) < 1.e-8 || std::abs(y - mmsLy) < 1.e-8;
         const bool verticalEdge = std::abs(x) < 1.e-8 || std::abs(x - mmsLx) < 1.e-8;
         if ( !horizontalEdge && !verticalEdge ) {
             OOFEM_ERROR("Manufactured Allen-Cahn boundary source requires boundary elements on the rectangle defined by mmslx and mmsly");
         }
         const double tangentLength = horizontalEdge ? mmsLx : mmsLy;
-        const double surfaceLaplacian = -M_PI * M_PI * b * c / ( tangentLength * tangentLength );
+        const double surfaceLaplacian = mmsSpatial == 2 ? 0.0
+            : -M_PI * M_PI * b * c / ( tangentLength * tangentLength );
         const double normalLength = horizontalEdge ? mmsLy : mmsLx;
         const double normalCoordinate = horizontalEdge ? x / mmsLx : y / mmsLy;
-        const double normalAmplitude = mmsSpatial == 0 ? beta : 1.0;
-        const double normalDerivative = -normalAmplitude * M_PI * b
-            * std::sin(M_PI * normalCoordinate) / normalLength;
+        double normalDerivative;
+        if ( mmsSpatial == 2 ) {
+            const double tangentCoordinate = horizontalEdge ? x / mmsLx : y / mmsLy;
+            const double outwardSign = normalCoordinate < 0.5 ? -1.0 : 1.0;
+            normalDerivative = outwardSign * b * tangentCoordinate / normalLength;
+        } else {
+            const double normalAmplitude = mmsSpatial == 0 ? beta : 1.0;
+            normalDerivative = -normalAmplitude * M_PI * b
+                * std::sin(M_PI * normalCoordinate) / normalLength;
+        }
         return capacity * u_t - conductivity * surfaceLaplacian - surfaceBeta * mobility * ( u - u * u * u )
             + normalConductivity * normalDerivative;
     }
 
-    const double bulkLaplacian = -M_PI * M_PI * b * c
-        * ( 1.0 / ( mmsLx * mmsLx ) + 1.0 / ( mmsLy * mmsLy ) );
-    return capacity * u_t - conductivity * bulkLaplacian - mobility * ( u - u * u * u );
+    const double bulkLaplacian = mmsSpatial >= 2 ? 0.0
+        : -M_PI * M_PI * b * c
+            * ( 1.0 / ( mmsLx * mmsLx ) + 1.0 / ( mmsLy * mmsLy ) );
+    const double inertial = hyperbolic ? density * u_tt : 0.0;
+    return inertial + capacity * u_t - conductivity * bulkLaplacian - mobility * ( u - u * u * u );
 }
 
 FloatArrayF<3>
@@ -119,6 +164,9 @@ AllenCahnMaterial::giveCharacteristicValue(MatResponseMode mode, GaussPoint *gp,
                                           TimeStep *) const
 {
     if ( mode == Capacity ) {
+        if ( hyperbolic ) {
+            return gp->giveElement()->giveGeometryType() == EGT_line_1 ? surfaceCapacity : density;
+        }
         return capacity;
     } else if ( mode == IntSource ) {
         // The source vector is placed on the right hand side. Its tangent is

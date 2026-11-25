@@ -1,0 +1,4 @@
+mesh,h_x,h_y,quad_edge_max,quad_edge_min,line_len_max,line_len_min,square,line_eq_h
+n8x4,0.25,0.25,0.25,0.25,0.25,0.25,True,True
+n16x8,0.125,0.125,0.125,0.125,0.125,0.125,True,True
+n32x16,0.0625,0.0625,0.0625,0.0625,0.0625,0.0625,True,True

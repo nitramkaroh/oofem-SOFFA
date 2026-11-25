@@ -1,0 +1,7 @@
+quantity,value,note
+D32_64(s): monotono crescente?,True,2.494e-07 -> 4.141e-04
+D64_128(s): monotono?,False,picco step 44 (t=0.01100) = 1.550e-04; valore a T = 4.874e-05; D(T)/D(picco) = 0.315
+p_low(t) range,-0.439 .. 0.501,a T: 0.501
+p_high(t) range,-0.446 .. 3.087,a T: 3.087
+"step con p_low e p_high entrambi in [1.5,2.5]",0,di 80
+step con |p_low - p_high| < 0.25,22,di 80

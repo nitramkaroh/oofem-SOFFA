@@ -1,0 +1,7 @@
+dataset,zone,energy_frac_mine,archived,rel_diff,status
+family 64->128 @T (n64 nodes),"cornerA (0,1)/(2,0)",6.584318e-01,6.584318e-01,5.459e-08,OK
+family 64->128 @T (n64 nodes),"cornerB (0,0)/(2,1)",2.803686e-01,2.803686e-01,7.877e-08,OK
+family 64->128 @T (n64 nodes),remainder,6.119961e-02,6.119961e-02,6.306e-08,OK
+OOFEM n32x16 vs proxy128 @T,"cornerA (0,1)/(2,0)",7.461304e-01,7.461304e-01,1.588e-08,OK
+OOFEM n32x16 vs proxy128 @T,"cornerB (0,0)/(2,1)",1.418758e-01,1.418758e-01,3.743e-08,OK
+OOFEM n32x16 vs proxy128 @T,remainder,1.119938e-01,1.119938e-01,5.837e-08,OK

@@ -1,0 +1,19 @@
+benchmark,case,mesh_n,h,evaluation,error_metric,value,observed_order,notes
+hyperbolic,nizovtseva_eq29_traveling_wave,80,0.3,T = 0.2,rms_full,2.918311384156078e-05,,Q1 strip 24 x 1; Newmark beta=1/4 gamma=1/2; dt = 1e-3 fixed; source: hyperbolic/nizovtseva_metrics.csv
+hyperbolic,nizovtseva_eq29_traveling_wave,160,0.15,T = 0.2,rms_full,7.323071979294976e-06,1.994612945759805,same configuration; h halved
+hyperbolic,nizovtseva_eq29_traveling_wave,320,0.075,T = 0.2,rms_full,1.8620658773059325e-06,1.9755448619736284,same configuration; h halved
+hyperbolic,nizovtseva_eq29_traveling_wave,80,0.3,T = 0.2,max_full,1.1578978006165919e-04,,max norm; same configuration
+hyperbolic,nizovtseva_eq29_traveling_wave,160,0.15,T = 0.2,max_full,2.888978006165832e-05,2.002876796743714,same configuration; h halved
+hyperbolic,nizovtseva_eq29_traveling_wave,320,0.075,T = 0.2,max_full,7.189780061700457e-06,2.006539676861221,same configuration; h halved
+parabolic,okumura_ch4_example2,50,0.02,t = 0.3,rms_vs_n400,1.802789695520413e-04,,Q1 strip 1 x 1; BE dt = 1e-3; nested nodal grids, coarse vs finest nodal difference, no interpolation; source: parabolic/okumura_refinement_convergence.csv
+parabolic,okumura_ch4_example2,100,0.01,t = 0.3,rms_vs_n400,4.2931228680748856e-05,2.070,interface in transit
+parabolic,okumura_ch4_example2,200,0.005,t = 0.3,rms_vs_n400,8.576367506226704e-06,2.324,interface in transit
+parabolic,okumura_ch4_example2,50,0.02,t = 0.3,max_vs_n400,3.189e-04,,same configuration
+parabolic,okumura_ch4_example2,100,0.01,t = 0.3,max_vs_n400,7.62e-05,2.065,same configuration
+parabolic,okumura_ch4_example2,200,0.005,t = 0.3,max_vs_n400,1.53e-05,2.316,same configuration
+parabolic,okumura_ch4_example2,50,0.02,t = 0.5,rms_vs_n400,7.202736408115359e-06,,agreement check; coarser meshes within ~1e-5 of the reference
+parabolic,okumura_ch4_example2,100,0.01,t = 0.5,rms_vs_n400,1.6907728621287206e-06,,differences within 6-significant-digit export precision; no order assigned
+parabolic,okumura_ch4_example2,200,0.005,t = 0.5,rms_vs_n400,3.356140877883633e-07,,differences within 6-significant-digit export precision; no order assigned
+parabolic,okumura_ch4_example2,50,0.02,t = 0.7,rms_vs_n400,1.407264067892277e-07,,near final state: meshes identical within export precision (6 significant digits)
+parabolic,okumura_ch4_example2,100,0.01,t = 0.7,rms_vs_n400,4.874666781452504e-08,,near final state: meshes identical within export precision (6 significant digits)
+parabolic,okumura_ch4_example2,200,0.005,t = 0.7,rms_vs_n400,1.4106912317577618e-08,,near final state: meshes identical within export precision (6 significant digits)

@@ -1,0 +1,3 @@
+case,dt,T,reference_type,rms_error,max_abs_error,reference_value,numerical_min,numerical_max
+linear,0.01,0.2,exact consistent-mass Q1 semi-discrete mode,2.1759021255670638e-05,3.044552310060844e-05,0.8089220544768994,-0.8089525,0.8089525
+oscillator,0.01,0.2,independent DOP853 ODE,5.063836400753807e-07,5.063836400753807e-07,0.2641955936163599,0.2641961,0.2641961

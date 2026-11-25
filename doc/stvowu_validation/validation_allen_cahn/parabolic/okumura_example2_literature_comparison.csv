@@ -1,0 +1,14 @@
+frames,700
+time_range,0.001 .. 0.7000000000000001
+energy_initial,77.42047359415844
+energy_final,2.219357171842687e-06
+max_energy_increment,-9.695043511930922e-08
+energy_monotone_nonincreasing,True
+max_y_variation_across_depth,0.0
+u_final_min,0.9998982
+u_final_max,0.9999997
+digitized_comparison_interval,0.01 <= t <= 0.4
+digitized_curve_RMSE,0.9881048219018264
+digitized_curve_MAE,0.8803680411631917
+digitized_curve_max_abs_error,1.832295199199237
+energy_scale_of_paper_figure,0 .. 90

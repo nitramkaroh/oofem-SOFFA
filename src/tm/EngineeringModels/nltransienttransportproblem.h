@@ -48,6 +48,12 @@
 #define _IFT_NLTransientTransportProblem_rtol "rtol"
 #define _IFT_NLTransientTransportProblem_manrmsteps "manrmsteps"
 #define _IFT_NLTransientTransportProblem_bdforder "bdforder"
+#define _IFT_NLTransientTransportProblem_wave "wave"
+#define _IFT_NLTransientTransportProblem_newmarkbeta "newmarkbeta"
+#define _IFT_NLTransientTransportProblem_newmarkgamma "newmarkgamma"
+#define _IFT_NLTransientTransportProblem_initialvelocity "initialvelocity"
+#define _IFT_NLTransientTransportProblem_initialvelocityvalues "initialvelocityvalues"
+#define _IFT_NLTransientTransportProblem_wavedamping "wavedamping"
 //@}
 
 namespace oofem {
@@ -71,6 +77,16 @@ protected:
     int currentIterations = 0;
     int bdfOrder = 1;
     double bdfPreviousIncrement = 0.0;
+    bool waveMode = false;
+    double newmarkBeta = 0.25;
+    double newmarkGamma = 0.5;
+    /// Bulk damping ratio multiplying the inertial mass matrix in wave mode.
+    double waveDamping = 0.0;
+    double initialVelocity = 0.0;
+    /// Optional initial velocity by equation number; overrides initialVelocity when supplied.
+    FloatArray initialVelocityValues;
+    FloatArray waveVelocity;
+    FloatArray waveAcceleration;
     // Element-local solution history, newest previous state first. This is
     // opt-in and only used when bdforder > 1.
     std::deque< std::vector<FloatArray> > bdfElementHistory;
@@ -96,6 +112,7 @@ public:
 
 protected:
     void captureBdfElementState(TimeStep *tStep);
+    void updateWaveKinematics(TimeStep *tStep);
     static void giveBdfCoefficients(int order, std::vector<double> &coefficients);
     void updateInternalState(TimeStep *tStep) override;
     void applyIC(TimeStep *tStep) override;

@@ -1,0 +1,13 @@
+panel,test,resolution,rms_error
+a,nizovtseva_traveling_wave_space,0.3,2.9183113842e-05
+a,nizovtseva_traveling_wave_space,0.15,7.3230719793e-06
+a,nizovtseva_traveling_wave_space,0.075,1.8620658773e-06
+b,stationary_kink_space,0.4,3.0955007982e-05
+b,stationary_kink_space,0.2,7.7073614228e-06
+b,stationary_kink_space,0.1,2.0844342639e-06
+c,linear_cosine_mode_time,0.04,3.4715165608e-04
+c,linear_cosine_mode_time,0.02,8.6980958220e-05
+c,linear_cosine_mode_time,0.01,2.1759021256e-05
+d,allencahn_oscillator_time,0.04,7.3063836401e-06
+d,allencahn_oscillator_time,0.02,1.8063836401e-06
+d,allencahn_oscillator_time,0.01,5.0638364008e-07

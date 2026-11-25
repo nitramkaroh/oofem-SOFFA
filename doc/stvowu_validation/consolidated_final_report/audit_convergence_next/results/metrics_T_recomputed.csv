@@ -1,0 +1,33 @@
+group,quantity,mine,archived,rel_diff,status
+OOFEM_vs_proxy128,n8 bulk_fe_rms @T,1.299267e-03,,,ARCH-MISSING
+OOFEM_vs_proxy64,n8 bulk_fe_rms @T,1.328574e-03,,,ARCH-MISSING
+OOFEM_vs_proxy128,n8 bulk_max @T,8.346605e-04,,,ARCH-MISSING
+OOFEM_vs_proxy64,n8 bulk_max @T,8.344629e-04,,,ARCH-MISSING
+OOFEM_vs_proxy128,n8 surf_fe_rms @T,2.508695e-03,,,ARCH-MISSING
+OOFEM_vs_proxy64,n8 surf_fe_rms @T,2.572747e-03,,,ARCH-MISSING
+OOFEM_vs_proxy128,n8 surf_max @T,5.873672e-03,,,ARCH-MISSING
+OOFEM_vs_proxy64,n8 surf_max @T,6.068584e-03,,,ARCH-MISSING
+OOFEM_vs_proxy128,n16 bulk_fe_rms @T,7.902543e-04,,,ARCH-MISSING
+OOFEM_vs_proxy64,n16 bulk_fe_rms @T,8.187584e-04,,,ARCH-MISSING
+OOFEM_vs_proxy128,n16 bulk_max @T,1.910358e-03,,,ARCH-MISSING
+OOFEM_vs_proxy64,n16 bulk_max @T,1.880232e-03,,,ARCH-MISSING
+OOFEM_vs_proxy128,n16 surf_fe_rms @T,1.900346e-03,,,ARCH-MISSING
+OOFEM_vs_proxy64,n16 surf_fe_rms @T,1.994828e-03,,,ARCH-MISSING
+OOFEM_vs_proxy128,n16 surf_max @T,4.263484e-03,,,ARCH-MISSING
+OOFEM_vs_proxy64,n16 surf_max @T,4.744012e-03,,,ARCH-MISSING
+OOFEM_vs_proxy128,n32 bulk_fe_rms @T,3.822430e-04,,,ARCH-MISSING
+OOFEM_vs_proxy64,n32 bulk_fe_rms @T,4.141403e-04,,,ARCH-MISSING
+OOFEM_vs_proxy128,n32 bulk_max @T,2.957438e-03,,,ARCH-MISSING
+OOFEM_vs_proxy64,n32 bulk_max @T,3.123210e-03,,,ARCH-MISSING
+OOFEM_vs_proxy128,n32 surf_fe_rms @T,8.372465e-04,,,ARCH-MISSING
+OOFEM_vs_proxy64,n32 surf_fe_rms @T,9.265213e-04,,,ARCH-MISSING
+OOFEM_vs_proxy128,n32 surf_max @T,1.832372e-03,,,ARCH-MISSING
+OOFEM_vs_proxy64,n32 surf_max @T,2.230155e-03,,,ARCH-MISSING
+family_diff,family 32->64 bulk_fe_rms @T,4.141362e-04,4.141362e-04,7.172e-08,OK
+family_diff,family 32->64 bulk_max @T,3.123389e-03,3.123389e-03,4.698e-08,OK
+family_diff,family 32->64 surf_fe_rms @T,9.264513e-04,9.264513e-04,2.853e-08,OK
+family_diff,family 32->64 surf_max @T,2.229713e-03,2.229713e-03,1.754e-07,OK
+family_diff,family 64->128 bulk_fe_rms @T,4.874007e-05,4.874007e-05,1.006e-07,OK
+family_diff,family 64->128 bulk_max @T,7.484989e-04,7.484989e-04,4.254e-08,OK
+family_diff,family 64->128 surf_fe_rms @T,1.642138e-04,1.642138e-04,1.653e-07,OK
+family_diff,family 64->128 surf_max @T,4.826234e-04,4.826234e-04,4.677e-09,OK

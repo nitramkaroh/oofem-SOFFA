@@ -1,0 +1,8 @@
+{
+  "sha256": "68c85bfd07f56eab54dad02443d84cab9e4af62a42a8b1ea1fabe17f1b3f1330",
+  "nx": 128,
+  "ny": 64,
+  "n": 8385,
+  "generated": "2026-10-27 11:41:59",
+  "source": "fj.assemble_fixed(128, 64) fresh (corrected line Jacobian)"
+}

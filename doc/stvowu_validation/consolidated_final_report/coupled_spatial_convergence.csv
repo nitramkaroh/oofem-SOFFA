@@ -1,0 +1,72 @@
+section,quantity,dataset,level_or_step,h,t,value,source,note
+errors_vs_proxy128_at_T,bulk_fe_rms,OOFEM vs proxy n128x64,n8x4,0.25,0.02,1.299267e-03,t1b_metrics_T.csv,FE RMS = sqrt(e'Mb e)/sqrt(AREA=2.0)
+errors_vs_proxy128_at_T,bulk_max,OOFEM vs proxy n128x64,n8x4,0.25,0.02,8.346605e-04,t1b_metrics_T.csv,max su nodi interni
+errors_vs_proxy128_at_T,surf_fe_rms,OOFEM vs proxy n128x64,n8x4,0.25,0.02,2.508695e-03,t1b_metrics_T.csv,FE RMS = sqrt(e'Ms e)/sqrt(PERIM=6.0); Ms corretta
+errors_vs_proxy128_at_T,surf_max,OOFEM vs proxy n128x64,n8x4,0.25,0.02,5.873672e-03,t1b_metrics_T.csv,max su nodi di bordo
+errors_vs_proxy128_at_T,bulk_fe_rms,OOFEM vs proxy n128x64,n16x8,0.125,0.02,7.902543e-04,t1b_metrics_T.csv,
+errors_vs_proxy128_at_T,bulk_max,OOFEM vs proxy n128x64,n16x8,0.125,0.02,1.910358e-03,t1b_metrics_T.csv,
+errors_vs_proxy128_at_T,surf_fe_rms,OOFEM vs proxy n128x64,n16x8,0.125,0.02,1.900346e-03,t1b_metrics_T.csv,
+errors_vs_proxy128_at_T,surf_max,OOFEM vs proxy n128x64,n16x8,0.125,0.02,4.263484e-03,t1b_metrics_T.csv,
+errors_vs_proxy128_at_T,bulk_fe_rms,OOFEM vs proxy n128x64,n32x16 (T1-A rerun),0.0625,0.02,3.822430e-04,t1b_metrics_T.csv,steps 1-39 bit-identici all'originale
+errors_vs_proxy128_at_T,bulk_max,OOFEM vs proxy n128x64,n32x16 (T1-A rerun),0.0625,0.02,2.957438e-03,t1b_metrics_T.csv,
+errors_vs_proxy128_at_T,surf_fe_rms,OOFEM vs proxy n128x64,n32x16 (T1-A rerun),0.0625,0.02,8.372465e-04,t1b_metrics_T.csv,
+errors_vs_proxy128_at_T,surf_max,OOFEM vs proxy n128x64,n32x16 (T1-A rerun),0.0625,0.02,1.832372e-03,t1b_metrics_T.csv,
+family_level_diffs_at_T,bulk_fe_rms,DOP853 32->64 (auto-differenza famiglia),n32x16,0.0625,0.02,4.141362e-04,t1b_metrics_T.csv,oggetto (1): differenza di livello di famiglia (proxy vs proxy)
+family_level_diffs_at_T,bulk_max,DOP853 32->64 (auto-differenza famiglia),n32x16,0.0625,0.02,3.123389e-03,t1b_metrics_T.csv,
+family_level_diffs_at_T,surf_fe_rms,DOP853 32->64 (auto-differenza famiglia),n32x16,0.0625,0.02,9.264513e-04,t1b_metrics_T.csv,
+family_level_diffs_at_T,surf_max,DOP853 32->64 (auto-differenza famiglia),n32x16,0.0625,0.02,2.229713e-03,t1b_metrics_T.csv,
+family_level_diffs_at_T,bulk_fe_rms,DOP853 64->128,n64x32,0.03125,0.02,4.874007e-05,t1b_metrics_T.csv,8.5x sotto la 32->64: nessun plateau
+family_level_diffs_at_T,bulk_max,DOP853 64->128,n64x32,0.03125,0.02,7.484989e-04,t1b_metrics_T.csv,
+family_level_diffs_at_T,surf_fe_rms,DOP853 64->128,n64x32,0.03125,0.02,1.642138e-04,t1b_metrics_T.csv,
+family_level_diffs_at_T,surf_max,DOP853 64->128,n64x32,0.03125,0.02,4.826234e-04,t1b_metrics_T.csv,
+orders_at_T,bulk_fe_rms,8->16 (OOFEM vs proxy128),,0.0625,0.02,0.7173,t1b_family_orders_T.csv,log2(e8/e16) a tempo uguale
+orders_at_T,bulk_max,8->16 (OOFEM vs proxy128),,0.0625,0.02,-1.1946,t1b_family_orders_T.csv,non monotonia del massimo mobile
+orders_at_T,surf_fe_rms,8->16 (OOFEM vs proxy128),,0.0625,0.02,0.4007,t1b_family_orders_T.csv,
+orders_at_T,surf_max,8->16 (OOFEM vs proxy128),,0.0625,0.02,0.4622,t1b_family_orders_T.csv,
+orders_at_T,bulk_fe_rms,16->32 (OOFEM vs proxy128),,0.03125,0.02,1.0478,t1b_family_orders_T.csv,
+orders_at_T,bulk_max,16->32 (OOFEM vs proxy128),,0.03125,0.02,-0.6305,t1b_family_orders_T.csv,
+orders_at_T,surf_fe_rms,16->32 (OOFEM vs proxy128),,0.03125,0.02,1.1825,t1b_family_orders_T.csv,
+orders_at_T,surf_max,16->32 (OOFEM vs proxy128),,0.03125,0.02,1.2183,t1b_family_orders_T.csv,
+orders_at_T,bulk_fe_rms,famiglia 32->64 / 64->128 (rapporto di differenze),,0.015625,0.02,3.0869,t1b_family_orders_T.csv,singolo rapporto log2(4.141362e-4/4.874007e-5); NON e una prova di terzo ordine
+orders_at_T,bulk_max,famiglia 32->64 / 64->128 (rapporto di differenze),,0.015625,0.02,2.0610,t1b_family_orders_T.csv,
+orders_at_T,surf_fe_rms,famiglia 32->64 / 64->128 (rapporto di differenze),,0.015625,0.02,2.4961,t1b_family_orders_T.csv,
+orders_at_T,surf_max,famiglia 32->64 / 64->128 (rapporto di differenze),,0.015625,0.02,2.2079,t1b_family_orders_T.csv,
+proxy_stability_at_T,bulk_fe_rms_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n8x4,0.25,0.02,2.930704e-05,t1b_proxy_stability_T.csv,err_vs_proxy64=1.328574e-03; err_vs_proxy128=1.299267e-03; rel=2.2%
+proxy_stability_at_T,bulk_max_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n8x4,0.25,0.02,1.976025e-07,t1b_proxy_stability_T.csv,err_vs_proxy64=8.344629e-04; err_vs_proxy128=8.346605e-04
+proxy_stability_at_T,surf_fe_rms_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n8x4,0.25,0.02,6.405205e-05,t1b_proxy_stability_T.csv,err_vs_proxy64=2.572747e-03; err_vs_proxy128=2.508695e-03
+proxy_stability_at_T,surf_max_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n8x4,0.25,0.02,1.949127e-04,t1b_proxy_stability_T.csv,err_vs_proxy64=6.068584e-03; err_vs_proxy128=5.873672e-03
+proxy_stability_at_T,bulk_fe_rms_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n16x8,0.125,0.02,2.850415e-05,t1b_proxy_stability_T.csv,err_vs_proxy64=8.187584e-04; err_vs_proxy128=7.902543e-04; rel=3.5%
+proxy_stability_at_T,bulk_max_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n16x8,0.125,0.02,3.012610e-05,t1b_proxy_stability_T.csv,err_vs_proxy64=1.880232e-03; err_vs_proxy128=1.910358e-03
+proxy_stability_at_T,surf_fe_rms_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n16x8,0.125,0.02,9.448161e-05,t1b_proxy_stability_T.csv,err_vs_proxy64=1.994828e-03; err_vs_proxy128=1.900346e-03
+proxy_stability_at_T,surf_max_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n16x8,0.125,0.02,4.805288e-04,t1b_proxy_stability_T.csv,err_vs_proxy64=4.744012e-03; err_vs_proxy128=4.263484e-03
+proxy_stability_at_T,bulk_fe_rms_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n32x16,0.0625,0.02,3.189733e-05,t1b_proxy_stability_T.csv,err_vs_proxy64=4.141403e-04; err_vs_proxy128=3.822430e-04; rel=7.7%
+proxy_stability_at_T,bulk_max_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n32x16,0.0625,0.02,1.657716e-04,t1b_proxy_stability_T.csv,err_vs_proxy64=3.123210e-03; err_vs_proxy128=2.957438e-03
+proxy_stability_at_T,surf_fe_rms_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n32x16,0.0625,0.02,8.927485e-05,t1b_proxy_stability_T.csv,err_vs_proxy64=9.265213e-04; err_vs_proxy128=8.372465e-04
+proxy_stability_at_T,surf_max_abs_diff,proxy64 vs proxy128 (stesse 3 mesh OOFEM),n32x16,0.0625,0.02,3.977833e-04,t1b_proxy_stability_T.csv,err_vs_proxy64=2.230155e-03; err_vs_proxy128=1.832372e-03
+moving_max_at_T,abs_err_primo_nodo_interno_angolo_attivo,OOFEM n8x4,,0.25,0.02,8.3466046188e-04,t1b_moving_max_T.csv,nodo (1.75; 0.25); r_c=0.35355
+moving_max_at_T,abs_err_primo_nodo_interno_angolo_attivo,OOFEM n16x8,,0.125,0.02,1.9103580700e-03,t1b_moving_max_T.csv,nodo (1.875; 0.125); r_c=0.17678
+moving_max_at_T,abs_err_primo_nodo_interno_angolo_attivo,OOFEM n32x16 (T1-A),,0.0625,0.02,2.9574380691e-03,t1b_moving_max_T.csv,nodo (1.9375; 0.0625); r_c=0.08839
+moving_max_at_T,abs_err_primo_nodo_interno_angolo_attivo,DOP853 family diff 64->128,,0.03125,0.02,7.4849893184e-04,t1b_moving_max_T.csv,nodo (1.96875; 0.03125); r_c=0.04419
+moving_max_at_T,p_fit_loglog_4pt_descriptive,fit 4 punti,,,,-0.016,t1b_moving_max_T.csv,err ~ r_c^(-0.016): essenzialmente piatto; NON legge di potenza; NON prova di singolarita
+zones_at_T,energy_frac_cornerA,family 64->128 (n64 nodes),,0.03125,0.02,6.584318e-01,t1b_zones_T.csv,active pair: angoli (0;1) e (2;0)
+zones_at_T,energy_frac_cornerB,family 64->128 (n64 nodes),,0.03125,0.02,2.803686e-01,t1b_zones_T.csv,inactive pair: angoli (0;0) e (2;1)
+zones_at_T,energy_frac_restante,family 64->128 (n64 nodes),,0.03125,0.02,6.119961e-02,t1b_zones_T.csv,
+zones_at_T,energy_frac_cornerA,OOFEM n32x16 vs proxy128,,0.0625,0.02,7.461304e-01,t1b_zones_T.csv,active pair: angoli (0;1) e (2;0)
+zones_at_T,energy_frac_cornerB,OOFEM n32x16 vs proxy128,,0.0625,0.02,1.418758e-01,t1b_zones_T.csv,inactive pair: angoli (0;0) e (2;1)
+zones_at_T,energy_frac_restante,OOFEM n32x16 vs proxy128,,0.0625,0.02,1.119938e-01,t1b_zones_T.csv,
+family_order_time_series,bulk_fe_rms_order,DOP853 family,step 1,0.015625,0.00025,-0.4462,t1b_orders_time_64_128.csv,serie completa 80 step nel file fonte
+family_order_time_series,bulk_fe_rms_order,DOP853 family,step 20,,0.005,-0.1140,t1b_orders_time_64_128.csv,
+family_order_time_series,bulk_fe_rms_order,DOP853 family,step 45,,0.01125,0.7156,t1b_orders_time_64_128.csv,e64->128 non monotona (picco ~s45)
+family_order_time_series,bulk_fe_rms_order,DOP853 family,step 80,,0.02,3.0869,t1b_orders_time_64_128.csv,
+family_order_time_series,surf_fe_rms_order,DOP853 family,step 1,,0.00025,-0.8947,t1b_orders_time_64_128.csv,
+family_order_time_series,surf_fe_rms_order,DOP853 family,step 20,,0.005,-0.5334,t1b_orders_time_64_128.csv,
+family_order_time_series,surf_fe_rms_order,DOP853 family,step 45,,0.01125,0.4823,t1b_orders_time_64_128.csv,
+family_order_time_series,surf_fe_rms_order,DOP853 family,step 80,,0.02,2.4961,t1b_orders_time_64_128.csv,
+floor_oofem_same_mesh_bulk_fe_rms,OOFEM n16x8 vs DOP853 n16x8 (stessa mesh; step 39),OOFEM vs DOP853 stessa mesh,n16x8,0.125,0.00975,2.0995e-08,static_audit_report.md §1.5,oggetto (2): floor del solutore; 6-7 ordini sotto l'errore spaziale
+floor_oofem_same_mesh_bulk_fe_rms,OOFEM n16x8 vs DOP853 n16x8 (stessa mesh; step 80),OOFEM vs DOP853 stessa mesh,n16x8,0.125,0.02,2.4441e-08,static_audit_report.md §1.5,
+floor_oofem_same_mesh_bulk_fe_rms,OOFEM n32x16 vs DOP853 n32x16 (stessa mesh; step 39),OOFEM vs DOP853 stessa mesh,n32x16,0.0625,0.00975,2.5972e-08,static_audit_report.md §1.5,nessun run OOFEM n64x32: floor a h=0.03125 sconosciuta
+energy_t1b_n128,E_tot,t=0,,,0,1.9327101889e+00,t1b_energy_n128.csv,monotono decrescente su 80 passi
+energy_t1b_n128,E_tot,t=0.005,,,0.005,1.93179788e+00,t1b_energy_n128.csv,
+energy_t1b_n128,E_tot,t=0.010,,,0.010,1.92978128e+00,t1b_energy_n128.csv,
+energy_t1b_n128,E_tot,t=0.015,,,0.015,1.92837767e+00,t1b_energy_n128.csv,
+energy_t1b_n128,E_tot,t=0.020,,,0.020,1.9274638141e+00,t1b_energy_n128.csv,variabile totale -0.27%; cinetica 0 -> 2.4766801329e-3

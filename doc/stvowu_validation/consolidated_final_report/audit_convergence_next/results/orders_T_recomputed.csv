@@ -1,0 +1,13 @@
+order,mine,archived,abs_diff,status
+8->16 bulk_fe_rms @T (vs proxy128),0.7173,0.7173,9.461e-06,OK
+16->32 bulk_fe_rms @T (vs proxy128),1.0478,1.0478,2.694e-05,OK
+family 32->64 bulk_fe_rms @T,3.0869,3.0869,2.484e-05,OK
+8->16 bulk_max @T (vs proxy128),-1.1946,-1.1946,1.826e-05,OK
+16->32 bulk_max @T (vs proxy128),-0.6305,-0.6305,4.881e-06,OK
+family 32->64 bulk_max @T,2.0610,2.0610,4.017e-05,OK
+8->16 surf_fe_rms @T (vs proxy128),0.4007,0.4007,2.529e-05,OK
+16->32 surf_fe_rms @T (vs proxy128),1.1825,1.1825,3.818e-05,OK
+family 32->64 surf_fe_rms @T,2.4961,2.4961,3.949e-05,OK
+8->16 surf_max @T (vs proxy128),0.4622,0.4622,2.987e-05,OK
+16->32 surf_max @T (vs proxy128),1.2183,1.2183,2.062e-05,OK
+family 32->64 surf_max @T,2.2079,2.2079,1.201e-05,OK

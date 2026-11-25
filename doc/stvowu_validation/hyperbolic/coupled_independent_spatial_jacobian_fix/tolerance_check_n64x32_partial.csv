@@ -1,0 +1,2 @@
+mesh,interval,rtol_base,rtol_tight,max_abs_diff,note
+n64x32,"t in [0, 0.002] (9 pts)",2e-12 (atol 2e-14),2e-14 (atol 2e-16),2.109424e-15,scipy clamps rtol 2e-14 to 2.2e-14 (machine epsilon)

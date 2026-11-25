@@ -1,0 +1,2 @@
+time,bulk_gradient,bulk_potential,surface_gradient,surface_potential,kinetic,potential_energy,total_energy,kinetic_status
+0.01,0.2526454045944615,0.029070712361144065,0.3038995358493744,0.034307956696137114,,0.619923609501117,0.619923609501117,not_applicable

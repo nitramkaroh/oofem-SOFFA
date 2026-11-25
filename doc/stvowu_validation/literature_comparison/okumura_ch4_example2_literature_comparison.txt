@@ -1,0 +1,11 @@
+samples: 391
+comparison_interval: 0.01 <= t <= 0.4
+paper_initial_energy_digitized: 75.10948905109488
+oofem_energy_at_0.01: 72.62270338180303
+oofem_energy_at_0.1: 57.86779538761516
+oofem_energy_at_0.2: 46.33449363309048
+oofem_energy_at_0.3: 13.383950206019284
+oofem_energy_at_0.4: 0.5740145733510096
+digitized_curve_RMSE: 0.9881049116487852
+digitized_curve_MAE: 0.8803681894399393
+digitized_curve_max_abs_error: 1.8322952154207997

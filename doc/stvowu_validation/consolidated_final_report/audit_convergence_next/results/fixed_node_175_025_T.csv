@@ -1,0 +1,8 @@
+object,value
+OOFEM n8,-8.346605e-04
+OOFEM n16,3.342395e-04
+OOFEM n32,2.723954e-05
+fam |U32-U64| @fn,2.741964e-05
+fam |U64-U128| @fn,1.976025e-07
+fam |U16-U32| @fn,3.069877e-04
+Richardson 3-livello @fn (T),5.3007

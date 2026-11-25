@@ -1,0 +1,17 @@
+stage,wall_s,note
+check,13.77,"34 checks, all passed"
+tolcheck_n16x8_rtol2e-12.npz,2.72,nx=16 ny=8 rtol=2e-12 tpoints=81
+tolcheck_n16x8_rtol2e-14.npz,4.47,nx=16 ny=8 rtol=2e-14 tpoints=81
+tolcheck,7.18,max|U(rtol 2e-12) - U(rtol 2e-14)| = 2.658e-14
+reference_n32x16_dt0p00025.npz,30.41,nx=32 ny=16 rtol=2e-12 tpoints=81
+control32,30.41,reference trajectory n32x16 stored
+proxy64_probe,28.98,est full 261s (nfev 149 for t<=0.002)
+reference_n64x32_dt0p00025.npz,167.9,nx=64 ny=32 rtol=2e-12 atol=2e-14 tpoints=81 nfev=1088 (~90 steps of 12 stages) rss_peak=77.1MB (+5724kB)
+tolcheck64_partial_rtol2e-14.npz,43.48,nx=64 ny=32 rtol=2e-14 atol=2e-16 tpoints=9 nfev=245 (~20 steps of 12 stages) rss_peak=71.6MB (+9404kB)
+tolcheck64,43.48,max|U(2e-12) - U(2e-14)| on t<=0.002 = 2.109e-15
+reference_n64x32_dt0p00025.npz,0.0,cached (nfev=1088)
+reference_n32x16_dt0p00025.npz,0.0,cached (nfev=n/a (pre-diagnostic run))
+compare,2.79,dual-time comparison (n32x16 step 80 missing): spatial_convergence_final.csv + convergence_orders.csv + per-node CSVs + PNG
+reference_n64x32_dt0p00025.npz,0.0,cached (nfev=1088)
+reference_n32x16_dt0p00025.npz,0.0,cached (nfev=n/a (pre-diagnostic run))
+compare,2.67,dual-time comparison (n32x16 step 80 missing): spatial_convergence_final.csv + convergence_orders.csv + per-node CSVs + PNG

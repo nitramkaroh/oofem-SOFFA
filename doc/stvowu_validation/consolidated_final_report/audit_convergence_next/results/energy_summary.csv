@@ -1,0 +1,8 @@
+quantity,value
+E0,1.9327101889e+00
+ET,1.9274638141e+00
+variazione relativa totale,-0.27145%
+monotona decrescente (80 passi),True,max dE_consecutivo = -2.737e-07
+cinetica t=0 -> T,0.000e+00 -> 2.4766801329e-03
+max|E_mine - E_arch| su 81 step,4.992e-11
+"max|E_mine - fj.energy_fixed| (s=0,40,80)",7.216e-15

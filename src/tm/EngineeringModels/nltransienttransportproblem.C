@@ -49,6 +49,43 @@
 namespace oofem {
 REGISTER_EngngModel(NLTransientTransportProblem);
 
+namespace {
+class NewmarkWaveLhsAssembler : public MatrixAssembler
+{
+    double beta;
+    double gamma;
+    double damping;
+public:
+    NewmarkWaveLhsAssembler(double beta, double gamma, double damping) : beta(beta), gamma(gamma), damping(damping) { }
+
+    void matrixFromElement(FloatMatrix &answer, Element &element, TimeStep *tStep) const override
+    {
+        FloatMatrix capacity;
+        element.giveCharacteristicMatrix(answer, TangentStiffnessMatrix, tStep);
+        element.giveCharacteristicMatrix(capacity, MassMatrix, tStep);
+        const double dt = tStep->giveTimeIncrement();
+        const bool dynamicBoundary = element.giveGeometryType() == EGT_line_1;
+        const double factor = dynamicBoundary
+            ? gamma / ( beta * dt )
+            : 1.0 / ( beta * dt * dt ) + damping * gamma / ( beta * dt );
+        answer.add(factor, capacity);
+    }
+};
+
+class BulkWaveMassAssembler : public MatrixAssembler
+{
+public:
+    void matrixFromElement(FloatMatrix &answer, Element &element, TimeStep *tStep) const override
+    {
+        if ( element.giveGeometryType() == EGT_line_1 ) {
+            answer.clear(); // boundary equation is first order, not inertial
+        } else {
+            element.giveCharacteristicMatrix(answer, MassMatrix, tStep);
+        }
+    }
+};
+}
+
 NLTransientTransportProblem :: NLTransientTransportProblem(int i, EngngModel *_master = nullptr) : NonStationaryTransportProblem(i, _master)
 {
 }
@@ -68,6 +105,12 @@ NLTransientTransportProblem :: initializeFrom(InputRecord &ir)
     MANRMSteps = 0;
     IR_GIVE_OPTIONAL_FIELD(ir, MANRMSteps, _IFT_NLTransientTransportProblem_manrmsteps);
     IR_GIVE_OPTIONAL_FIELD(ir, bdfOrder, _IFT_NLTransientTransportProblem_bdforder);
+    IR_GIVE_OPTIONAL_FIELD(ir, waveMode, _IFT_NLTransientTransportProblem_wave);
+    IR_GIVE_OPTIONAL_FIELD(ir, newmarkBeta, _IFT_NLTransientTransportProblem_newmarkbeta);
+    IR_GIVE_OPTIONAL_FIELD(ir, newmarkGamma, _IFT_NLTransientTransportProblem_newmarkgamma);
+    IR_GIVE_OPTIONAL_FIELD(ir, initialVelocity, _IFT_NLTransientTransportProblem_initialvelocity);
+    IR_GIVE_OPTIONAL_FIELD(ir, initialVelocityValues, _IFT_NLTransientTransportProblem_initialvelocityvalues);
+    IR_GIVE_OPTIONAL_FIELD(ir, waveDamping, _IFT_NLTransientTransportProblem_wavedamping);
     if ( bdfOrder < 1 || bdfOrder > 5 ) {
         throw ValueInputException(ir, _IFT_NLTransientTransportProblem_bdforder,
                                   "BDF order must be between 1 and 5");
@@ -75,6 +118,20 @@ NLTransientTransportProblem :: initializeFrom(InputRecord &ir)
     if ( bdfOrder > 1 && alpha != 1.0 ) {
         throw ValueInputException(ir, _IFT_NonStationaryTransportProblem_alpha,
                                   "BDF integration requires alpha 1.0");
+    }
+    if ( waveMode ) {
+        if ( alpha != 1.0 ) {
+            throw ValueInputException(ir, _IFT_NonStationaryTransportProblem_alpha,
+                                      "Newmark wave integration requires alpha 1.0");
+        }
+        if ( bdfOrder > 1 ) {
+            throw ValueInputException(ir, _IFT_NLTransientTransportProblem_bdforder,
+                                      "BDF integration cannot be combined with Newmark wave integration");
+        }
+        if ( newmarkBeta <= 0.0 || newmarkGamma <= 0.0 ) {
+            throw ValueInputException(ir, _IFT_NLTransientTransportProblem_newmarkbeta,
+                                      "Newmark beta and gamma must be positive");
+        }
     }
     if ( bdfOrder > 1 && ( dtFunction != 0 || discreteTimes.giveSize() > 0 ) ) {
         throw ValueInputException(ir, _IFT_NonStationaryTransportProblem_deltat,
@@ -84,6 +141,11 @@ NLTransientTransportProblem :: initializeFrom(InputRecord &ir)
         NR_Mode = nrsolverAccelNRM;
     } else {
         NR_Mode = nrsolverModifiedNRM;
+    }
+    if ( waveMode ) {
+        // The Newmark effective tangent depends on the current nonlinear
+        // state through the Allen-Cahn reaction term, so refresh it each iteration.
+        NR_Mode = nrsolverFullNRM;
     }
 }
 
@@ -198,6 +260,16 @@ void NLTransientTransportProblem :: solveYourselfAt(TimeStep *tStep)
         *solutionVector = *UnknownsField->giveSolutionVector( tStep->givePreviousStep() );
     }
 
+    if ( waveMode ) {
+        const FloatArray *previousSolution = UnknownsField->giveSolutionVector(tStep->givePreviousStep());
+        const double dt = tStep->giveTimeIncrement();
+        const double predictorAccelerationFactor = dt * dt * ( 0.5 - newmarkBeta );
+        for ( int eq = 1; eq <= neq; ++eq ) {
+            solutionVector->at(eq) = previousSolution->at(eq) + dt * waveVelocity.at(eq)
+                + predictorAccelerationFactor * waveAcceleration.at(eq);
+        }
+    }
+
     this->updateInternalState(& TauStep); //insert to hash=0(current), if changes in equation numbering
 
     FloatArray solutionVectorIncrement(neq);
@@ -216,18 +288,26 @@ void NLTransientTransportProblem :: solveYourselfAt(TimeStep *tStep)
 
         if ( ( nite == 1 ) || ( NR_Mode == nrsolverFullNRM ) || ( ( NR_Mode == nrsolverAccelNRM ) && ( nite % MANRMSteps == 0 ) ) ) {
             conductivityMatrix->zero();
-            //Assembling left hand side - start with conductivity matrix
-            this->assemble( *conductivityMatrix, & TauStep, IntSourceLHSAssembler(),
-                           EModelDefaultEquationNumbering(), this->giveDomain(1) );
-            conductivityMatrix->times(alpha);
-            //Add capacity matrix
-            std::vector<double> coefficients;
-            const int activeOrder = bdfOrder == 1 ? 1 :
-                std::min(bdfOrder, static_cast<int>(bdfElementHistory.size()));
-            giveBdfCoefficients(activeOrder, coefficients);
-            this->assemble( *conductivityMatrix, & TauStep,
-                           MidpointLhsAssembler(lumpedCapacityStab, alpha, coefficients[0]),
-                           EModelDefaultEquationNumbering(), this->giveDomain(1) );
+            if ( waveMode ) {
+                this->assemble(*conductivityMatrix, &TauStep,
+                               NewmarkWaveLhsAssembler(newmarkBeta, newmarkGamma, waveDamping),
+                               EModelDefaultEquationNumbering(), this->giveDomain(1));
+                this->assemble(*conductivityMatrix, &TauStep, IntSourceLHSAssembler(),
+                               EModelDefaultEquationNumbering(), this->giveDomain(1));
+            } else {
+                //Assembling left hand side - start with conductivity matrix
+                this->assemble( *conductivityMatrix, & TauStep, IntSourceLHSAssembler(),
+                               EModelDefaultEquationNumbering(), this->giveDomain(1) );
+                conductivityMatrix->times(alpha);
+                //Add capacity matrix
+                std::vector<double> coefficients;
+                const int activeOrder = bdfOrder == 1 ? 1 :
+                    std::min(bdfOrder, static_cast<int>(bdfElementHistory.size()));
+                giveBdfCoefficients(activeOrder, coefficients);
+                this->assemble( *conductivityMatrix, & TauStep,
+                               MidpointLhsAssembler(lumpedCapacityStab, alpha, coefficients[0]),
+                               EModelDefaultEquationNumbering(), this->giveDomain(1) );
+            }
         }
 
         rhs.resize(neq);
@@ -293,6 +373,17 @@ double NLTransientTransportProblem :: giveUnknownComponent(ValueModeType mode, T
 // returns unknown quantity like displacement, velocity of equation
 // This function translates this request to numerical method language
 {
+    if ( waveMode && ( mode == VM_Velocity || mode == VM_Acceleration ) ) {
+        const int eq = dof->__giveEquationNumber();
+        if ( eq > 0 && eq <= waveVelocity.giveSize() ) {
+            return mode == VM_Velocity ? waveVelocity.at(eq) : waveAcceleration.at(eq);
+        }
+        if ( eq > 0 ) {
+            return mode == VM_Velocity ? initialVelocity : 0.0;
+        }
+        return dof->hasBc(tStep) ? dof->giveBcValue(mode, tStep) : 0.0;
+    }
+
     if ( this->requiresUnknownsDictionaryUpdate() ) {
         if ( mode == VM_Incremental ) { //get difference between current and previous time variable
             return dof->giveUnknowns()->at(0) - dof->giveUnknowns()->at(1);
@@ -351,11 +442,92 @@ NLTransientTransportProblem :: applyIC(TimeStep *stepWhenIcApply)
 
     NonStationaryTransportProblem :: applyIC(stepWhenIcApply);
 
+    if ( waveMode && waveVelocity.giveSize() == 0 ) {
+        const int neq = this->giveNumberOfDomainEquations(1, EModelDefaultEquationNumbering());
+        if ( initialVelocityValues.giveSize() != 0 && initialVelocityValues.giveSize() != neq ) {
+            OOFEM_ERROR("Initial velocity array has %d values, but the model has %d equations",
+                        initialVelocityValues.giveSize(), neq);
+        }
+        waveVelocity.resize(neq);
+        if ( initialVelocityValues.giveSize() == neq ) {
+            waveVelocity = initialVelocityValues;
+        } else {
+            waveVelocity.zero();
+        }
+        waveAcceleration.resize(neq);
+        waveAcceleration.zero();
+        if ( initialVelocityValues.giveSize() == 0 ) {
+            for ( int eq = 1; eq <= neq; ++eq ) {
+                waveVelocity.at(eq) = initialVelocity;
+            }
+        }
+    }
+
     // update element state according to given ic
     for ( auto &elem : domain->giveElements() ) {
         TransportElement *element = static_cast< TransportElement * >( elem.get() );
         element->updateInternalState(stepWhenIcApply);
         element->updateYourself(stepWhenIcApply);
+    }
+
+    if ( waveMode && waveAcceleration.giveSize() > 0 ) {
+        // Newmark requires acceleration consistent with the initial equilibrium.
+        // Starting with a=0 introduces an O(dt) startup error even for a smooth
+        // solution. Solve M_bulk*a0 = source - K*u0 - M_surface*v0; the line
+        // capacity is the first-order dynamic-boundary term and contributes via
+        // the prescribed initial velocity, not to the inertia matrix.
+        const auto &numbering = EModelDefaultEquationNumbering();
+        FloatArray initialRhs(waveAcceleration.giveSize());
+        initialRhs.zero();
+        this->assembleVectorFromElements(initialRhs, stepWhenIcApply,
+                                         TransportExternalForceAssembler(), VM_Total,
+                                         numbering, domain);
+        this->assembleVectorFromDofManagers(initialRhs, stepWhenIcApply,
+                                           ExternalForceAssembler(), VM_Total,
+                                           numbering, domain);
+
+        IntArray loc;
+        FloatMatrix stiffness, capacity;
+        FloatArray localU, localVelocity, contribution;
+        for ( auto &element : domain->giveElements() ) {
+            if ( element->giveParallelMode() == Element_remote || !element->isActivated(stepWhenIcApply) ) {
+                continue;
+            }
+            element->giveLocationArray(loc, numbering);
+            element->giveCharacteristicMatrix(stiffness, TangentStiffnessMatrix, stepWhenIcApply);
+            element->computeVectorOf(VM_Total, stepWhenIcApply, localU);
+            contribution.beProductOf(stiffness, localU);
+            contribution.negated();
+            initialRhs.assemble(contribution, loc);
+
+            if ( element->giveGeometryType() == EGT_line_1 ) {
+                element->giveCharacteristicMatrix(capacity, MassMatrix, stepWhenIcApply);
+                localVelocity.resize(loc.giveSize());
+                for ( int j = 1; j <= loc.giveSize(); ++j ) {
+                    const int eq = loc.at(j);
+                    localVelocity.at(j) = eq > 0 ? waveVelocity.at(eq) : initialVelocity;
+                }
+                contribution.beProductOf(capacity, localVelocity);
+                contribution.negated();
+                initialRhs.assemble(contribution, loc);
+            } else if ( waveDamping != 0.0 ) {
+                element->giveCharacteristicMatrix(capacity, MassMatrix, stepWhenIcApply);
+                localVelocity.resize(loc.giveSize());
+                for ( int j = 1; j <= loc.giveSize(); ++j ) {
+                    const int eq = loc.at(j);
+                    localVelocity.at(j) = eq > 0 ? waveVelocity.at(eq) : initialVelocity;
+                }
+                contribution.beProductOf(capacity, localVelocity);
+                contribution.times(-waveDamping);
+                initialRhs.assemble(contribution, loc);
+            }
+        }
+
+        conductivityMatrix->zero();
+        this->assemble(*conductivityMatrix, stepWhenIcApply, BulkWaveMassAssembler(),
+                       numbering, domain);
+        this->giveNumericalMethod(this->giveCurrentMetaStep());
+        linSolver->solve(*conductivityMatrix, initialRhs, waveAcceleration);
     }
     if ( bdfOrder > 1 && bdfElementHistory.empty() ) {
         captureBdfElementState(stepWhenIcApply);
@@ -382,6 +554,9 @@ NLTransientTransportProblem :: createPreviousSolutionInDofUnknownsDictionary(Tim
 void
 NLTransientTransportProblem :: updateYourself(TimeStep *tStep)
 {
+    if ( waveMode ) {
+        this->updateWaveKinematics(tStep);
+    }
     if ( bdfOrder > 1 ) {
         captureBdfElementState(tStep);
         bdfPreviousIncrement = tStep->giveTimeIncrement();
@@ -394,6 +569,26 @@ NLTransientTransportProblem :: updateYourself(TimeStep *tStep)
     NonStationaryTransportProblem :: updateYourself(tStep);
     //return back to original intrinsic time
     tStep->setIntrinsicTime(intrinsicTime);
+}
+
+void
+NLTransientTransportProblem :: updateWaveKinematics(TimeStep *tStep)
+{
+    const FloatArray *current = UnknownsField->giveSolutionVector(tStep);
+    const FloatArray *previous = UnknownsField->giveSolutionVector(tStep->givePreviousStep());
+    const double dt = tStep->giveTimeIncrement();
+    const double accelerationFactor = 1.0 / ( newmarkBeta * dt * dt );
+    const double velocityPredictorFactor = dt * ( 1.0 - newmarkGamma );
+    const double displacementPredictorAccelerationFactor = dt * dt * ( 0.5 - newmarkBeta );
+    const int neq = this->giveNumberOfDomainEquations(1, EModelDefaultEquationNumbering());
+    for ( int eq = 1; eq <= neq; ++eq ) {
+        const double displacementPredictor = previous->at(eq) + dt * waveVelocity.at(eq)
+            + displacementPredictorAccelerationFactor * waveAcceleration.at(eq);
+        const double acceleration = accelerationFactor * ( current->at(eq) - displacementPredictor );
+        waveVelocity.at(eq) += velocityPredictorFactor * waveAcceleration.at(eq)
+            + newmarkGamma * dt * acceleration;
+        waveAcceleration.at(eq) = acceleration;
+    }
 }
 
 int
@@ -468,6 +663,52 @@ NLTransientTransportProblem :: assembleAlgorithmicPartOfRhs(FloatArray &answer,
 
     Domain *domain = this->giveDomain(1);
     int nelem = domain->giveNumberOfElements();
+
+    if ( waveMode ) {
+        const double dt = tStep->giveTimeIncrement();
+        const double accelerationFactor = 1.0 / ( newmarkBeta * dt * dt );
+        const double velocityAccelerationFactor = newmarkGamma / ( newmarkBeta * dt );
+        const double predictorVelocityFactor = dt * ( 1.0 - newmarkGamma );
+        const double predictorDisplacementAccelerationFactor = dt * dt * ( 0.5 - newmarkBeta );
+        for ( int i = 1; i <= nelem; i++ ) {
+            element = domain->giveElement(i);
+            if ( element->giveParallelMode() == Element_remote || !element->isActivated(tStep) ) {
+                continue;
+            }
+            element->giveLocationArray(loc, ns);
+            element->giveCharacteristicMatrix(charMtrxCond, TangentStiffnessMatrix, tStep);
+            element->giveCharacteristicMatrix(charMtrxCap, MassMatrix, tStep);
+            element->computeVectorOf(VM_Total, currentStep, r);
+            element->computeVectorOf(VM_Total, previousStep, drdt);
+
+            const bool dynamicBoundary = element->giveGeometryType() == EGT_line_1;
+            FloatArray dynamicTerm(r.giveSize());
+            for ( int j = 1; j <= loc.giveSize(); ++j ) {
+                const int eq = loc.at(j);
+                double velocity = initialVelocity;
+                double acceleration = 0.0;
+                if ( eq > 0 ) {
+                    velocity = waveVelocity.at(eq);
+                    acceleration = waveAcceleration.at(eq);
+                }
+                const double displacementPredictor = drdt.at(j) + dt * velocity
+                    + predictorDisplacementAccelerationFactor * acceleration;
+                const double currentAcceleration = accelerationFactor * ( r.at(j) - displacementPredictor );
+                const double currentVelocity = velocity + predictorVelocityFactor * acceleration
+                    + velocityAccelerationFactor * ( r.at(j) - displacementPredictor );
+                dynamicTerm.at(j) = dynamicBoundary
+                    ? currentVelocity
+                    : currentAcceleration + waveDamping * currentVelocity;
+            }
+
+            help.beProductOf(charMtrxCap, dynamicTerm);
+            contrib.beProductOf(charMtrxCond, r);
+            contrib.add(help);
+            contrib.negated();
+            answer.assemble(contrib, loc);
+        }
+        return;
+    }
 
     if ( bdfOrder > 1 ) {
         const int activeOrder = std::min(bdfOrder, static_cast<int>(bdfElementHistory.size()));

@@ -1,0 +1,7 @@
+quantity,value
+max|floor_nodale| = max|u32 - U32|,4.423e-07
+frazione nodi interni con |floor| < 1e-7,0.987097
+correlazione Pearson |e| vs |famiglia| (nodi interni),1.000000
+nodi interni con |e - fam| > 1e-7,6
+argmax|e| nodo,"[0.0625, 0.9375] valore=2.957438e-03"
+argmax|fam| nodo,"[0.0625, 0.9375] valore=2.957618e-03"

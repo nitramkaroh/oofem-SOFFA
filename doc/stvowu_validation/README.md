@@ -49,10 +49,16 @@ Parametri principali: WED non uniforme usa mesh $8\times4$, riferimento OOFEM $\
 - Il MMS verifica separatamente il solver diretto OOFEM.
 - Il bilancio energetico usa differenze all'indietro per $u_t$ e matrici FEM di massa per la dissipazione; l'energia include termini bulk e superficiali.
 - Gli studi beta presentano separatamente OOFEM e WED. Non è implementato un confronto con un problema privo di dinamica superficiale; porre $\beta=0$ non definirebbe da solo tale problema.
-- Il caso ondoso è fuori ambito. Gli ordini osservati sono empirici sui casi riportati, non risultati teorici universali.
+- `allencahn_wave_dynamic.in` esercita Newmark con inerzia Allen--Cahn nel bulk e capacità dinamica di primo ordine sul bordo. Il test precedente aveva accelerazione iniziale nulla; il confronto con riferimenti esatti ha mostrato l'errore di avvio e il codice è stato corretto per inizializzare l'accelerazione coerente. Le verifiche del modo lineare, dell'oscillatore nonlineare, del profilo tanh iperbolico e della convergenza temporale del caso accoppiato sono descritte in [`hyperbolic/README.md`](hyperbolic/README.md). I preprint CRC 1173 caricati sono riferimenti per onde con inerzia anche sulla superficie: utili per il metodo d'onda, ma non una validazione letterale del modello misto OOFEM.
 
 ## Riproducibilità archiviata
 
 Una ripetizione in directory temporanea pulita del caso WED non uniforme con `epsilon=0.05` ha riprodotto gli errori integrati bulk/bordo (`1.1511e-3`, `2.0198e-3`). Input e log sono conservati in `archive/inputs/clean_repro/` e `archive/logs/clean_repro/`; output grezzi compatti sono in `archive/results/clean_repro/`. Gli archivi per gli altri casi contengono gli input e i log OOFEM/WED disponibili. Ambiente usato: Python 3.12.3, NumPy 1.26.4, SciPy 1.11.4, Matplotlib 3.6.3; revisione sorgente `0680f2da49050e2ef72407897d7b292ce66cd054`, build Debug `build/debug_magneto/oofem`. Per rigenerare il PDF serve anche `pdflatex`.
 
 La replica pulita riguarda un caso rappresentativo e usa la build esistente: non è una build isolata da zero. I file VTU completi non sono duplicati nell'archivio; i risultati tabellari sono conservati nei CSV della cartella.
+
+## Confronto con la letteratura
+
+I test senza MMS e il confronto con Okumura–Furihata, Kovács–Lubich, la tesi di Okumura e Xiao–Chen sono documentati in [`literature_comparison/README.md`](literature_comparison/README.md). Include la replica OOFEM del benchmark 1D dinamico di Okumura, la curva energetica digitalizzata dal paper, gli script e i dati del confronto.
+
+La campagna consolidata, eseguita il 27/10/2026, è in [`validation_allen_cahn/`](validation_allen_cahn/README.md): benchmark parabolico con condizione dinamica (Okumura 2021, Ch. 4, Example 2) e benchmark iperbolico (onda viaggiante esatta di Nizovtseva 2016, eq. 29), con figure principali (PNG+PDF), metriche di errore, studi di raffinamento spaziale e rapporto di confronto in [`validation_allen_cahn/validation/comparison_report.md`](validation_allen_cahn/validation/comparison_report.md). Nota: nel test iperbolico la condizione dinamica al bordo **non** è esercitata né validata (nessun riferimento disponibile lo consente); ciò è dichiarato esplicitamente nel rapporto.

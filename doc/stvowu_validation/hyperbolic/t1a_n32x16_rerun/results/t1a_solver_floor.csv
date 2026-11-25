@@ -1,0 +1,5 @@
+quantity,value,note
+bulk_fe_rms,2.916141e-08,"new n32x16 OOFEM step 80 (t=0.02) vs cached DOP853 n32x16 (rtol 2e-12), same mesh, same time"
+bulk_max,4.423024e-07,interior nodes
+surf_fe_rms,9.255899e-08,boundary FE RMS
+surf_max,4.423024e-07,boundary max

@@ -1,0 +1,3 @@
+stage,asm_s,load_s,wall_s,int_s,n,nfev,ms_per_rhs,nfev_per_step,rss_peak_mb,n_accepted,first_step_h,final_t,note
+pilot,,,33.07,33.04,8385,56,590.0,,80.2,2,2.500000e-04,,"est full: nfev~1130 -> ~11.6 min (cost model, NOT a budget proof)"
+full,27.58,,1259.29,,8385,2117,594.8,26.46,98.8,,,0.02,"saved reference_n128x64_dt0p00025.npz (5.4 MB U + 5.4 MB V); rss per /usr/bin/time = 109 MB"

@@ -1,0 +1,17 @@
+case,t,metric,mine,archived
+OOFEM n16x8 vs DOP853 n16x8,t=0.00975,bulk_fe_rms,2.099453e-08,2.0995e-8 (static audit §1.5)
+OOFEM n16x8 vs DOP853 n16x8,t=0.00975,bulk_max,4.804153e-08,
+OOFEM n16x8 vs DOP853 n16x8,t=0.00975,surf_fe_rms,3.567047e-08,
+OOFEM n16x8 vs DOP853 n16x8,t=0.00975,surf_max,1.237725e-07,
+OOFEM n16x8 vs DOP853 n16x8,t=0.02000,bulk_fe_rms,2.444096e-08,2.4441e-8 (static audit §1.5)
+OOFEM n16x8 vs DOP853 n16x8,t=0.02000,bulk_max,6.667319e-08,
+OOFEM n16x8 vs DOP853 n16x8,t=0.02000,surf_fe_rms,5.150623e-08,
+OOFEM n16x8 vs DOP853 n16x8,t=0.02000,surf_max,2.084836e-07,
+OOFEM n32x16 (T1-A) vs DOP853 n32x16,t=0.00975,bulk_fe_rms,2.597176e-08,2.5972e-8 (static audit §1.5)
+OOFEM n32x16 (T1-A) vs DOP853 n32x16,t=0.00975,bulk_max,1.976483e-07,
+OOFEM n32x16 (T1-A) vs DOP853 n32x16,t=0.00975,surf_fe_rms,7.777188e-08,
+OOFEM n32x16 (T1-A) vs DOP853 n32x16,t=0.00975,surf_max,3.734796e-07,
+OOFEM n32x16 (T1-A) vs DOP853 n32x16,t=0.02000,bulk_fe_rms,2.916141e-08,NON ARCHIVIATO (nuovo)
+OOFEM n32x16 (T1-A) vs DOP853 n32x16,t=0.02000,bulk_max,1.794505e-07,
+OOFEM n32x16 (T1-A) vs DOP853 n32x16,t=0.02000,surf_fe_rms,9.255899e-08,
+OOFEM n32x16 (T1-A) vs DOP853 n32x16,t=0.02000,surf_max,4.423024e-07,

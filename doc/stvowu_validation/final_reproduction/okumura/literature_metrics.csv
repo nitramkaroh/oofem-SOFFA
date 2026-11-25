@@ -1,0 +1,2 @@
+samples,interval_start,interval_end,rmse,mae,max_abs,energy_first,energy_final,max_increase,max_y_spread
+372,0.01,0.4,0.9928837256054492,0.8827582413490673,1.8320115337130431,77.42047359415842,2.21935717183804e-06,-9.6950435119363e-08,0.0

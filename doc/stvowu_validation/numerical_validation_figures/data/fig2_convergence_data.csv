@@ -1,0 +1,11 @@
+series,norm,h,E_FE_RMS
+oofem_vs_dop853_n128,bulk,0.25,1.2992672897e-03
+oofem_vs_dop853_n128,surf,0.25,2.5086951973e-03
+oofem_vs_dop853_n128,bulk,0.125,7.9025425100e-04
+oofem_vs_dop853_n128,surf,0.125,1.9003464859e-03
+oofem_vs_dop853_n128,bulk,0.0625,3.8224296652e-04
+oofem_vs_dop853_n128,surf,0.0625,8.3724647804e-04
+semidiscrete_family_level_diff,bulk,0.0625,4.1413617030e-04
+semidiscrete_family_level_diff,surf,0.0625,9.2645127357e-04
+semidiscrete_family_level_diff,bulk,0.03125,4.8740074904e-05
+semidiscrete_family_level_diff,surf,0.03125,1.6421382715e-04

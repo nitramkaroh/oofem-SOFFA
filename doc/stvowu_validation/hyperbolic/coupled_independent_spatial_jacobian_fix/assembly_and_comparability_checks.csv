@@ -1,0 +1,35 @@
+check,pass,value
+n8x4 regenerated node coords == case.in node coords,True,max|diff|=0.00e+00
+n8x4 regenerated boundary == case.in line1ht node set,True,
+n8x4 mesh.npz == regenerated mesh,True,
+n16x8 regenerated node coords == case.in node coords,True,max|diff|=0.00e+00
+n16x8 regenerated boundary == case.in line1ht node set,True,
+n16x8 mesh.npz == regenerated mesh,True,
+n32x16 regenerated node coords == case.in node coords,True,max|diff|=0.00e+00
+n32x16 regenerated boundary == case.in line1ht node set,True,
+"n32x16 mesh.npz is a 0-byte file (corrupted archive, left untouched; regenerated mesh used after validation vs case.in)",True,0 bytes
+n8x4 nodes subset of n64x32 nodes (atol 1e-13),True,max min-dist=0.00e+00
+n16x8 nodes subset of n64x32 nodes (atol 1e-13),True,max min-dist=0.00e+00
+n32x16 nodes subset of n64x32 nodes (atol 1e-13),True,max min-dist=0.00e+00
+"n8x4 line elements cover the whole boundary (24 edges = 2(8+4), all nodes on boundary)",True,
+"n16x8 line elements cover the whole boundary (48 edges = 2(16+8), all nodes on boundary)",True,
+"n32x16 line elements cover the whole boundary (96 edges = 2(32+16), all nodes on boundary)",True,
+"n64x32 line elements cover the whole boundary (192 edges = 2(64+32), all nodes on boundary)",True,
+"total Mb 1 = area (bulk mass, 3x3 Gauss)",True,2 vs 2.0
+"total Ms 1 = perimeter (surface mass, corrected J=L/2)",True,6 vs 6.0
+row sums Kb = 0 (bulk diffusion constant invariance),True,1.998e-15
+row sums Ks = 0 (surface diffusion constant invariance),True,0.000e+00
+"single-edge Ms_e = (L/6)[[2,1],[1,2]] (L=0.03125)",True,max|diff|=1.73e-18
+"single-edge Ks_e = (1/L)[[1,-1],[-1,1]] (L=0.03125)",True,max|diff|=0.00e+00
+bulk reaction: sum rb = m(0.2)*area (partition of unity),True,0.384 vs 0.384
+surface reaction: sum rs = m(0.2)*perimeter (corrected weight L/2),True,1.152 vs 1.152
+surface energy at u=0.2: esp = F(0.2)*perimeter (grad=0),True,1.3824 vs 1.3824
+n8x4 case.in material params == reference constants,True,"{'d': '1.0', 'k': '1.0', 'c': '1.0', 'mobility': '1.0', 'surfacebeta': '1.0', 'manufactured': '0', 'hyperbolic': '1', 'rho': '1.0', 'surfacecapacity': '1.0'}"
+"n8x4 case.in problem line (80 steps, dt 2.5e-4, rtol 1e-8, wave 1, Newmark 1/4 1/2, v0 0)",True,
+n8x4 case.in IC = 0.2+0.1 cos(pi x/2) cos(pi y) at every node,True,max|diff|=0.00e+00
+n16x8 case.in material params == reference constants,True,"{'d': '1.0', 'k': '1.0', 'c': '1.0', 'mobility': '1.0', 'surfacebeta': '1.0', 'manufactured': '0', 'hyperbolic': '1', 'rho': '1.0', 'surfacecapacity': '1.0'}"
+"n16x8 case.in problem line (80 steps, dt 2.5e-4, rtol 1e-8, wave 1, Newmark 1/4 1/2, v0 0)",True,
+n16x8 case.in IC = 0.2+0.1 cos(pi x/2) cos(pi y) at every node,True,max|diff|=0.00e+00
+n32x16 case.in material params == reference constants,True,"{'d': '1.0', 'k': '1.0', 'c': '1.0', 'mobility': '1.0', 'surfacebeta': '1.0', 'manufactured': '0', 'hyperbolic': '1', 'rho': '1.0', 'surfacecapacity': '1.0'}"
+"n32x16 case.in problem line (80 steps, dt 2.5e-4, rtol 1e-8, wave 1, Newmark 1/4 1/2, v0 0)",True,
+n32x16 case.in IC = 0.2+0.1 cos(pi x/2) cos(pi y) at every node,True,max|diff|=0.00e+00

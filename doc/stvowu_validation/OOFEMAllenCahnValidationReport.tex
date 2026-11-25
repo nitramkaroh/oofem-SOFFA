@@ -1,0 +1,16 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=18mm]{geometry}
+\usepackage{fontspec}
+\setmainfont{Latin Modern Roman}
+\usepackage{amsmath,amssymb}
+\usepackage{longtable,booktabs,array}
+\usepackage{microtype}
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
+\usepackage{markdown}
+\markdownSetup{pipeTables=true,texMathSingleBackslash=true,underscores=false}
+\setcounter{secnumdepth}{-2} % i titoli nel .md sono già numerati
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.35em}
+\begin{document}
+\markdownInput{OOFEM_AllenCahn_Validation_Report.md}
+\end{document}

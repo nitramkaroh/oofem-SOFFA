@@ -1,0 +1,2 @@
+endpoint difference ratio = 1.9782407
+observed temporal order = 0.98421797
